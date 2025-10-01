@@ -1,6 +1,12 @@
 import express, { Request, Response } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import { 
+  logUserActivity, 
+  ActivityType, 
+  logDashboardAccess,
+  logProfileUpdateActivity 
+} from '../middleware/activityLogger';
 
 dotenv.config();
 
@@ -283,12 +289,25 @@ router.post('/reports', async (req: Request, res: Response) => {
 });
 
 // Get user statistics
-router.get('/stats/:userId', async (req: Request, res: Response) => {
+router.get('/stats/:userId', logDashboardAccess, async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
 
-    // Get search count
-    const { count: searchCount } = await supabase
+    // Log dashboard access activity
+    await logUserActivity(userId, ActivityType.DASHBOARD_ACCESS, {
+      dashboardType: 'user',
+      endpoint: '/stats'
+    }, req);
+
+    // Get search count from user_activities
+    const { count: searchActivitiesCount } = await supabase
+      .from('user_activities')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('activity_type', 'search');
+
+    // Get search count from search_history (legacy)
+    const { count: searchHistoryCount } = await supabase
       .from('search_history')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId);
@@ -299,24 +318,47 @@ router.get('/stats/:userId', async (req: Request, res: Response) => {
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId);
 
-    // Get monthly activity (searches in current month)
+    // Get report generation activities
+    const { count: reportActivitiesCount } = await supabase
+      .from('user_activities')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('activity_type', 'report_generate');
+
+    // Get monthly activity (all activities in current month)
     const currentMonth = new Date();
     currentMonth.setDate(1);
     currentMonth.setHours(0, 0, 0, 0);
 
     const { count: monthlyActivity } = await supabase
-      .from('search_history')
+      .from('user_activities')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
       .gte('created_at', currentMonth.toISOString());
 
+    // Get patent view activities
+    const { count: patentViewsCount } = await supabase
+      .from('user_activities')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('activity_type', 'view_patent');
+
+    // Get login activities for engagement metrics
+    const { count: loginCount } = await supabase
+      .from('user_activities')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('activity_type', 'login');
+
     res.json({
       success: true,
       data: {
-        totalSearches: searchCount || 0,
-        reportsGenerated: reportsCount || 0,
+        totalSearches: (searchActivitiesCount || 0) + (searchHistoryCount || 0),
+        reportsGenerated: (reportsCount || 0) + (reportActivitiesCount || 0),
         monthlyActivity: monthlyActivity || 0,
-        savedPatents: 0 // Mock data for now
+        savedPatents: patentViewsCount || 0,
+        totalLogins: loginCount || 0,
+        engagementScore: Math.min(100, ((monthlyActivity || 0) * 10))
       }
     });
   } catch (error) {
@@ -373,33 +415,50 @@ router.delete('/account/:userId', async (req: Request, res: Response) => {
 });
 
 // Get admin dashboard statistics
-router.get('/admin/stats', async (req: Request, res: Response) => {
+router.get('/admin/stats', logDashboardAccess, async (req: Request, res: Response) => {
   try {
+    // Log admin dashboard access
+    const adminUserId = (req as any).user?.id || 'admin';
+    await logUserActivity(adminUserId, ActivityType.DASHBOARD_ACCESS, {
+      dashboardType: 'admin',
+      endpoint: '/admin/stats'
+    }, req);
+
     // Get total users count
     const { count: totalUsers } = await supabase
       .from('users')
       .select('*', { count: 'exact', head: true });
 
-    // Get active users (users who have searched in the last 30 days)
+    // Get active users (users who have any activity in the last 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
     const { data: activeUsersData } = await supabase
-      .from('search_history')
+      .from('user_activities')
       .select('user_id')
       .gte('created_at', thirtyDaysAgo.toISOString());
 
     const activeUsers = new Set(activeUsersData?.map(item => item.user_id) || []).size;
 
-    // Get total reports count
-    const { count: totalReports } = await supabase
+    // Get total reports count (from both tables)
+    const { count: reportsTableCount } = await supabase
       .from('reports')
       .select('*', { count: 'exact', head: true });
 
-    // Get total searches count
-    const { count: totalSearches } = await supabase
+    const { count: reportActivitiesCount } = await supabase
+      .from('user_activities')
+      .select('*', { count: 'exact', head: true })
+      .eq('activity_type', 'report_generate');
+
+    // Get total searches count (from both tables)
+    const { count: searchHistoryCount } = await supabase
       .from('search_history')
       .select('*', { count: 'exact', head: true });
+
+    const { count: searchActivitiesCount } = await supabase
+      .from('user_activities')
+      .select('*', { count: 'exact', head: true })
+      .eq('activity_type', 'search');
 
     // Get new signups in the last 30 days
     const { count: newSignups } = await supabase
@@ -407,11 +466,22 @@ router.get('/admin/stats', async (req: Request, res: Response) => {
       .select('*', { count: 'exact', head: true })
       .gte('created_at', thirtyDaysAgo.toISOString());
 
-    // Get monthly activity (searches in the last 30 days)
+    // Get monthly activity (all activities in the last 30 days)
     const { count: monthlyActivity } = await supabase
-      .from('search_history')
+      .from('user_activities')
       .select('*', { count: 'exact', head: true })
       .gte('created_at', thirtyDaysAgo.toISOString());
+
+    // Get activity breakdown by type
+    const { data: activityBreakdown } = await supabase
+      .from('user_activities')
+      .select('activity_type')
+      .gte('created_at', thirtyDaysAgo.toISOString());
+
+    const activityStats = activityBreakdown?.reduce((acc: any, activity) => {
+      acc[activity.activity_type] = (acc[activity.activity_type] || 0) + 1;
+      return acc;
+    }, {}) || {};
 
     // Get recent users for user list
     const { data: recentUsers } = await supabase
@@ -420,16 +490,35 @@ router.get('/admin/stats', async (req: Request, res: Response) => {
       .order('created_at', { ascending: false })
       .limit(10);
 
+    // Get daily activity for the last 7 days
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const { data: dailyActivityData } = await supabase
+      .from('user_activities')
+      .select('created_at')
+      .gte('created_at', sevenDaysAgo.toISOString())
+      .order('created_at', { ascending: true });
+
+    const dailyActivity = dailyActivityData?.reduce((acc: any, activity) => {
+      const date = new Date(activity.created_at).toISOString().split('T')[0];
+      acc[date] = (acc[date] || 0) + 1;
+      return acc;
+    }, {}) || {};
+
     res.json({
       success: true,
       data: {
         totalUsers: totalUsers || 0,
         activeUsers,
-        totalReports: totalReports || 0,
-        totalSearches: totalSearches || 0,
+        totalReports: (reportsTableCount || 0) + (reportActivitiesCount || 0),
+        totalSearches: (searchHistoryCount || 0) + (searchActivitiesCount || 0),
         newSignups: newSignups || 0,
         monthlyActivity: monthlyActivity || 0,
-        recentUsers: recentUsers || []
+        recentUsers: recentUsers || [],
+        activityBreakdown: activityStats,
+        dailyActivity,
+        engagementRate: totalUsers > 0 ? Math.round((activeUsers / totalUsers) * 100) : 0
       }
     });
 

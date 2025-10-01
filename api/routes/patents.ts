@@ -4,6 +4,13 @@ import axios from 'axios';
 import { parseStringPromise } from 'xml2js';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import { 
+  logUserActivity, 
+  ActivityType, 
+  logSearchActivity,
+  logPatentView,
+  logReportGenerationActivity 
+} from '../middleware/activityLogger';
 
 // Request 인터페이스 확장
 declare global {
@@ -99,7 +106,7 @@ const mockPatents: PatentData[] = [
 ];
 
 // 특허 검색 API 라우트
-router.get('/search', async (req: Request, res: Response) => {
+router.get('/search', logSearchActivity, async (req: Request, res: Response) => {
   try {
     const {
       keyword,
@@ -116,6 +123,19 @@ router.get('/search', async (req: Request, res: Response) => {
         success: false,
         error: 'Keyword is required'
       });
+    }
+
+    // Log search activity
+    const userId = req.user?.id;
+    if (userId) {
+      await logUserActivity(userId, ActivityType.SEARCH, {
+        keyword,
+        category,
+        country,
+        dateFrom,
+        dateTo,
+        searchType: 'basic'
+      }, req);
     }
 
     // Filter mock patents based on search criteria
@@ -232,7 +252,7 @@ router.get('/test-kipris', async (req: Request, res: Response) => {
 });
 
 // Get patent by ID
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', logPatentView, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const patent = mockPatents.find(p => p.id === id);
@@ -242,6 +262,16 @@ router.get('/:id', async (req: Request, res: Response) => {
         success: false,
         error: 'Patent not found'
       });
+    }
+
+    // Log patent view activity
+    const userId = req.user?.id;
+    if (userId) {
+      await logUserActivity(userId, ActivityType.VIEW_PATENT, {
+        patentId: id,
+        patentTitle: patent.title,
+        patentNumber: patent.patentNumber
+      }, req);
     }
 
     res.json({
@@ -258,7 +288,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 // Generate AI analysis report
-router.post('/:id/analyze', async (req: Request, res: Response) => {
+router.post('/:id/analyze', logReportGenerationActivity, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { analysisType = 'comprehensive' } = req.body;
@@ -269,6 +299,17 @@ router.post('/:id/analyze', async (req: Request, res: Response) => {
         success: false,
         error: 'Patent not found'
       });
+    }
+
+    // Log report generation activity
+    const userId = req.user?.id;
+    if (userId) {
+      await logUserActivity(userId, ActivityType.REPORT_GENERATE, {
+        patentId: id,
+        patentTitle: patent.title,
+        analysisType,
+        reportType: 'ai_analysis'
+      }, req);
     }
 
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
@@ -378,9 +419,21 @@ router.get('/trending/list', async (req: Request, res: Response) => {
 });
 
 // KIPRIS API 통합 검색 라우트
-router.post('/kipris-search', async (req: Request, res: Response) => {
+router.post('/kipris-search', logSearchActivity, async (req: Request, res: Response) => {
   try {
     const searchParams = req.body;
+    
+    // Log KIPRIS search activity
+    const userId = req.user?.id;
+    if (userId) {
+      await logUserActivity(userId, ActivityType.SEARCH, {
+        searchType: 'kipris',
+        searchParams: searchParams,
+        keyword: searchParams.word || searchParams.keyword,
+        inventionTitle: searchParams.inventionTitle,
+        applicationNumber: searchParams.applicationNumber
+      }, req);
+    }
     
     // KIPRIS API 서비스 키 (환경변수에서 가져오기)
     const serviceKey = process.env.KIPRIS_SERVICE_KEY || process.env.KIPRIS_API_KEY || 'your_service_key_here';
@@ -608,7 +661,7 @@ router.post('/kipris-search', async (req: Request, res: Response) => {
 });
 
 // KIPRIS 특허 상세정보 API 라우트
-router.get('/detail/:applicationNumber', async (req: Request, res: Response) => {
+router.get('/detail/:applicationNumber', logPatentView, async (req: Request, res: Response) => {
   try {
     const { applicationNumber } = req.params;
     
@@ -617,6 +670,16 @@ router.get('/detail/:applicationNumber', async (req: Request, res: Response) => 
         success: false,
         error: 'Application number is required'
       });
+    }
+
+    // Log patent detail view activity
+    const userId = req.user?.id;
+    if (userId) {
+      await logUserActivity(userId, ActivityType.VIEW_PATENT, {
+        applicationNumber,
+        patentSource: 'kipris',
+        viewType: 'detail'
+      }, req);
     }
     
     // KIPRIS API 서비스 키 (환경변수에서 가져오기)
@@ -790,7 +853,7 @@ router.get('/detail/:applicationNumber', async (req: Request, res: Response) => 
 });
 
 // AI 분석 API 엔드포인트
-router.post('/analyze/:applicationNumber', async (req: Request, res: Response) => {
+router.post('/analyze/:applicationNumber', logReportGenerationActivity, async (req: Request, res: Response) => {
   try {
     const { applicationNumber } = req.params;
     
@@ -799,6 +862,17 @@ router.post('/analyze/:applicationNumber', async (req: Request, res: Response) =
         success: false,
         error: 'Application number is required'
       });
+    }
+
+    // Log AI analysis activity
+    const userId = req.user?.id;
+    if (userId) {
+      await logUserActivity(userId, ActivityType.REPORT_GENERATE, {
+        applicationNumber,
+        patentSource: 'kipris',
+        reportType: 'ai_analysis',
+        analysisType: 'comprehensive'
+      }, req);
     }
 
     // 먼저 특허 상세정보를 가져옴

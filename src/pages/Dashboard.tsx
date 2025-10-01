@@ -38,7 +38,9 @@ export default function Dashboard() {
     totalSearches: 0,
     reportsGenerated: 0,
     monthlyActivity: 0,
-    savedPatents: 0
+    savedPatents: 0,
+    totalLogins: 0,
+    engagementScore: 0
   })
   const { user, profile } = useAuthStore()
   const { searchHistory, reports, loadSearchHistory, loadReports } = useSearchStore()
@@ -59,10 +61,17 @@ export default function Dashboard() {
         ])
         
         // 사용자 통계 데이터 가져오기
-        const response = await fetch(`/api/users/stats/${user.id}`)
+        const response = await fetch(`http://localhost:3001/api/users/stats/${user.id}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
         
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
+          console.error(`HTTP error! status: ${response.status}`)
+          // 네트워크 오류나 서버 오류 시에도 기본값 유지
+          return
         }
         
         const data = await response.json()
@@ -123,6 +132,22 @@ export default function Dashboard() {
         description: '검색당 평균 결과 수',
         color: 'text-orange-600 dark:text-orange-400',
         bgColor: 'bg-orange-50 dark:bg-orange-950/50'
+      },
+      {
+        title: '총 로그인 수',
+        value: userStats.totalLogins.toLocaleString(),
+        icon: Users,
+        description: '누적 로그인 횟수',
+        color: 'text-indigo-600 dark:text-indigo-400',
+        bgColor: 'bg-indigo-50 dark:bg-indigo-950/50'
+      },
+      {
+        title: '참여도 점수',
+        value: `${userStats.engagementScore}%`,
+        icon: Activity,
+        description: '사용자 활동 참여도',
+        color: 'text-pink-600 dark:text-pink-400',
+        bgColor: 'bg-pink-50 dark:bg-pink-950/50'
       }
     ]
   }, [userStats, searchHistory])
