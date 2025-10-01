@@ -23,7 +23,7 @@ const AdminLogin: React.FC = () => {
     try {
       const result = await signIn(formData.email, formData.password);
       
-      if (result.success) {
+      if (!result.error) {
         // 관리자 이메일 확인
         if (formData.email === 'admin@p-ai.com') {
           navigate('/admin/dashboard');
