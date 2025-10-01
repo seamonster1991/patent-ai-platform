@@ -15,11 +15,16 @@ interface DashboardStats {
   totalUsers: number;
   activeUsers: number;
   totalReports: number;
-  monthlyRevenue: number;
-  apiCalls: number;
-  errorRate: number;
-  avgLatency: number;
+  totalSearches: number;
   newSignups: number;
+  monthlyActivity: number;
+  recentUsers: Array<{
+    id: string;
+    email: string;
+    name?: string;
+    subscription_plan: string;
+    created_at: string;
+  }>;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -27,34 +32,27 @@ const AdminDashboard: React.FC = () => {
     totalUsers: 0,
     activeUsers: 0,
     totalReports: 0,
-    monthlyRevenue: 0,
-    apiCalls: 0,
-    errorRate: 0,
-    avgLatency: 0,
-    newSignups: 0
+    totalSearches: 0,
+    newSignups: 0,
+    monthlyActivity: 0,
+    recentUsers: []
   });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardStats = async () => {
       try {
-        // TODO: Implement actual API calls to fetch dashboard statistics
-        // For now, using mock data
-        setTimeout(() => {
-          setStats({
-            totalUsers: 1247,
-            activeUsers: 892,
-            totalReports: 5634,
-            monthlyRevenue: 45600,
-            apiCalls: 12450,
-            errorRate: 2.3,
-            avgLatency: 1.2,
-            newSignups: 156
-          });
-          setIsLoading(false);
-        }, 1000);
+        const response = await fetch('/api/users/admin/stats');
+        const result = await response.json();
+        
+        if (result.success) {
+          setStats(result.data);
+        } else {
+          console.error('Failed to fetch admin stats:', result.error);
+        }
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
+      } finally {
         setIsLoading(false);
       }
     };
@@ -66,7 +64,7 @@ const AdminDashboard: React.FC = () => {
     {
       title: '총 사용자',
       value: stats.totalUsers.toLocaleString(),
-      change: '+12.5%',
+      change: `+${stats.newSignups}명 (30일)`,
       changeType: 'positive' as const,
       icon: Users,
       color: 'blue'
@@ -74,58 +72,42 @@ const AdminDashboard: React.FC = () => {
     {
       title: '활성 사용자',
       value: stats.activeUsers.toLocaleString(),
-      change: '+8.2%',
-      changeType: 'positive' as const,
+      change: '최근 30일 활동',
+      changeType: 'neutral' as const,
       icon: Activity,
       color: 'green'
     },
     {
-      title: '총 리포트',
-      value: stats.totalReports.toLocaleString(),
-      change: '+15.3%',
+      title: '총 검색',
+      value: stats.totalSearches.toLocaleString(),
+      change: `${stats.monthlyActivity}회 (30일)`,
       changeType: 'positive' as const,
-      icon: FileText,
+      icon: TrendingUp,
       color: 'purple'
     },
     {
-      title: '월간 수익',
-      value: `₩${stats.monthlyRevenue.toLocaleString()}`,
-      change: '+23.1%',
-      changeType: 'positive' as const,
-      icon: DollarSign,
+      title: '총 리포트',
+      value: stats.totalReports.toLocaleString(),
+      change: '누적 생성',
+      changeType: 'neutral' as const,
+      icon: FileText,
       color: 'yellow'
-    },
-    {
-      title: 'API 호출',
-      value: stats.apiCalls.toLocaleString(),
-      change: '+5.7%',
-      changeType: 'positive' as const,
-      icon: BarChart3,
-      color: 'indigo'
-    },
-    {
-      title: '오류율',
-      value: `${stats.errorRate}%`,
-      change: '-0.5%',
-      changeType: 'positive' as const,
-      icon: AlertTriangle,
-      color: 'red'
-    },
-    {
-      title: '평균 지연시간',
-      value: `${stats.avgLatency}초`,
-      change: '-0.2초',
-      changeType: 'positive' as const,
-      icon: Clock,
-      color: 'gray'
     },
     {
       title: '신규 가입',
       value: stats.newSignups.toLocaleString(),
-      change: '+18.9%',
-      changeType: 'positive' as const,
-      icon: TrendingUp,
-      color: 'pink'
+      change: '최근 30일',
+      changeType: 'neutral' as const,
+      icon: BarChart3,
+      color: 'indigo'
+    },
+    {
+      title: '월간 활동',
+      value: stats.monthlyActivity.toLocaleString(),
+      change: '최근 30일 검색',
+      changeType: 'neutral' as const,
+      icon: Activity,
+      color: 'orange'
     }
   ];
 
@@ -136,9 +118,7 @@ const AdminDashboard: React.FC = () => {
       purple: 'bg-purple-500 text-purple-100',
       yellow: 'bg-yellow-500 text-yellow-100',
       indigo: 'bg-indigo-500 text-indigo-100',
-      red: 'bg-red-500 text-red-100',
-      gray: 'bg-gray-500 text-gray-100',
-      pink: 'bg-pink-500 text-pink-100'
+      orange: 'bg-orange-500 text-orange-100'
     };
     return colorMap[color as keyof typeof colorMap] || 'bg-gray-500 text-gray-100';
   };
@@ -197,7 +177,8 @@ const AdminDashboard: React.FC = () => {
                           {stat.value}
                         </div>
                         <div className={`ml-2 flex items-baseline text-sm font-semibold ${
-                          stat.changeType === 'positive' ? 'text-green-400' : 'text-red-400'
+                          stat.changeType === 'positive' ? 'text-green-400' : 
+                          stat.changeType === 'negative' ? 'text-red-400' : 'text-gray-400'
                         }`}>
                           {stat.change}
                         </div>
@@ -260,52 +241,38 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Recent Activity */}
+        {/* Recent Users */}
         <div className="bg-gray-800 shadow-lg rounded-lg border border-gray-700">
           <div className="px-6 py-4 border-b border-gray-700">
-            <h3 className="text-lg font-medium text-white">최근 활동</h3>
+            <h3 className="text-lg font-medium text-white">최근 가입 사용자</h3>
           </div>
           <div className="p-6">
             <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <div className="flex-shrink-0">
-                  <div className="h-2 w-2 bg-green-400 rounded-full"></div>
+              {stats.recentUsers.length > 0 ? (
+                stats.recentUsers.map((user) => (
+                  <div key={user.id} className="flex items-center space-x-3">
+                    <div className="flex-shrink-0">
+                      <div className="h-8 w-8 bg-blue-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm font-medium">
+                          {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white font-medium">
+                        {user.name || user.email}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {user.email} • {user.subscription_plan} • {new Date(user.created_at).toLocaleDateString('ko-KR')}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-gray-400">최근 가입한 사용자가 없습니다.</p>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white">새로운 사용자 15명이 가입했습니다</p>
-                  <p className="text-xs text-gray-400">5분 전</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <div className="flex-shrink-0">
-                  <div className="h-2 w-2 bg-blue-400 rounded-full"></div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white">시장 분석 리포트 234건이 생성되었습니다</p>
-                  <p className="text-xs text-gray-400">12분 전</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <div className="flex-shrink-0">
-                  <div className="h-2 w-2 bg-yellow-400 rounded-full"></div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white">KIPRIS API 응답 시간이 개선되었습니다</p>
-                  <p className="text-xs text-gray-400">1시간 전</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <div className="flex-shrink-0">
-                  <div className="h-2 w-2 bg-red-400 rounded-full"></div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white">결제 실패 알림 3건이 발생했습니다</p>
-                  <p className="text-xs text-gray-400">2시간 전</p>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

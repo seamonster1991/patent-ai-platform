@@ -354,6 +354,9 @@ export const useSearchStore = create<SearchState>((set, get) => ({
         applicationDateTo: '',
       }
     })
+    
+    // 저장된 검색 상태도 함께 초기화
+    get().clearSavedState()
   },
 
   // 검색 상태 저장 기능

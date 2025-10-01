@@ -6,6 +6,7 @@ interface AuthState {
   user: SupabaseUser | null
   profile: User | null
   loading: boolean
+  isAdmin: boolean
   signIn: (email: string, password: string) => Promise<{ error?: string }>
   signUp: (email: string, password: string, metadata: { name: string; company?: string | null }) => Promise<{ error?: string }>
   signOut: () => Promise<void>
@@ -17,6 +18,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   profile: null,
   loading: true,
+  isAdmin: false,
 
   signIn: async (email: string, password: string) => {
     try {
@@ -37,7 +39,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           .eq('id', data.user.id)
           .single()
 
-        set({ user: data.user, profile })
+        // Check if user is admin based on email or user metadata
+        const isAdmin = email === 'admin@p-ai.com' || 
+                       data.user.user_metadata?.role === 'admin' ||
+                       data.user.app_metadata?.role === 'admin'
+
+        set({ user: data.user, profile, isAdmin })
       }
 
       return {}
@@ -104,7 +111,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signOut: async () => {
     await supabase.auth.signOut()
-    set({ user: null, profile: null })
+    set({ user: null, profile: null, isAdmin: false })
   },
 
   initialize: async () => {
@@ -118,7 +125,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           .eq('id', session.user.id)
           .single()
 
-        set({ user: session.user, profile })
+        // Check if user is admin
+        const isAdmin = session.user.email === 'admin@p-ai.com' || 
+                       session.user.user_metadata?.role === 'admin' ||
+                       session.user.app_metadata?.role === 'admin'
+
+        set({ user: session.user, profile, isAdmin })
       }
     } catch (error) {
       console.error('Failed to initialize auth:', error)
@@ -161,9 +173,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           }
         }
 
-        set({ user: session.user, profile })
+        // Check if user is admin
+        const isAdmin = session.user.email === 'admin@p-ai.com' || 
+                       session.user.user_metadata?.role === 'admin' ||
+                       session.user.app_metadata?.role === 'admin'
+
+        set({ user: session.user, profile, isAdmin })
       } else {
-        set({ user: null, profile: null })
+        set({ user: null, profile: null, isAdmin: false })
       }
     })
   },

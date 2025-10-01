@@ -45,10 +45,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     const loadData = async () => {
-      if (!user) return
+      if (!user) {
+        setLoading(false)
+        return
+      }
       
       setLoading(true)
       try {
+        // 검색 기록과 리포트 로드
         await Promise.all([
           loadSearchHistory(),
           loadReports()
@@ -56,20 +60,29 @@ export default function Dashboard() {
         
         // 사용자 통계 데이터 가져오기
         const response = await fetch(`/api/users/stats/${user.id}`)
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
         const data = await response.json()
         
         if (data.success) {
           setUserStats(data.data)
+        } else {
+          console.error('API returned error:', data.error)
+          // 기본값 유지
         }
       } catch (error) {
         console.error('Failed to load dashboard data:', error)
+        // 오류 발생 시 기본값 유지
       } finally {
         setLoading(false)
       }
     }
     
     loadData()
-  }, [user])
+  }, [user, loadSearchHistory, loadReports])
 
   // 실제 데이터 기반 통계 계산
   const stats = useMemo(() => {

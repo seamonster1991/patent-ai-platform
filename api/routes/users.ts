@@ -333,31 +333,111 @@ router.delete('/account/:userId', async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
 
-    // Delete user data in order (due to foreign key constraints)
-    await supabase.from('reports').delete().eq('user_id', userId);
-    await supabase.from('search_history').delete().eq('user_id', userId);
-    
-    const { error } = await supabase
+    // Delete user profile
+    const { error: profileError } = await supabase
       .from('users')
       .delete()
       .eq('id', userId);
 
-    if (error) {
-      return res.status(400).json({
+    if (profileError) {
+      return res.status(500).json({
         success: false,
-        error: 'Failed to delete account'
+        error: 'Failed to delete user profile'
       });
     }
 
+    // Delete search history
+    await supabase
+      .from('search_history')
+      .delete()
+      .eq('user_id', userId);
+
+    // Delete reports
+    await supabase
+      .from('reports')
+      .delete()
+      .eq('user_id', userId);
+
     res.json({
       success: true,
-      message: 'Account deleted successfully'
+      message: 'User account deleted successfully'
     });
+
   } catch (error) {
     console.error('Delete account error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to delete account'
+      error: 'Failed to delete user account'
+    });
+  }
+});
+
+// Get admin dashboard statistics
+router.get('/admin/stats', async (req: Request, res: Response) => {
+  try {
+    // Get total users count
+    const { count: totalUsers } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true });
+
+    // Get active users (users who have searched in the last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const { data: activeUsersData } = await supabase
+      .from('search_history')
+      .select('user_id')
+      .gte('created_at', thirtyDaysAgo.toISOString());
+
+    const activeUsers = new Set(activeUsersData?.map(item => item.user_id) || []).size;
+
+    // Get total reports count
+    const { count: totalReports } = await supabase
+      .from('reports')
+      .select('*', { count: 'exact', head: true });
+
+    // Get total searches count
+    const { count: totalSearches } = await supabase
+      .from('search_history')
+      .select('*', { count: 'exact', head: true });
+
+    // Get new signups in the last 30 days
+    const { count: newSignups } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', thirtyDaysAgo.toISOString());
+
+    // Get monthly activity (searches in the last 30 days)
+    const { count: monthlyActivity } = await supabase
+      .from('search_history')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', thirtyDaysAgo.toISOString());
+
+    // Get recent users for user list
+    const { data: recentUsers } = await supabase
+      .from('users')
+      .select('id, email, name, subscription_plan, created_at')
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    res.json({
+      success: true,
+      data: {
+        totalUsers: totalUsers || 0,
+        activeUsers,
+        totalReports: totalReports || 0,
+        totalSearches: totalSearches || 0,
+        newSignups: newSignups || 0,
+        monthlyActivity: monthlyActivity || 0,
+        recentUsers: recentUsers || []
+      }
+    });
+
+  } catch (error) {
+    console.error('Admin stats error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch admin statistics'
     });
   }
 });

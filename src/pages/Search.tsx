@@ -34,8 +34,13 @@ export default function Search() {
     const queryFromUrl = searchParams.get('q')
     
     if (queryFromUrl) {
-      // URL에서 온 검색어가 있으면 필터에 설정하고 검색 실행
-      setFilters({ keyword: queryFromUrl })
+      // URL에서 온 검색어가 있으면 모든 상태를 초기화하고 새로운 검색 실행
+      resetFilters()
+      clearResults()
+      
+      // 새로운 검색어로 필터 설정
+      setFilters({ word: queryFromUrl })
+      
       // 다음 렌더링 사이클에서 검색 실행
       setTimeout(() => {
         searchPatents(1).then(({ error }) => {

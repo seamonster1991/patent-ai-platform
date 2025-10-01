@@ -81,14 +81,14 @@ export default function Navbar() {
             {user ? (
               <>
                 <Link
-                  to="/dashboard"
+                  to="/profile"
                   className="text-secondary-600 dark:text-secondary-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900 rounded-lg p-1"
-                  aria-label="대시보드로 이동"
+                  aria-label="개인정보 수정"
                 >
                   <User className="h-5 w-5" />
                 </Link>
                 <button
-                  onClick={signOut}
+                  onClick={handleSignOut}
                   className="text-secondary-600 dark:text-secondary-300 hover:text-danger-600 dark:hover:text-danger-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900 rounded-lg p-1"
                   aria-label="로그아웃"
                 >
