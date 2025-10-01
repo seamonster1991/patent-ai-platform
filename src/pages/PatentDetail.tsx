@@ -38,10 +38,12 @@ import { KiprisPatentDetail, AIAnalysisReport, DocumentType, DOCUMENT_TYPES, Doc
 import { formatDate } from '../lib/utils'
 import { toast } from 'sonner'
 import { generateMarketAnalysisPDF, generateBusinessInsightPDF } from '../lib/pdfGenerator'
+import { useSearchStore } from '../store/searchStore'
 
 export default function PatentDetail() {
   const { applicationNumber } = useParams<{ applicationNumber: string }>()
   const navigate = useNavigate()
+  const { loadSearchState } = useSearchStore()
   const [patent, setPatent] = useState<KiprisPatentDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -107,6 +109,12 @@ export default function PatentDetail() {
 
   const handleBookmark = () => {
     toast.success('북마크에 추가되었습니다.')
+  }
+
+  const handleBackToSearch = () => {
+    // 검색 페이지로 이동하기 전에 저장된 검색 상태가 있는지 확인
+    const hasSearchState = loadSearchState()
+    navigate('/search')
   }
 
   const generateAIAnalysis = async () => {
@@ -268,7 +276,7 @@ export default function PatentDetail() {
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               {error || '요청하신 특허 정보가 존재하지 않습니다.'}
             </p>
-            <Button onClick={() => navigate('/search')}>
+            <Button onClick={handleBackToSearch}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               검색으로 돌아가기
             </Button>
@@ -300,7 +308,7 @@ export default function PatentDetail() {
         <div className="flex items-center justify-between mb-6">
           <Button 
             variant="outline" 
-            onClick={() => navigate('/search')}
+            onClick={handleBackToSearch}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -458,68 +466,68 @@ function SummaryTab({ patent }: { patent: KiprisPatentDetail }) {
   
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <Card>
+      <Card variant="default">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" />
+          <CardTitle className="flex items-center gap-2 text-secondary-900 dark:text-secondary-100">
+            <FileText className="w-5 h-5 text-primary-600 dark:text-primary-400" />
             기본 정보
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-gray-500 dark:text-gray-400">출원번호</label>
-            <p className="text-gray-900 dark:text-white">{biblioInfo?.applicationNumber || '-'}</p>
+            <label className="text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">출원번호</label>
+            <p className="text-secondary-900 dark:text-secondary-100 font-medium">{biblioInfo?.applicationNumber || '-'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-500 dark:text-gray-400">출원일</label>
-            <p className="text-gray-900 dark:text-white">{biblioInfo?.applicationDate || '-'}</p>
+            <label className="text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">출원일</label>
+            <p className="text-secondary-900 dark:text-secondary-100">{biblioInfo?.applicationDate || '-'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-500 dark:text-gray-400">공개번호</label>
-            <p className="text-gray-900 dark:text-white">{biblioInfo?.openNumber || '-'}</p>
+            <label className="text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">공개번호</label>
+            <p className="text-secondary-900 dark:text-secondary-100">{biblioInfo?.openNumber || '-'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-500 dark:text-gray-400">공개일</label>
-            <p className="text-gray-900 dark:text-white">{biblioInfo?.openDate || '-'}</p>
+            <label className="text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">공개일</label>
+            <p className="text-secondary-900 dark:text-secondary-100">{biblioInfo?.openDate || '-'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-500 dark:text-gray-400">등록번호</label>
-            <p className="text-gray-900 dark:text-white">{biblioInfo?.registerNumber || '-'}</p>
+            <label className="text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">등록번호</label>
+            <p className="text-secondary-900 dark:text-secondary-100 font-medium">{biblioInfo?.registerNumber || '-'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-500 dark:text-gray-400">등록일</label>
-            <p className="text-gray-900 dark:text-white">{biblioInfo?.registerDate || '-'}</p>
+            <label className="text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">등록일</label>
+            <p className="text-secondary-900 dark:text-secondary-100">{biblioInfo?.registerDate || '-'}</p>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card variant="default">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Award className="w-5 h-5" />
+          <CardTitle className="flex items-center gap-2 text-secondary-900 dark:text-secondary-100">
+            <Award className="w-5 h-5 text-primary-600 dark:text-primary-400" />
             심사 정보
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-gray-500 dark:text-gray-400">심사관</label>
-            <p className="text-gray-900 dark:text-white">{biblioInfo?.examinerName || '-'}</p>
+            <label className="text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">심사관</label>
+            <p className="text-secondary-900 dark:text-secondary-100">{biblioInfo?.examinerName || '-'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-500 dark:text-gray-400">최종처분</label>
-            <p className="text-gray-900 dark:text-white">{biblioInfo?.finalDisposal || '-'}</p>
+            <label className="text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">최종처분</label>
+            <p className="text-secondary-900 dark:text-secondary-100">{biblioInfo?.finalDisposal || '-'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-500 dark:text-gray-400">청구항 수</label>
-            <p className="text-gray-900 dark:text-white">{biblioInfo?.claimCount || '-'}</p>
+            <label className="text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">청구항 수</label>
+            <p className="text-secondary-900 dark:text-secondary-100 font-medium">{biblioInfo?.claimCount || '-'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-500 dark:text-gray-400">심사청구일</label>
-            <p className="text-gray-900 dark:text-white">{biblioInfo?.originalExaminationRequestDate || '-'}</p>
+            <label className="text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">심사청구일</label>
+            <p className="text-secondary-900 dark:text-secondary-100">{biblioInfo?.originalExaminationRequestDate || '-'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-500 dark:text-gray-400">출원구분</label>
-            <p className="text-gray-900 dark:text-white">{biblioInfo?.originalApplicationKind || '-'}</p>
+            <label className="text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">출원구분</label>
+            <p className="text-secondary-900 dark:text-secondary-100">{biblioInfo?.originalApplicationKind || '-'}</p>
           </div>
         </CardContent>
       </Card>
@@ -563,7 +571,7 @@ function DocumentsTab({
             >
               {availabilityLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                   확인 중...
                 </>
               ) : (
@@ -673,22 +681,22 @@ function AbstractTab({ patent }: { patent: KiprisPatentDetail }) {
   const abstractInfo = patent.abstractInfoArray?.abstractInfo
   
   return (
-    <Card>
+    <Card variant="default">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <BookOpen className="w-5 h-5" />
+        <CardTitle className="flex items-center gap-2 text-secondary-900 dark:text-secondary-100">
+          <BookOpen className="w-5 h-5 text-primary-600 dark:text-primary-400" />
           초록
         </CardTitle>
       </CardHeader>
       <CardContent>
         {abstractInfo?.astrtCont ? (
           <div className="prose dark:prose-invert max-w-none">
-            <p className="text-gray-900 dark:text-white leading-relaxed whitespace-pre-wrap">
+            <p className="text-secondary-900 dark:text-secondary-100 leading-relaxed whitespace-pre-wrap">
               {abstractInfo.astrtCont}
             </p>
           </div>
         ) : (
-          <p className="text-gray-500 dark:text-gray-400">초록 정보가 없습니다.</p>
+          <p className="text-secondary-500 dark:text-secondary-400">초록 정보가 없습니다.</p>
         )}
       </CardContent>
     </Card>
@@ -699,10 +707,10 @@ function ClaimsTab({ patent }: { patent: KiprisPatentDetail }) {
   const claims = patent.claimInfoArray?.claimInfo || []
   
   return (
-    <Card>
+    <Card variant="default">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Scale className="w-5 h-5" />
+        <CardTitle className="flex items-center gap-2 text-secondary-900 dark:text-secondary-100">
+          <Scale className="w-5 h-5 text-primary-600 dark:text-primary-400" />
           청구항 ({claims.length}개)
         </CardTitle>
       </CardHeader>
@@ -710,18 +718,18 @@ function ClaimsTab({ patent }: { patent: KiprisPatentDetail }) {
         {claims.length > 0 ? (
           <div className="space-y-6">
             {claims.map((claim, index) => (
-              <div key={index} className="border-l-4 border-blue-500 pl-4">
-                <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+              <div key={index} className="border-l-4 border-primary-500 dark:border-primary-400 pl-4 py-2">
+                <h4 className="font-medium text-secondary-900 dark:text-secondary-100 mb-2">
                   청구항 {index + 1}
                 </h4>
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                <p className="text-secondary-700 dark:text-secondary-300 leading-relaxed whitespace-pre-wrap">
                   {claim.claim}
                 </p>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 dark:text-gray-400">청구항 정보가 없습니다.</p>
+          <p className="text-secondary-500 dark:text-secondary-400">청구항 정보가 없습니다.</p>
         )}
       </CardContent>
     </Card>
@@ -929,13 +937,54 @@ function FamilyTab({ patent }: { patent: KiprisPatentDetail }) {
 }
 
 function ImagesTab({ patent }: { patent: KiprisPatentDetail }) {
+  const [imageLoading, setImageLoading] = useState(false)
+  const [imageError, setImageError] = useState(false)
+  const [showImageModal, setShowImageModal] = useState(false)
+  const [selectedImageUrl, setSelectedImageUrl] = useState('')
+  
   const imageInfo = patent.imagePathInfo
   
+  const handleViewImage = (imageUrl: string) => {
+    if (imageUrl) {
+      setSelectedImageUrl(imageUrl)
+      setShowImageModal(true)
+    } else {
+      toast.error('이미지 URL이 유효하지 않습니다.')
+    }
+  }
+
+  const handleDownloadImage = async (imageUrl: string, fileName: string) => {
+    if (!imageUrl) {
+      toast.error('다운로드할 이미지 URL이 없습니다.')
+      return
+    }
+
+    try {
+      setImageLoading(true)
+      
+      // 이미지를 새 탭에서 열기 (직접 다운로드)
+      const link = document.createElement('a')
+      link.href = imageUrl
+      link.target = '_blank'
+      link.download = fileName || 'patent_image.jpg'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      toast.success('이미지 다운로드가 시작되었습니다.')
+    } catch (error) {
+      console.error('Image download error:', error)
+      toast.error('이미지 다운로드 중 오류가 발생했습니다.')
+    } finally {
+      setImageLoading(false)
+    }
+  }
+
   if (!imageInfo?.path) {
     return (
-      <Card>
+      <Card variant="default">
         <CardContent className="p-6">
-          <div className="text-center text-gray-500 dark:text-gray-400">
+          <div className="text-center text-secondary-500 dark:text-secondary-400">
             <ImageIcon className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>도면 정보가 없습니다.</p>
           </div>
@@ -945,45 +994,176 @@ function ImagesTab({ patent }: { patent: KiprisPatentDetail }) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ImageIcon className="w-5 h-5" />
-          특허 도면
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-            <h4 className="font-medium mb-2">도면 정보</h4>
-            <div className="space-y-2 text-sm">
-              <div>
-                <span className="font-medium">문서명:</span> {imageInfo.docName || '정보 없음'}
+    <>
+      <Card variant="default">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-secondary-900 dark:text-secondary-100">
+            <ImageIcon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+            특허 도면
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {/* 도면 미리보기 */}
+            {imageInfo.path && (
+              <div className="border border-secondary-200 dark:border-secondary-700 rounded-lg overflow-hidden">
+                <img 
+                  src={imageInfo.path}
+                  alt={`${patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle || '특허'} 도면`}
+                  className="w-full h-64 object-contain bg-secondary-50 dark:bg-secondary-800"
+                  onError={() => setImageError(true)}
+                  onLoad={() => setImageError(false)}
+                />
+                {imageError && (
+                  <div className="w-full h-64 bg-secondary-100 dark:bg-secondary-800 flex items-center justify-center">
+                    <div className="text-center text-secondary-500 dark:text-secondary-400">
+                      <ImageIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>이미지를 불러올 수 없습니다</p>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div>
-                <span className="font-medium">이미지 경로:</span> {imageInfo.path}
+            )}
+
+            {/* 도면 정보 테이블 */}
+            <div className="bg-secondary-50 dark:bg-secondary-800 p-4 rounded-lg">
+              <h4 className="font-medium mb-3 text-secondary-900 dark:text-secondary-100">도면 정보</h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <tbody className="space-y-2">
+                    <tr>
+                      <td className="font-medium text-secondary-600 dark:text-secondary-400 py-1 pr-4 whitespace-nowrap">문서명:</td>
+                      <td className="text-secondary-900 dark:text-secondary-100 py-1 break-all">
+                        {imageInfo.docName || '정보 없음'}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="font-medium text-secondary-600 dark:text-secondary-400 py-1 pr-4 whitespace-nowrap">이미지 경로:</td>
+                      <td className="text-secondary-900 dark:text-secondary-100 py-1">
+                        <div className="max-w-md break-all text-xs bg-secondary-100 dark:bg-secondary-700 p-2 rounded font-mono">
+                          {imageInfo.path}
+                        </div>
+                      </td>
+                    </tr>
+                    {imageInfo.largePath && (
+                      <tr>
+                        <td className="font-medium text-secondary-600 dark:text-secondary-400 py-1 pr-4 whitespace-nowrap">고해상도 경로:</td>
+                        <td className="text-secondary-900 dark:text-secondary-100 py-1">
+                          <div className="max-w-md break-all text-xs bg-secondary-100 dark:bg-secondary-700 p-2 rounded font-mono">
+                            {imageInfo.largePath}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
+            </div>
+            
+            {/* 액션 버튼들 */}
+            <div className="flex flex-wrap gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => handleViewImage(imageInfo.largePath || imageInfo.path)}
+                disabled={!imageInfo.path}
+                aria-label="도면 크게 보기"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                도면 보기
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={() => handleDownloadImage(
+                  imageInfo.largePath || imageInfo.path, 
+                  `patent_${patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber}_drawing.jpg`
+                )}
+                disabled={imageLoading || !imageInfo.path}
+                aria-label="도면 다운로드"
+              >
+                {imageLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    다운로드 중...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 mr-2" />
+                    다운로드
+                  </>
+                )}
+              </Button>
+
               {imageInfo.largePath && (
-                <div>
-                  <span className="font-medium">고해상도 경로:</span> {imageInfo.largePath}
-                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleDownloadImage(
+                    imageInfo.largePath, 
+                    `patent_${patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber}_drawing_hd.jpg`
+                  )}
+                  disabled={imageLoading}
+                  aria-label="고해상도 도면 다운로드"
+                >
+                  {imageLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      다운로드 중...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4 mr-2" />
+                      고해상도 다운로드
+                    </>
+                  )}
+                </Button>
               )}
             </div>
+
+            {/* 안내 메시지 */}
+            <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-primary-500 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-medium text-primary-900 dark:text-primary-100 mb-1">
+                    도면 이용 안내
+                  </p>
+                  <ul className="text-primary-700 dark:text-primary-300 space-y-1">
+                    <li>• 도면은 KIPRIS에서 제공하는 원본 이미지입니다.</li>
+                    <li>• 고해상도 이미지가 있는 경우 더 선명한 화질로 제공됩니다.</li>
+                    <li>• 이미지를 클릭하면 새 창에서 원본 크기로 볼 수 있습니다.</li>
+                    <li>• 다운로드한 이미지는 개인적인 용도로만 사용해주세요.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
-          
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex items-center gap-2">
-              <ExternalLink className="w-4 h-4" />
-              도면 보기
-            </Button>
-            <Button variant="outline" className="flex items-center gap-2">
-              <Download className="w-4 h-4" />
-              다운로드
-            </Button>
+        </CardContent>
+      </Card>
+
+      {/* 이미지 모달 */}
+      {showImageModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowImageModal(false)}
+        >
+          <div className="relative max-w-4xl max-h-full">
+            <button
+              onClick={() => setShowImageModal(false)}
+              className="absolute -top-10 right-0 text-white hover:text-secondary-300 transition-colors"
+              aria-label="이미지 닫기"
+            >
+              <XCircle className="w-8 h-8" />
+            </button>
+            <img 
+              src={selectedImageUrl}
+              alt="특허 도면 확대보기"
+              className="max-w-full max-h-full object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
           </div>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </>
   )
 }
 

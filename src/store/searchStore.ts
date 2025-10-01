@@ -111,6 +111,11 @@ interface SearchState {
   clearResults: () => void
   resetFilters: () => void
   
+  // Search state persistence
+  saveSearchState: () => void
+  loadSearchState: () => boolean
+  clearSavedState: () => void
+  
   // History actions
   loadSearchHistory: () => Promise<void>
   
@@ -236,17 +241,45 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
       const kiprisResponse: KiprisSearchResponse = data.data
 
+      console.log('🔍 [SearchStore] API 응답 데이터:', {
+        success: data.success,
+        hasData: !!data.data,
+        headerSuccess: kiprisResponse?.header?.successYN,
+        resultCode: kiprisResponse?.header?.resultCode,
+        resultMsg: kiprisResponse?.header?.resultMsg
+      });
+
       // KIPRIS API 응답 검증
       if (kiprisResponse.header.successYN !== 'Y') {
+        console.log('❌ [SearchStore] KIPRIS API 실패:', kiprisResponse.header);
         set({ loading: false })
         return { error: kiprisResponse.header.resultMsg || 'KIPRIS API 오류가 발생했습니다.' }
       }
 
+      console.log('📊 [SearchStore] 검색 결과 처리:', {
+        itemsCount: kiprisResponse.body.items?.length || 0,
+        hasCount: !!kiprisResponse.body.count,
+        totalCountRaw: kiprisResponse.body.count?.totalCount,
+        totalCountType: typeof kiprisResponse.body.count?.totalCount,
+        totalCountFinal: kiprisResponse.body.count?.totalCount || 0
+      });
+
+      const finalTotalCount = kiprisResponse.body.count?.totalCount || 0;
+      
       set({
         results: kiprisResponse.body.items || [],
-        totalCount: kiprisResponse.body.count?.totalCount || 0,
+        totalCount: finalTotalCount,
         loading: false,
       })
+
+      console.log('✅ [SearchStore] 상태 업데이트 완료:', {
+        resultsLength: (kiprisResponse.body.items || []).length,
+        totalCount: finalTotalCount,
+        currentPage: page
+      });
+
+      // 검색 성공 시 상태 자동 저장
+      get().saveSearchState()
 
       return {}
     } catch (error) {
@@ -316,6 +349,61 @@ export const useSearchStore = create<SearchState>((set, get) => ({
         applicationDateTo: '',
       }
     })
+  },
+
+  // 검색 상태 저장 기능
+  saveSearchState: () => {
+    const { filters, results, totalCount, currentPage } = get()
+    const searchState = {
+      filters,
+      results,
+      totalCount,
+      currentPage,
+      timestamp: Date.now()
+    }
+    
+    try {
+      localStorage.setItem('patent_search_state', JSON.stringify(searchState))
+    } catch (error) {
+      console.error('Failed to save search state:', error)
+    }
+  },
+
+  // 검색 상태 복원 기능
+  loadSearchState: () => {
+    try {
+      const savedState = localStorage.getItem('patent_search_state')
+      if (savedState) {
+        const searchState = JSON.parse(savedState)
+        
+        // 저장된 상태가 24시간 이내인지 확인 (선택적)
+        const isRecent = Date.now() - searchState.timestamp < 24 * 60 * 60 * 1000
+        
+        if (isRecent) {
+          set({
+            filters: searchState.filters || get().filters,
+            results: searchState.results || [],
+            totalCount: searchState.totalCount || 0,
+            currentPage: searchState.currentPage || 1,
+          })
+          
+          // 검색 결과가 있으면 true, 없으면 false 반환
+          return searchState.results && searchState.results.length > 0
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load search state:', error)
+    }
+    return false
+  },
+
+  // 저장된 검색 상태 삭제
+  clearSavedState: () => {
+    try {
+      localStorage.removeItem('patent_search_state')
+    } catch (error) {
+      console.error('Failed to clear saved search state:', error)
+    }
   },
 
   loadSearchHistory: async () => {

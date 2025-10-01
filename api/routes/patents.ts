@@ -160,7 +160,78 @@ router.get('/search', async (req: Request, res: Response) => {
   }
 });
 
-// Get patent details
+// 디버깅용 테스트 엔드포인트 - /:id 라우트보다 먼저 배치
+router.get('/test-kipris', async (req: Request, res: Response) => {
+  try {
+    const serviceKey = process.env.KIPRIS_SERVICE_KEY;
+    const kiprisApiUrl = 'http://plus.kipris.or.kr/kipo-api/kipi/patUtiModInfoSearchSevice/getAdvancedSearch';
+    
+    if (!serviceKey) {
+      return res.status(500).json({
+        success: false,
+        error: 'KIPRIS_SERVICE_KEY가 설정되지 않았습니다.'
+      });
+    }
+
+    // 간단한 테스트 검색
+    const params = new URLSearchParams();
+    params.append('word', '인공지능');
+    params.append('pageNo', '1');
+    params.append('numOfRows', '5');
+    params.append('ServiceKey', serviceKey);
+    
+    const fullUrl = `${kiprisApiUrl}?${params.toString()}`;
+    console.log('🧪 [TEST] KIPRIS API 테스트 호출:', fullUrl.replace(serviceKey, '[SERVICE_KEY]'));
+    
+    const response = await axios.get(fullUrl, {
+      timeout: 30000,
+      headers: {
+        'Accept': 'application/xml',
+        'User-Agent': 'Patent-AI-Test'
+      }
+    });
+    
+    console.log('🧪 [TEST] 응답 상태:', response.status);
+    console.log('🧪 [TEST] 원본 XML (처음 1000자):', response.data.substring(0, 1000));
+    
+    // XML을 JSON으로 변환
+    const jsonData = await parseStringPromise(response.data, {
+      explicitArray: false,
+      ignoreAttrs: true,
+      trim: true
+    });
+    
+    console.log('🧪 [TEST] JSON 변환 결과:', JSON.stringify(jsonData, null, 2));
+    
+    res.json({
+      success: true,
+      rawXml: response.data.substring(0, 1000),
+      jsonData: jsonData,
+      analysis: {
+        hasResponse: !!jsonData.response,
+        hasHeader: !!(jsonData.response && jsonData.response.header),
+        hasBody: !!(jsonData.response && jsonData.response.body),
+        hasItems: !!(jsonData.response && jsonData.response.body && jsonData.response.body.items),
+        hasCount: !!(jsonData.response && jsonData.response.body && jsonData.response.body.count),
+        bodyKeys: jsonData.response && jsonData.response.body ? Object.keys(jsonData.response.body) : []
+      }
+    });
+    
+  } catch (error: any) {
+    console.error('🧪 [TEST] KIPRIS API 테스트 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      details: error.response ? {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data
+      } : null
+    });
+  }
+});
+
+// Get patent by ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -200,7 +271,7 @@ router.post('/:id/analyze', async (req: Request, res: Response) => {
       });
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
     let prompt = '';
     switch (analysisType) {
@@ -312,7 +383,13 @@ router.post('/kipris-search', async (req: Request, res: Response) => {
     const searchParams = req.body;
     
     // KIPRIS API 서비스 키 (환경변수에서 가져오기)
-    const serviceKey = process.env.KIPRIS_SERVICE_KEY || 'your_service_key_here';
+    const serviceKey = process.env.KIPRIS_SERVICE_KEY || process.env.KIPRIS_API_KEY || 'your_service_key_here';
+    
+    console.log('🔍 KIPRIS API 검색 요청:', {
+      searchParams: JSON.stringify(searchParams, null, 2),
+      serviceKeyExists: serviceKey !== 'your_service_key_here',
+      serviceKeyLength: serviceKey.length
+    });
     
     // KIPRIS API URL
     const kiprisApiUrl = 'http://plus.kipris.or.kr/kipo-api/kipi/patUtiModInfoSearchSevice/getAdvancedSearch';
@@ -320,8 +397,9 @@ router.post('/kipris-search', async (req: Request, res: Response) => {
     // 검색 파라미터 준비
     const params = new URLSearchParams();
     
-    // 기본 검색 필드
-    if (searchParams.word) params.append('word', searchParams.word);
+    // 기본 검색 필드 - keyword를 word로 변환 (호환성)
+    const searchWord = searchParams.word || searchParams.keyword;
+    if (searchWord) params.append('word', searchWord);
     if (searchParams.inventionTitle) params.append('inventionTitle', searchParams.inventionTitle);
     if (searchParams.astrtCont) params.append('astrtCont', searchParams.astrtCont);
     if (searchParams.claimScope) params.append('claimScope', searchParams.claimScope);
@@ -367,8 +445,11 @@ router.post('/kipris-search', async (req: Request, res: Response) => {
     // 서비스 키 추가
     params.append('ServiceKey', serviceKey);
     
+    const fullUrl = `${kiprisApiUrl}?${params.toString()}`;
+    console.log('📡 KIPRIS API 호출 URL:', fullUrl.replace(serviceKey, '[SERVICE_KEY]'));
+    
     // KIPRIS API 호출
-    const response = await axios.get(`${kiprisApiUrl}?${params.toString()}`, {
+    const response = await axios.get(fullUrl, {
       timeout: 30000, // 30초 타임아웃
       headers: {
         'Accept': 'application/xml',
@@ -376,15 +457,54 @@ router.post('/kipris-search', async (req: Request, res: Response) => {
       }
     });
     
+    console.log('✅ KIPRIS API 응답 상태:', response.status, response.statusText);
+    
     // XML 응답을 JSON으로 변환
     const xmlData = response.data;
+    console.log('🔍 원본 XML 응답 (처음 1000자):', xmlData.substring(0, 1000));
+    
     const jsonData = await parseStringPromise(xmlData, {
       explicitArray: false,
       ignoreAttrs: true,
       trim: true
     });
     
+    console.log('🔄 JSON 변환 완료. 전체 구조:', JSON.stringify(jsonData, null, 2));
+    
+    // 응답 구조 상세 분석
+    if (jsonData.response && jsonData.response.body) {
+      console.log('📋 Body 구조 상세 분석:', {
+        bodyKeys: Object.keys(jsonData.response.body),
+        hasItems: !!jsonData.response.body.items,
+        hasCount: !!jsonData.response.body.count,
+        hasNumOfRows: !!jsonData.response.body.numOfRows,
+        hasPageNo: !!jsonData.response.body.pageNo,
+        hasTotalCount: !!jsonData.response.body.totalCount,
+        bodyStructure: JSON.stringify(jsonData.response.body, null, 2)
+      });
+    }
+    
     // KIPRIS API 응답 구조 확인 및 변환
+    console.log('📊 KIPRIS API 응답 구조:', {
+      hasResponse: !!jsonData.response,
+      hasHeader: !!(jsonData.response && jsonData.response.header),
+      hasBody: !!(jsonData.response && jsonData.response.body),
+      hasItems: !!(jsonData.response && jsonData.response.body && jsonData.response.body.items),
+      hasCount: !!(jsonData.response && jsonData.response.body && jsonData.response.body.count)
+    });
+    
+    // count 정보 상세 로그
+    if (jsonData.response && jsonData.response.body && jsonData.response.body.count) {
+      console.log('📈 Count 정보 상세:', {
+        rawCount: jsonData.response.body.count,
+        totalCountRaw: jsonData.response.body.count.totalCount,
+        totalCountType: typeof jsonData.response.body.count.totalCount,
+        totalCountParsed: parseInt(jsonData.response.body.count.totalCount) || 0
+      });
+    } else {
+      console.log('❌ Count 정보 없음');
+    }
+    
     let kiprisResponse;
     if (jsonData.response) {
       kiprisResponse = {
@@ -409,12 +529,28 @@ router.post('/kipris-search', async (req: Request, res: Response) => {
         }
       }
       
-      // count 정보 처리
-      if (jsonData.response.body && jsonData.response.body.count) {
+      // count 정보 처리 (totalCount 포함) - 올바른 경로: response.count
+      if (jsonData.response.count) {
+        console.log('📊 count 추출 시도 (response.count):', jsonData.response.count);
+        
         kiprisResponse.body.count = {
-          numOfRows: parseInt(jsonData.response.body.count.numOfRows) || 0,
-          pageNo: parseInt(jsonData.response.body.count.pageNo) || 1,
-          totalCount: parseInt(jsonData.response.body.count.totalCount) || 0
+          numOfRows: parseInt(jsonData.response.count.numOfRows) || parseInt(searchParams.numOfRows) || 30,
+          pageNo: parseInt(jsonData.response.count.pageNo) || parseInt(searchParams.pageNo) || 1,
+          totalCount: parseInt(jsonData.response.count.totalCount) || 0
+        };
+        
+        console.log('📊 totalCount 추출:', {
+          raw: jsonData.response.count.totalCount,
+          parsed: parseInt(jsonData.response.count.totalCount),
+          type: typeof jsonData.response.count.totalCount
+        });
+        console.log('✅ 최종 kiprisResponse.body.count:', kiprisResponse.body.count);
+      } else {
+        console.log('⚠️ response.count가 없음, 기본값 사용');
+        kiprisResponse.body.count = {
+          numOfRows: parseInt(searchParams.numOfRows) || 30,
+          pageNo: parseInt(searchParams.pageNo) || 1,
+          totalCount: kiprisResponse.body.items.length // items 길이로 추정
         };
       }
     } else {
@@ -435,6 +571,14 @@ router.post('/kipris-search', async (req: Request, res: Response) => {
         }
       };
     }
+    
+    console.log('📤 KIPRIS API 최종 응답:', {
+      success: kiprisResponse.header.successYN === 'Y',
+      itemCount: kiprisResponse.body.items.length,
+      totalCount: kiprisResponse.body.count.totalCount,
+      resultCode: kiprisResponse.header.resultCode,
+      resultMsg: kiprisResponse.header.resultMsg
+    });
     
     res.json({
       success: true,
@@ -544,52 +688,80 @@ router.get('/detail/:applicationNumber', async (req: Request, res: Response) => 
       return Array.isArray(data) ? data : [data];
     };
     
-    // 응답 데이터 구조화
+    // 응답 데이터 구조화 - 프론트엔드에서 기대하는 Array 구조로 맞춤
     const patentDetail = {
-      // 서지요약정보
-      biblioSummaryInfo: item.biblioSummaryInfoArray?.biblioSummaryInfo || null,
+      // 서지요약정보 - Array 구조로 래핑
+      biblioSummaryInfoArray: {
+        biblioSummaryInfo: item.biblioSummaryInfoArray?.biblioSummaryInfo || null
+      },
       
-      // IPC 정보
-      ipcInfo: ensureArray(item.ipcInfoArray?.ipcInfo),
+      // IPC 정보 - Array 구조로 래핑
+      ipcInfoArray: {
+        ipcInfo: ensureArray(item.ipcInfoArray?.ipcInfo)
+      },
       
-      // 패밀리 정보
-      familyInfo: ensureArray(item.familyInfoArray?.familyInfo),
+      // 패밀리 정보 - Array 구조로 래핑
+      familyInfoArray: {
+        familyInfo: ensureArray(item.familyInfoArray?.familyInfo)
+      },
       
-      // 초록 정보
-      abstractInfo: item.abstractInfoArray?.abstractInfo || null,
+      // 초록 정보 - Array 구조로 래핑
+      abstractInfoArray: {
+        abstractInfo: item.abstractInfoArray?.abstractInfo || null
+      },
       
-      // 국제출원 정보
-      internationalInfo: ensureArray(item.internationalInfoArray?.internationalInfo),
+      // 국제출원 정보 - Array 구조로 래핑
+      internationalInfoArray: {
+        internationalInfo: ensureArray(item.internationalInfoArray?.internationalInfo)
+      },
       
-      // 청구항 정보
-      claimInfo: ensureArray(item.claimInfoArray?.claimInfo),
+      // 청구항 정보 - Array 구조로 래핑
+      claimInfoArray: {
+        claimInfo: ensureArray(item.claimInfoArray?.claimInfo)
+      },
       
-      // 출원인 정보
-      applicantInfo: ensureArray(item.applicantInfoArray?.applicantInfo),
+      // 출원인 정보 - Array 구조로 래핑
+      applicantInfoArray: {
+        applicantInfo: ensureArray(item.applicantInfoArray?.applicantInfo)
+      },
       
-      // 발명자 정보
-      inventorInfo: ensureArray(item.inventorInfoArray?.inventorInfo),
+      // 발명자 정보 - Array 구조로 래핑
+      inventorInfoArray: {
+        inventorInfo: ensureArray(item.inventorInfoArray?.inventorInfo)
+      },
       
-      // 대리인 정보
-      agentInfo: ensureArray(item.agentInfoArray?.agentInfo),
+      // 대리인 정보 - Array 구조로 래핑
+      agentInfoArray: {
+        agentInfo: ensureArray(item.agentInfoArray?.agentInfo)
+      },
       
-      // 우선권 정보
-      priorityInfo: ensureArray(item.priorityInfoArray?.priorityInfo),
+      // 우선권 정보 - Array 구조로 래핑
+      priorityInfoArray: {
+        priorityInfo: ensureArray(item.priorityInfoArray?.priorityInfo)
+      },
       
-      // 지정국 정보
-      designatedStateInfo: ensureArray(item.designatedStateInfoArray?.designatedStateInfo),
+      // 지정국 정보 - Array 구조로 래핑
+      designatedStateInfoArray: {
+        designatedStateInfo: ensureArray(item.designatedStateInfoArray?.designatedStateInfo)
+      },
       
-      // 선행기술조사문헌 정보
-      priorArtDocumentsInfo: ensureArray(item.priorArtDocumentsInfoArray?.priorArtDocumentsInfo),
+      // 선행기술조사문헌 정보 - Array 구조로 래핑
+      priorArtDocumentsInfoArray: {
+        priorArtDocumentsInfo: ensureArray(item.priorArtDocumentsInfoArray?.priorArtDocumentsInfo)
+      },
       
-      // 법적상태 정보
-      legalStatusInfo: ensureArray(item.legalStatusInfoArray?.legalStatusInfo),
+      // 법적상태 정보 - Array 구조로 래핑
+      legalStatusInfoArray: {
+        legalStatusInfo: ensureArray(item.legalStatusInfoArray?.legalStatusInfo)
+      },
       
       // 이미지 경로 정보
       imagePathInfo: item.imagePathInfo || null,
       
-      // 연구개발사업 정보
-      rndInfo: ensureArray(item.rndInfoArray?.rndInfo)
+      // 연구개발사업 정보 - Array 구조로 래핑
+      rndInfoArray: {
+        rndInfo: ensureArray(item.rndInfoArray?.rndInfo)
+      }
     };
     
     res.json({
@@ -678,7 +850,7 @@ router.post('/analyze/:applicationNumber', async (req: Request, res: Response) =
     console.log('Generating AI analysis for:', inventionTitle);
 
     // Gemini AI 모델 초기화
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
     // 시장분석 리포트 생성
     const marketAnalysisPrompt = `

@@ -7,6 +7,7 @@ interface AuthState {
   profile: User | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error?: string }>
+  signInWithGoogle: () => Promise<{ error?: string }>
   signUp: (email: string, password: string, metadata: { name: string; company?: string | null }) => Promise<{ error?: string }>
   signOut: () => Promise<void>
   initialize: () => Promise<void>
@@ -38,6 +39,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           .single()
 
         set({ user: data.user, profile })
+      }
+
+      return {}
+    } catch (error) {
+      return { error: 'An unexpected error occurred' }
+    }
+  },
+
+  signInWithGoogle: async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      })
+
+      if (error) {
+        return { error: error.message }
       }
 
       return {}
@@ -119,11 +139,37 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // Listen for auth changes
     supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        const { data: profile } = await supabase
+        let { data: profile } = await supabase
           .from('users')
           .select('*')
           .eq('id', session.user.id)
           .single()
+
+        // If profile doesn't exist (e.g., Google OAuth first login), create it
+        if (!profile && session.user.user_metadata) {
+          const { error } = await supabase
+            .from('users')
+            .insert({
+              id: session.user.id,
+              email: session.user.email!,
+              name: session.user.user_metadata.full_name || session.user.user_metadata.name || session.user.email!.split('@')[0],
+              company: null,
+              phone: null,
+              bio: null,
+              notifications_enabled: true,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+
+          if (!error) {
+            const { data: newProfile } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', session.user.id)
+              .single()
+            profile = newProfile
+          }
+        }
 
         set({ user: session.user, profile })
       } else {

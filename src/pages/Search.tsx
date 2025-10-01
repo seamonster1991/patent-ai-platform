@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { Search as SearchIcon, Filter, Calendar, Building, FileText, TrendingUp, ChevronLeft, ChevronRight, Settings, X, Plus } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Search as SearchIcon, Filter, Calendar, Building, FileText, TrendingUp, ChevronLeft, ChevronRight, Settings, X, Plus, Hash, User } from 'lucide-react'
 import Layout from '../components/Layout/Layout'
 import Button from '../components/UI/Button'
 import Input from '../components/UI/Input'
 import Card, { CardContent, CardHeader, CardTitle } from '../components/UI/Card'
 import Loading from '../components/UI/Loading'
 import { useSearchStore } from '../store/searchStore'
-import { formatDate, truncateText } from '../lib/utils'
+import { formatDate, truncateText, cn } from '../lib/utils'
 import { toast } from 'sonner'
 
 export default function Search() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
   const [activeTab, setActiveTab] = useState<'basic' | 'number' | 'date' | 'person'>('basic')
+  const navigate = useNavigate()
   
   const {
     filters,
@@ -23,21 +24,34 @@ export default function Search() {
     setFilters,
     searchPatents,
     clearResults,
-    resetFilters
+    resetFilters,
+    loadSearchState
   } = useSearchStore()
 
   useEffect(() => {
-    // If there's a search term, search automatically
-    const hasSearchTerm = filters.word || filters.inventionTitle || filters.keyword
-    if (hasSearchTerm) {
-      handleSearch()
+    // 페이지 로드 시 저장된 검색 상태 복원 시도
+    const stateRestored = loadSearchState()
+    
+    // 상태가 복원되지 않았고 검색어가 있다면 자동 검색 실행
+    if (stateRestored === false) {
+      const hasSearchTerm = filters.word || filters.inventionTitle || filters.keyword
+      if (hasSearchTerm) {
+        handleSearch()
+      }
     }
   }, [])
 
   const handleSearch = async (page = 1) => {
+    console.log('🔍 [Search] 검색 시작:', { page, currentTotalCount: totalCount });
     const { error } = await searchPatents(page)
     if (error) {
       toast.error(error)
+    } else {
+      console.log('✅ [Search] 검색 완료:', { 
+        resultsLength: results.length, 
+        totalCount, 
+        currentPage 
+      });
     }
   }
 
@@ -80,90 +94,108 @@ export default function Search() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-4">KIPRIS 특허 검색</h1>
-          <p className="text-slate-400">
+          <h1 className="text-3xl font-bold text-secondary-900 dark:text-secondary-100 mb-4">
+            KIPRIS 특허 검색
+          </h1>
+          <p className="text-secondary-600 dark:text-secondary-400 text-lg">
             한국특허정보원(KIPI) KIPRIS API와 연동된 전문 특허 검색 시스템
           </p>
         </div>
 
         {/* Search Form */}
-        <Card className="mb-8">
+        <Card className="mb-8" variant="elevated">
           <CardContent>
             <form 
               onSubmit={(e) => {
                 e.preventDefault()
-                handleSearch(1)
+                handleSearch()
               }}
               className="space-y-6"
             >
-              {/* Main Search */}
-              <div className="flex flex-col lg:flex-row gap-4">
-                <div className="flex-1">
-                  <Input
-                    type="text"
-                    placeholder="자유검색 키워드를 입력하세요 (예: 인공지능, 블록체인, IoT)"
-                    value={filters.word || filters.keyword || ''}
-                    onChange={(e) => {
-                      handleFilterChange('word', e.target.value)
-                      handleFilterChange('keyword', e.target.value) // 호환성
-                    }}
-                    className="text-lg py-3"
-                  />
+              {/* Basic Search */}
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex-1">
+                    <Input
+                      label="검색어"
+                      placeholder="특허 제목, 키워드, 출원인 등을 입력하세요"
+                      value={filters.word || ''}
+                      onChange={(e) => handleFilterChange('word', e.target.value)}
+                      size="lg"
+                    />
+                  </div>
+                  <div className="flex gap-2 sm:items-end">
+                    <Button 
+                      type="submit" 
+                      loading={loading}
+                      size="lg"
+                      className="min-w-[120px]"
+                    >
+                      <SearchIcon className="w-5 h-5 mr-2" />
+                      검색
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                      size="lg"
+                      aria-expanded={showAdvancedFilters}
+                      aria-controls="advanced-filters"
+                    >
+                      <Filter className="w-5 h-5 mr-2" />
+                      {showAdvancedFilters ? '간단히' : '상세'}
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
+
+                {/* Quick Actions */}
+                <div className="flex flex-wrap gap-2">
                   <Button
                     type="button"
-                    variant="outline"
-                    onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                    className="flex items-center"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearFilters}
+                    className="text-secondary-600 dark:text-secondary-400"
                   >
-                    <Filter className="w-4 h-4 mr-2" />
-                    고급검색
-                  </Button>
-                  <Button type="submit" loading={loading} className="px-8">
-                    <SearchIcon className="w-4 h-4 mr-2" />
-                    검색
+                    <X className="w-4 h-4 mr-1" />
+                    필터 초기화
                   </Button>
                 </div>
               </div>
 
               {/* Advanced Filters */}
               {showAdvancedFilters && (
-                <div className="border-t border-slate-700 pt-6">
+                <div 
+                  id="advanced-filters"
+                  className="border-t border-secondary-200 dark:border-secondary-700 pt-6 space-y-6"
+                >
                   {/* Filter Tabs */}
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    <Button
-                      type="button"
-                      variant={activeTab === 'basic' ? 'primary' : 'ghost'}
-                      size="sm"
-                      onClick={() => setActiveTab('basic')}
-                    >
-                      기본검색
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={activeTab === 'number' ? 'primary' : 'ghost'}
-                      size="sm"
-                      onClick={() => setActiveTab('number')}
-                    >
-                      번호검색
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={activeTab === 'date' ? 'primary' : 'ghost'}
-                      size="sm"
-                      onClick={() => setActiveTab('date')}
-                    >
-                      날짜검색
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={activeTab === 'person' ? 'primary' : 'ghost'}
-                      size="sm"
-                      onClick={() => setActiveTab('person')}
-                    >
-                      인물정보
-                    </Button>
+                  <div className="border-b border-secondary-200 dark:border-secondary-700">
+                    <nav className="-mb-px flex space-x-8" aria-label="필터 탭">
+                      {[
+                        { id: 'basic', label: '기본 검색', icon: SearchIcon },
+                        { id: 'number', label: '번호 검색', icon: Hash },
+                        { id: 'date', label: '날짜 검색', icon: Calendar },
+                        { id: 'person', label: '인명 검색', icon: User }
+                      ].map((tab) => (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => setActiveTab(tab.id as any)}
+                          className={cn(
+                            'group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors',
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
+                            activeTab === tab.id
+                              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                              : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300 dark:text-secondary-400 dark:hover:text-secondary-300 dark:hover:border-secondary-600'
+                          )}
+                          aria-current={activeTab === tab.id ? 'page' : undefined}
+                        >
+                          <tab.icon className="w-5 h-5 mr-2" />
+                          {tab.label}
+                        </button>
+                      ))}
+                    </nav>
                   </div>
 
                   {/* Basic Search Tab */}
@@ -441,80 +473,137 @@ export default function Search() {
         ) : results.length > 0 ? (
           <>
             {/* Results Header */}
-            <div className="flex justify-between items-center mb-6">
-              <div className="text-slate-300">
-                총 <span className="text-white font-semibold">{totalCount.toLocaleString()}</span>건의 특허가 검색되었습니다
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-secondary-900 dark:text-secondary-100">
+                  검색 결과
+                </h2>
+                <p className="text-secondary-600 dark:text-secondary-400 mt-1">
+                  총 <span className="font-medium text-primary-600 dark:text-primary-400">{totalCount.toLocaleString()}</span>건의 특허가 검색되었습니다
+                  {totalPages > 0 && (
+                    <span className="ml-2">
+                      페이지 <span className="font-medium">{currentPage}</span> / <span className="font-medium">{totalPages}</span>
+                    </span>
+                  )}
+                </p>
               </div>
-              <div className="text-sm text-slate-400">
-                페이지 {currentPage} / {totalPages}
+              
+              {/* Results per page selector */}
+              <div className="flex items-center gap-2">
+                <label htmlFor="results-per-page" className="text-sm text-secondary-600 dark:text-secondary-400">
+                  페이지당:
+                </label>
+                <select
+                  id="results-per-page"
+                  value={filters.numOfRows || 30}
+                  onChange={(e) => handleFilterChange('numOfRows', parseInt(e.target.value))}
+                  className={cn(
+                    'px-3 py-2 text-sm rounded-lg border',
+                    'bg-white dark:bg-dark-800',
+                    'border-secondary-300 dark:border-secondary-600',
+                    'text-secondary-900 dark:text-secondary-100',
+                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
+                    'focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900'
+                  )}
+                >
+                  <option value={10}>10개</option>
+                  <option value={30}>30개</option>
+                  <option value={50}>50개</option>
+                  <option value={100}>100개</option>
+                </select>
               </div>
             </div>
 
             {/* Results List */}
-            <div className="space-y-4 mb-8">
+            <div className="space-y-6 mb-8">
               {results.map((patent, index) => (
-                <Card key={patent.indexNo || index} hover>
-                  <CardContent>
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <span className="text-sm text-blue-400 font-medium">
+                <Card 
+                  key={patent.indexNo || index} 
+                  variant="default"
+                  hover
+                  className="transition-all duration-200 hover:shadow-lg"
+                >
+                  <CardContent className="space-y-4">
+                    <div className="flex flex-col lg:flex-row lg:items-start gap-4">
+                      <div className="flex-1 space-y-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
                             {patent.applicationNumber}
                           </span>
                           {patent.registerNumber && (
-                            <span className="text-sm text-green-400 font-medium">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900 dark:text-success-200">
                               등록: {patent.registerNumber}
                             </span>
                           )}
-                          <span className="text-xs px-2 py-1 rounded-full bg-slate-700 text-slate-300">
+                          {patent.registerStatus && (
+                            <span className={cn(
+                              "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+                              patent.registerStatus === '등록' 
+                                ? 'bg-success-100 text-success-800 dark:bg-success-900 dark:text-success-200'
+                                : 'bg-secondary-100 text-secondary-800 dark:bg-secondary-800 dark:text-secondary-200'
+                            )}>
                             {patent.registerStatus}
                           </span>
+                          )}
                         </div>
                         
-                        <h3 className="text-lg font-semibold text-white mb-2 hover:text-blue-400 transition-colors">
-                          <Link to={`/patent/${patent.applicationNumber}`}>
+                        <h3 className="text-lg font-semibold">
+                          <Link 
+                            to={`/patent/${patent.applicationNumber}`}
+                            className={cn(
+                              "text-primary-700 dark:text-primary-300",
+                              "hover:text-primary-800 dark:hover:text-primary-200",
+                              "visited:text-purple-700 dark:visited:text-purple-300",
+                              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2",
+                              "focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900",
+                              "rounded transition-colors duration-200",
+                              "underline decoration-primary-300 dark:decoration-primary-600",
+                              "hover:decoration-primary-500 dark:hover:decoration-primary-400"
+                            )}
+                          >
                             {patent.inventionTitle}
                           </Link>
                         </h3>
                         
                         {patent.astrtCont && (
-                          <p className="text-slate-400 mb-3 leading-relaxed">
+                          <p className="text-secondary-600 dark:text-secondary-400 leading-relaxed">
                             {truncateText(patent.astrtCont, 200)}
                           </p>
                         )}
                         
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-secondary-500 dark:text-secondary-400">
                           <div className="flex items-center">
-                            <Building className="w-4 h-4 mr-1" />
-                            {patent.applicantName}
+                            <Building className="w-4 h-4 mr-1 flex-shrink-0" />
+                            <span className="font-medium">{patent.applicantName}</span>
                           </div>
                           {patent.applicationDate && (
                             <div className="flex items-center">
-                              <Calendar className="w-4 h-4 mr-1" />
+                              <Calendar className="w-4 h-4 mr-1 flex-shrink-0" />
                               출원: {formatDate(patent.applicationDate)}
                             </div>
                           )}
                           {patent.registerDate && (
                             <div className="flex items-center">
-                              <Calendar className="w-4 h-4 mr-1" />
+                              <Calendar className="w-4 h-4 mr-1 flex-shrink-0" />
                               등록: {formatDate(patent.registerDate)}
                             </div>
                           )}
                           {patent.ipcNumber && (
                             <div className="flex items-center">
-                              <FileText className="w-4 h-4 mr-1" />
+                              <FileText className="w-4 h-4 mr-1 flex-shrink-0" />
                               IPC: {patent.ipcNumber}
                             </div>
                           )}
                         </div>
                       </div>
                       
-                      <div className="ml-4 flex flex-col space-y-2">
+                      {/* Patent Image and Actions */}
+                      <div className="flex lg:flex-col items-center lg:items-end gap-3">
                         {patent.drawing && (
                           <img 
                             src={patent.drawing} 
-                            alt="특허 도면"
-                            className="w-20 h-20 object-cover rounded border border-slate-600"
+                            alt={`${patent.inventionTitle} 특허 도면`}
+                            className="w-20 h-20 object-cover rounded-lg border border-secondary-200 dark:border-secondary-700 shadow-sm"
                             onError={(e) => {
                               e.currentTarget.style.display = 'none'
                             }}
@@ -523,12 +612,12 @@ export default function Search() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => {
-                            window.open(`/patent/${patent.applicationNumber}`, '_blank')
-                          }}
+                          asChild
                         >
-                          <FileText className="w-4 h-4 mr-1" />
-                          상세보기
+                          <Link to={`/patent/${patent.applicationNumber}`}>
+                            <FileText className="w-4 h-4 mr-1" />
+                            상세보기
+                          </Link>
                         </Button>
                       </div>
                     </div>
@@ -539,79 +628,117 @@ export default function Search() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex justify-center items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleSearch(currentPage - 1)}
-                  disabled={currentPage === 1 || loading}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  이전
-                </Button>
-                
-                <div className="flex space-x-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    const page = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i
-                    return (
-                      <Button
-                        key={page}
-                        variant={page === currentPage ? 'primary' : 'ghost'}
-                        size="sm"
-                        onClick={() => handleSearch(page)}
-                        disabled={loading}
-                      >
-                        {page}
-                      </Button>
-                    )
-                  })}
+              <div className="flex items-center justify-between border-t border-secondary-200 dark:border-secondary-700 pt-6">
+                <div className="flex-1 flex justify-between sm:hidden">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleSearch(currentPage - 1)}
+                    disabled={currentPage <= 1}
+                  >
+                    이전
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleSearch(currentPage + 1)}
+                    disabled={currentPage >= totalPages}
+                  >
+                    다음
+                  </Button>
                 </div>
                 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleSearch(currentPage + 1)}
-                  disabled={currentPage === totalPages || loading}
-                >
-                  다음
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
+                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-secondary-700 dark:text-secondary-300">
+                      <span className="font-medium">{((currentPage - 1) * (filters.numOfRows || 30)) + 1}</span>
+                      {' - '}
+                      <span className="font-medium">
+                        {Math.min(currentPage * (filters.numOfRows || 30), totalCount)}
+                      </span>
+                      {' / '}
+                      <span className="font-medium">{totalCount.toLocaleString()}</span>
+                      {' 건'}
+                    </p>
+                  </div>
+                  <div>
+                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="페이지네이션">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSearch(currentPage - 1)}
+                        disabled={currentPage <= 1}
+                        className="rounded-r-none"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                        <span className="sr-only">이전 페이지</span>
+                      </Button>
+                      
+                      {/* Page Numbers */}
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={pageNum === currentPage ? "primary" : "outline"}
+                            size="sm"
+                            onClick={() => handleSearch(pageNum)}
+                            className="rounded-none"
+                          >
+                            {pageNum}
+                          </Button>
+                        )
+                      })}
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSearch(currentPage + 1)}
+                        disabled={currentPage >= totalPages}
+                        className="rounded-l-none"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                        <span className="sr-only">다음 페이지</span>
+                      </Button>
+                    </nav>
+                  </div>
+                </div>
               </div>
             )}
           </>
-        ) : filters.word || filters.inventionTitle || filters.keyword ? (
-          <Card>
-            <CardContent className="text-center py-12">
-              <SearchIcon className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">
-                검색 결과가 없습니다
-              </h3>
-              <p className="text-slate-400 mb-4">
-                다른 키워드로 검색해보시거나 검색 조건을 변경해보세요
-              </p>
-              <Button variant="outline" onClick={handleClearFilters}>
-                검색 조건 초기화
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardContent className="text-center py-12">
-              <SearchIcon className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">
-                KIPRIS 특허 검색을 시작하세요
-              </h3>
-              <p className="text-slate-400 mb-4">
-                키워드를 입력하여 한국특허정보원의 특허 데이터베이스에서 관련 특허를 검색할 수 있습니다
-              </p>
-              <div className="text-sm text-slate-500">
-                • 자유검색, 발명의명칭, 출원인명 등 다양한 조건으로 검색 가능<br/>
-                • 출원번호, 등록번호 등 정확한 번호로 검색 가능<br/>
-                • 날짜 범위 및 행정처분 상태별 필터링 지원
+        ) : filters.word ? (
+          <>
+            {/* Results Header for No Results */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-secondary-900 dark:text-secondary-100">
+                  검색 결과
+                </h2>
+                <p className="text-secondary-600 dark:text-secondary-400 mt-1">
+                  총 <span className="font-medium text-primary-600 dark:text-primary-400">{totalCount.toLocaleString()}</span>건의 특허가 검색되었습니다
+                  {totalPages > 0 && (
+                    <span className="ml-2">
+                      페이지 <span className="font-medium">{currentPage}</span> / <span className="font-medium">{totalPages}</span>
+                    </span>
+                  )}
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+            
+            <Card className="text-center py-12">
+              <CardContent>
+                <SearchIcon className="mx-auto h-12 w-12 text-secondary-400 dark:text-secondary-500 mb-4" />
+                <h3 className="text-lg font-medium text-secondary-900 dark:text-secondary-100 mb-2">
+                  검색 결과가 없습니다
+                </h3>
+                <p className="text-secondary-600 dark:text-secondary-400 mb-4">
+                  다른 검색어를 시도하거나 필터를 조정해보세요.
+                </p>
+                <Button variant="outline" onClick={handleClearFilters}>
+                  필터 초기화
+                </Button>
+              </CardContent>
+            </Card>
+          </>
+        ) : null}
       </div>
     </Layout>
   )

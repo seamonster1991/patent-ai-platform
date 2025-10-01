@@ -10,6 +10,7 @@ import PatentDetail from "@/pages/PatentDetail";
 import Dashboard from "@/pages/Dashboard";
 import Profile from "@/pages/Profile";
 import AdminRoute from "@/components/Auth/AdminRoute";
+import ProtectedRoute from "@/components/Auth/ProtectedRoute";
 import AdminDashboard from "@/pages/Admin/AdminDashboard";
 import SystemStatus from "@/pages/Admin/SystemStatus";
 import UserActivity from "@/pages/Admin/UserActivity";
@@ -44,10 +45,26 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="/patent/:applicationNumber" element={<PatentDetail />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/search" element={
+            <ProtectedRoute>
+              <Search />
+            </ProtectedRoute>
+          } />
+          <Route path="/patent/:applicationNumber" element={
+            <ProtectedRoute>
+              <PatentDetail />
+            </ProtectedRoute>
+          } />
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          } />
           
           {/* Admin Routes */}
           <Route path="/admin" element={
