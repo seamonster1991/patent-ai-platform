@@ -7,7 +7,23 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Get the current origin for redirect URLs
+const getRedirectUrl = () => {
+  if (typeof window !== 'undefined') {
+    return window.location.origin
+  }
+  // Fallback for SSR or development
+  return import.meta.env.DEV ? 'http://localhost:5173' : 'https://p-ai-seongwankim-1691-re-chip.vercel.app'
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce'
+  }
+})
 
 // Database types
 export interface User {

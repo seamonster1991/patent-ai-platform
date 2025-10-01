@@ -7,7 +7,6 @@ interface AuthState {
   profile: User | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error?: string }>
-  signInWithGoogle: () => Promise<{ error?: string }>
   signUp: (email: string, password: string, metadata: { name: string; company?: string | null }) => Promise<{ error?: string }>
   signOut: () => Promise<void>
   initialize: () => Promise<void>
@@ -47,12 +46,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  signInWithGoogle: async () => {
+
+
+  signUp: async (email: string, password: string, metadata: { name: string; company?: string | null }) => {
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
         options: {
-          redirectTo: `${window.location.origin}/dashboard`
+          emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       })
 
@@ -60,21 +62,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return { error: error.message }
       }
 
-      return {}
-    } catch (error) {
-      return { error: 'An unexpected error occurred' }
-    }
-  },
-
-  signUp: async (email: string, password: string, metadata: { name: string; company?: string | null }) => {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      })
-
-      if (error) {
-        return { error: error.message }
+      if (data.user && !data.user.email_confirmed_at) {
+        // User needs to confirm email
+        return { error: 'Please check your email and click the confirmation link to complete registration.' }
       }
 
       if (data.user) {

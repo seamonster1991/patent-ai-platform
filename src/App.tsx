@@ -9,6 +9,7 @@ import Search from "@/pages/Search";
 import PatentDetail from "@/pages/PatentDetail";
 import Dashboard from "@/pages/Dashboard";
 import Profile from "@/pages/Profile";
+import AuthCallback from "@/pages/AuthCallback";
 import AdminRoute from "@/components/Auth/AdminRoute";
 import ProtectedRoute from "@/components/Auth/ProtectedRoute";
 import AdminDashboard from "@/pages/Admin/AdminDashboard";
@@ -45,6 +46,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/search" element={
             <ProtectedRoute>
               <Search />

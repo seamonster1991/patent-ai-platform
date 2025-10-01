@@ -20,8 +20,7 @@ export default function Home() {
       return
     }
     
-    setFilters({ keyword: searchKeyword })
-    navigate('/search')
+    navigate(`/search?q=${encodeURIComponent(searchKeyword)}`)
   }
 
   const features = [
@@ -113,30 +112,27 @@ export default function Home() {
               </div>
               <div className="flex flex-wrap justify-center gap-3">
                 {[
-                  { keyword: '인공지능', icon: '🤖', description: 'AI 기술' },
-                  { keyword: '블록체인', icon: '⛓️', description: '분산 기술' },
-                  { keyword: 'IoT', icon: '🌐', description: '사물 인터넷' },
-                  { keyword: '자율주행', icon: '🚗', description: '자동차 기술' },
-                  { keyword: '바이오', icon: '🧬', description: '생명 과학' }
-                ].map((item) => (
+                  '인공지능',
+                  '블록체인', 
+                  'IoT',
+                  '자율주행',
+                  '바이오',
+                  '반도체',
+                  '5G',
+                  '메타버스'
+                ].map((keyword) => (
                   <button
-                    key={item.keyword}
+                    key={keyword}
                     onClick={() => {
-                      setSearchKeyword(item.keyword)
-                      setFilters({ keyword: item.keyword })
-                      navigate('/search')
+                      setSearchKeyword(keyword)
+                      setFilters({ keyword })
+                      navigate(`/search?q=${encodeURIComponent(keyword)}`)
                     }}
-                    className="group flex flex-col items-center p-4 bg-secondary-700/50 dark:bg-secondary-600/50 hover:bg-secondary-600/70 dark:hover:bg-secondary-500/70 backdrop-blur-sm border border-secondary-600/30 dark:border-secondary-500/30 hover:border-primary-500/50 rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-900 transform hover:scale-105"
-                    aria-label={`${item.keyword} 검색하기`}
+                    className="px-4 py-2 bg-secondary-700/50 dark:bg-secondary-600/50 hover:bg-primary-600/80 dark:hover:bg-primary-500/80 backdrop-blur-sm border border-secondary-600/30 dark:border-secondary-500/30 hover:border-primary-500/50 rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-900 transform hover:scale-105"
+                    aria-label={`${keyword} 검색하기`}
                   >
-                    <span className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200">
-                      {item.icon}
-                    </span>
-                    <span className="text-white font-medium text-sm mb-1">
-                      {item.keyword}
-                    </span>
-                    <span className="text-secondary-300 dark:text-secondary-400 text-xs">
-                      {item.description}
+                    <span className="text-white font-medium text-sm">
+                      {keyword}
                     </span>
                   </button>
                 ))}

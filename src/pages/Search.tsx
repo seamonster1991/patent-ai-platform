@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Search as SearchIcon, Filter, Calendar, Building, FileText, TrendingUp, ChevronLeft, ChevronRight, Settings, X, Plus, Hash, User } from 'lucide-react'
 import Layout from '../components/Layout/Layout'
 import Button from '../components/UI/Button'
@@ -14,6 +14,7 @@ export default function Search() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
   const [activeTab, setActiveTab] = useState<'basic' | 'number' | 'date' | 'person'>('basic')
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   
   const {
     filters,
@@ -29,17 +30,39 @@ export default function Search() {
   } = useSearchStore()
 
   useEffect(() => {
-    // 페이지 로드 시 저장된 검색 상태 복원 시도
-    const stateRestored = loadSearchState()
+    // URL 파라미터에서 검색어 확인
+    const queryFromUrl = searchParams.get('q')
     
-    // 상태가 복원되지 않았고 검색어가 있다면 자동 검색 실행
-    if (stateRestored === false) {
-      const hasSearchTerm = filters.word || filters.inventionTitle || filters.keyword
-      if (hasSearchTerm) {
-        handleSearch()
+    if (queryFromUrl) {
+      // URL에서 온 검색어가 있으면 필터에 설정하고 검색 실행
+      setFilters({ keyword: queryFromUrl })
+      // 다음 렌더링 사이클에서 검색 실행
+      setTimeout(() => {
+        searchPatents(1).then(({ error }) => {
+          if (error) {
+            toast.error(error)
+          }
+        })
+      }, 0)
+    } else {
+      // URL 파라미터가 없으면 기존 로직 실행
+      const stateRestored = loadSearchState()
+      
+      // 상태가 복원되지 않았고 검색어가 있다면 자동 검색 실행
+      if (stateRestored === false) {
+        const hasSearchTerm = filters.word || filters.inventionTitle || filters.keyword
+        if (hasSearchTerm) {
+          setTimeout(() => {
+            searchPatents(1).then(({ error }) => {
+              if (error) {
+                toast.error(error)
+              }
+            })
+          }, 0)
+        }
       }
     }
-  }, [])
+  }, [searchParams])
 
   const handleSearch = async (page = 1) => {
     console.log('🔍 [Search] 검색 시작:', { page, currentTotalCount: totalCount });
