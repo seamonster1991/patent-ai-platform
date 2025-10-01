@@ -1,20 +1,18 @@
 import React, { useState } from 'react';
-import { Link, useLocation, Navigate } from 'react-router-dom';
+import { Link, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
-  CreditCard, 
   BarChart3, 
-  Settings, 
-  FileText,
-  Activity,
-  TrendingUp,
   Menu,
   X,
   LogOut,
-  Shield
+  Shield,
+  Bell,
+  Search,
+  Settings,
+  ChevronDown
 } from 'lucide-react';
-import { useAdminStore } from '../../store/adminStore';
 import { useAuthStore } from '../../store/authStore';
 
 interface AdminLayoutProps {
@@ -23,197 +21,214 @@ interface AdminLayoutProps {
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const location = useLocation();
-  const { isAdmin, adminUser } = useAdminStore();
-  const { signOut } = useAuthStore();
+  const navigate = useNavigate();
+  const { user, isAdmin, signOut } = useAuthStore();
 
   // Redirect if not admin
   if (!isAdmin) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 
   const navigation = [
     {
-      name: '대시보드 개요',
-      href: '/admin',
+      name: '대시보드',
+      href: '/admin/dashboard',
       icon: LayoutDashboard,
-      current: location.pathname === '/admin'
-    },
-    {
-      name: '시스템 상태',
-      href: '/admin/system',
-      icon: Activity,
-      current: location.pathname === '/admin/system'
-    },
-    {
-      name: '사용자 활동',
-      href: '/admin/users',
-      icon: TrendingUp,
-      current: location.pathname === '/admin/users'
-    },
-    {
-      name: '특허 통계',
-      href: '/admin/patents',
-      icon: BarChart3,
-      current: location.pathname === '/admin/patents'
-    },
-    {
-      name: 'LLM 품질',
-      href: '/admin/quality',
-      icon: FileText,
-      current: location.pathname === '/admin/quality'
+      current: location.pathname === '/admin/dashboard' || location.pathname === '/admin'
     },
     {
       name: '사용자 관리',
-      href: '/admin/management',
+      href: '/admin/users',
       icon: Users,
-      current: location.pathname === '/admin/management'
+      current: location.pathname === '/admin/users'
     },
     {
-      name: '결제 관리',
-      href: '/admin/billing',
-      icon: CreditCard,
-      current: location.pathname === '/admin/billing'
-    },
-    {
-      name: '설정',
-      href: '/admin/settings',
-      icon: Settings,
-      current: location.pathname === '/admin/settings'
+      name: '사용 통계',
+      href: '/admin/statistics',
+      icon: BarChart3,
+      current: location.pathname === '/admin/statistics'
     }
   ];
 
   const handleSignOut = async () => {
     await signOut();
+    navigate('/admin/login');
   };
 
   return (
-    <div className="min-h-screen bg-gray-900">
-      {/* Mobile sidebar */}
-      <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
-        <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-gray-800">
-          <div className="flex h-16 items-center justify-between px-4">
-            <div className="flex items-center">
-              <Shield className="h-8 w-8 text-blue-500" />
-              <span className="ml-2 text-lg font-semibold text-white">Admin Panel</span>
-            </div>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="text-gray-400 hover:text-white"
-            >
-              <X className="h-6 w-6" />
-            </button>
-          </div>
-          <nav className="flex-1 space-y-1 px-2 py-4">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
-                  item.current
-                    ? 'bg-gray-900 text-white'
-                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                }`}
-                onClick={() => setSidebarOpen(false)}
-              >
-                <item.icon className="mr-3 h-5 w-5" />
-                {item.name}
-              </Link>
-            ))}
-          </nav>
-        </div>
-      </div>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+      {/* Mobile sidebar backdrop */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-      {/* Desktop sidebar */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex flex-col flex-grow bg-gray-800 pt-5 pb-4 overflow-y-auto">
-          <div className="flex items-center flex-shrink-0 px-4">
-            <Shield className="h-8 w-8 text-blue-500" />
-            <span className="ml-2 text-lg font-semibold text-white">Admin Panel</span>
+      {/* Sidebar */}
+      <div className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-800 shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        {/* Sidebar header */}
+        <div className="flex items-center justify-between h-16 px-6 bg-gradient-to-r from-blue-600 to-purple-600">
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center justify-center w-8 h-8 bg-white/20 rounded-lg">
+              <Shield className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-white">관리자</h1>
+              <p className="text-xs text-blue-100">IP Insight AI</p>
+            </div>
           </div>
-          <nav className="mt-8 flex-1 flex flex-col divide-y divide-gray-700 overflow-y-auto">
-            <div className="px-2 space-y-1">
-              {navigation.map((item) => (
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden text-white hover:bg-white/10 p-1 rounded"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Navigation */}
+        <nav className="mt-8 px-4">
+          <div className="space-y-2">
+            {navigation.map((item) => {
+              const Icon = item.icon;
+              return (
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
-                    item.current
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  }`}
+                  className={`
+                    flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200
+                    ${item.current
+                      ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-r-2 border-blue-600'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white'
+                    }
+                  `}
+                  onClick={() => setSidebarOpen(false)}
                 >
-                  <item.icon className="mr-3 h-5 w-5" />
+                  <Icon className={`mr-3 h-5 w-5 ${item.current ? 'text-blue-600 dark:text-blue-400' : ''}`} />
                   {item.name}
                 </Link>
-              ))}
+              );
+            })}
+          </div>
+        </nav>
+
+        {/* Sidebar footer */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 dark:border-slate-700">
+          <div className="flex items-center space-x-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+            <div className="flex items-center justify-center w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full">
+              <Shield className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             </div>
-          </nav>
-          
-          {/* Admin user info */}
-          <div className="flex-shrink-0 flex border-t border-gray-700 p-4">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center">
-                  <span className="text-sm font-medium text-white">
-                    {adminUser?.email?.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              </div>
-              <div className="ml-3 flex-1">
-                <p className="text-sm font-medium text-white truncate">
-                  {adminUser?.email}
-                </p>
-                <p className="text-xs text-gray-400">
-                  {adminUser?.role === 'super_admin' ? 'Super Admin' : 'Admin'}
-                </p>
-              </div>
-              <button
-                onClick={handleSignOut}
-                className="ml-3 text-gray-400 hover:text-white"
-                title="로그아웃"
-              >
-                <LogOut className="h-5 w-5" />
-              </button>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                관리자
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                {user?.email}
+              </p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64 flex flex-col flex-1">
-        {/* Top bar */}
-        <div className="sticky top-0 z-10 flex-shrink-0 flex h-16 bg-gray-800 shadow-sm border-b border-gray-700">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="px-4 border-r border-gray-700 text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 lg:hidden"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-          <div className="flex-1 px-4 flex justify-between items-center">
-            <div className="flex-1">
-              <h1 className="text-lg font-semibold text-white">
-                KIPRIS 특허 분석 SaaS 관리자 대시보드
-              </h1>
+      <div className="lg:ml-64">
+        {/* Top navigation */}
+        <header className="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700">
+          <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
+            {/* Mobile menu button */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+
+            {/* Search bar */}
+            <div className="flex-1 max-w-lg mx-4">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-5 w-5 text-slate-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="검색..."
+                  className="block w-full pl-10 pr-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
             </div>
-            <div className="ml-4 flex items-center md:ml-6">
-              <div className="text-sm text-gray-300">
-                마지막 업데이트: {new Date().toLocaleString('ko-KR')}
+
+            {/* Right side */}
+            <div className="flex items-center space-x-4">
+              {/* Notifications */}
+              <button className="relative text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300">
+                <Bell className="w-6 h-6" />
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+              </button>
+
+              {/* Profile dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                  className="flex items-center space-x-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                >
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <Shield className="w-4 h-4 text-white" />
+                  </div>
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+
+                {/* Dropdown menu */}
+                {profileDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-50">
+                    <div className="px-4 py-2 border-b border-slate-200 dark:border-slate-700">
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">관리자</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{user?.email}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setProfileDropdownOpen(false);
+                        // Navigate to settings if needed
+                      }}
+                      className="flex items-center w-full px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      설정
+                    </button>
+                    <button
+                      onClick={() => {
+                        setProfileDropdownOpen(false);
+                        handleSignOut();
+                      }}
+                      className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      로그아웃
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        </div>
+        </header>
 
         {/* Page content */}
-        <main className="flex-1 relative overflow-y-auto focus:outline-none">
-          <div className="py-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-              {children}
-            </div>
-          </div>
+        <main className="p-4 sm:p-6 lg:p-8">
+          {children}
         </main>
       </div>
+
+      {/* Click outside to close dropdown */}
+      {profileDropdownOpen && (
+        <div 
+          className="fixed inset-0 z-40"
+          onClick={() => setProfileDropdownOpen(false)}
+        />
+      )}
     </div>
   );
 };

@@ -12,13 +12,10 @@ import Profile from "@/pages/Profile";
 import AuthCallback from "@/pages/AuthCallback";
 import AdminRoute from "@/components/Auth/AdminRoute";
 import ProtectedRoute from "@/components/Auth/ProtectedRoute";
+import AdminLogin from "@/pages/Admin/AdminLogin";
 import AdminDashboard from "@/pages/Admin/AdminDashboard";
-import SystemStatus from "@/pages/Admin/SystemStatus";
-import UserActivity from "@/pages/Admin/UserActivity";
-import PatentStatistics from "@/pages/Admin/PatentStatistics";
-import LLMQuality from "@/pages/Admin/LLMQuality";
 import UserManagement from "@/pages/Admin/UserManagement";
-import BillingManagement from "@/pages/Admin/BillingManagement";
+import UsageStatistics from "@/pages/Admin/UsageStatistics";
 import { useAuthStore } from "@/store/authStore";
 import { useThemeStore } from "@/store/themeStore";
 
@@ -69,39 +66,25 @@ export default function App() {
           } />
           
           {/* Admin Routes */}
+          <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={
             <AdminRoute>
               <AdminDashboard />
             </AdminRoute>
           } />
-          <Route path="/admin/system" element={
+          <Route path="/admin/dashboard" element={
             <AdminRoute>
-              <SystemStatus />
+              <AdminDashboard />
             </AdminRoute>
           } />
           <Route path="/admin/users" element={
             <AdminRoute>
-              <UserActivity />
-            </AdminRoute>
-          } />
-          <Route path="/admin/patents" element={
-            <AdminRoute>
-              <PatentStatistics />
-            </AdminRoute>
-          } />
-          <Route path="/admin/quality" element={
-            <AdminRoute>
-              <LLMQuality />
-            </AdminRoute>
-          } />
-          <Route path="/admin/management" element={
-            <AdminRoute>
               <UserManagement />
             </AdminRoute>
           } />
-          <Route path="/admin/billing" element={
+          <Route path="/admin/statistics" element={
             <AdminRoute>
-              <BillingManagement />
+              <UsageStatistics />
             </AdminRoute>
           } />
         </Routes>
