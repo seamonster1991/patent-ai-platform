@@ -49,61 +49,64 @@ export function activityLoggerMiddleware(activityType: ActivityType) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       // Extract user ID from request (assuming it's set by auth middleware)
-      const userId = (req as any).user?.id || (req as any).userId;
+      const userId = (req as any).user?.id || 'anonymous';
       
-      if (userId) {
-        const activityData: ActivityData = {
-          endpoint: req.path,
-          method: req.method,
-          query: req.query,
-          timestamp: new Date().toISOString()
-        };
+      // Prepare activity data based on request
+      const activityData: ActivityData = {
+        method: req.method,
+        path: req.path,
+        query: req.query,
+        timestamp: new Date().toISOString()
+      };
 
-        // Add specific data based on activity type
-        switch (activityType) {
-          case ActivityType.SEARCH:
-            activityData.searchParams = {
-              keyword: req.body.keyword || req.query.keyword,
-              applicant: req.body.applicant || req.query.applicant,
-              dateFrom: req.body.application_date_from || req.query.application_date_from,
-              dateTo: req.body.application_date_to || req.query.application_date_to
-            };
-            break;
-          case ActivityType.VIEW_PATENT:
-            activityData.patentId = req.params.id || req.query.id;
-            break;
-          case ActivityType.DASHBOARD_ACCESS:
-            activityData.dashboardType = req.path.includes('admin') ? 'admin' : 'user';
-            break;
-        }
-
-        await logUserActivity(userId, activityType, activityData, req);
+      // Add specific data based on activity type
+      switch (activityType) {
+        case ActivityType.SEARCH:
+          activityData.searchParams = {
+            keyword: req.body?.keyword || req.query?.keyword,
+            searchType: req.body?.searchType || req.query?.searchType,
+            inventionTitle: req.body?.inventionTitle,
+            applicationNumber: req.body?.applicationNumber
+          };
+          break;
+        case ActivityType.VIEW_PATENT:
+          activityData.patentInfo = {
+            patentId: req.params?.id || req.params?.applicationNumber,
+            patentSource: req.path.includes('kipris') ? 'kipris' : 'internal',
+            viewType: 'detail'
+          };
+          break;
+        case ActivityType.DASHBOARD_ACCESS:
+          activityData.dashboardType = req.path.includes('admin') ? 'admin' : 'user';
+          break;
       }
+
+      // Log the activity
+      await logUserActivity(userId, activityType, activityData, req);
     } catch (error) {
-      console.error('Activity logging middleware error:', error);
+      console.error('Error in activity logger middleware:', error);
     }
     
     next();
   };
 }
 
-// Middleware to log dashboard access
+// Pre-configured middleware exports
 export const logDashboardAccess = activityLoggerMiddleware(ActivityType.DASHBOARD_ACCESS);
 
-// Middleware to log search activities
+// Search activity middleware
 export const logSearchActivity = activityLoggerMiddleware(ActivityType.SEARCH);
 
-// Middleware to log patent view activities
+// Patent view middleware
 export const logPatentView = activityLoggerMiddleware(ActivityType.VIEW_PATENT);
 
-// Middleware to log API calls
+// API call middleware
 export const logApiCall = activityLoggerMiddleware(ActivityType.API_CALL);
 
 // Function to log login activity
 export async function logLoginActivity(userId: string, req: Request): Promise<void> {
   await logUserActivity(userId, ActivityType.LOGIN, {
-    loginTime: new Date().toISOString(),
-    method: 'email' // or other auth methods
+    loginTime: new Date().toISOString()
   }, req);
 }
 
@@ -126,16 +129,30 @@ export async function logProfileUpdateActivity(
   }, req);
 }
 
-// Function to log report generation activity
-export async function logReportGenerationActivity(
-  userId: string, 
-  reportType: string, 
-  patentId: string, 
-  req: Request
-): Promise<void> {
-  await logUserActivity(userId, ActivityType.REPORT_GENERATE, {
-    reportType,
-    patentId,
-    generationTime: new Date().toISOString()
-  }, req);
+// Middleware to log report generation activity
+export function logReportGenerationActivity(req: Request, res: Response, next: NextFunction) {
+  // Store the original json method
+  const originalJson = res.json;
+  
+  // Override the json method to capture response data
+  res.json = function(body: any) {
+    // Log the activity after successful response
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      const userId = (req as any).user?.id || 'anonymous';
+      const reportType = 'ai_analysis';
+      const patentId = req.params.id || req.params.applicationNumber || 'unknown';
+      
+      logUserActivity(userId, ActivityType.REPORT_GENERATE, {
+        reportType,
+        patentId,
+        analysisType: req.body?.analysisType || 'comprehensive',
+        generationTime: new Date().toISOString()
+      }, req).catch(err => console.error('Failed to log report generation:', err));
+    }
+    
+    // Call the original json method
+    return originalJson.call(this, body);
+  };
+  
+  next();
 }
