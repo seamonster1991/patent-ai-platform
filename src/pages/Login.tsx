@@ -52,7 +52,7 @@ export default function Login() {
       } else {
         toast.success('로그인되었습니다.')
         // 관리자인 경우 관리자 대시보드로, 일반 사용자는 홈으로
-        if (isAdmin) {
+        if (formData.email === 'admin@p-ai.com') {
           navigate('/admin')
         } else {
           navigate('/')
