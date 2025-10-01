@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { PatentSearchResult, SearchHistory, Report } from '../lib/supabase'
+import { useAuthStore } from './authStore'
 
 interface SearchFilters {
   // 기본 검색 필드
@@ -118,8 +119,9 @@ interface SearchState {
   
   // History actions
   loadSearchHistory: () => Promise<void>
-  
-  // Report actions
+  saveSearchToHistory: (keyword: string, resultsCount: number) => Promise<void>
+
+  // Report management
   generateReport: (patentId: string, type: 'market' | 'business') => Promise<{ error?: string; report?: Report }>
   loadReports: () => Promise<void>
 }
@@ -280,6 +282,9 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
       // 검색 성공 시 상태 자동 저장
       get().saveSearchState()
+      
+      // 검색 기록을 데이터베이스에 저장
+      get().saveSearchToHistory(filters.word || filters.keyword || '', finalTotalCount)
 
       return {}
     } catch (error) {
@@ -408,14 +413,44 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
   loadSearchHistory: async () => {
     try {
-      const response = await fetch('/api/user/search-history')
+      const { user } = useAuthStore.getState()
+      if (!user) return
+
+      const response = await fetch(`/api/users/search-history/${user.id}`)
       const data = await response.json()
 
       if (data.success) {
-        set({ searchHistory: data.data })
+        set({ searchHistory: data.data.history || data.data })
       }
     } catch (error) {
       console.error('Failed to load search history:', error)
+    }
+  },
+
+  saveSearchToHistory: async (keyword: string, resultsCount: number) => {
+    try {
+      const { user } = useAuthStore.getState()
+      if (!user || !keyword.trim()) return
+
+      const { filters } = get()
+      
+      await fetch('/api/users/search-history', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: user.id,
+          keyword: keyword.trim(),
+          filters: filters,
+          results_count: resultsCount
+        }),
+      })
+      
+      // 검색 기록 저장 후 목록 새로고침
+      get().loadSearchHistory()
+    } catch (error) {
+      console.error('Failed to save search to history:', error)
     }
   },
 
@@ -451,11 +486,14 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
   loadReports: async () => {
     try {
-      const response = await fetch('/api/user/reports')
+      const { user } = useAuthStore.getState()
+      if (!user) return
+
+      const response = await fetch(`/api/users/reports/${user.id}`)
       const data = await response.json()
 
       if (data.success) {
-        set({ reports: data.data })
+        set({ reports: data.data.reports || data.data })
       }
     } catch (error) {
       console.error('Failed to load reports:', error)

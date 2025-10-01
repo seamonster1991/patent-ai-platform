@@ -34,34 +34,45 @@ import { cn } from '../lib/utils'
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true)
+  const [userStats, setUserStats] = useState({
+    totalSearches: 0,
+    reportsGenerated: 0,
+    monthlyActivity: 0,
+    savedPatents: 0
+  })
   const { user, profile } = useAuthStore()
   const { searchHistory, reports, loadSearchHistory, loadReports } = useSearchStore()
 
   useEffect(() => {
     const loadData = async () => {
+      if (!user) return
+      
       setLoading(true)
-      await Promise.all([
-        loadSearchHistory(),
-        loadReports()
-      ])
-      setLoading(false)
+      try {
+        await Promise.all([
+          loadSearchHistory(),
+          loadReports()
+        ])
+        
+        // 사용자 통계 데이터 가져오기
+        const response = await fetch(`/api/users/stats/${user.id}`)
+        const data = await response.json()
+        
+        if (data.success) {
+          setUserStats(data.data)
+        }
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error)
+      } finally {
+        setLoading(false)
+      }
     }
     
     loadData()
-  }, [])
+  }, [user])
 
   // 실제 데이터 기반 통계 계산
   const stats = useMemo(() => {
-    const totalSearches = searchHistory.length
-    const reportsGenerated = reports.length
-    
-    // 이번 달 검색 수 계산
-    const currentMonth = new Date()
-    currentMonth.setDate(1)
-    const monthlySearches = searchHistory.filter(search => 
-      new Date(search.created_at) >= currentMonth
-    ).length
-
     // 평균 검색 결과 수 계산
     const avgResults = searchHistory.length > 0 
       ? Math.round(searchHistory.reduce((sum, search) => sum + (search.results_count || 0), 0) / searchHistory.length)
@@ -70,7 +81,7 @@ export default function Dashboard() {
     return [
       {
         title: '총 검색 수',
-        value: totalSearches.toLocaleString(),
+        value: userStats.totalSearches.toLocaleString(),
         icon: Search,
         description: '누적 특허 검색 횟수',
         color: 'text-blue-600 dark:text-blue-400',
@@ -78,7 +89,7 @@ export default function Dashboard() {
       },
       {
         title: '생성된 리포트',
-        value: reportsGenerated.toLocaleString(),
+        value: userStats.reportsGenerated.toLocaleString(),
         icon: FileText,
         description: '분석 리포트 생성 수',
         color: 'text-green-600 dark:text-green-400',
@@ -86,9 +97,9 @@ export default function Dashboard() {
       },
       {
         title: '이번 달 활동',
-        value: monthlySearches.toLocaleString(),
-        icon: TrendingUp,
-        description: '이번 달 검색 활동',
+        value: userStats.monthlyActivity.toLocaleString(),
+        icon: Calendar,
+        description: '이번 달 검색 횟수',
         color: 'text-purple-600 dark:text-purple-400',
         bgColor: 'bg-purple-50 dark:bg-purple-950/50'
       },
@@ -101,7 +112,7 @@ export default function Dashboard() {
         bgColor: 'bg-orange-50 dark:bg-orange-950/50'
       }
     ]
-  }, [searchHistory, reports])
+  }, [userStats, searchHistory])
 
   // 월별 검색 동향 데이터 (실제 데이터 기반)
   const searchTrendData = useMemo(() => {
