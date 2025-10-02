@@ -2,12 +2,9 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "functions": {
-    "api/*.ts": {
-      "runtime": "@vercel/node@3.0.0"
+    "api/**/*.ts": {
+      "runtime": "@vercel/node"
     }
-  },
-  "engines": {
-    "node": "22.x"
   },
   "rewrites": [
     {
