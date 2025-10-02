@@ -1,6 +1,4 @@
-const { VercelRequest, VercelResponse } = require('@vercel/node');
-
-module.exports = async function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = async function handler(req, res) {
   console.log('Test API called');
   
   // CORS headers
@@ -24,7 +22,7 @@ module.exports = async function handler(req: VercelRequest, res: VercelResponse)
         hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
       }
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Test API Error:', error);
     return res.status(500).json({
       success: false,

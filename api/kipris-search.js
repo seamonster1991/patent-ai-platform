@@ -1,4 +1,3 @@
-const { VercelRequest, VercelResponse } = require('@vercel/node');
 const axios = require('axios');
 const { parseStringPromise } = require('xml2js');
 const { createClient } = require('@supabase/supabase-js');
@@ -10,7 +9,7 @@ const supabase = createClient(
 );
 
 // Activity logging function
-async function logUserActivity(userId: string, activityType: string, details: any, req: VercelRequest) {
+async function logUserActivity(userId, activityType, details, req) {
   try {
     const { error } = await supabase
       .from('user_activities')
@@ -30,7 +29,7 @@ async function logUserActivity(userId: string, activityType: string, details: an
   }
 }
 
-module.exports = async function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = async function handler(req, res) {
   console.log('API handler called with method:', req.method);
   console.log('Environment variables check:', {
     hasKiprisKey: !!process.env.KIPRIS_API_KEY,
@@ -166,7 +165,7 @@ module.exports = async function handler(req: VercelRequest, res: VercelResponse)
           validateStatus: (status) => status < 500 // 5xx 에러만 재시도
         });
         break; // 성공하면 루프 종료
-      } catch (error: any) {
+      } catch (error) {
         retryCount++;
         console.log(`🔄 KIPRIS API 호출 재시도 ${retryCount}/${maxRetries}:`, error.message);
         
@@ -274,8 +273,8 @@ module.exports = async function handler(req: VercelRequest, res: VercelResponse)
       data: kiprisResponse
     });
     
-  } catch (error: any) {
-    console.error('KIPRIS API Error:', error);
+  } catch (error) {
+      console.error('KIPRIS API Error:', error);
     console.error('Error stack:', error.stack);
     console.error('Error details:', {
       message: error.message,
