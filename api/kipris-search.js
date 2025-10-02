@@ -2,87 +2,102 @@ const axios = require('axios');
 const { parseStringPromise } = require('xml2js');
 const { createClient } = require('@supabase/supabase-js');
 
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+// Supabase 클라이언트 초기화
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
-// Activity logging function
-async function logUserActivity(userId, activityType, details, req) {
+let supabase = null;
+if (supabaseUrl && supabaseKey) {
   try {
-    const { error } = await supabase
-      .from('user_activities')
-      .insert({
-        user_id: userId,
-        activity_type: activityType,
-        details: details,
-        ip_address: req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'unknown',
-        user_agent: req.headers['user-agent'] || 'unknown'
-      });
-
-    if (error) {
-      console.error('Error logging user activity:', error);
-    }
+    supabase = createClient(supabaseUrl, supabaseKey);
   } catch (error) {
-    console.error('Error in logUserActivity:', error);
+    console.error('Failed to initialize Supabase:', error);
   }
 }
 
-module.exports = async function handler(req, res) {
-  console.log('API handler called with method:', req.method);
-  console.log('Environment variables check:', {
-    hasKiprisKey: !!process.env.KIPRIS_API_KEY,
-    hasSupabaseUrl: !!process.env.SUPABASE_URL,
-    hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
-  });
+// 사용자 활동 로깅 함수
+async function logUserActivity(searchParams, results) {
+  if (!supabase) {
+    console.log('Supabase not configured, skipping activity log');
+    return;
+  }
 
-  // CORS headers
+  try {
+    const { error } = await supabase
+      .from('user_activities')
+      .insert([
+        {
+          activity_type: 'patent_search',
+          search_params: searchParams,
+          result_count: results?.length || 0,
+          timestamp: new Date().toISOString()
+        }
+      ]);
+
+    if (error) {
+      console.error('Failed to log user activity:', error);
+    }
+  } catch (error) {
+    console.error('Error logging user activity:', error);
+  }
+}
+
+export default async function handler(req, res) {
+  // CORS 헤더 설정
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
+  // OPTIONS 요청 처리
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
+  // POST 요청만 허용
   if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, message: 'Method not allowed' });
+    return res.status(405).json({ 
+      success: false, 
+      error: 'Method not allowed',
+      message: 'Only POST method is allowed' 
+    });
   }
 
   try {
+    console.log('=== KIPRIS API 검색 요청 시작 ===');
     console.log('Request body:', req.body);
-    const searchParams = req.body;
+    console.log('Environment variables check:');
+    console.log('- KIPRIS_SERVICE_KEY:', process.env.KIPRIS_SERVICE_KEY ? 'Set' : 'Not set');
+    console.log('- KIPRIS_API_KEY:', process.env.KIPRIS_API_KEY ? 'Set' : 'Not set');
+
+    // 환경변수에서 KIPRIS API 키 가져오기
+    const kiprisApiKey = process.env.KIPRIS_SERVICE_KEY || process.env.KIPRIS_API_KEY;
     
-    // Log KIPRIS search activity
-    const userId = req.headers.authorization?.replace('Bearer ', '') || 'anonymous';
-    if (userId !== 'anonymous') {
-      await logUserActivity(userId, 'SEARCH', {
-        searchType: 'kipris',
-        searchParams: searchParams,
-        keyword: searchParams.word || searchParams.keyword,
-        inventionTitle: searchParams.inventionTitle,
-        applicationNumber: searchParams.applicationNumber
-      }, req);
-    }
-    
-    // KIPRIS API 서비스 키 (환경변수에서 가져오기)
-    const serviceKey = process.env.KIPRIS_SERVICE_KEY || process.env.KIPRIS_API_KEY || 'your_service_key_here';
-    
-    // 환경변수 검증
-    if (!serviceKey || serviceKey === 'your_service_key_here') {
-      console.error('❌ KIPRIS API 키가 설정되지 않았습니다.');
+    if (!kiprisApiKey) {
+      console.error('KIPRIS API key not found in environment variables');
       return res.status(500).json({
         success: false,
-        message: 'KIPRIS API 키가 설정되지 않았습니다. 관리자에게 문의하세요.',
-        error: 'KIPRIS_API_KEY not configured'
+        error: 'API configuration error',
+        message: 'KIPRIS API key is not configured',
+        debug: {
+          hasServiceKey: !!process.env.KIPRIS_SERVICE_KEY,
+          hasApiKey: !!process.env.KIPRIS_API_KEY
+        }
       });
     }
+
+    console.log('KIPRIS API Key found:', kiprisApiKey ? 'Yes' : 'No');
+
+    // 사용자 활동 로깅 (비동기로 처리하여 메인 로직에 영향 없도록)
+    logUserActivity(req.body, []).catch(error => {
+      console.error('Activity logging failed:', error);
+    });
+    
+    const searchParams = req.body;
     
     console.log('🔍 KIPRIS API 검색 요청:', {
       searchParams: JSON.stringify(searchParams, null, 2),
-      serviceKeyExists: serviceKey !== 'your_service_key_here',
-      serviceKeyLength: serviceKey.length,
+      serviceKeyExists: !!kiprisApiKey,
+      serviceKeyLength: kiprisApiKey.length,
       envVars: {
         KIPRIS_SERVICE_KEY: !!process.env.KIPRIS_SERVICE_KEY,
         KIPRIS_API_KEY: !!process.env.KIPRIS_API_KEY,
@@ -142,10 +157,10 @@ module.exports = async function handler(req, res) {
     if (searchParams.descSort !== undefined) params.append('descSort', searchParams.descSort.toString());
     
     // 서비스 키 추가
-    params.append('ServiceKey', serviceKey);
+    params.append('ServiceKey', kiprisApiKey);
     
     const fullUrl = `${kiprisApiUrl}?${params.toString()}`;
-    console.log('📡 KIPRIS API 호출 URL:', fullUrl.replace(serviceKey, '[SERVICE_KEY]'));
+    console.log('📡 KIPRIS API 호출 URL:', fullUrl.replace(kiprisApiKey, '[SERVICE_KEY]'));
     
     // KIPRIS API 호출 (재시도 로직 포함)
     let response;
@@ -274,31 +289,47 @@ module.exports = async function handler(req, res) {
     });
     
   } catch (error) {
-      console.error('KIPRIS API Error:', error);
+    console.error('❌ KIPRIS API Error:', error);
     console.error('Error stack:', error.stack);
     console.error('Error details:', {
       message: error.message,
       code: error.code,
       response: error.response?.data,
-      status: error.response?.status
+      status: error.response?.status,
+      config: {
+        url: error.config?.url?.replace(kiprisApiKey || '', '[SERVICE_KEY]'),
+        method: error.config?.method,
+        timeout: error.config?.timeout
+      }
     });
     
     // 에러 타입에 따른 메시지 처리
     let errorMessage = 'KIPRIS API 호출 중 오류가 발생했습니다.';
+    let errorCode = 'UNKNOWN_ERROR';
     
     if (error.code === 'ECONNABORTED') {
       errorMessage = 'KIPRIS API 응답 시간이 초과되었습니다.';
+      errorCode = 'TIMEOUT_ERROR';
     } else if (error.response) {
       errorMessage = `KIPRIS API 오류: ${error.response.status} ${error.response.statusText}`;
+      errorCode = 'API_RESPONSE_ERROR';
     } else if (error.request) {
       errorMessage = 'KIPRIS API 서버에 연결할 수 없습니다.';
+      errorCode = 'CONNECTION_ERROR';
+    } else if (error.message.includes('XML')) {
+      errorMessage = 'KIPRIS API 응답 데이터 처리 중 오류가 발생했습니다.';
+      errorCode = 'XML_PARSE_ERROR';
     }
 
     return res.status(500).json({
       success: false,
       message: errorMessage,
       error: error.message,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      errorCode: errorCode,
+      details: process.env.NODE_ENV === 'development' ? {
+        stack: error.stack,
+        config: error.config
+      } : undefined
     });
   }
 }
