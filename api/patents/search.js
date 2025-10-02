@@ -1,5 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = require('@supabase/supabase-js');
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -7,7 +6,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 );
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -50,7 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    res.json({
+    return res.status(200).json({
       success: true,
       data: {
         patents: patents || [],
@@ -63,12 +62,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Patent search error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Internal server error',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
-}
+};
