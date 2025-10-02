@@ -9,7 +9,7 @@ import Loading from '../components/UI/Loading'
 import { useSearchStore } from '../store/searchStore'
 import { formatDate, truncateText, cn } from '../lib/utils'
 import { toast } from 'sonner'
-import SearchTest from '../test/search_test_20250102_140000'
+
 
 export default function Search() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)

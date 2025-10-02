@@ -82,7 +82,7 @@ const AdminDashboard: React.FC = () => {
           type: 'search',
           description: `특허 검색: "${activity.query}"`,
           created_at: activity.created_at,
-          user_email: activity.users?.email
+          user_email: (activity as any).users?.email || 'Unknown'
         })) || [];
 
         setStats({
