@@ -28,26 +28,32 @@ import {
   File,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  BarChart3
 } from 'lucide-react'
 import Layout from '../components/Layout/Layout'
 import Button from '../components/UI/Button'
 import Card, { CardContent, CardHeader, CardTitle } from '../components/UI/Card'
 import { LoadingPage } from '../components/UI/Loading'
-import { KiprisPatentDetail, AIAnalysisReport, DocumentType, DOCUMENT_TYPES, DocumentDownloadResponse } from '../types/kipris'
+import { KiprisPatentDetailItem, AIAnalysisReport, DocumentType, DOCUMENT_TYPES, DocumentDownloadResponse } from '../types/kipris'
 import { formatDate } from '../lib/utils'
 import { toast } from 'sonner'
 import { generateMarketAnalysisPDF, generateBusinessInsightPDF } from '../lib/pdfGenerator'
 import { useSearchStore } from '../store/searchStore'
+import { useAuthStore } from '../store/authStore'
+import { ActivityTracker } from '../lib/activityTracker'
 
 export default function PatentDetail() {
   const { applicationNumber } = useParams<{ applicationNumber: string }>()
   const navigate = useNavigate()
   const { loadSearchState } = useSearchStore()
-  const [patent, setPatent] = useState<KiprisPatentDetail | null>(null)
+  const [patent, setPatent] = useState<KiprisPatentDetailItem | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
   const [activeTab, setActiveTab] = useState('summary')
+  const [renderedTabs, setRenderedTabs] = useState<Set<string>>(new Set(['summary'])) // 렌더링된 탭 추적
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisReport | null>(null)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
@@ -59,6 +65,20 @@ export default function PatentDetail() {
   useEffect(() => {
     if (applicationNumber) {
       fetchPatentDetail(applicationNumber)
+      // applicationNumber가 변경될 때 AI 분석 관련 상태 초기화
+      setAiAnalysis(null)
+      setAiError(null)
+      setAiLoading(false)
+      // 문서 관련 상태도 초기화
+      setDocumentAvailability({} as Record<DocumentType, boolean>)
+      setDocumentLoading({} as Record<DocumentType, boolean>)
+      setAvailabilityLoading(false)
+      // PDF 생성 상태 초기화
+      setPdfGenerating({ market: false, business: false })
+      // 탭을 기본값으로 리셋
+      setActiveTab('summary')
+      // 렌더링된 탭 목록 초기화
+      setRenderedTabs(new Set(['summary']))
     }
   }, [applicationNumber])
 
@@ -67,14 +87,14 @@ export default function PatentDetail() {
     if (activeTab === 'documents' && applicationNumber && Object.keys(documentAvailability).length === 0) {
       checkDocumentAvailability()
     }
-  }, [activeTab, applicationNumber])
+  }, [activeTab, applicationNumber, documentAvailability])
 
   const fetchPatentDetail = async (appNumber: string) => {
     try {
       setLoading(true)
       setError(null)
       
-      const response = await fetch(`/api/patents/detail/${appNumber}`)
+      const response = await fetch(`/api/detail?applicationNumber=${appNumber}`)
       const data = await response.json()
       
       if (!response.ok) {
@@ -82,12 +102,32 @@ export default function PatentDetail() {
       }
       
       if (data.success && data.data) {
-        setPatent(data.data)
+        setPatent(data.data.body.item)
+        
+        // 사용자 활동 추적 - 특허 상세 조회
+        try {
+          const { user } = useAuthStore.getState()
+          if (user) {
+            const activityTracker = new ActivityTracker()
+            activityTracker.setUserId(user.id)
+            await activityTracker.trackPatentView(
+              appNumber,
+              data.data.body.item.biblioSummaryInfo?.inventionTitle || '제목 없음',
+              {
+                registerStatus: data.data.body.item.biblioSummaryInfo?.registerStatus,
+                applicant: data.data.body.item.biblioSummaryInfo?.applicantName,
+                applicationDate: data.data.body.item.biblioSummaryInfo?.applicationDate
+              }
+            )
+          }
+        } catch (error) {
+          console.error('특허 조회 활동 추적 오류:', error)
+          // 활동 추적 실패는 특허 조회 기능에 영향을 주지 않음
+        }
       } else {
         throw new Error('No patent data found')
       }
     } catch (err: any) {
-      console.error('Error fetching patent detail:', err)
       setError(err.message)
       toast.error('특허 상세정보를 불러오는데 실패했습니다.')
     } finally {
@@ -98,7 +138,7 @@ export default function PatentDetail() {
   const handleShare = async () => {
     try {
       await navigator.share({
-        title: patent?.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle || '특허 상세정보',
+        title: patent?.biblioSummaryInfo?.inventionTitle || '특허 상세정보',
         url: window.location.href
       })
     } catch (err) {
@@ -118,36 +158,110 @@ export default function PatentDetail() {
   }
 
   const generateAIAnalysis = async () => {
-    if (!applicationNumber) return
+    console.log('🔥 AI 분석 버튼 클릭됨!')
+    if (!applicationNumber || !patent) {
+      console.log('❌ AI 분석 조건 미충족:', { applicationNumber, hasPatent: !!patent })
+      return
+    }
+    
+    // 이미 로딩 중이면 중복 실행 방지
+    if (aiLoading) {
+      console.log('⚠️ AI 분석이 이미 진행 중입니다.')
+      return
+    }
     
     try {
+      console.log('🚀 AI 분석 시작:', { applicationNumber, patentTitle: patent.biblioSummaryInfo?.inventionTitle })
       setAiLoading(true)
       setAiError(null)
       
-      const response = await fetch(`/api/patents/analyze/${applicationNumber}`, {
+      const requestBody = {
+        patentData: patent,
+        analysisType: 'comprehensive'
+      }
+      console.log('📤 AI 분석 요청 데이터:', requestBody)
+      // AbortController를 사용해 요청 타임아웃(60초) 적용
+      const controller = new AbortController()
+      const timeoutMs = 60_000
+      const timeoutId = setTimeout(() => {
+        console.warn(`⏱️ AI 분석 요청이 ${timeoutMs}ms를 초과하여 중단됩니다`)
+        controller.abort()
+      }, timeoutMs)
+
+      const response = await fetch('/api/ai-analysis', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal
       })
       
-      const data = await response.json()
+      console.log('📡 AI 분석 응답 상태:', response.status, response.statusText)
       
       if (!response.ok) {
-        throw new Error(data.error || 'AI 분석 생성에 실패했습니다.')
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`
+        try {
+          const errorData = await response.text()
+          if (errorData) {
+            try {
+              const parsedError = JSON.parse(errorData)
+              errorMessage = parsedError.message || parsedError.error || errorMessage
+            } catch {
+              errorMessage = errorData || errorMessage
+            }
+          }
+        } catch (e) {
+          console.log('❌ 에러 응답 파싱 실패:', e)
+        }
+        throw new Error(errorMessage)
       }
       
+      const data = await response.json()
+      console.log('📊 AI 분석 응답 데이터:', data)
+      
       if (data.success && data.data) {
+        console.log('✅ AI 분석 성공:', data.data)
         setAiAnalysis(data.data)
         toast.success('AI 분석이 완료되었습니다.')
+        
+        // 사용자 활동 추적 - AI 분석 생성
+        try {
+          const { user } = useAuthStore.getState()
+          if (user) {
+            const activityTracker = new ActivityTracker()
+            activityTracker.setUserId(user.id)
+            await activityTracker.trackAIAnalysis(
+              applicationNumber,
+              'comprehensive',
+              {
+                patentTitle: patent.biblioSummaryInfo?.inventionTitle,
+                analysisResult: data.data
+              }
+            )
+          }
+        } catch (error) {
+          console.error('AI 분석 활동 추적 오류:', error)
+          // 활동 추적 실패는 AI 분석 기능에 영향을 주지 않음
+        }
       } else {
-        throw new Error('AI 분석 데이터를 받을 수 없습니다.')
+        console.error('❌ AI 분석 데이터 구조 오류:', data)
+        throw new Error(data.message || data.error || 'AI 분석 데이터를 받을 수 없습니다.')
       }
     } catch (err: any) {
-      console.error('Error generating AI analysis:', err)
-      setAiError(err.message)
-      toast.error('AI 분석 생성에 실패했습니다.')
+      // 요청 타임아웃/중단 처리
+      if (err?.name === 'AbortError') {
+        console.error('⏱️ AI 분석 요청 시간 초과로 중단됨')
+        setAiError('AI 분석 요청이 시간 초과(60초)로 중단되었습니다. 잠시 후 다시 시도해주세요.')
+        toast.error('AI 분석 요청이 시간 초과(60초)로 중단되었습니다.')
+      } else {
+        console.error('❌ AI 분석 전체 오류:', err)
+        setAiError(err.message)
+        toast.error(`AI 분석 생성에 실패했습니다: ${err.message}`)
+      }
     } finally {
+      // 타이머 정리 및 로딩 해제
+      try { clearTimeout(timeoutId) } catch {}
       setAiLoading(false)
     }
   }
@@ -175,22 +289,29 @@ export default function PatentDetail() {
     try {
       setAvailabilityLoading(true)
       
-      const response = await fetch(`/api/patents/documents/${applicationNumber}/availability`)
-      const data = await response.json()
+      // 각 문서 타입별로 가용성 확인
+      const availability: Record<DocumentType, boolean> = {} as Record<DocumentType, boolean>
       
-      if (!response.ok) {
-        throw new Error(data.error || '문서 가용성 확인에 실패했습니다.')
+      for (const docType of DOCUMENT_TYPES) {
+        try {
+          const response = await fetch(`/api/documents?applicationNumber=${applicationNumber}&documentType=${docType.type}`)
+          const data = await response.json()
+          
+          // 성공적으로 응답을 받고 파일 정보가 있으면 사용 가능
+          availability[docType.type] = response.ok && data.success && data.data && data.data.length > 0
+        } catch (err) {
+          // 개별 문서 타입 확인 실패 시 false로 설정
+          availability[docType.type] = false
+        }
       }
       
-      if (data.success && data.data) {
-        setDocumentAvailability(data.data)
-        
-        // 결과를 캐시에 저장
-        localStorage.setItem(cacheKey, JSON.stringify({
-          data: data.data,
-          timestamp: Date.now()
-        }))
-      }
+      setDocumentAvailability(availability)
+      
+      // 결과를 캐시에 저장
+      localStorage.setItem(cacheKey, JSON.stringify({
+        data: availability,
+        timestamp: Date.now()
+      }))
     } catch (err: any) {
       console.error('Error checking document availability:', err)
       toast.error('문서 가용성 확인에 실패했습니다.')
@@ -205,19 +326,46 @@ export default function PatentDetail() {
     try {
       setDocumentLoading(prev => ({ ...prev, [documentType]: true }))
       
-      const response = await fetch(`/api/patents/documents/${applicationNumber}?type=${documentType}`)
+      const response = await fetch(`/api/documents?applicationNumber=${applicationNumber}&documentType=${documentType}`)
       const data = await response.json()
       
       if (!response.ok) {
         throw new Error(data.error || '문서 다운로드에 실패했습니다.')
       }
       
-      if (data.success && data.data && data.data.path) {
-        // 새 창에서 파일 다운로드
-        window.open(data.data.path, '_blank')
-        toast.success(`${DOCUMENT_TYPES.find(dt => dt.type === documentType)?.name} 다운로드가 시작되었습니다.`)
+      if (data.success && data.data && data.data.length > 0) {
+        const document = data.data[0] // 첫 번째 문서 사용
+        if (document.downloadUrl || document.path) {
+          // 새 창에서 파일 다운로드
+          const downloadUrl = document.downloadUrl || document.path
+          window.open(downloadUrl, '_blank')
+          toast.success(`${DOCUMENT_TYPES.find(dt => dt.type === documentType)?.name} 다운로드가 시작되었습니다.`)
+          
+          // 사용자 활동 추적 - 문서 다운로드
+          try {
+            const { user } = useAuthStore.getState()
+            if (user) {
+              const activityTracker = new ActivityTracker()
+              activityTracker.setUserId(user.id)
+              await activityTracker.trackDocumentDownload(
+                applicationNumber,
+                documentType,
+                {
+                  patentTitle: patent?.biblioSummaryInfo?.inventionTitle,
+                  documentName: DOCUMENT_TYPES.find(dt => dt.type === documentType)?.name,
+                  downloadUrl: downloadUrl
+                }
+              )
+            }
+          } catch (error) {
+            console.error('문서 다운로드 활동 추적 오류:', error)
+            // 활동 추적 실패는 문서 다운로드 기능에 영향을 주지 않음
+          }
+        } else {
+          throw new Error('다운로드 링크를 받을 수 없습니다.')
+        }
       } else {
-        throw new Error('다운로드 링크를 받을 수 없습니다.')
+        throw new Error('다운로드할 문서를 찾을 수 없습니다.')
       }
     } catch (err: any) {
       console.error('Error downloading document:', err)
@@ -236,6 +384,26 @@ export default function PatentDetail() {
       
       await generateMarketAnalysisPDF(patent, aiAnalysis.marketAnalysis)
       toast.success('시장분석 리포트 PDF가 다운로드되었습니다.')
+      
+      // 사용자 활동 추적 - 리포트 생성
+      try {
+        const { user } = useAuthStore.getState()
+        if (user) {
+          const activityTracker = new ActivityTracker()
+          activityTracker.setUserId(user.id)
+          await activityTracker.trackReportGenerate(
+            applicationNumber || '',
+            'market_analysis',
+            {
+              patentTitle: patent.biblioSummaryInfo?.inventionTitle,
+              reportType: '시장분석 리포트'
+            }
+          )
+        }
+      } catch (error) {
+        console.error('리포트 생성 활동 추적 오류:', error)
+        // 활동 추적 실패는 리포트 생성 기능에 영향을 주지 않음
+      }
     } catch (err: any) {
       console.error('Error generating market analysis PDF:', err)
       toast.error('PDF 생성에 실패했습니다.')
@@ -253,6 +421,26 @@ export default function PatentDetail() {
       
       await generateBusinessInsightPDF(patent, aiAnalysis.businessInsight)
       toast.success('비즈니스 인사이트 리포트 PDF가 다운로드되었습니다.')
+      
+      // 사용자 활동 추적 - 리포트 생성
+      try {
+        const { user } = useAuthStore.getState()
+        if (user) {
+          const activityTracker = new ActivityTracker()
+          activityTracker.setUserId(user.id)
+          await activityTracker.trackReportGenerate(
+            applicationNumber || '',
+            'business_insight',
+            {
+              patentTitle: patent.biblioSummaryInfo?.inventionTitle,
+              reportType: '비즈니스 인사이트 리포트'
+            }
+          )
+        }
+      } catch (error) {
+        console.error('리포트 생성 활동 추적 오류:', error)
+        // 활동 추적 실패는 리포트 생성 기능에 영향을 주지 않음
+      }
     } catch (err: any) {
       console.error('Error generating business insight PDF:', err)
       toast.error('PDF 생성에 실패했습니다.')
@@ -286,7 +474,7 @@ export default function PatentDetail() {
     )
   }
 
-  const biblioInfo = patent.biblioSummaryInfoArray?.biblioSummaryInfo
+  const biblioInfo = patent.biblioSummaryInfo
   const tabs = [
     { id: 'summary', label: '서지정보', icon: FileText },
     { id: 'abstract', label: '초록', icon: BookOpen },
@@ -377,7 +565,10 @@ export default function PatentDetail() {
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
+                    onClick={() => {
+                      setActiveTab(tab.id)
+                      setRenderedTabs(prev => new Set([...prev, tab.id]))
+                    }}
                     className={`flex items-center gap-2 py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                       activeTab === tab.id
                         ? 'border-blue-500 text-blue-600 dark:text-blue-400'
@@ -393,66 +584,88 @@ export default function PatentDetail() {
           </div>
         </div>
 
-        {/* Tab Content */}
+        {/* Tab Content - 방문한 탭만 렌더링하고 상태 유지 */}
         <div className="space-y-6">
-          {activeTab === 'summary' && (
-            <SummaryTab patent={patent} />
+          {renderedTabs.has('summary') && (
+            <div className={activeTab === 'summary' ? 'block' : 'hidden'}>
+              <SummaryTab patent={patent} />
+            </div>
           )}
           
-          {activeTab === 'abstract' && (
-            <AbstractTab patent={patent} />
+          {renderedTabs.has('abstract') && (
+            <div className={activeTab === 'abstract' ? 'block' : 'hidden'}>
+              <AbstractTab patent={patent} />
+            </div>
           )}
           
-          {activeTab === 'claims' && (
-            <ClaimsTab patent={patent} />
+          {renderedTabs.has('claims') && (
+            <div className={activeTab === 'claims' ? 'block' : 'hidden'}>
+              <ClaimsTab patent={patent} />
+            </div>
           )}
           
-          {activeTab === 'applicant' && (
-            <ApplicantTab patent={patent} />
+          {renderedTabs.has('applicant') && (
+            <div className={activeTab === 'applicant' ? 'block' : 'hidden'}>
+              <ApplicantTab patent={patent} />
+            </div>
           )}
           
-          {activeTab === 'inventor' && (
-            <InventorTab patent={patent} />
+          {renderedTabs.has('inventor') && (
+            <div className={activeTab === 'inventor' ? 'block' : 'hidden'}>
+              <InventorTab patent={patent} />
+            </div>
           )}
           
-          {activeTab === 'ipc' && (
-            <IpcTab patent={patent} />
+          {renderedTabs.has('ipc') && (
+            <div className={activeTab === 'ipc' ? 'block' : 'hidden'}>
+              <IpcTab patent={patent} />
+            </div>
           )}
           
-          {activeTab === 'legal' && (
-            <LegalTab patent={patent} />
+          {renderedTabs.has('legal') && (
+            <div className={activeTab === 'legal' ? 'block' : 'hidden'}>
+              <LegalTab patent={patent} />
+            </div>
           )}
           
-          {activeTab === 'family' && (
-            <FamilyTab patent={patent} />
+          {renderedTabs.has('family') && (
+            <div className={activeTab === 'family' ? 'block' : 'hidden'}>
+              <FamilyTab patent={patent} />
+            </div>
           )}
           
-          {activeTab === 'images' && (
-            <ImagesTab patent={patent} />
+          {renderedTabs.has('images') && (
+            <div className={activeTab === 'images' ? 'block' : 'hidden'}>
+              <ImagesTab patent={patent} />
+            </div>
           )}
           
-          {activeTab === 'documents' && (
-            <DocumentsTab 
-              patent={patent}
-              availability={documentAvailability}
-              loading={documentLoading}
-              availabilityLoading={availabilityLoading}
-              onCheckAvailability={checkDocumentAvailability}
-              onDownload={downloadDocument}
-            />
+          {renderedTabs.has('documents') && (
+            <div className={activeTab === 'documents' ? 'block' : 'hidden'}>
+              <DocumentsTab 
+                patent={patent}
+                availability={documentAvailability}
+                loading={documentLoading}
+                availabilityLoading={availabilityLoading}
+                onCheckAvailability={checkDocumentAvailability}
+                onDownload={downloadDocument}
+              />
+            </div>
           )}
           
-          {activeTab === 'ai-analysis' && (
-            <AIAnalysisTab 
-              patent={patent} 
-              analysis={aiAnalysis}
-              loading={aiLoading}
-              error={aiError}
-              onGenerate={generateAIAnalysis}
-              pdfGenerating={pdfGenerating}
-              onGenerateMarketPDF={generateMarketAnalysisReport}
-              onGenerateBusinessPDF={generateBusinessInsightReport}
-            />
+          {renderedTabs.has('ai-analysis') && (
+            <div className={activeTab === 'ai-analysis' ? 'block' : 'hidden'}>
+              <AIAnalysisTab 
+                patent={patent} 
+                analysis={aiAnalysis}
+                loading={aiLoading}
+                error={aiError}
+                onGenerate={generateAIAnalysis}
+                pdfGenerating={pdfGenerating}
+                onGenerateMarketPDF={generateMarketAnalysisReport}
+                onGenerateBusinessPDF={generateBusinessInsightReport}
+              />
+            </div>
           )}
         </div>
       </div>
@@ -461,8 +674,8 @@ export default function PatentDetail() {
 }
 
 // Tab Components
-function SummaryTab({ patent }: { patent: KiprisPatentDetail }) {
-  const biblioInfo = patent.biblioSummaryInfoArray?.biblioSummaryInfo
+function SummaryTab({ patent }: { patent: KiprisPatentDetailItem }) {
+  const biblioInfo = patent.biblioSummaryInfo
   
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -536,7 +749,7 @@ function SummaryTab({ patent }: { patent: KiprisPatentDetail }) {
 }
 
 interface DocumentsTabProps {
-  patent: KiprisPatentDetail
+  patent: KiprisPatentDetailItem
   availability: Record<DocumentType, boolean>
   loading: Record<DocumentType, boolean>
   availabilityLoading: boolean
@@ -677,8 +890,8 @@ function DocumentsTab({
   )
 }
 
-function AbstractTab({ patent }: { patent: KiprisPatentDetail }) {
-  const abstractInfo = patent.abstractInfoArray?.abstractInfo
+function AbstractTab({ patent }: { patent: KiprisPatentDetailItem }) {
+  const abstractInfo = patent.abstractInfo
   
   return (
     <Card variant="default">
@@ -703,8 +916,8 @@ function AbstractTab({ patent }: { patent: KiprisPatentDetail }) {
   )
 }
 
-function ClaimsTab({ patent }: { patent: KiprisPatentDetail }) {
-  const claims = patent.claimInfoArray?.claimInfo || []
+function ClaimsTab({ patent }: { patent: KiprisPatentDetailItem }) {
+  const claims = patent.claimInfo || []
   
   return (
     <Card variant="default">
@@ -736,8 +949,8 @@ function ClaimsTab({ patent }: { patent: KiprisPatentDetail }) {
   )
 }
 
-function ApplicantTab({ patent }: { patent: KiprisPatentDetail }) {
-  const applicants = patent.applicantInfoArray?.applicantInfo || []
+function ApplicantTab({ patent }: { patent: KiprisPatentDetailItem }) {
+  const applicants = patent.applicantInfo || []
   
   return (
     <Card>
@@ -781,8 +994,8 @@ function ApplicantTab({ patent }: { patent: KiprisPatentDetail }) {
   )
 }
 
-function InventorTab({ patent }: { patent: KiprisPatentDetail }) {
-  const inventors = patent.inventorInfoArray?.inventorInfo || []
+function InventorTab({ patent }: { patent: KiprisPatentDetailItem }) {
+  const inventors = patent.inventorInfo || []
   
   return (
     <Card>
@@ -826,8 +1039,8 @@ function InventorTab({ patent }: { patent: KiprisPatentDetail }) {
   )
 }
 
-function IpcTab({ patent }: { patent: KiprisPatentDetail }) {
-  const ipcInfo = patent.ipcInfoArray?.ipcInfo || []
+function IpcTab({ patent }: { patent: KiprisPatentDetailItem }) {
+  const ipcInfo = patent.ipcInfo || []
   
   return (
     <Card>
@@ -861,8 +1074,8 @@ function IpcTab({ patent }: { patent: KiprisPatentDetail }) {
   )
 }
 
-function LegalTab({ patent }: { patent: KiprisPatentDetail }) {
-  const legalStatus = patent.legalStatusInfoArray?.legalStatusInfo || []
+function LegalTab({ patent }: { patent: KiprisPatentDetailItem }) {
+  const legalStatus = patent.legalStatusInfo || []
   
   return (
     <Card>
@@ -906,8 +1119,8 @@ function LegalTab({ patent }: { patent: KiprisPatentDetail }) {
   )
 }
 
-function FamilyTab({ patent }: { patent: KiprisPatentDetail }) {
-  const familyInfo = patent.familyInfoArray?.familyInfo || []
+function FamilyTab({ patent }: { patent: KiprisPatentDetailItem }) {
+  const familyInfo = patent.familyInfo || []
   
   return (
     <Card>
@@ -936,7 +1149,7 @@ function FamilyTab({ patent }: { patent: KiprisPatentDetail }) {
   )
 }
 
-function ImagesTab({ patent }: { patent: KiprisPatentDetail }) {
+function ImagesTab({ patent }: { patent: KiprisPatentDetailItem }) {
   const [imageLoading, setImageLoading] = useState(false)
   const [imageError, setImageError] = useState(false)
   const [showImageModal, setShowImageModal] = useState(false)
@@ -1009,7 +1222,7 @@ function ImagesTab({ patent }: { patent: KiprisPatentDetail }) {
               <div className="border border-secondary-200 dark:border-secondary-700 rounded-lg overflow-hidden">
                 <img 
                   src={imageInfo.path}
-                  alt={`${patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle || '특허'} 도면`}
+                  alt={`${patent.biblioSummaryInfo?.inventionTitle || '특허'} 도면`}
                   className="w-full h-64 object-contain bg-secondary-50 dark:bg-secondary-800"
                   onError={() => setImageError(true)}
                   onLoad={() => setImageError(false)}
@@ -1076,7 +1289,7 @@ function ImagesTab({ patent }: { patent: KiprisPatentDetail }) {
                 variant="outline" 
                 onClick={() => handleDownloadImage(
                   imageInfo.largePath || imageInfo.path, 
-                  `patent_${patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber}_drawing.jpg`
+                  `patent_${patent.biblioSummaryInfo?.applicationNumber}_drawing.jpg`
                 )}
                 disabled={imageLoading || !imageInfo.path}
                 aria-label="도면 다운로드"
@@ -1099,7 +1312,7 @@ function ImagesTab({ patent }: { patent: KiprisPatentDetail }) {
                   variant="outline" 
                   onClick={() => handleDownloadImage(
                     imageInfo.largePath, 
-                    `patent_${patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber}_drawing_hd.jpg`
+                    `patent_${patent.biblioSummaryInfo?.applicationNumber}_drawing_hd.jpg`
                   )}
                   disabled={imageLoading}
                   aria-label="고해상도 도면 다운로드"
@@ -1168,7 +1381,7 @@ function ImagesTab({ patent }: { patent: KiprisPatentDetail }) {
 }
 
 interface AIAnalysisTabProps {
-  patent: KiprisPatentDetail
+  patent: KiprisPatentDetailItem
   analysis: AIAnalysisReport | null
   loading: boolean
   error: string | null
@@ -1237,6 +1450,27 @@ function AIAnalysisTab({ patent, analysis, loading, error, onGenerate, pdfGenera
 
   if (!analysis) return null
 
+  // 새로운 API 응답 구조 처리
+  console.log('🔍 AI 분석 탭 - analysis 객체:', analysis)
+  console.log('🔍 AI 분석 탭 - analysis 타입:', typeof analysis)
+  console.log('🔍 AI 분석 탭 - analysis.analysis:', analysis.analysis)
+  console.log('🔍 AI 분석 탭 - analysis.sections:', analysis.sections)
+  
+  // 데이터 구조 확인
+  const hasDirectSections = analysis.sections && Array.isArray(analysis.sections)
+  const hasNestedAnalysis = analysis.analysis && analysis.analysis.sections && Array.isArray(analysis.analysis.sections)
+  const isNewFormat = hasNestedAnalysis || hasDirectSections
+  const analysisData = hasNestedAnalysis ? analysis.analysis : analysis
+  const analysisDate = analysis.analysisDate || analysis.generatedAt
+  const hasLegacyMarket = !!analysis.marketAnalysis && typeof analysis.marketAnalysis === 'object'
+  const hasLegacyBusiness = !!analysis.businessInsight && typeof analysis.businessInsight === 'object'
+  
+  console.log('🔍 AI 분석 탭 - hasDirectSections:', hasDirectSections)
+  console.log('🔍 AI 분석 탭 - hasNestedAnalysis:', hasNestedAnalysis)
+  console.log('🔍 AI 분석 탭 - isNewFormat:', isNewFormat)
+  console.log('🔍 AI 분석 탭 - analysisData:', analysisData)
+  console.log('🔍 AI 분석 탭 - analysisData.sections:', analysisData.sections)
+
   return (
     <div className="space-y-6">
       {/* 헤더 */}
@@ -1249,7 +1483,7 @@ function AIAnalysisTab({ patent, analysis, loading, error, onGenerate, pdfGenera
             </CardTitle>
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-500">
-                생성일: {new Date(analysis.generatedAt).toLocaleDateString()}
+                생성일: {analysisDate ? new Date(analysisDate).toLocaleDateString() : '방금 전'}
               </span>
               <Button onClick={onGenerate} variant="outline" size="sm">
                 재생성
@@ -1259,161 +1493,300 @@ function AIAnalysisTab({ patent, analysis, loading, error, onGenerate, pdfGenera
         </CardHeader>
       </Card>
 
-      {/* 시장분석 리포트 */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+      {/* 새로운 형식의 분석 결과 표시 */}
+      {isNewFormat && analysisData.sections ? (
+        <div className="space-y-6">
+          {/* 요약 */}
+          {analysisData.summary && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-green-500" />
+                  분석 요약
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                    {analysisData.summary}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 섹션별 분석 결과 */}
+          {analysisData.sections.map((section: any, index: number) => {
+            const colors = [
+              { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-600 dark:text-blue-400', icon: 'text-blue-500' },
+              { bg: 'bg-green-50 dark:bg-green-900/20', text: 'text-green-600 dark:text-green-400', icon: 'text-green-500' },
+              { bg: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-600 dark:text-purple-400', icon: 'text-purple-500' },
+              { bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-600 dark:text-orange-400', icon: 'text-orange-500' },
+              { bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-600 dark:text-red-400', icon: 'text-red-500' },
+            ]
+            const colorScheme = colors[index % colors.length]
+
+            return (
+              <Card key={index}>
+                <CardHeader>
+                  <CardTitle className={`flex items-center gap-2 ${colorScheme.text}`}>
+                    <TrendingUp className={`w-5 h-5 ${colorScheme.icon}`} />
+                    {section.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className={`${colorScheme.bg} p-4 rounded-lg`}>
+                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                      {section.content}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+
+          {/* 핵심 인사이트 */}
+          {analysisData.keyInsights && analysisData.keyInsights.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Eye className="w-5 h-5 text-yellow-500" />
+                  핵심 인사이트
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
+                  <ul className="space-y-2">
+                    {analysisData.keyInsights.map((insight: string, index: number) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <span className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></span>
+                        <span className="text-gray-700 dark:text-gray-300">{insight}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 신뢰도 표시 */}
+          {typeof analysisData.confidence === 'number' && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-indigo-500" />
+                  분석 신뢰도
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-lg">
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1">
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div 
+                          className="bg-indigo-500 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${(analysisData.confidence * 100)}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                    <span className="text-indigo-600 dark:text-indigo-400 font-semibold">
+                      {Math.round(analysisData.confidence * 100)}%
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      ) : hasLegacyMarket || hasLegacyBusiness ? (
+        /* 기존 형식의 분석 결과 표시 (하위 호환성) */
+        <div className="space-y-6">
+          {/* 시장분석 리포트 */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-green-500" />
+                  시장분석 리포트
+                </CardTitle>
+                <Button 
+                  onClick={onGenerateMarketPDF}
+                  disabled={pdfGenerating.market}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  {pdfGenerating.market ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      PDF 생성 중...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4" />
+                      PDF 다운로드
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div>
+                  <h4 className="font-semibold text-lg mb-3 text-blue-600 dark:text-blue-400">
+                    1. 시장 침투력
+                  </h4>
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                      {analysis.marketAnalysis?.marketPenetration || '데이터가 없습니다.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-lg mb-3 text-green-600 dark:text-green-400">
+                    2. 경쟁 구도
+                  </h4>
+                  <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                      {analysis.marketAnalysis?.competitiveLandscape || '데이터가 없습니다.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-lg mb-3 text-purple-600 dark:text-purple-400">
+                    3. 시장 성장 동력
+                  </h4>
+                  <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                      {analysis.marketAnalysis?.marketGrowthDrivers || '데이터가 없습니다.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-lg mb-3 text-red-600 dark:text-red-400">
+                    4. 위험 요소
+                  </h4>
+                  <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                      {analysis.marketAnalysis?.riskFactors || '데이터가 없습니다.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 비즈니스 인사이트 리포트 */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-yellow-500" />
+                  비즈니스 인사이트 리포트
+                </CardTitle>
+                <Button 
+                  onClick={onGenerateBusinessPDF}
+                  disabled={pdfGenerating.business}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  {pdfGenerating.business ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      PDF 생성 중...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4" />
+                      PDF 다운로드
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div>
+                  <h4 className="font-semibold text-lg mb-3 text-blue-600 dark:text-blue-400">
+                    1. 수익 모델
+                  </h4>
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                      {analysis.businessInsight?.revenueModel || '데이터가 없습니다.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-lg mb-3 text-green-600 dark:text-green-400">
+                    2. 로열티 마진
+                  </h4>
+                  <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                      {analysis.businessInsight?.royaltyMargin || '데이터가 없습니다.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-lg mb-3 text-purple-600 dark:text-purple-400">
+                    3. 신사업 기회
+                  </h4>
+                  <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                      {analysis.businessInsight?.newBusinessOpportunities || '데이터가 없습니다.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-lg mb-3 text-orange-600 dark:text-orange-400">
+                    4. 경쟁사 대응 전략
+                  </h4>
+                  <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
+                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                      {analysis.businessInsight?.competitorResponseStrategy || '데이터가 없습니다.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        /* 완전한 폴백: 구조가 맞지 않는 경우 rawAnalysis 또는 JSON을 표시 */
+        <Card>
+          <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-green-500" />
-              시장분석 리포트
+              <AlertCircle className="w-5 h-5 text-red-500" />
+              분석 결과 표시 불가
             </CardTitle>
-            <Button 
-              onClick={onGenerateMarketPDF}
-              disabled={pdfGenerating.market}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              {pdfGenerating.market ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  PDF 생성 중...
-                </>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-gray-700 dark:text-gray-300">
+                분석은 완료되었지만, 응답 데이터 구조가 예상과 달라 화면에 표시할 수 없습니다. 아래 원본 데이터를 참고하세요.
+              </p>
+              {analysis.rawAnalysis ? (
+                <div className="bg-gray-50 dark:bg-gray-900/30 p-4 rounded-lg whitespace-pre-line">
+                  {analysis.rawAnalysis}
+                </div>
               ) : (
-                <>
-                  <Download className="w-4 h-4" />
-                  PDF 다운로드
-                </>
+                <pre className="bg-gray-50 dark:bg-gray-900/30 p-4 rounded-lg overflow-auto text-sm">
+                  {JSON.stringify(analysis, null, 2)}
+                </pre>
               )}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            <div>
-              <h4 className="font-semibold text-lg mb-3 text-blue-600 dark:text-blue-400">
-                1. 시장 침투력
-              </h4>
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                  {analysis.marketAnalysis.marketPenetration}
-                </p>
+              <div className="flex gap-2">
+                <Button onClick={onGenerate} variant="outline" size="sm">재생성</Button>
               </div>
             </div>
-
-            <div>
-              <h4 className="font-semibold text-lg mb-3 text-green-600 dark:text-green-400">
-                2. 경쟁 구도
-              </h4>
-              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                  {analysis.marketAnalysis.competitiveLandscape}
-                </p>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-lg mb-3 text-purple-600 dark:text-purple-400">
-                3. 시장 성장 동력
-              </h4>
-              <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
-                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                  {analysis.marketAnalysis.marketGrowthDrivers}
-                </p>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-lg mb-3 text-red-600 dark:text-red-400">
-                4. 위험 요소
-              </h4>
-              <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
-                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                  {analysis.marketAnalysis.riskFactors}
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 비즈니스 인사이트 리포트 */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-yellow-500" />
-              비즈니스 인사이트 리포트
-            </CardTitle>
-            <Button 
-              onClick={onGenerateBusinessPDF}
-              disabled={pdfGenerating.business}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              {pdfGenerating.business ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  PDF 생성 중...
-                </>
-              ) : (
-                <>
-                  <Download className="w-4 h-4" />
-                  PDF 다운로드
-                </>
-              )}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            <div>
-              <h4 className="font-semibold text-lg mb-3 text-blue-600 dark:text-blue-400">
-                1. 수익 모델
-              </h4>
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                  {analysis.businessInsight.revenueModel}
-                </p>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-lg mb-3 text-green-600 dark:text-green-400">
-                2. 로열티 마진
-              </h4>
-              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                  {analysis.businessInsight.royaltyMargin}
-                </p>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-lg mb-3 text-purple-600 dark:text-purple-400">
-                3. 신사업 기회
-              </h4>
-              <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
-                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                  {analysis.businessInsight.newBusinessOpportunities}
-                </p>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-lg mb-3 text-orange-600 dark:text-orange-400">
-                4. 경쟁사 대응 전략
-              </h4>
-              <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
-                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                  {analysis.businessInsight.competitorResponseStrategy}
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

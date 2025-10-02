@@ -152,9 +152,10 @@ patent-ai/
 ### API 엔드포인트
 
 #### 특허 검색
-- `GET /api/patents/search` - 특허 검색
-- `GET /api/patents/:id` - 특허 상세 정보
-- `POST /api/patents/analyze` - AI 분석 요청
+- `POST /api/search` - 특허 검색 (KIPRIS API 통합)
+- `GET /api/detail` - 특허 상세 정보
+- `POST /api/ai-analysis` - AI 분석 요청
+- `GET /api/documents` - 특허 문서 다운로드
 
 #### 사용자 관리
 - `POST /api/auth/login` - 로그인

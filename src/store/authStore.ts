@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { User as SupabaseUser } from '@supabase/supabase-js'
 import { supabase, User } from '../lib/supabase'
+import { ActivityTracker } from '../lib/activityTracker'
 
 interface AuthState {
   user: SupabaseUser | null
@@ -64,6 +65,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                        profile?.role === 'super_admin'
 
         set({ user: data.user, profile, isAdmin })
+        
+        // 사용자 활동 추적 - 로그인
+        try {
+          const activityTracker = new ActivityTracker()
+          activityTracker.setUserId(data.user.id)
+          await activityTracker.trackLogin({
+            email: data.user.email,
+            loginMethod: 'email',
+            userAgent: navigator.userAgent
+          })
+        } catch (error) {
+          console.error('로그인 활동 추적 오류:', error)
+          // 활동 추적 실패는 로그인 기능에 영향을 주지 않음
+        }
       }
 
       return {}
@@ -131,6 +146,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signOut: async () => {
+    const { user } = get()
+    
+    // 사용자 활동 추적 - 로그아웃
+    if (user) {
+      try {
+        const activityTracker = new ActivityTracker()
+        activityTracker.setUserId(user.id)
+        await activityTracker.trackLogout({
+          email: user.email,
+          sessionDuration: Date.now() - (user.created_at ? new Date(user.created_at).getTime() : Date.now())
+        })
+      } catch (error) {
+        console.error('로그아웃 활동 추적 오류:', error)
+        // 활동 추적 실패는 로그아웃 기능에 영향을 주지 않음
+      }
+    }
+    
     await supabase.auth.signOut()
     set({ user: null, profile: null, isAdmin: false })
   },
@@ -230,6 +262,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         .single()
 
       set({ profile })
+      
+      // 사용자 활동 추적 - 프로필 업데이트
+      try {
+        const activityTracker = new ActivityTracker()
+        activityTracker.setUserId(user.id)
+        await activityTracker.trackProfileUpdate({
+          updatedFields: Object.keys(updates),
+          profileData: {
+            name: profile?.name,
+            company: profile?.company,
+            email: profile?.email
+          }
+        })
+      } catch (error) {
+        console.error('프로필 업데이트 활동 추적 오류:', error)
+        // 활동 추적 실패는 프로필 업데이트 기능에 영향을 주지 않음
+      }
+      
       return {}
     } catch (error) {
       return { error: 'An unexpected error occurred' }

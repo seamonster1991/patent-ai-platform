@@ -1,4 +1,4 @@
-import { ButtonHTMLAttributes, ReactNode } from 'react'
+import { ButtonHTMLAttributes, ReactNode, cloneElement, isValidElement } from 'react'
 import { cn } from '../../lib/utils'
 import { LoadingSpinner } from './Loading'
 
@@ -51,20 +51,20 @@ export default function Button({
     ].join(' '),
     
     outline: [
-      'border-2 border-secondary-300 dark:border-secondary-600',
-      'bg-transparent hover:bg-secondary-50 dark:hover:bg-secondary-800',
+      'bg-transparent hover:bg-secondary-50 active:bg-secondary-100',
+      'dark:hover:bg-secondary-800 dark:active:bg-secondary-700',
       'text-secondary-700 dark:text-secondary-300',
-      'hover:text-secondary-900 dark:hover:text-white',
-      'focus-visible:ring-secondary-500 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900',
-      'active:bg-secondary-100 dark:active:bg-secondary-700'
+      'border border-secondary-300 dark:border-secondary-600',
+      'hover:border-secondary-400 dark:hover:border-secondary-500',
+      'focus-visible:ring-secondary-500 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900'
     ].join(' '),
     
     ghost: [
-      'bg-transparent hover:bg-secondary-100 dark:hover:bg-secondary-800',
+      'bg-transparent hover:bg-secondary-100 active:bg-secondary-200',
+      'dark:hover:bg-secondary-800 dark:active:bg-secondary-700',
       'text-secondary-700 dark:text-secondary-300',
-      'hover:text-secondary-900 dark:hover:text-white',
-      'focus-visible:ring-secondary-500 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900',
-      'active:bg-secondary-200 dark:active:bg-secondary-700'
+      'border border-transparent',
+      'focus-visible:ring-secondary-500 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900'
     ].join(' '),
     
     danger: [
@@ -91,22 +91,35 @@ export default function Button({
       'border border-transparent'
     ].join(' ')
   }
-  
+
   const sizeClasses = {
-    sm: 'px-3 py-2 text-sm min-h-[36px]',
-    md: 'px-4 py-2.5 text-sm min-h-[44px]',
-    lg: 'px-6 py-3 text-base min-h-[48px]',
-    xl: 'px-8 py-4 text-lg min-h-[52px]'
+    sm: 'px-3 py-1.5 text-sm gap-1.5',
+    md: 'px-4 py-2 text-sm gap-2',
+    lg: 'px-6 py-2.5 text-base gap-2',
+    xl: 'px-8 py-3 text-lg gap-3'
+  }
+
+  const buttonClasses = cn(
+    baseClasses,
+    variantClasses[variant],
+    sizeClasses[size],
+    className
+  )
+
+  // asChild가 true이면 children을 그대로 렌더링하되, 스타일을 적용
+  if (asChild && isValidElement(children)) {
+    return cloneElement(children, {
+      className: cn(buttonClasses, children.props.className),
+      disabled: disabled || loading,
+      'aria-disabled': disabled || loading,
+      ...props,
+      ...children.props
+    })
   }
 
   return (
     <button
-      className={cn(
-        baseClasses,
-        variantClasses[variant],
-        sizeClasses[size],
-        className
-      )}
+      className={buttonClasses}
       disabled={disabled || loading}
       aria-disabled={disabled || loading}
       {...props}

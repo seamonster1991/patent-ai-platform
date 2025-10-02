@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Card, { CardContent, CardDescription, CardHeader, CardTitle } from '../components/UI/Card'
 import Button from '../components/UI/Button'
 import { 
@@ -45,11 +46,16 @@ export default function Dashboard() {
   })
   const { user, profile } = useAuthStore()
   const { searchHistory, reports, loadSearchHistory, loadReports } = useSearchStore()
-
+  const navigate = useNavigate()
+  
   useEffect(() => {
     const loadData = async () => {
       if (!user) {
+        console.log('🔍 [Dashboard] 사용자가 로그인되지 않음')
         setLoading(false)
+        setError('로그인이 필요합니다.')
+        // 로그인 페이지로 리다이렉트
+        setTimeout(() => navigate('/login'), 2000)
         return
       }
       
@@ -63,31 +69,86 @@ export default function Dashboard() {
           loadReports()
         ])
         
+        // 디버깅: 사용자 정보 확인
+        console.log('🔍 [Dashboard] 사용자 정보:', { 
+          user, 
+          userId: user?.id, 
+          email: user?.email,
+          userType: typeof user?.id,
+          userIdLength: user?.id?.length 
+        })
+        
+        // 사용자 ID 존재 여부 확인
+        if (!user.id) {
+          console.error('❌ [Dashboard] 사용자 ID가 없음')
+          setError('사용자 정보가 올바르지 않습니다. 다시 로그인해주세요.')
+          setTimeout(() => navigate('/login'), 2000)
+          return
+        }
+        
+        // UUID 형식 검증
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        const isValidUUID = uuidRegex.test(user.id);
+        console.log('🔍 [Dashboard] UUID 검증:', { userId: user.id, isValidUUID })
+        
+        if (!isValidUUID) {
+          console.error('❌ [Dashboard] 잘못된 UUID 형식:', user.id)
+          setError('사용자 ID 형식이 올바르지 않습니다. 다시 로그인해주세요.')
+          setTimeout(() => navigate('/login'), 2000)
+          return
+        }
+        
         // 사용자 통계 데이터 가져오기
-        const response = await fetch(`http://localhost:3001/api/users/stats/${user.id}`, {
+        const apiUrl = `/api/users/stats?userId=${encodeURIComponent(user.id)}&period=all`
+        console.log('🔍 [Dashboard] API 호출 URL:', apiUrl)
+        
+        const response = await fetch(apiUrl, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
         })
         
+        console.log('🔍 [Dashboard] API 응답 상태:', response.status, response.statusText)
+        
         if (!response.ok) {
-          console.error(`HTTP error! status: ${response.status}`)
-          setError('데이터를 불러오는데 실패했습니다.')
+          const errorText = await response.text()
+          console.error(`HTTP error! status: ${response.status}, response: ${errorText}`)
+          
+          if (response.status === 400) {
+            setError('사용자 정보가 올바르지 않습니다. 다시 로그인해주세요.')
+          } else {
+            setError('데이터를 불러오는데 실패했습니다.')
+          }
           return
         }
         
         const data = await response.json()
+        console.log('🔍 [Dashboard] API 응답 데이터:', data)
         
         if (data.success) {
-          setUserStats(data.data)
+          // API 응답 구조에 맞게 데이터 매핑
+          const newStats = {
+            totalSearches: data.data.summary?.search_count || 0,
+            reportsGenerated: data.data.summary?.ai_analysis_count || 0,
+            monthlyActivity: data.data.daily_activities?.reduce((sum: number, day: any) => sum + day.count, 0) || 0,
+            savedPatents: data.data.summary?.patent_view_count || 0,
+            totalLogins: data.data.activity_breakdown?.login || 0,
+            engagementScore: Math.min(100, Math.round((data.data.summary?.total_activities || 0) / 10)) // 간단한 참여도 계산
+          }
+          setUserStats(newStats)
+          console.log('🔍 [Dashboard] 사용자 통계 업데이트 완료:', newStats)
         } else {
           console.error('API returned error:', data.error)
           setError('데이터를 불러오는데 실패했습니다.')
         }
       } catch (error) {
         console.error('Failed to load dashboard data:', error)
-        setError('서버 연결에 실패했습니다.')
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+          setError('네트워크 연결을 확인해주세요.')
+        } else {
+          setError('서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.')
+        }
       } finally {
         setLoading(false)
       }
@@ -249,6 +310,13 @@ export default function Dashboard() {
     )
   }
 
+  const handleRetry = () => {
+    setError(null)
+    setLoading(true)
+    // loadData 함수를 다시 호출하기 위해 useEffect 의존성을 트리거
+    window.location.reload()
+  }
+
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -257,7 +325,7 @@ export default function Dashboard() {
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">데이터 로드 실패</h3>
           <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
           <Button 
-            onClick={() => window.location.reload()}
+            onClick={handleRetry}
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
             다시 시도
@@ -423,6 +491,104 @@ export default function Dashboard() {
                     <p className="text-gray-500 dark:text-gray-400">검색 분야 데이터가 없습니다</p>
                     <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">다양한 분야의 특허를 검색해보세요!</p>
                   </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* 상세 활동 통계 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* 활동 유형별 통계 */}
+          <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+            <CardHeader>
+              <CardTitle className="text-gray-900 dark:text-white flex items-center gap-2">
+                <Activity className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                활동 유형별 통계
+              </CardTitle>
+              <CardDescription className="text-gray-600 dark:text-gray-300">
+                각 활동 유형별 사용 현황
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-blue-50 dark:bg-blue-950/50">
+                  <div className="flex items-center gap-3">
+                    <Search className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">검색</span>
+                  </div>
+                  <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                    {userStats.totalSearches}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-950/50">
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">특허 조회</span>
+                  </div>
+                  <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                    {userStats.savedPatents}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-purple-50 dark:bg-purple-950/50">
+                  <div className="flex items-center gap-3">
+                    <BarChart3 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">AI 분석</span>
+                  </div>
+                  <span className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                    {userStats.reportsGenerated}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-orange-50 dark:bg-orange-950/50">
+                  <div className="flex items-center gap-3">
+                    <Users className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">로그인</span>
+                  </div>
+                  <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                    {userStats.totalLogins}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 최근 활동 타임라인 */}
+          <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+            <CardHeader>
+              <CardTitle className="text-gray-900 dark:text-white flex items-center gap-2">
+                <Clock className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                최근 활동 타임라인
+              </CardTitle>
+              <CardDescription className="text-gray-600 dark:text-gray-300">
+                최근 7일간의 활동 내역
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {recentActivity.length > 0 ? (
+                <div className="space-y-4">
+                  {recentActivity.map((activity, index) => (
+                    <div key={index} className="flex items-center gap-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                      <div className={cn("p-2 rounded-lg", 
+                        activity.type === 'search' ? "bg-blue-100 dark:bg-blue-900/50" : "bg-green-100 dark:bg-green-900/50"
+                      )}>
+                        <activity.icon className={cn("h-4 w-4", activity.color)} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          {activity.title}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {activity.time}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Clock className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400">최근 활동이 없습니다</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">특허 검색을 시작해보세요!</p>
                 </div>
               )}
             </CardContent>

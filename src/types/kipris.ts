@@ -113,6 +113,45 @@ export interface RndInfo {
   rndTaskNumber: string;
 }
 
+// 새로운 API 응답 구조에 맞는 타입 정의
+export interface KiprisPatentDetailItem {
+  biblioSummaryInfo: BiblioSummaryInfo | null;
+  ipcInfo: IpcInfo[];
+  applicantInfo: ApplicantInfo[];
+  inventorInfo: InventorInfo[];
+  abstractInfo: AbstractInfo | null;
+  claimInfo: ClaimInfo[];
+  agentInfo: AgentInfo[];
+  priorityInfo: PriorityInfo[];
+  familyInfo: FamilyInfo[];
+  internationalInfo: InternationalInfo[];
+  designatedStateInfo: DesignatedStateInfo[];
+  priorArtDocumentsInfo: PriorArtDocumentsInfo[];
+  legalStatusInfo: LegalStatusInfo[];
+  imagePathInfo: ImagePathInfo | null;
+  rndInfo: RndInfo[];
+}
+
+export interface KiprisDetailApiResponse {
+  header: {
+    successYN: string;
+    resultCode: string;
+    resultMsg: string;
+  };
+  body: {
+    item: KiprisPatentDetailItem;
+  };
+}
+
+export interface KiprisDetailResponse {
+  success: boolean;
+  data?: KiprisDetailApiResponse;
+  error?: string;
+  message?: string;
+  errorCode?: string;
+}
+
+// 기존 타입 (하위 호환성을 위해 유지)
 export interface KiprisPatentDetail {
   biblioSummaryInfoArray: {
     biblioSummaryInfo: BiblioSummaryInfo;
@@ -159,20 +198,6 @@ export interface KiprisPatentDetail {
   };
 }
 
-export interface KiprisDetailResponse {
-  header: {
-    requestMsgID: string;
-    responseTime: string;
-    responseMsgID: string;
-    successYN: string;
-    resultCode: string;
-    resultMsg: string;
-  };
-  body: {
-    item: KiprisPatentDetail;
-  };
-}
-
 // AI 분석 리포트 관련 타입 정의
 export interface MarketAnalysisReport {
   marketPenetration: string; // 시장 침투력
@@ -188,12 +213,36 @@ export interface BusinessInsightReport {
   competitorResponseStrategy: string; // 경쟁사 대응 전략
 }
 
+// 새로운 AI 분석 섹션 타입
+export interface AIAnalysisSection {
+  title: string;
+  content: string;
+}
+
+// 새로운 AI 분석 구조 타입
+export interface AIAnalysisStructure {
+  summary: string;
+  sections: AIAnalysisSection[];
+  analysisType: string;
+  confidence: number;
+  keyInsights: string[];
+}
+
+// 업데이트된 AI 분석 리포트 타입 (새로운 API 응답 구조)
 export interface AIAnalysisReport {
-  applicationNumber: string;
-  inventionTitle: string;
-  marketAnalysis: MarketAnalysisReport;
-  businessInsight: BusinessInsightReport;
-  generatedAt: string;
+  analysisType: string;
+  patentNumber: string;
+  patentTitle: string;
+  analysisDate: string;
+  analysis: AIAnalysisStructure;
+  rawAnalysis: string;
+  
+  // 레거시 필드들 (하위 호환성을 위해 선택적으로 유지)
+  applicationNumber?: string;
+  inventionTitle?: string;
+  marketAnalysis?: MarketAnalysisReport;
+  businessInsight?: BusinessInsightReport;
+  generatedAt?: string;
   userId?: string;
 }
 

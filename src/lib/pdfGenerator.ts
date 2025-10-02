@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
-import { KiprisPatentDetail, MarketAnalysisReport, BusinessInsightReport } from '../types/kipris'
+import { KiprisPatentDetail, KiprisPatentDetailItem, MarketAnalysisReport, BusinessInsightReport } from '../types/kipris'
 
 // 한글 폰트 지원을 위한 설정
 const addKoreanFont = (doc: jsPDF) => {
@@ -9,7 +9,7 @@ const addKoreanFont = (doc: jsPDF) => {
 }
 
 // 공통 PDF 헤더 생성
-const addPDFHeader = (doc: jsPDF, title: string, patent: KiprisPatentDetail) => {
+const addPDFHeader = (doc: jsPDF, title: string, patent: KiprisPatentDetailItem) => {
   const pageWidth = doc.internal.pageSize.getWidth()
   
   // 헤더 배경
@@ -29,8 +29,8 @@ const addPDFHeader = (doc: jsPDF, title: string, patent: KiprisPatentDetail) => 
   // 특허 정보
   doc.setTextColor(0, 0, 0)
   doc.setFontSize(14)
-  const patentTitle = patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle || '제목 없음'
-  const applicationNumber = patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber || 'N/A'
+  const patentTitle = patent.biblioSummaryInfo?.inventionTitle || '제목 없음'
+  const applicationNumber = patent.biblioSummaryInfo?.applicationNumber || 'N/A'
   
   doc.text(`특허명: ${patentTitle.substring(0, 50)}${patentTitle.length > 50 ? '...' : ''}`, 20, 60)
   doc.text(`출원번호: ${applicationNumber}`, 20, 75)
@@ -80,7 +80,7 @@ const addTextBlock = (doc: jsPDF, text: string, x: number, y: number, maxWidth: 
 
 // 시장 분석 리포트 PDF 생성
 export const generateMarketAnalysisPDF = async (
-  patent: KiprisPatentDetail,
+  patent: KiprisPatentDetailItem,
   analysis: MarketAnalysisReport
 ): Promise<void> => {
   const doc = new jsPDF()
@@ -114,7 +114,7 @@ export const generateMarketAnalysisPDF = async (
   // 1. 개요
   currentY = addSectionTitle(doc, '1. 개요', currentY)
   currentY = addTextBlock(doc, 
-    `본 리포트는 "${patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle || '특허'}"에 대한 시장 분석을 제공합니다. ` +
+    `본 리포트는 "${patent.biblioSummaryInfo?.inventionTitle || '특허'}"에 대한 시장 분석을 제공합니다. ` +
     `AI 기반 분석을 통해 시장 기회와 위험 요소를 평가하였습니다.`,
     20, currentY, 170
   )
@@ -167,13 +167,13 @@ export const generateMarketAnalysisPDF = async (
   }
   
   // PDF 다운로드
-  const fileName = `시장분석리포트_${patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber || 'unknown'}_${new Date().toISOString().split('T')[0]}.pdf`
+  const fileName = `시장분석리포트_${patent.biblioSummaryInfo?.applicationNumber || 'unknown'}_${new Date().toISOString().split('T')[0]}.pdf`
   doc.save(fileName)
 }
 
 // 비즈니스 인사이트 리포트 PDF 생성
 export const generateBusinessInsightPDF = async (
-  patent: KiprisPatentDetail,
+  patent: KiprisPatentDetailItem,
   analysis: BusinessInsightReport
 ): Promise<void> => {
   const doc = new jsPDF()
@@ -207,7 +207,7 @@ export const generateBusinessInsightPDF = async (
   // 1. 개요
   currentY = addSectionTitle(doc, '1. 개요', currentY)
   currentY = addTextBlock(doc, 
-    `본 리포트는 "${patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle || '특허'}"의 비즈니스 가치와 ` +
+    `본 리포트는 "${patent.biblioSummaryInfo?.inventionTitle || '특허'}"의 비즈니스 가치와 ` +
     `상업화 전략에 대한 인사이트를 제공합니다.`,
     20, currentY, 170
   )
@@ -260,7 +260,7 @@ export const generateBusinessInsightPDF = async (
   }
   
   // PDF 다운로드
-  const fileName = `비즈니스인사이트리포트_${patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber || 'unknown'}_${new Date().toISOString().split('T')[0]}.pdf`
+  const fileName = `비즈니스인사이트리포트_${patent.biblioSummaryInfo?.applicationNumber || 'unknown'}_${new Date().toISOString().split('T')[0]}.pdf`
   doc.save(fileName)
 }
 

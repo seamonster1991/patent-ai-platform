@@ -1,6 +1,7 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuthStore } from '../../store/authStore';
+import React, { useEffect, useRef } from 'react';
+import { Navigate, useLocation } from 'react-router-dom'
+import { useAuthStore } from '../../store/authStore'
+import { LoadingPage } from '../UI/Loading';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -8,25 +9,28 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuthStore();
+  const location = useLocation();
+  const hasLoggedRef = useRef<string>('');
 
-  // Show loading while checking authentication status
+  // 임시 디버그 로깅: 라우팅 가드 상태 추적
+  useEffect(() => {
+    const key = `${location.pathname}|${loading ? 'loading' : 'ready'}|${user ? 'authed' : 'guest'}`;
+    if (hasLoggedRef.current !== key) {
+      hasLoggedRef.current = key;
+      console.log('[ProtectedRoute] path=', location.pathname, 'state=', { loading, authed: !!user });
+    }
+  }, [location.pathname, loading, user]);
+
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">로그인 상태를 확인하는 중...</p>
-        </div>
-      </div>
-    );
+    return <LoadingPage />
   }
 
-  // Redirect to login if not authenticated
   if (!user) {
-    return <Navigate to="/login" replace />;
+    console.warn('[ProtectedRoute] 인증되지 않음. 로그인으로 리다이렉트:', location.pathname);
+    return <Navigate to="/login" replace state={{ from: location }} />
   }
 
-  return <>{children}</>;
+  return <>{children}</>
 };
 
 export default ProtectedRoute;

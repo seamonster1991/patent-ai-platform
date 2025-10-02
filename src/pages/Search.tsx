@@ -7,6 +7,7 @@ import Input from '../components/UI/Input'
 import Card, { CardContent, CardHeader, CardTitle } from '../components/UI/Card'
 import Loading from '../components/UI/Loading'
 import { useSearchStore } from '../store/searchStore'
+import { useAuthStore } from '../store/authStore'
 import { formatDate, truncateText, cn } from '../lib/utils'
 import { toast } from 'sonner'
 
@@ -17,6 +18,7 @@ export default function Search() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   
+  const { user } = useAuthStore()
   const {
     filters,
     results,
@@ -29,6 +31,9 @@ export default function Search() {
     resetFilters,
     loadSearchState
   } = useSearchStore()
+
+  console.log('🔐 Search 페이지 - 사용자 인증 상태:', { user: !!user, userEmail: user?.email })
+  console.log('🔐 Search 페이지 - 전체 사용자 객체:', user)
 
   useEffect(() => {
     // URL 파라미터에서 검색어 확인
@@ -547,7 +552,14 @@ export default function Search() {
 
             {/* Results List */}
             <div className="space-y-6 mb-8">
-              {results.map((patent, index) => (
+              {results.map((patent, index) => {
+                console.log('🔍 특허 데이터 렌더링:', { 
+                  index, 
+                  applicationNumber: patent.applicationNumber, 
+                  title: patent.inventionTitle,
+                  hasApplicationNumber: !!patent.applicationNumber 
+                });
+                return (
                 <Card 
                   key={patent.indexNo || index} 
                   variant="default"
@@ -581,7 +593,30 @@ export default function Search() {
                         <h3 className="text-lg font-semibold">
                           <Link 
                             to={`/patent/${patent.applicationNumber}`}
+                            onClick={(e) => {
+                              console.log('🔗 특허 제목 링크 클릭됨:', patent.applicationNumber);
+                              console.log('🔗 특허 제목 클릭 이벤트:', e);
+                              console.log('🔗 특허 제목 Link to 경로:', `/patent/${patent.applicationNumber}`);
+                              console.log('🔗 특허 제목 현재 URL:', window.location.href);
+                              
+                              // 네비게이션이 작동하지 않는 경우를 위한 대체 방법
+                              if (!e.defaultPrevented) {
+                                console.log('🔗 특허 제목 기본 Link 네비게이션 시도 중...');
+                              }
+                            }}
+                            onMouseDown={() => {
+                              console.log('🖱️ 특허 제목 링크 마우스 다운:', patent.applicationNumber);
+                              console.log('🖱️ 특허 제목 마우스 다운 시 URL:', window.location.href);
+                            }}
+                            onMouseEnter={() => {
+                              console.log('🖱️ 특허 제목 링크 마우스 진입:', patent.applicationNumber);
+                              console.log('🖱️ 특허 제목 마우스 진입 시 Link href:', `/patent/${patent.applicationNumber}`);
+                            }}
+                            onMouseLeave={() => {
+                              console.log('🖱️ 특허 제목 링크 마우스 떠남:', patent.applicationNumber);
+                            }}
                             className={cn(
+                              "block cursor-pointer",
                               "text-primary-700 dark:text-primary-300",
                               "hover:text-primary-800 dark:hover:text-primary-200",
                               "visited:text-purple-700 dark:visited:text-purple-300",
@@ -645,7 +680,26 @@ export default function Search() {
                           variant="outline"
                           asChild
                         >
-                          <Link to={`/patent/${patent.applicationNumber}`}>
+                          <Link 
+                            to={`/patent/${patent.applicationNumber}`}
+                            onClick={(e) => {
+                              console.log('🔗 상세보기 버튼 클릭됨:', patent.applicationNumber);
+                              console.log('🔗 상세보기 클릭 이벤트:', e);
+                              console.log('🔗 상세보기 Link to 경로:', `/patent/${patent.applicationNumber}`);
+                              console.log('🔗 상세보기 현재 URL:', window.location.href);
+                              
+                              // 네비게이션이 작동하지 않는 경우를 위한 대체 방법
+                              if (!e.defaultPrevented) {
+                                console.log('🔗 상세보기 기본 Link 네비게이션 시도 중...');
+                              }
+                            }}
+                            onMouseEnter={() => {
+                              console.log('🖱️ 상세보기 버튼 마우스 진입:', patent.applicationNumber);
+                            }}
+                            onMouseLeave={() => {
+                              console.log('🖱️ 상세보기 버튼 마우스 떠남:', patent.applicationNumber);
+                            }}
+                          >
                             <FileText className="w-4 h-4 mr-1" />
                             상세보기
                           </Link>
@@ -654,7 +708,8 @@ export default function Search() {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              );
+              })}
             </div>
 
             {/* Pagination */}

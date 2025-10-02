@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { PatentSearchResult, SearchHistory, Report } from '../lib/supabase'
 import { useAuthStore } from './authStore'
+import { ActivityTracker } from '../lib/activityTracker'
 
 interface SearchFilters {
   // 기본 검색 필드
@@ -226,7 +227,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       }
 
       // Call API to search patents via KIPRIS
-      const response = await fetch('/api/kipris-search', {
+      const response = await fetch('/api/search', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -285,6 +286,27 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       
       // 검색 기록을 데이터베이스에 저장
       get().saveSearchToHistory(filters.word || filters.keyword || '', finalTotalCount)
+
+      // 사용자 활동 추적 - 검색 실행
+      try {
+        const { user } = useAuthStore.getState()
+        if (user) {
+          const activityTracker = new ActivityTracker()
+          activityTracker.setUserId(user.id)
+          await activityTracker.trackSearch(
+            filters.word || filters.keyword || '',
+            finalTotalCount,
+            {
+              page: page,
+              filters: filters,
+              searchType: 'patent_search'
+            }
+          )
+        }
+      } catch (error) {
+        console.error('활동 추적 오류:', error)
+        // 활동 추적 실패는 검색 기능에 영향을 주지 않음
+      }
 
       return {}
     } catch (error) {
