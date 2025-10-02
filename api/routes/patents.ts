@@ -438,10 +438,25 @@ router.post('/kipris-search', logSearchActivity, async (req: Request, res: Respo
     // KIPRIS API 서비스 키 (환경변수에서 가져오기)
     const serviceKey = process.env.KIPRIS_SERVICE_KEY || process.env.KIPRIS_API_KEY || 'your_service_key_here';
     
+    // 환경변수 검증
+    if (!serviceKey || serviceKey === 'your_service_key_here') {
+      console.error('❌ KIPRIS API 키가 설정되지 않았습니다.');
+      return res.status(500).json({
+        success: false,
+        message: 'KIPRIS API 키가 설정되지 않았습니다. 관리자에게 문의하세요.',
+        error: 'KIPRIS_API_KEY not configured'
+      });
+    }
+    
     console.log('🔍 KIPRIS API 검색 요청:', {
       searchParams: JSON.stringify(searchParams, null, 2),
       serviceKeyExists: serviceKey !== 'your_service_key_here',
-      serviceKeyLength: serviceKey.length
+      serviceKeyLength: serviceKey.length,
+      envVars: {
+        KIPRIS_SERVICE_KEY: !!process.env.KIPRIS_SERVICE_KEY,
+        KIPRIS_API_KEY: !!process.env.KIPRIS_API_KEY,
+        NODE_ENV: process.env.NODE_ENV
+      }
     });
     
     // KIPRIS API URL
@@ -501,14 +516,36 @@ router.post('/kipris-search', logSearchActivity, async (req: Request, res: Respo
     const fullUrl = `${kiprisApiUrl}?${params.toString()}`;
     console.log('📡 KIPRIS API 호출 URL:', fullUrl.replace(serviceKey, '[SERVICE_KEY]'));
     
-    // KIPRIS API 호출
-    const response = await axios.get(fullUrl, {
-      timeout: 30000, // 30초 타임아웃
-      headers: {
-        'Accept': 'application/xml',
-        'User-Agent': 'Patent-AI-Application'
+    // KIPRIS API 호출 (재시도 로직 포함)
+    let response;
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    while (retryCount < maxRetries) {
+      try {
+        response = await axios.get(fullUrl, {
+          timeout: 30000, // 30초 타임아웃
+          headers: {
+            'Accept': 'application/xml',
+            'User-Agent': 'Patent-AI-Application'
+          },
+          // 추가 설정으로 연결 안정성 향상
+          maxRedirects: 5,
+          validateStatus: (status) => status < 500 // 5xx 에러만 재시도
+        });
+        break; // 성공하면 루프 종료
+      } catch (error: any) {
+        retryCount++;
+        console.log(`🔄 KIPRIS API 호출 재시도 ${retryCount}/${maxRetries}:`, error.message);
+        
+        if (retryCount >= maxRetries) {
+          throw error; // 최대 재시도 횟수 도달 시 에러 발생
+        }
+        
+        // 재시도 전 잠시 대기 (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
       }
-    });
+    }
     
     console.log('✅ KIPRIS API 응답 상태:', response.status, response.statusText);
     

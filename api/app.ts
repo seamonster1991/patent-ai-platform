@@ -19,8 +19,8 @@ import userRoutes from './routes/users.js'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// load env
-dotenv.config()
+// load env from project root
+dotenv.config({ path: path.join(__dirname, '..', '.env') })
 
 const app: express.Application = express()
 
