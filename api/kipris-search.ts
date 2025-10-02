@@ -1,7 +1,7 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import axios from 'axios';
-import { parseStringPromise } from 'xml2js';
-import { createClient } from '@supabase/supabase-js';
+const { VercelRequest, VercelResponse } = require('@vercel/node');
+const axios = require('axios');
+const { parseStringPromise } = require('xml2js');
+const { createClient } = require('@supabase/supabase-js');
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -30,7 +30,7 @@ async function logUserActivity(userId: string, activityType: string, details: an
   }
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = async function handler(req: VercelRequest, res: VercelResponse) {
   console.log('API handler called with method:', req.method);
   console.log('Environment variables check:', {
     hasKiprisKey: !!process.env.KIPRIS_API_KEY,

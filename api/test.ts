@@ -1,14 +1,35 @@
-import express from 'express';
+const { VercelRequest, VercelResponse } = require('@vercel/node');
 
-const app = express();
-const PORT = process.env.PORT || 3001;
+module.exports = async function handler(req: VercelRequest, res: VercelResponse) {
+  console.log('Test API called');
+  
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-app.use(express.json());
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
-app.get('/test', (req, res) => {
-  res.json({ message: 'Test endpoint working!' });
-});
-
-app.listen(PORT, () => {
-  console.log(`Test server running on port ${PORT}`);
-});
+  try {
+    return res.status(200).json({
+      success: true,
+      message: 'Test API is working',
+      method: req.method,
+      body: req.body,
+      env: {
+        hasKiprisKey: !!process.env.KIPRIS_API_KEY,
+        hasSupabaseUrl: !!process.env.SUPABASE_URL,
+        hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+      }
+    });
+  } catch (error: any) {
+    console.error('Test API Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Test API failed',
+      error: error.message
+    });
+  }
+}
