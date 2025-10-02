@@ -9,9 +9,9 @@ import {
   LogOut,
   Shield,
   Bell,
-  Search,
   Settings,
-  ChevronDown
+  ChevronDown,
+  Home
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 
@@ -33,19 +33,25 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   const navigation = [
     {
+      name: '홈',
+      href: '/admin',
+      icon: Home,
+      current: location.pathname === '/admin'
+    },
+    {
       name: '대시보드',
       href: '/admin/dashboard',
       icon: LayoutDashboard,
-      current: location.pathname === '/admin/dashboard' || location.pathname === '/admin'
+      current: location.pathname === '/admin/dashboard'
     },
     {
-      name: '사용자 관리',
+      name: '사용자관리',
       href: '/admin/users',
       icon: Users,
       current: location.pathname === '/admin/users'
     },
     {
-      name: '사용 통계',
+      name: '사용량 통계',
       href: '/admin/statistics',
       icon: BarChart3,
       current: location.pathname === '/admin/statistics'
@@ -148,19 +154,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               <Menu className="w-6 h-6" />
             </button>
 
-            {/* Search bar */}
-            <div className="flex-1 max-w-lg mx-4">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-slate-400" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="검색..."
-                  className="block w-full pl-10 pr-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
+            {/* Empty space for layout balance */}
+            <div className="flex-1"></div>
 
             {/* Right side */}
             <div className="flex items-center space-x-4">

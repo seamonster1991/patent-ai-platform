@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { User, Mail, Building, Calendar, Shield, Bell, Download, Trash2, Save } from 'lucide-react'
 import Layout from '../components/Layout/Layout'
 import Button from '../components/UI/Button'
@@ -22,6 +22,18 @@ export default function Profile() {
     push: false,
     marketing: false
   })
+
+  // Update formData when profile is loaded
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        name: profile.name || '',
+        company: profile.company || '',
+        phone: profile.phone || '',
+        bio: profile.bio || ''
+      })
+    }
+  }, [profile])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

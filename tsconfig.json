@@ -31,10 +31,19 @@
     "types": [
       "node",
       "express"
+    ],
+    "typeRoots": [
+      "./node_modules/@types",
+      "./api/types"
     ]
   },
   "include": [
     "src",
     "api"
+  ],
+  "exclude": [
+    "supabase/functions/**/*",
+    "src/pages/Admin/backups/**/*",
+    "api/routes/*_backup_*.ts"
   ]
 }

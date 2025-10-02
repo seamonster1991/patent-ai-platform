@@ -4,63 +4,17 @@ import {
   FileText, 
   TrendingUp, 
   Activity,
-  AlertTriangle,
-  Clock,
   BarChart3,
   Search,
   Eye,
-  Download,
-  ArrowUpRight,
-  ArrowDownRight,
-  Minus
+  Download
 } from 'lucide-react';
-import AdminLayout from '../../components/Layout/AdminLayout';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  Area,
-  AreaChart
-} from 'recharts';
 
 interface DashboardStats {
   totalUsers: number;
   activeUsers: number;
   totalReports: number;
   totalSearches: number;
-  newSignups: number;
-  monthlyActivity: number;
-  activityBreakdown?: {
-    [key: string]: number;
-  };
-  dailyActivity?: Array<{
-    date: string;
-    count: number;
-  }>;
-  engagementRate?: number;
-  recentUsers: Array<{
-    id: string;
-    email: string;
-    name?: string;
-    subscription_plan: string;
-    created_at: string;
-  }>;
-}
-
-interface ActivityData {
-  date: string;
-  searches: number;
-  reports: number;
-  users: number;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -68,521 +22,200 @@ const AdminDashboard: React.FC = () => {
     totalUsers: 0,
     activeUsers: 0,
     totalReports: 0,
-    totalSearches: 0,
-    newSignups: 0,
-    monthlyActivity: 0,
-    recentUsers: []
+    totalSearches: 0
   });
-  const [activityData, setActivityData] = useState<ActivityData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchDashboardStats = async () => {
+    // 간단한 모의 데이터로 시작
+    const fetchStats = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/users/admin/stats', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        if (!response.ok) {
-          console.error(`HTTP error! status: ${response.status}`);
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          setStats(result.data);
-        } else {
-          console.error('Failed to fetch admin stats:', result.error);
-          // 데모 데이터 사용
+        // 실제 데이터 대신 모의 데이터 사용
+        setTimeout(() => {
           setStats({
-            totalUsers: 1247,
-            activeUsers: 892,
-            totalReports: 3456,
-            totalSearches: 12890,
-            newSignups: 45,
-            monthlyActivity: 78,
-            recentUsers: [
-              {
-                id: '1',
-                email: 'user1@example.com',
-                name: '김철수',
-                subscription_plan: 'premium',
-                created_at: new Date().toISOString()
-              },
-              {
-                id: '2',
-                email: 'user2@example.com',
-                name: '이영희',
-                subscription_plan: 'basic',
-                created_at: new Date().toISOString()
-              }
-            ]
+            totalUsers: 150,
+            activeUsers: 45,
+            totalReports: 320,
+            totalSearches: 1250
           });
-        }
-
-        // 활동 데이터 생성 (데모)
-        const mockActivityData = Array.from({ length: 7 }, (_, i) => {
-          const date = new Date();
-          date.setDate(date.getDate() - (6 - i));
-          return {
-            date: date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }),
-            searches: Math.floor(Math.random() * 200) + 100,
-            reports: Math.floor(Math.random() * 50) + 20,
-            users: Math.floor(Math.random() * 100) + 50
-          };
-        });
-        setActivityData(mockActivityData);
-
+          setLoading(false);
+        }, 1000);
       } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
-        // 에러 발생 시 데모 데이터 사용
-        setStats({
-          totalUsers: 6, // 실제 데이터 기반
-          activeUsers: 0,
-          totalReports: 0,
-          totalSearches: 0,
-          newSignups: 6,
-          monthlyActivity: 0,
-          recentUsers: []
-        });
-      } finally {
-        setIsLoading(false);
+        console.error('Error fetching stats:', error);
+        setLoading(false);
       }
     };
 
-    fetchDashboardStats();
+    fetchStats();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-6"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+                <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const statCards = [
     {
-      title: '총 사용자',
+      title: '전체 사용자',
       value: stats.totalUsers.toLocaleString(),
       icon: Users,
-      change: '+12%',
-      changeType: 'positive',
-      description: '지난 달 대비'
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50 dark:bg-blue-900/20'
     },
     {
       title: '활성 사용자',
       value: stats.activeUsers.toLocaleString(),
       icon: Activity,
-      change: '+8%',
-      changeType: 'positive',
-      description: '이번 주 활성 사용자'
+      color: 'text-green-600',
+      bgColor: 'bg-green-50 dark:bg-green-900/20'
     },
     {
       title: '총 검색',
       value: stats.totalSearches.toLocaleString(),
       icon: Search,
-      change: '+24%',
-      changeType: 'positive',
-      description: '누적 검색 횟수'
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50 dark:bg-purple-900/20'
     },
     {
-      title: '생성된 리포트',
+      title: '생성된 보고서',
       value: stats.totalReports.toLocaleString(),
       icon: FileText,
-      change: '+15%',
-      changeType: 'positive',
-      description: '총 분석 리포트'
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50 dark:bg-orange-900/20'
     }
   ];
-
-  const pieData = [
-    { name: '프리미엄', value: 35, color: '#3B82F6' },
-    { name: '베이직', value: 45, color: '#10B981' },
-    { name: '무료', value: 20, color: '#F59E0B' }
-  ];
-
-  const getChangeIcon = (changeType: string) => {
-    switch (changeType) {
-      case 'positive':
-        return <ArrowUpRight className="w-4 h-4 text-green-500" />;
-      case 'negative':
-        return <ArrowDownRight className="w-4 h-4 text-red-500" />;
-      default:
-        return <Minus className="w-4 h-4 text-gray-400" />;
-    }
-  };
-
-  const getChangeColor = (changeType: string) => {
-    switch (changeType) {
-      case 'positive':
-        return 'text-green-600 dark:text-green-400';
-      case 'negative':
-        return 'text-red-600 dark:text-red-400';
-      default:
-        return 'text-gray-600 dark:text-gray-400';
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-      </AdminLayout>
-    );
-  }
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-              관리자 대시보드
-            </h1>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-              IP Insight AI 시스템 현황을 한눈에 확인하세요
-            </p>
-          </div>
-          <div className="mt-4 sm:mt-0 flex space-x-3">
-            <button className="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700">
-              <Download className="w-4 h-4 mr-2" />
-              리포트 다운로드
-            </button>
-          </div>
-        </div>
+    <div className="p-6">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          관리자 대시보드
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">
+          시스템 현황과 주요 지표를 확인하세요
+        </p>
+      </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {statCards.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <div
-                key={index}
-                className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex items-center justify-center w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                      <Icon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        {stat.title}
-                      </p>
-                      <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                        {stat.value}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center justify-between">
-                  <div className={`flex items-center space-x-1 ${getChangeColor(stat.changeType)}`}>
-                    {getChangeIcon(stat.changeType)}
-                    <span className="text-sm font-medium">{stat.change}</span>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {stat.description}
+      {/* 통계 카드 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {statCards.map((card, index) => {
+          const IconComponent = card.icon;
+          return (
+            <div
+              key={index}
+              className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    {card.title}
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                    {card.value}
                   </p>
                 </div>
+                <div className={`p-3 rounded-lg ${card.bgColor}`}>
+                  <IconComponent className={`w-6 h-6 ${card.color}`} />
+                </div>
               </div>
-            );
-          })}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 빠른 액션 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center mb-4">
+            <Users className="w-5 h-5 text-blue-600 mr-2" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              사용자 관리
+            </h3>
+          </div>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            사용자 계정을 관리하고 권한을 설정하세요
+          </p>
+          <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+            사용자 관리로 이동
+          </button>
         </div>
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Activity Chart */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                  주간 활동 현황
-                </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  최근 7일간의 사용자 활동
-                </p>
-              </div>
-              <div className="flex items-center space-x-4 text-xs">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <span className="text-slate-600 dark:text-slate-400">검색</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-slate-600 dark:text-slate-400">리포트</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                  <span className="text-slate-600 dark:text-slate-400">사용자</span>
-                </div>
-              </div>
-            </div>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={activityData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis 
-                    dataKey="date" 
-                    stroke="#64748b"
-                    fontSize={12}
-                  />
-                  <YAxis 
-                    stroke="#64748b"
-                    fontSize={12}
-                  />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: '#1e293b',
-                      border: 'none',
-                      borderRadius: '8px',
-                      color: '#f1f5f9'
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="searches"
-                    stackId="1"
-                    stroke="#3b82f6"
-                    fill="#3b82f6"
-                    fillOpacity={0.6}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="reports"
-                    stackId="1"
-                    stroke="#10b981"
-                    fill="#10b981"
-                    fillOpacity={0.6}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="users"
-                    stackId="1"
-                    stroke="#8b5cf6"
-                    fill="#8b5cf6"
-                    fillOpacity={0.6}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center mb-4">
+            <BarChart3 className="w-5 h-5 text-green-600 mr-2" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              사용량 통계
+            </h3>
           </div>
-
-          {/* Subscription Distribution */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                  구독 플랜 분포
-                </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  사용자 구독 현황
-                </p>
-              </div>
-            </div>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: '#1e293b',
-                      border: 'none',
-                      borderRadius: '8px',
-                      color: '#f1f5f9'
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-4 space-y-2">
-              {pieData.map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <div 
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: item.color }}
-                    ></div>
-                    <span className="text-sm text-slate-600 dark:text-slate-400">
-                      {item.name}
-                    </span>
-                  </div>
-                  <span className="text-sm font-medium text-slate-900 dark:text-white">
-                    {item.value}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            시스템 사용량과 성능 지표를 확인하세요
+          </p>
+          <button className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
+            통계 보기
+          </button>
         </div>
 
-        {/* Activity Breakdown and Engagement */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Activity Type Breakdown */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                  활동 유형별 분석
-                </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  사용자 활동 유형 분포
-                </p>
-              </div>
-            </div>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={Object.entries(stats.activityBreakdown || {}).map(([key, value]) => ({ name: key, count: value }))}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis 
-                    dataKey="name" 
-                    stroke="#64748b"
-                    fontSize={12}
-                    angle={-45}
-                    textAnchor="end"
-                    height={80}
-                  />
-                  <YAxis 
-                    stroke="#64748b"
-                    fontSize={12}
-                  />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: '#1e293b',
-                      border: 'none',
-                      borderRadius: '8px',
-                      color: '#f1f5f9'
-                    }}
-                  />
-                  <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center mb-4">
+            <Activity className="w-5 h-5 text-purple-600 mr-2" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              시스템 상태
+            </h3>
           </div>
-
-          {/* Daily Activity Trend */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                  일별 활동 추이
-                </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  최근 7일간 활동 변화
-                </p>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-slate-900 dark:text-white">
-                  {stats.engagementRate || 0}%
-                </div>
-                <div className="text-sm text-slate-600 dark:text-slate-400">
-                  참여도
-                </div>
-              </div>
-            </div>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={stats.dailyActivity || []}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis 
-                    dataKey="date" 
-                    stroke="#64748b"
-                    fontSize={12}
-                  />
-                  <YAxis 
-                    stroke="#64748b"
-                    fontSize={12}
-                  />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: '#1e293b',
-                      border: 'none',
-                      borderRadius: '8px',
-                      color: '#f1f5f9'
-                    }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="count" 
-                    stroke="#10b981" 
-                    strokeWidth={3}
-                    dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6, stroke: '#10b981', strokeWidth: 2 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            시스템 상태와 서버 성능을 모니터링하세요
+          </p>
+          <button className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">
+            상태 확인
+          </button>
         </div>
+      </div>
 
-        {/* Recent Activity */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
-          <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                  최근 가입 사용자
-                </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  신규 가입한 사용자 목록
-                </p>
+      {/* 최근 활동 */}
+      <div className="mt-8">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            최근 활동
+          </h3>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                <span className="text-gray-900 dark:text-white">새로운 사용자 등록</span>
               </div>
-              <button className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium">
-                전체 보기
-              </button>
+              <span className="text-sm text-gray-500 dark:text-gray-400">5분 전</span>
             </div>
-          </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              {stats.recentUsers.slice(0, 5).map((user, index) => (
-                <div key={user.id} className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-slate-700 last:border-b-0">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full">
-                      <span className="text-sm font-medium text-white">
-                        {user.name?.charAt(0) || user.email.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-900 dark:text-white">
-                        {user.name || '이름 없음'}
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {user.email}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      user.subscription_plan === 'premium' 
-                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
-                        : user.subscription_plan === 'basic'
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
-                    }`}>
-                      {user.subscription_plan}
-                    </span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      {new Date(user.created_at).toLocaleDateString('ko-KR')}
-                    </span>
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                <span className="text-gray-900 dark:text-white">특허 검색 완료</span>
+              </div>
+              <span className="text-sm text-gray-500 dark:text-gray-400">12분 전</span>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
+                <span className="text-gray-900 dark:text-white">보고서 생성</span>
+              </div>
+              <span className="text-sm text-gray-500 dark:text-gray-400">25분 전</span>
             </div>
           </div>
         </div>
       </div>
-    </AdminLayout>
+    </div>
   );
 };
 

@@ -22,13 +22,30 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signIn: async (email: string, password: string) => {
     try {
+      // 이메일 형식 검증
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(email)) {
+        return { error: '올바른 이메일 형식을 입력해주세요' }
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (error) {
-        return { error: error.message }
+        // 상황에 맞는 에러 메시지 반환
+        if (error.message.includes('Invalid login credentials')) {
+          return { error: '등록되지 않은 이메일이거나 비밀번호가 일치하지 않습니다' }
+        } else if (error.message.includes('Email not confirmed')) {
+          return { error: '이메일 인증이 완료되지 않았습니다. 이메일을 확인해주세요' }
+        } else if (error.message.includes('Too many requests')) {
+          return { error: '너무 많은 로그인 시도가 있었습니다. 잠시 후 다시 시도해주세요' }
+        } else if (error.message.includes('Network')) {
+          return { error: '네트워크 연결을 확인해주세요' }
+        } else {
+          return { error: '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요' }
+        }
       }
 
       if (data.user) {
@@ -39,17 +56,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           .eq('id', data.user.id)
           .single()
 
-        // Check if user is admin based on email or user metadata
+        // Check if user is admin based on email, user metadata, or database role
         const isAdmin = email === 'admin@p-ai.com' || 
                        data.user.user_metadata?.role === 'admin' ||
-                       data.user.app_metadata?.role === 'admin'
+                       data.user.app_metadata?.role === 'admin' ||
+                       profile?.role === 'admin' ||
+                       profile?.role === 'super_admin'
 
         set({ user: data.user, profile, isAdmin })
       }
 
       return {}
     } catch (error) {
-      return { error: 'An unexpected error occurred' }
+      console.error('Login error:', error)
+      return { error: '네트워크 연결을 확인해주세요' }
     }
   },
 
@@ -128,7 +148,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // Check if user is admin
         const isAdmin = session.user.email === 'admin@p-ai.com' || 
                        session.user.user_metadata?.role === 'admin' ||
-                       session.user.app_metadata?.role === 'admin'
+                       session.user.app_metadata?.role === 'admin' ||
+                       profile?.role === 'admin' ||
+                       profile?.role === 'super_admin'
 
         set({ user: session.user, profile, isAdmin })
       }

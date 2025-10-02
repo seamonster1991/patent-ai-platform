@@ -34,6 +34,7 @@ import { cn } from '../lib/utils'
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [userStats, setUserStats] = useState({
     totalSearches: 0,
     reportsGenerated: 0,
@@ -53,6 +54,8 @@ export default function Dashboard() {
       }
       
       setLoading(true)
+      setError(null)
+      
       try {
         // 검색 기록과 리포트 로드
         await Promise.all([
@@ -70,7 +73,7 @@ export default function Dashboard() {
         
         if (!response.ok) {
           console.error(`HTTP error! status: ${response.status}`)
-          // 네트워크 오류나 서버 오류 시에도 기본값 유지
+          setError('데이터를 불러오는데 실패했습니다.')
           return
         }
         
@@ -80,11 +83,11 @@ export default function Dashboard() {
           setUserStats(data.data)
         } else {
           console.error('API returned error:', data.error)
-          // 기본값 유지
+          setError('데이터를 불러오는데 실패했습니다.')
         }
       } catch (error) {
         console.error('Failed to load dashboard data:', error)
-        // 오류 발생 시 기본값 유지
+        setError('서버 연결에 실패했습니다.')
       } finally {
         setLoading(false)
       }
@@ -241,6 +244,24 @@ export default function Dashboard() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-300">대시보드를 로딩 중입니다...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">데이터 로드 실패</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
+          <Button 
+            onClick={() => window.location.reload()}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            다시 시도
+          </Button>
         </div>
       </div>
     )

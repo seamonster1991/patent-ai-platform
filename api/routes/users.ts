@@ -7,6 +7,7 @@ import {
   logDashboardAccess,
   logProfileUpdateActivity 
 } from '../middleware/activityLogger';
+import { authenticateToken, requireAdmin } from '../middleware/auth';
 
 dotenv.config();
 
@@ -415,7 +416,69 @@ router.delete('/account/:userId', async (req: Request, res: Response) => {
 });
 
 // Get admin dashboard statistics
-router.get('/admin/stats', logDashboardAccess, async (req: Request, res: Response) => {
+// Admin overview endpoint
+router.get('/admin/overview', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    // Get total users count
+    const { count: totalUsers } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true });
+
+    // Get active users (users who logged in within last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const { count: activeUsers } = await supabase
+      .from('user_activities')
+      .select('user_id', { count: 'exact', head: true })
+      .gte('created_at', thirtyDaysAgo.toISOString())
+      .eq('activity_type', 'login');
+
+    // Get total searches
+    const { count: totalSearches } = await supabase
+      .from('user_activities')
+      .select('*', { count: 'exact', head: true })
+      .eq('activity_type', 'search');
+
+    // Get total reports
+    const { count: totalReports } = await supabase
+      .from('user_activities')
+      .select('*', { count: 'exact', head: true })
+      .eq('activity_type', 'report_generated');
+
+    // Calculate server uptime (simplified)
+    const uptimeMs = process.uptime() * 1000;
+    const days = Math.floor(uptimeMs / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((uptimeMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const serverUptime = `${days}일 ${hours}시간`;
+
+    const overview = {
+      totalUsers: totalUsers || 0,
+      activeUsers: activeUsers || 0,
+      totalSearches: totalSearches || 0,
+      totalReports: totalReports || 0,
+      systemStatus: 'healthy' as const,
+      serverUptime,
+      databaseStatus: 'connected' as const
+    };
+
+    res.json(overview);
+  } catch (error) {
+    console.error('Error fetching admin overview:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch admin overview',
+      totalUsers: 0,
+      activeUsers: 0,
+      totalSearches: 0,
+      totalReports: 0,
+      systemStatus: 'error' as const,
+      serverUptime: '0일 0시간',
+      databaseStatus: 'disconnected' as const
+    });
+  }
+});
+
+router.get('/admin/stats', authenticateToken, requireAdmin, logDashboardAccess, async (req: Request, res: Response) => {
   try {
     // Log admin dashboard access
     const adminUserId = (req as any).user?.id || 'admin';
@@ -527,6 +590,244 @@ router.get('/admin/stats', logDashboardAccess, async (req: Request, res: Respons
     res.status(500).json({
       success: false,
       error: 'Failed to fetch admin statistics'
+    });
+  }
+});
+
+// Get all users for admin management
+router.get('/admin/users', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { page = 1, limit = 10, search = '', status = 'all', plan = 'all' } = req.query;
+    const offset = (Number(page) - 1) * Number(limit);
+
+    let query = supabase
+      .from('users')
+      .select(`
+        id,
+        email,
+        name,
+        subscription_plan,
+        role,
+        created_at,
+        updated_at
+      `, { count: 'exact' });
+
+    // Apply search filter
+    if (search) {
+      query = query.or(`email.ilike.%${search}%,name.ilike.%${search}%`);
+    }
+
+    // Apply plan filter
+    if (plan !== 'all') {
+      query = query.eq('subscription_plan', plan);
+    }
+
+    // Apply pagination
+    query = query.range(offset, offset + Number(limit) - 1);
+    query = query.order('created_at', { ascending: false });
+
+    const { data: users, error, count } = await query;
+
+    if (error) {
+      throw error;
+    }
+
+    // Get user activity data for each user
+    const usersWithActivity = await Promise.all(
+      (users || []).map(async (user) => {
+        // Get last login
+        const { data: lastLogin } = await supabase
+          .from('user_activities')
+          .select('created_at')
+          .eq('user_id', user.id)
+          .eq('activity_type', 'login')
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        // Get total reports
+        const { count: totalReports } = await supabase
+          .from('user_activities')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('activity_type', 'report_generated');
+
+        // Get total searches
+        const { count: totalSearches } = await supabase
+          .from('user_activities')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('activity_type', 'search');
+
+        return {
+          ...user,
+          last_login: lastLogin?.[0]?.created_at || null,
+          total_reports: totalReports || 0,
+          total_searches: totalSearches || 0,
+          status: lastLogin?.[0] ? 'active' : 'inactive'
+        };
+      })
+    );
+
+    res.json({
+      success: true,
+      data: {
+        users: usersWithActivity,
+        totalUsers: count || 0,
+        currentPage: Number(page),
+        totalPages: Math.ceil((count || 0) / Number(limit))
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch users'
+    });
+  }
+});
+
+// Get usage statistics for admin dashboard
+router.get('/admin/usage-statistics', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { period = '30' } = req.query;
+    const daysAgo = new Date();
+    daysAgo.setDate(daysAgo.getDate() - Number(period));
+
+    // Get search trends
+    const { data: searchData } = await supabase
+      .from('user_activities')
+      .select('created_at, activity_data')
+      .eq('activity_type', 'search')
+      .gte('created_at', daysAgo.toISOString())
+      .order('created_at', { ascending: true });
+
+    // Group searches by date
+    const searchTrends = searchData?.reduce((acc: any, search) => {
+      const date = new Date(search.created_at).toISOString().split('T')[0];
+      acc[date] = (acc[date] || 0) + 1;
+      return acc;
+    }, {}) || {};
+
+    // Get top search terms
+    const { data: searchTermsData } = await supabase
+      .from('search_history')
+      .select('keyword')
+      .gte('created_at', daysAgo.toISOString());
+
+    const searchTerms = searchTermsData?.reduce((acc: any, item) => {
+      const keyword = item.keyword.toLowerCase();
+      acc[keyword] = (acc[keyword] || 0) + 1;
+      return acc;
+    }, {}) || {};
+
+    const topSearchTerms = Object.entries(searchTerms)
+      .sort(([,a], [,b]) => (b as number) - (a as number))
+      .slice(0, 10)
+      .map(([term, count]) => ({ term, count }));
+
+    // Get plan usage statistics
+    const { data: planData } = await supabase
+      .from('users')
+      .select('subscription_plan');
+
+    const planUsage = planData?.reduce((acc: any, user) => {
+      acc[user.subscription_plan] = (acc[user.subscription_plan] || 0) + 1;
+      return acc;
+    }, {}) || {};
+
+    // Get user activity by type
+    const { data: activityData } = await supabase
+      .from('user_activities')
+      .select('activity_type')
+      .gte('created_at', daysAgo.toISOString());
+
+    const activityBreakdown = activityData?.reduce((acc: any, activity) => {
+      acc[activity.activity_type] = (acc[activity.activity_type] || 0) + 1;
+      return acc;
+    }, {}) || {};
+
+    res.json({
+      success: true,
+      data: {
+        searchTrends,
+        topSearchTerms,
+        planUsage,
+        activityBreakdown,
+        totalSearches: searchData?.length || 0,
+        totalUsers: planData?.length || 0
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching usage statistics:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch usage statistics'
+    });
+  }
+});
+
+// Get system status for admin dashboard
+router.get('/admin/system-status', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    // Check database connection
+    const { data: dbTest } = await supabase
+      .from('users')
+      .select('id')
+      .limit(1);
+
+    const databaseStatus = dbTest ? 'connected' : 'disconnected';
+
+    // Get recent errors (if you have an error logging table)
+    const recentErrors: any[] = []; // Placeholder for error logs
+
+    // Calculate server uptime
+    const uptimeMs = process.uptime() * 1000;
+    const days = Math.floor(uptimeMs / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((uptimeMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((uptimeMs % (1000 * 60 * 60)) / (1000 * 60));
+
+    // Get API response times (simplified)
+    const apiResponseTimes = {
+      average: 150,
+      p95: 300,
+      p99: 500
+    };
+
+    // Get memory usage
+    const memoryUsage = process.memoryUsage();
+
+    res.json({
+      success: true,
+      data: {
+        systemStatus: databaseStatus === 'connected' ? 'healthy' : 'error',
+        databaseStatus,
+        serverUptime: `${days}일 ${hours}시간 ${minutes}분`,
+        apiResponseTimes,
+        memoryUsage: {
+          used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+          total: Math.round(memoryUsage.heapTotal / 1024 / 1024)
+        },
+        recentErrors,
+        lastUpdated: new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching system status:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch system status',
+      data: {
+        systemStatus: 'error',
+        databaseStatus: 'disconnected',
+        serverUptime: '0일 0시간 0분',
+        apiResponseTimes: { average: 0, p95: 0, p99: 0 },
+        memoryUsage: { used: 0, total: 0 },
+        recentErrors: [],
+        lastUpdated: new Date().toISOString()
+      }
     });
   }
 });

@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
 import { Toaster } from "sonner";
 import Layout from "@/components/Layout/Layout";
+import AdminLayout from "@/components/Layout/AdminLayout";
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
@@ -16,6 +17,8 @@ import AdminLogin from "@/pages/Admin/AdminLogin";
 import AdminDashboard from "@/pages/Admin/AdminDashboard";
 import UserManagement from "@/pages/Admin/UserManagement";
 import UsageStatistics from "@/pages/Admin/UsageStatistics";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
 import { useAuthStore } from "@/store/authStore";
 import { useThemeStore } from "@/store/themeStore";
 
@@ -38,57 +41,58 @@ export default function App() {
 
   return (
     <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/search" element={
-            <ProtectedRoute>
-              <Search />
-            </ProtectedRoute>
-          } />
-          <Route path="/patent/:applicationNumber" element={
-            <ProtectedRoute>
-              <PatentDetail />
-            </ProtectedRoute>
-          } />
-          <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          } />
-          
-          {/* Admin Routes */}
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={
-            <AdminRoute>
-              <AdminDashboard />
-            </AdminRoute>
-          } />
-          <Route path="/admin/dashboard" element={
-            <AdminRoute>
-              <AdminDashboard />
-            </AdminRoute>
-          } />
-          <Route path="/admin/users" element={
-            <AdminRoute>
-              <UserManagement />
-            </AdminRoute>
-          } />
-          <Route path="/admin/statistics" element={
-            <AdminRoute>
-              <UsageStatistics />
-            </AdminRoute>
-          } />
-        </Routes>
-      </Layout>
+      <Routes>
+        {/* Admin Login - No Layout wrapper */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        
+        {/* Admin Routes - AdminLayout applied at route level */}
+        <Route path="/admin/*" element={
+          <AdminRoute>
+            <AdminLayout>
+              <Routes>
+                <Route path="/" element={<AdminDashboard />} />
+                <Route path="/dashboard" element={<AdminDashboard />} />
+                <Route path="/users" element={<UserManagement />} />
+                <Route path="/statistics" element={<UsageStatistics />} />
+              </Routes>
+            </AdminLayout>
+          </AdminRoute>
+        } />
+        
+        {/* Regular Routes - With Layout wrapper */}
+        <Route path="/*" element={
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/search" element={
+                <ProtectedRoute>
+                  <Search />
+                </ProtectedRoute>
+              } />
+              <Route path="/patent/:applicationNumber" element={
+                <ProtectedRoute>
+                  <PatentDetail />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } />
+            </Routes>
+          </Layout>
+        } />
+      </Routes>
       <Toaster position="top-right" richColors />
     </Router>
   );

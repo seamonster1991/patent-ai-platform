@@ -22,61 +22,50 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     id,
     ...props 
   }, ref) => {
-    const generatedId = useId()
-    const inputId = id || generatedId
-    const errorId = error ? `${inputId}-error` : undefined
-    const helperTextId = helperText ? `${inputId}-helper` : undefined
+    const inputId = useId()
+    const errorId = useId()
+    const helperTextId = useId()
 
-    const baseClasses = [
-      'w-full rounded-lg transition-all duration-200',
-      'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
-      'disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-secondary-100 dark:disabled:bg-secondary-800',
-      'placeholder:text-secondary-400 dark:placeholder:text-secondary-500',
-      // 최소 터치 크기 보장
-      'min-h-touch'
-    ].join(' ')
+    const baseClasses = cn(
+      'block w-full rounded-lg border transition-colors duration-200',
+      'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+      'disabled:opacity-50 disabled:cursor-not-allowed',
+      fullWidth ? 'w-full' : ''
+    )
 
     const variantClasses = {
-      default: [
-        'bg-white dark:bg-dark-800',
-        'border border-secondary-300 dark:border-secondary-600',
-        'text-secondary-900 dark:text-secondary-100',
-        'focus-visible:ring-primary-500 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900',
-        'focus-visible:border-primary-500',
-        error ? 'border-danger-500 focus-visible:ring-danger-500' : ''
-      ].filter(Boolean).join(' '),
-      
-      filled: [
-        'bg-secondary-100 dark:bg-secondary-800',
-        'border border-transparent',
-        'text-secondary-900 dark:text-secondary-100',
-        'focus-visible:ring-primary-500 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900',
-        'focus-visible:bg-white dark:focus-visible:bg-dark-800',
-        error ? 'bg-danger-50 dark:bg-danger-900/20 focus-visible:ring-danger-500' : ''
-      ].filter(Boolean).join(' '),
-      
-      outline: [
+      default: cn(
+        'border-slate-300 dark:border-slate-600',
+        'bg-white dark:bg-slate-800',
+        'text-slate-900 dark:text-white',
+        'placeholder:text-slate-400 dark:placeholder:text-slate-500'
+      ),
+      filled: cn(
+        'border-transparent',
+        'bg-slate-100 dark:bg-slate-700',
+        'text-slate-900 dark:text-white',
+        'placeholder:text-slate-400 dark:placeholder:text-slate-500'
+      ),
+      outline: cn(
+        'border-2 border-slate-300 dark:border-slate-600',
         'bg-transparent',
-        'border-2 border-secondary-300 dark:border-secondary-600',
-        'text-secondary-900 dark:text-secondary-100',
-        'focus-visible:ring-primary-500 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900',
-        'focus-visible:border-primary-500',
-        error ? 'border-danger-500 focus-visible:ring-danger-500' : ''
-      ].filter(Boolean).join(' ')
+        'text-slate-900 dark:text-white',
+        'placeholder:text-slate-400 dark:placeholder:text-slate-500'
+      )
     }
 
     const sizeClasses = {
-      sm: 'px-3 py-2 text-sm min-h-[36px]',
-      md: 'px-4 py-2.5 text-sm min-h-[44px]',
-      lg: 'px-4 py-3 text-base min-h-[48px]'
+      sm: 'px-3 py-2 text-sm',
+      md: 'px-4 py-2.5 text-base',
+      lg: 'px-4 py-3 text-lg'
     }
 
     return (
-      <div className="space-y-2">
+      <div className={cn('space-y-2', fullWidth ? 'w-full' : '')}>
         {label && (
           <label 
-            htmlFor={inputId}
-            className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+            htmlFor={id || inputId}
+            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
           >
             {label}
             {props.required && (
@@ -86,7 +75,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
         <input
           ref={ref}
-          id={inputId}
+          id={id || inputId}
           className={cn(
             baseClasses,
             variantClasses[variant],
