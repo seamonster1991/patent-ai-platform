@@ -36,7 +36,7 @@ import Layout from '../components/Layout/Layout'
 import Button from '../components/UI/Button'
 import Card, { CardContent, CardHeader, CardTitle } from '../components/UI/Card'
 import { LoadingPage } from '../components/UI/Loading'
-import { KiprisPatentDetailItem, AIAnalysisReport, DocumentType, DOCUMENT_TYPES, DocumentDownloadResponse } from '../types/kipris'
+import { KiprisPatentDetailItem, AIAnalysisReport, AIAnalysisStructure, DocumentType, DOCUMENT_TYPES, DocumentDownloadResponse } from '../types/kipris'
 import { formatDate } from '../lib/utils'
 import { toast } from 'sonner'
 import { generateMarketAnalysisPDF, generateBusinessInsightPDF } from '../lib/pdfGenerator'
@@ -108,16 +108,11 @@ export default function PatentDetail() {
         try {
           const { user } = useAuthStore.getState()
           if (user) {
-            const activityTracker = new ActivityTracker()
+            const activityTracker = ActivityTracker.getInstance()
             activityTracker.setUserId(user.id)
             await activityTracker.trackPatentView(
               appNumber,
-              data.data.body.item.biblioSummaryInfo?.inventionTitle || '제목 없음',
-              {
-                registerStatus: data.data.body.item.biblioSummaryInfo?.registerStatus,
-                applicant: data.data.body.item.biblioSummaryInfo?.applicantName,
-                applicationDate: data.data.body.item.biblioSummaryInfo?.applicationDate
-              }
+              data.data.body.item.biblioSummaryInfo?.inventionTitle || '제목 없음'
             )
           }
         } catch (error) {
@@ -229,15 +224,11 @@ export default function PatentDetail() {
         try {
           const { user } = useAuthStore.getState()
           if (user) {
-            const activityTracker = new ActivityTracker()
+            const activityTracker = ActivityTracker.getInstance()
             activityTracker.setUserId(user.id)
             await activityTracker.trackAIAnalysis(
               applicationNumber,
-              'comprehensive',
-              {
-                patentTitle: patent.biblioSummaryInfo?.inventionTitle,
-                analysisResult: data.data
-              }
+              'comprehensive'
             )
           }
         } catch (error) {
@@ -260,8 +251,7 @@ export default function PatentDetail() {
         toast.error(`AI 분석 생성에 실패했습니다: ${err.message}`)
       }
     } finally {
-      // 타이머 정리 및 로딩 해제
-      try { clearTimeout(timeoutId) } catch {}
+      // 로딩 해제
       setAiLoading(false)
     }
   }
@@ -345,16 +335,11 @@ export default function PatentDetail() {
           try {
             const { user } = useAuthStore.getState()
             if (user) {
-              const activityTracker = new ActivityTracker()
+              const activityTracker = ActivityTracker.getInstance()
               activityTracker.setUserId(user.id)
               await activityTracker.trackDocumentDownload(
                 applicationNumber,
-                documentType,
-                {
-                  patentTitle: patent?.biblioSummaryInfo?.inventionTitle,
-                  documentName: DOCUMENT_TYPES.find(dt => dt.type === documentType)?.name,
-                  downloadUrl: downloadUrl
-                }
+                documentType
               )
             }
           } catch (error) {
@@ -389,7 +374,7 @@ export default function PatentDetail() {
       try {
         const { user } = useAuthStore.getState()
         if (user) {
-          const activityTracker = new ActivityTracker()
+          const activityTracker = ActivityTracker.getInstance()
           activityTracker.setUserId(user.id)
           await activityTracker.trackReportGenerate(
             applicationNumber || '',
@@ -426,7 +411,7 @@ export default function PatentDetail() {
       try {
         const { user } = useAuthStore.getState()
         if (user) {
-          const activityTracker = new ActivityTracker()
+          const activityTracker = ActivityTracker.getInstance()
           activityTracker.setUserId(user.id)
           await activityTracker.trackReportGenerate(
             applicationNumber || '',
@@ -1454,13 +1439,13 @@ function AIAnalysisTab({ patent, analysis, loading, error, onGenerate, pdfGenera
   console.log('🔍 AI 분석 탭 - analysis 객체:', analysis)
   console.log('🔍 AI 분석 탭 - analysis 타입:', typeof analysis)
   console.log('🔍 AI 분석 탭 - analysis.analysis:', analysis.analysis)
-  console.log('🔍 AI 분석 탭 - analysis.sections:', analysis.sections)
+  console.log('🔍 AI 분석 탭 - analysis.sections:', 'sections' in analysis ? analysis.sections : 'No sections property')
   
   // 데이터 구조 확인
-  const hasDirectSections = analysis.sections && Array.isArray(analysis.sections)
-  const hasNestedAnalysis = analysis.analysis && analysis.analysis.sections && Array.isArray(analysis.analysis.sections)
+  const hasDirectSections = 'sections' in analysis && analysis.sections && Array.isArray(analysis.sections)
+  const hasNestedAnalysis = 'analysis' in analysis && analysis.analysis && 'sections' in analysis.analysis && analysis.analysis.sections && Array.isArray(analysis.analysis.sections)
   const isNewFormat = hasNestedAnalysis || hasDirectSections
-  const analysisData = hasNestedAnalysis ? analysis.analysis : analysis
+  const analysisData: AIAnalysisStructure = hasNestedAnalysis ? analysis.analysis : (analysis as any)
   const analysisDate = analysis.analysisDate || analysis.generatedAt
   const hasLegacyMarket = !!analysis.marketAnalysis && typeof analysis.marketAnalysis === 'object'
   const hasLegacyBusiness = !!analysis.businessInsight && typeof analysis.businessInsight === 'object'
@@ -1469,7 +1454,7 @@ function AIAnalysisTab({ patent, analysis, loading, error, onGenerate, pdfGenera
   console.log('🔍 AI 분석 탭 - hasNestedAnalysis:', hasNestedAnalysis)
   console.log('🔍 AI 분석 탭 - isNewFormat:', isNewFormat)
   console.log('🔍 AI 분석 탭 - analysisData:', analysisData)
-  console.log('🔍 AI 분석 탭 - analysisData.sections:', analysisData.sections)
+  console.log('🔍 AI 분석 탭 - analysisData.sections:', 'sections' in analysisData ? analysisData.sections : 'No sections property')
 
   return (
     <div className="space-y-6">

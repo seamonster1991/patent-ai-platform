@@ -68,7 +68,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         
         // 사용자 활동 추적 - 로그인
         try {
-          const activityTracker = new ActivityTracker()
+          const activityTracker = ActivityTracker.getInstance()
           activityTracker.setUserId(data.user.id)
           await activityTracker.trackLogin({
             email: data.user.email,
@@ -151,7 +151,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // 사용자 활동 추적 - 로그아웃
     if (user) {
       try {
-        const activityTracker = new ActivityTracker()
+        const activityTracker = ActivityTracker.getInstance()
         activityTracker.setUserId(user.id)
         await activityTracker.trackLogout({
           email: user.email,
@@ -265,7 +265,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       
       // 사용자 활동 추적 - 프로필 업데이트
       try {
-        const activityTracker = new ActivityTracker()
+        const activityTracker = ActivityTracker.getInstance()
         activityTracker.setUserId(user.id)
         await activityTracker.trackProfileUpdate({
           updatedFields: Object.keys(updates),

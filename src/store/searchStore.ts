@@ -291,16 +291,16 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       try {
         const { user } = useAuthStore.getState()
         if (user) {
-          const activityTracker = new ActivityTracker()
+          const activityTracker = ActivityTracker.getInstance()
           activityTracker.setUserId(user.id)
           await activityTracker.trackSearch(
             filters.word || filters.keyword || '',
-            finalTotalCount,
             {
               page: page,
               filters: filters,
               searchType: 'patent_search'
-            }
+            },
+            finalTotalCount
           )
         }
       } catch (error) {

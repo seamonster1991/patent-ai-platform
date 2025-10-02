@@ -99,6 +99,37 @@ export class ActivityTracker {
     })
   }
 
+  public async trackLogin(data: Record<string, any>) {
+    await this.trackActivity('login', {
+      timestamp: new Date().toISOString(),
+      ...data
+    })
+  }
+
+  public async trackLogout(data: Record<string, any>) {
+    await this.trackActivity('logout', {
+      timestamp: new Date().toISOString(),
+      ...data
+    })
+  }
+
+  public async trackReportGenerate(applicationNumber: string, reportType: string, data: Record<string, any>) {
+    await this.trackActivity('document_download', {
+      applicationNumber,
+      reportType,
+      timestamp: new Date().toISOString(),
+      ...data
+    })
+  }
+
+  public async trackProfileUpdate(data: Record<string, any>) {
+    await this.trackActivity('login', {
+      action: 'profile_update',
+      timestamp: new Date().toISOString(),
+      ...data
+    })
+  }
+
   // 사용자 활동 통계 조회
   public async getUserActivityStats(userId: string, days: number = 30) {
     try {
