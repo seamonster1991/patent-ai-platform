@@ -9,6 +9,7 @@ import Loading from '../components/UI/Loading'
 import { useSearchStore } from '../store/searchStore'
 import { formatDate, truncateText, cn } from '../lib/utils'
 import { toast } from 'sonner'
+import SearchTest from '../test/search_test_20250102_140000'
 
 export default function Search() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
@@ -129,6 +130,8 @@ export default function Search() {
             한국특허정보원(KIPI) KIPRIS API와 연동된 전문 특허 검색 시스템
           </p>
         </div>
+
+
 
         {/* Search Form */}
         <Card className="mb-8" variant="elevated">

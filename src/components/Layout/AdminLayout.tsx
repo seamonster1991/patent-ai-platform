@@ -51,20 +51,24 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       current: location.pathname === '/admin/users'
     },
     {
-      name: '사용량 통계',
-      href: '/admin/statistics',
+      name: '분석',
+      href: '/admin/analytics',
       icon: BarChart3,
-      current: location.pathname === '/admin/statistics'
+      current: location.pathname === '/admin/analytics'
     }
   ];
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/admin/login');
+    try {
+      await signOut();
+      navigate('/admin/login');
+    } catch (error) {
+      console.error('로그아웃 중 오류 발생:', error);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div 
@@ -75,7 +79,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
       {/* Sidebar */}
       <div className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-800 shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
+        fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-800 shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:flex lg:flex-col
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         {/* Sidebar header */}
@@ -98,7 +102,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </div>
 
         {/* Navigation */}
-        <nav className="mt-8 px-4">
+        <nav className="flex-1 mt-8 px-4">
           <div className="space-y-2">
             {navigation.map((item) => {
               const Icon = item.icon;
@@ -124,7 +128,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </nav>
 
         {/* Sidebar footer */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 dark:border-slate-700">
+        <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex-shrink-0">
           <div className="flex items-center space-x-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
             <div className="flex items-center justify-center w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full">
               <Shield className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -142,9 +146,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       </div>
 
       {/* Main content */}
-      <div className="lg:ml-64">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Top navigation */}
-        <header className="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700">
+        <header className="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
             {/* Mobile menu button */}
             <button
@@ -212,7 +216,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </header>
 
         {/* Page content */}
-        <main className="p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
           {children}
         </main>
       </div>

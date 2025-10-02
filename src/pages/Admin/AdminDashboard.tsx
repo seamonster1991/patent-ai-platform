@@ -9,12 +9,21 @@ import {
   Eye,
   Download
 } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 
 interface DashboardStats {
   totalUsers: number;
   activeUsers: number;
   totalReports: number;
   totalSearches: number;
+}
+
+interface RecentActivity {
+  id: string;
+  type: string;
+  description: string;
+  created_at: string;
+  user_email?: string;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -24,24 +33,76 @@ const AdminDashboard: React.FC = () => {
     totalReports: 0,
     totalSearches: 0
   });
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 간단한 모의 데이터로 시작
     const fetchStats = async () => {
       try {
-        // 실제 데이터 대신 모의 데이터 사용
-        setTimeout(() => {
-          setStats({
-            totalUsers: 150,
-            activeUsers: 45,
-            totalReports: 320,
-            totalSearches: 1250
-          });
-          setLoading(false);
-        }, 1000);
+        setLoading(true);
+
+        // 전체 사용자 수 조회
+        const { count: totalUsers } = await supabase
+          .from('users')
+          .select('*', { count: 'exact', head: true });
+
+        // 최근 7일간 활성 사용자 수 조회 (로그인한 사용자)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        
+        const { count: activeUsers } = await supabase
+          .from('users')
+          .select('*', { count: 'exact', head: true })
+          .gte('last_sign_in_at', sevenDaysAgo.toISOString());
+
+        // 총 검색 수 조회
+        const { count: totalSearches } = await supabase
+          .from('search_history')
+          .select('*', { count: 'exact', head: true });
+
+        // 생성된 보고서 수 조회
+        const { count: totalReports } = await supabase
+          .from('reports')
+          .select('*', { count: 'exact', head: true });
+
+        // 최근 활동 조회
+        const { data: activities } = await supabase
+          .from('search_history')
+          .select(`
+            id,
+            query,
+            created_at,
+            users!inner(email)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        const formattedActivities: RecentActivity[] = activities?.map(activity => ({
+          id: activity.id,
+          type: 'search',
+          description: `특허 검색: "${activity.query}"`,
+          created_at: activity.created_at,
+          user_email: activity.users?.email
+        })) || [];
+
+        setStats({
+          totalUsers: totalUsers || 0,
+          activeUsers: activeUsers || 0,
+          totalReports: totalReports || 0,
+          totalSearches: totalSearches || 0
+        });
+
+        setRecentActivities(formattedActivities);
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching stats:', error);
+        // 에러 발생 시 기본값 설정
+        setStats({
+          totalUsers: 0,
+          activeUsers: 0,
+          totalReports: 0,
+          totalSearches: 0
+        });
         setLoading(false);
       }
     };
@@ -191,27 +252,44 @@ const AdminDashboard: React.FC = () => {
             최근 활동
           </h3>
           <div className="space-y-3">
-            <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                <span className="text-gray-900 dark:text-white">새로운 사용자 등록</span>
+            {recentActivities.length > 0 ? (
+              recentActivities.map((activity, index) => (
+                <div 
+                  key={activity.id} 
+                  className={`flex items-center justify-between py-2 ${
+                    index < recentActivities.length - 1 ? 'border-b border-gray-200 dark:border-gray-700' : ''
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                    <div className="flex flex-col">
+                      <span className="text-gray-900 dark:text-white">
+                        {activity.description}
+                      </span>
+                      {activity.user_email && (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          사용자: {activity.user_email}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    {new Date(activity.created_at).toLocaleString('ko-KR', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-4">
+                <span className="text-gray-500 dark:text-gray-400">
+                  최근 활동이 없습니다.
+                </span>
               </div>
-              <span className="text-sm text-gray-500 dark:text-gray-400">5분 전</span>
-            </div>
-            <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                <span className="text-gray-900 dark:text-white">특허 검색 완료</span>
-              </div>
-              <span className="text-sm text-gray-500 dark:text-gray-400">12분 전</span>
-            </div>
-            <div className="flex items-center justify-between py-2">
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
-                <span className="text-gray-900 dark:text-white">보고서 생성</span>
-              </div>
-              <span className="text-sm text-gray-500 dark:text-gray-400">25분 전</span>
-            </div>
+            )}
           </div>
         </div>
       </div>

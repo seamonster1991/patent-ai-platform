@@ -97,3 +97,12 @@ temp/
 # Vercel
 .vercel
 .vercel
+
+# Backup and test files
+*_backup_*.tsx
+*_backup_*.ts
+*_backup_*.js
+*_test_*.tsx
+*_test_*.ts
+*_test_*.js
+test_*.js
