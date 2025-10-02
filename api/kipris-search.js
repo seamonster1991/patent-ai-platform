@@ -66,11 +66,11 @@ export default async function handler(req, res) {
     console.log('=== KIPRIS API 검색 요청 시작 ===');
     console.log('Request body:', req.body);
     console.log('Environment variables check:');
-    console.log('- KIPRIS_SERVICE_KEY:', process.env.KIPRIS_SERVICE_KEY ? 'Set' : 'Not set');
     console.log('- KIPRIS_API_KEY:', process.env.KIPRIS_API_KEY ? 'Set' : 'Not set');
+    console.log('- KIPRIS_SERVICE_KEY:', process.env.KIPRIS_SERVICE_KEY ? 'Set' : 'Not set');
 
     // 환경변수에서 KIPRIS API 키 가져오기
-    const kiprisApiKey = process.env.KIPRIS_SERVICE_KEY || process.env.KIPRIS_API_KEY;
+    const kiprisApiKey = process.env.KIPRIS_API_KEY || process.env.KIPRIS_SERVICE_KEY;
     
     if (!kiprisApiKey) {
       console.error('KIPRIS API key not found in environment variables');
@@ -79,8 +79,8 @@ export default async function handler(req, res) {
         error: 'API configuration error',
         message: 'KIPRIS API key is not configured',
         debug: {
-          hasServiceKey: !!process.env.KIPRIS_SERVICE_KEY,
-          hasApiKey: !!process.env.KIPRIS_API_KEY
+          hasApiKey: !!process.env.KIPRIS_API_KEY,
+          hasServiceKey: !!process.env.KIPRIS_SERVICE_KEY
         }
       });
     }
