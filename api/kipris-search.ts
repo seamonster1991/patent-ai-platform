@@ -31,6 +31,13 @@ async function logUserActivity(userId: string, activityType: string, details: an
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  console.log('API handler called with method:', req.method);
+  console.log('Environment variables check:', {
+    hasKiprisKey: !!process.env.KIPRIS_API_KEY,
+    hasSupabaseUrl: !!process.env.SUPABASE_URL,
+    hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+  });
+
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -45,6 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    console.log('Request body:', req.body);
     const searchParams = req.body;
     
     // Log KIPRIS search activity
@@ -267,7 +275,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
     
   } catch (error: any) {
-    console.error('KIPRIS API error:', error);
+    console.error('KIPRIS API Error:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      response: error.response?.data,
+      status: error.response?.status
+    });
     
     // 에러 타입에 따른 메시지 처리
     let errorMessage = 'KIPRIS API 호출 중 오류가 발생했습니다.';
@@ -279,11 +294,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } else if (error.request) {
       errorMessage = 'KIPRIS API 서버에 연결할 수 없습니다.';
     }
-    
-    res.status(500).json({
+
+    return res.status(500).json({
       success: false,
       message: errorMessage,
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 }
