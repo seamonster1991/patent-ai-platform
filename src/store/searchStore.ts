@@ -226,7 +226,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       }
 
       // Call API to search patents via KIPRIS
-      const response = await fetch('/api/patents/kipris-search', {
+      const response = await fetch('/api/kipris-search', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
