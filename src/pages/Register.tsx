@@ -12,6 +12,7 @@ export default function Register() {
     name: '',
     email: '',
     company: '',
+    phone: '',
     password: '',
     confirmPassword: '',
   })
@@ -46,6 +47,10 @@ export default function Register() {
       newErrors.email = '올바른 이메일 형식을 입력해주세요.'
     }
 
+    if (formData.phone && !/^[0-9-+\s()]{10,15}$/.test(formData.phone.replace(/\s/g, ''))) {
+      newErrors.phone = '올바른 전화번호 형식을 입력해주세요.'
+    }
+
     if (!formData.password) {
       newErrors.password = '비밀번호를 입력해주세요.'
     } else if (formData.password.length < 8) {
@@ -77,6 +82,7 @@ export default function Register() {
       const result = await signUp(formData.email, formData.password, {
         name: formData.name,
         company: formData.company || null,
+        phone: formData.phone || null,
       })
 
       if (result.error) {
@@ -185,6 +191,17 @@ export default function Register() {
                   onChange={handleChange}
                   placeholder="회사명을 입력하세요"
                   autoComplete="organization"
+                />
+
+                <Input
+                  label="전화번호 (선택사항)"
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  error={errors.phone}
+                  placeholder="010-1234-5678"
+                  autoComplete="tel"
                 />
 
                 <div className="relative">

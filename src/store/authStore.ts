@@ -8,7 +8,7 @@ interface AuthState {
   loading: boolean
   isAdmin: boolean
   signIn: (email: string, password: string) => Promise<{ error?: string }>
-  signUp: (email: string, password: string, metadata: { name: string; company?: string | null }) => Promise<{ error?: string }>
+  signUp: (email: string, password: string, metadata: { name: string; company?: string | null; phone?: string | null }) => Promise<{ error?: string }>
   signOut: () => Promise<void>
   initialize: () => Promise<void>
   updateProfile: (updates: Partial<User>) => Promise<{ error?: string }>
@@ -75,7 +75,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
 
 
-  signUp: async (email: string, password: string, metadata: { name: string; company?: string | null }) => {
+  signUp: async (email: string, password: string, metadata: { name: string; company?: string | null; phone?: string | null }) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -104,6 +104,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
               email: data.user.email!,
               name: metadata.name,
               company: metadata.company,
+              phone: metadata.phone,
               subscription_plan: 'free',
               usage_count: 0,
             },
