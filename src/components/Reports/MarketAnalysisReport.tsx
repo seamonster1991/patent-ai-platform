@@ -399,7 +399,7 @@ export default function MarketAnalysisReport({
       const newReportData: ReportData = {
         reportType: 'market_analysis',
         sections: sections,
-        summary: typeof analysis === 'object' && analysis.summary ? analysis.summary : '시장 분석이 완료되었습니다.',
+        summary: typeof analysis === 'object' && analysis.analysis?.summary ? analysis.analysis.summary : '시장 분석이 완료되었습니다.',
         generatedAt: new Date().toISOString()
       }
       

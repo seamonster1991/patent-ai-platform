@@ -386,7 +386,7 @@ export default function BusinessInsightsReport({
       const newReportData: ReportData = {
         reportType: 'business_insights',
         sections: sections,
-        summary: typeof analysis === 'object' && analysis.summary ? analysis.summary : '비즈니스 인사이트 분석이 완료되었습니다.',
+        summary: typeof analysis === 'object' && analysis.analysis?.summary ? analysis.analysis.summary : '비즈니스 인사이트 분석이 완료되었습니다.',
         generatedAt: new Date().toISOString()
       }
       

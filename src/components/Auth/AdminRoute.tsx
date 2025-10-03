@@ -10,7 +10,7 @@ interface AdminRouteProps {
 
 const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   const { user, isAdmin, loading: authLoading } = useAuthStore();
-  const { loading: adminLoading } = useAdminStore();
+  const { isLoading: adminLoading } = useAdminStore();
   const [isChecking, setIsChecking] = useState(true);
   const [hasAdminAccess, setHasAdminAccess] = useState(false);
 
