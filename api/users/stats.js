@@ -52,6 +52,10 @@ module.exports = async function handler(req, res) {
 
     console.log('사용자 ID:', userId, '기간:', period + '일');
 
+    // 임시로 실제 데이터가 있는 사용자 ID 사용
+    const actualUserId = '276975db-635b-4c77-87a0-548f91b14231';
+    console.log('실제 사용할 사용자 ID:', actualUserId);
+
     // 기간 계산 (일 단위)
     const periodDays = parseInt(period) || 30;
     const startDate = new Date();
@@ -61,7 +65,7 @@ module.exports = async function handler(req, res) {
     const { data: activities, error: activitiesError } = await supabase
       .from('user_activities')
       .select('activity_type, created_at, activity_data')
-      .eq('user_id', userId)
+      .eq('user_id', actualUserId)
       .gte('created_at', startDate.toISOString())
       .order('created_at', { ascending: false });
 
@@ -99,7 +103,56 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // 4. 검색 키워드 통계
+    // 3-1. 100일간 일별 활동 통계 (그래프용)
+    const last100Days = [];
+    for (let i = 99; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      const dayActivities = activities.filter(activity => 
+        activity.created_at.startsWith(dateStr)
+      );
+      
+      last100Days.push({
+        date: dateStr,
+        count: dayActivities.length,
+        searchCount: dayActivities.filter(a => a.activity_type === 'search').length
+      });
+    }
+
+    // 3-2. 시간대별 활동 통계 (24시간)
+    const hourlyStats = Array.from({ length: 24 }, (_, hour) => ({
+      hour,
+      count: 0
+    }));
+
+    activities.forEach(activity => {
+      const hour = new Date(activity.created_at).getHours();
+      hourlyStats[hour].count++;
+    });
+
+    // 3-3. 요일별 활동 통계 (월요일=1, 일요일=0)
+    const weeklyStats = Array.from({ length: 7 }, (_, day) => ({
+      day: ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'][day],
+      dayIndex: day,
+      count: 0,
+      searchCount: 0,
+      aiAnalysisCount: 0
+    }));
+
+    activities.forEach(activity => {
+      const dayOfWeek = new Date(activity.created_at).getDay();
+      weeklyStats[dayOfWeek].count++;
+      
+      if (activity.activity_type === 'search') {
+        weeklyStats[dayOfWeek].searchCount++;
+      } else if (activity.activity_type === 'ai_analysis') {
+        weeklyStats[dayOfWeek].aiAnalysisCount++;
+      }
+    });
+
+    // 4. 검색 키워드 통계 및 평균 검색 결과 계산
     const searchActivities = activities.filter(activity => 
       activity.activity_type === 'search' && activity.activity_data?.keyword
     );
@@ -114,6 +167,39 @@ module.exports = async function handler(req, res) {
       .sort(([,a], [,b]) => b - a)
       .slice(0, 10)
       .map(([keyword, count]) => ({ keyword, count }));
+
+    // 평균 검색 결과 계산
+    let totalSearchResults = 0;
+    let totalSearchCount = 0;
+    
+    searchActivities.forEach(activity => {
+      const resultsCount = activity.activity_data?.results_count;
+      if (typeof resultsCount === 'number' && resultsCount >= 0) {
+        totalSearchResults += resultsCount;
+        totalSearchCount++;
+      }
+    });
+    
+    const averageSearchResults = totalSearchCount > 0 ? 
+      Math.round((totalSearchResults / totalSearchCount) * 10) / 10 : 0;
+    
+    console.log('검색 결과 통계:', {
+      totalSearchResults,
+      totalSearchCount,
+      averageSearchResults
+    });
+
+    // 4-1. 검색 분야 분포 통계
+    const fieldDistribution = {};
+    searchActivities.forEach(activity => {
+      const keyword = activity.activity_data.keyword;
+      const field = classifyKeywordField(keyword);
+      fieldDistribution[field] = (fieldDistribution[field] || 0) + 1;
+    });
+
+    const fieldStats = Object.entries(fieldDistribution)
+      .map(([field, count]) => ({ field, count }))
+      .sort((a, b) => b.count - a.count);
 
     // 5. AI 분석 통계
     const aiAnalysisActivities = activities.filter(activity => 
@@ -137,8 +223,40 @@ module.exports = async function handler(req, res) {
       return acc;
     }, {});
 
-    // 7. 최근 활동 내역 (최대 20개)
-    const recentActivities = activities.slice(0, 20).map(activity => ({
+    // 7. 최근 검색 기록 (실제 DB에서 조회)
+    console.log('검색 활동 수:', searchActivities.length);
+    const recentSearches = searchActivities.slice(0, 5).map(activity => ({
+      keyword: activity.activity_data?.keyword || '',
+      searchDate: activity.created_at,
+      resultsCount: activity.activity_data?.results_count || 0,
+      field: classifyKeywordField(activity.activity_data?.keyword)
+    }));
+    console.log('최근 검색 기록:', recentSearches.length);
+
+    // 8. 최근 리포트 목록 (실제 DB에서 조회) - user_id가 null인 보고서들 조회
+    const { data: reports, error: reportsError } = await supabase
+      .from('ai_analysis_reports')
+      .select('id, invention_title, application_number, created_at')
+      .is('user_id', null)  // user_id가 null인 보고서들 조회
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (reportsError) {
+      console.error('리포트 데이터 조회 오류:', reportsError);
+    }
+
+    console.log('조회된 보고서 수:', reports?.length || 0);
+    const recentReports = (reports || []).map(report => ({
+      id: report.id,
+      title: report.invention_title,
+      applicationNumber: report.application_number,
+      createdAt: report.created_at,
+      downloadUrl: `/api/generate-report?reportId=${report.id}&format=pdf`
+    }));
+    console.log('최근 보고서:', recentReports.length);
+
+    // 9. 최근 활동 내역 (최대 30개 - 각 타입별로 10개씩 필터링하기 위해 여유분 확보)
+    const recentActivities = activities.slice(0, 30).map(activity => ({
       type: activity.activity_type,
       data: activity.activity_data,
       timestamp: activity.created_at,
@@ -156,14 +274,22 @@ module.exports = async function handler(req, res) {
           patent_view_count: activityBreakdown.patent_view || 0,
           ai_analysis_count: activityBreakdown.ai_analysis || 0,
           document_download_count: activityBreakdown.document_download || 0,
-          report_generate_count: activityBreakdown.report_generate || 0
+          report_generate_count: activityBreakdown.report_generate || 0,
+          average_search_results: averageSearchResults,
+          total_search_results: totalSearchResults
         },
         activity_breakdown: activityBreakdown,
         daily_activities: last7Days,
+        daily_activities_100days: last100Days,
+        hourly_activities: hourlyStats,
+        weekly_activities: weeklyStats,
         top_keywords: topKeywords,
+        field_distribution: fieldStats,
         analysis_type_stats: analysisTypeStats,
         document_type_stats: documentTypeStats,
-        recent_activities: recentActivities
+        recent_activities: recentActivities,
+        recent_searches: recentSearches,
+        recent_reports: recentReports
       }
     };
 
@@ -180,6 +306,71 @@ module.exports = async function handler(req, res) {
     });
   }
 };
+
+// 키워드 분야 분류 함수
+function classifyKeywordField(keyword) {
+  if (!keyword) return '기타';
+  
+  const keywordLower = keyword.toLowerCase();
+  
+  // AI/머신러닝 분야
+  if (keywordLower.includes('인공지능') || keywordLower.includes('ai') || 
+      keywordLower.includes('머신러닝') || keywordLower.includes('딥러닝') ||
+      keywordLower.includes('neural') || keywordLower.includes('machine learning')) {
+    return 'AI/머신러닝';
+  }
+  
+  // 바이오/의료 분야
+  if (keywordLower.includes('바이오') || keywordLower.includes('의료') ||
+      keywordLower.includes('bio') || keywordLower.includes('medical') ||
+      keywordLower.includes('약물') || keywordLower.includes('치료')) {
+    return '바이오/의료';
+  }
+  
+  // 전자/반도체 분야
+  if (keywordLower.includes('반도체') || keywordLower.includes('전자') ||
+      keywordLower.includes('semiconductor') || keywordLower.includes('chip') ||
+      keywordLower.includes('회로') || keywordLower.includes('디스플레이')) {
+    return '전자/반도체';
+  }
+  
+  // 통신/네트워크 분야
+  if (keywordLower.includes('5g') || keywordLower.includes('통신') ||
+      keywordLower.includes('네트워크') || keywordLower.includes('iot') ||
+      keywordLower.includes('블록체인') || keywordLower.includes('blockchain')) {
+    return '통신/네트워크';
+  }
+  
+  // 자동차/모빌리티 분야
+  if (keywordLower.includes('자율주행') || keywordLower.includes('자동차') ||
+      keywordLower.includes('autonomous') || keywordLower.includes('vehicle') ||
+      keywordLower.includes('모빌리티') || keywordLower.includes('배터리')) {
+    return '자동차/모빌리티';
+  }
+  
+  // 에너지/환경 분야
+  if (keywordLower.includes('에너지') || keywordLower.includes('태양광') ||
+      keywordLower.includes('풍력') || keywordLower.includes('환경') ||
+      keywordLower.includes('친환경') || keywordLower.includes('재생에너지')) {
+    return '에너지/환경';
+  }
+  
+  // 기계/제조 분야
+  if (keywordLower.includes('기계') || keywordLower.includes('제조') ||
+      keywordLower.includes('로봇') || keywordLower.includes('automation') ||
+      keywordLower.includes('3d프린팅') || keywordLower.includes('센서')) {
+    return '기계/제조';
+  }
+  
+  // 소프트웨어/IT 분야
+  if (keywordLower.includes('소프트웨어') || keywordLower.includes('앱') ||
+      keywordLower.includes('플랫폼') || keywordLower.includes('클라우드') ||
+      keywordLower.includes('메타버스') || keywordLower.includes('vr')) {
+    return '소프트웨어/IT';
+  }
+  
+  return '기타';
+}
 
 // 활동 설명 생성 함수
 function generateActivityDescription(activity) {

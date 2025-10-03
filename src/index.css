@@ -2,23 +2,98 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CSS 변수를 통한 색상 시스템 */
+/* CSS 변수를 통한 프리미엄 색상 시스템 */
 :root {
-  /* 라이트 모드 색상 */
-  --color-primary: 59 130 246;
+  /* 프리미엄 라이트 모드 색상 */
+  --color-primary: 30 58 138; /* 네이비 블루 */
   --color-primary-foreground: 255 255 255;
-  --color-secondary: 100 116 139;
+  --color-secondary: 71 85 105; /* 슬레이트 그레이 */
   --color-secondary-foreground: 255 255 255;
+  --color-accent: 217 119 6; /* 골드 */
+  --color-accent-foreground: 255 255 255;
   --color-background: 255 255 255;
   --color-foreground: 15 23 42;
-  --color-muted: 241 245 249;
+  --color-muted: 248 250 252;
   --color-muted-foreground: 100 116 139;
   --color-border: 226 232 240;
   --color-input: 226 232 240;
-  --color-ring: 59 130 246;
-  --color-success: 34 197 94;
-  --color-warning: 245 158 11;
-  --color-danger: 239 68 68;
+  --color-ring: 30 58 138;
+  --color-success: 5 150 105;
+  --color-warning: 217 119 6;
+  --color-danger: 220 38 38;
+  
+  /* 프리미엄 그라데이션 색상 */
+  --gradient-primary: linear-gradient(135deg, rgb(30 58 138) 0%, rgb(59 130 246) 100%);
+  --gradient-secondary: linear-gradient(135deg, rgb(71 85 105) 0%, rgb(100 116 139) 100%);
+  --gradient-accent: linear-gradient(135deg, rgb(217 119 6) 0%, rgb(245 158 11) 100%);
+  --gradient-success: linear-gradient(135deg, rgb(5 150 105) 0%, rgb(34 197 94) 100%);
+  
+  /* 고급 그림자 */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+  
+  /* 프리미엄 색상 팔레트 */
+  --navy-50: 248 250 252;
+  --navy-100: 241 245 249;
+  --navy-200: 226 232 240;
+  --navy-300: 203 213 225;
+  --navy-400: 148 163 184;
+  --navy-500: 100 116 139;
+  --navy-600: 71 85 105;
+  --navy-700: 51 65 85;
+  --navy-800: 30 41 59;
+  --navy-900: 15 23 42;
+}
+
+/* 커스텀 스크롤바 스타일링 */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(203 213 225) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgb(203 213 225);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(148 163 184);
+}
+
+/* 다크 모드 스크롤바 */
+.dark .custom-scrollbar {
+  scrollbar-color: rgb(71 85 105) transparent;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgb(71 85 105);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(100 116 139);
+  
+  --gold-50: 255 251 235;
+  --gold-100: 254 243 199;
+  --gold-200: 253 230 138;
+  --gold-300: 252 211 77;
+  --gold-400: 251 191 36;
+  --gold-500: 245 158 11;
+  --gold-600: 217 119 6;
+  --gold-700: 180 83 9;
+  --gold-800: 146 64 14;
+  --gold-900: 120 53 15;
   
   /* 폰트 설정 */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
@@ -35,12 +110,14 @@
   -ms-text-size-adjust: 100%;
 }
 
-/* 다크 모드 색상 */
+/* 프리미엄 다크 모드 색상 */
 .dark {
   --color-primary: 59 130 246;
   --color-primary-foreground: 255 255 255;
-  --color-secondary: 71 85 105;
+  --color-secondary: 100 116 139;
   --color-secondary-foreground: 248 250 252;
+  --color-accent: 245 158 11;
+  --color-accent-foreground: 15 23 42;
   --color-background: 2 6 23;
   --color-foreground: 248 250 252;
   --color-muted: 30 41 59;
@@ -51,6 +128,12 @@
   --color-success: 34 197 94;
   --color-warning: 245 158 11;
   --color-danger: 239 68 68;
+  
+  /* 다크 모드 그라데이션 */
+  --gradient-primary: linear-gradient(135deg, rgb(59 130 246) 0%, rgb(99 102 241) 100%);
+  --gradient-secondary: linear-gradient(135deg, rgb(100 116 139) 0%, rgb(148 163 184) 100%);
+  --gradient-accent: linear-gradient(135deg, rgb(245 158 11) 0%, rgb(251 191 36) 100%);
+  --gradient-success: linear-gradient(135deg, rgb(34 197 94) 0%, rgb(59 130 246) 100%);
 }
 
 /* 기본 요소 스타일 재설정 */
@@ -101,7 +184,7 @@ body {
   }
 }
 
-/* 인쇄 스타일 */
+/* 프리미엄 인쇄 스타일 */
 @media print {
   * {
     background: transparent !important;
@@ -110,22 +193,143 @@ body {
     text-shadow: none !important;
   }
   
+  body {
+    font-size: 12pt;
+    line-height: 1.4;
+    color: black;
+    background: white;
+  }
+  
+  /* 페이지 설정 */
+  @page {
+    margin: 2cm;
+    size: A4;
+  }
+  
+  /* 제목 스타일 */
+  h1, h2, h3, h4, h5, h6 {
+    color: black !important;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+  
+  h1 {
+    font-size: 18pt;
+    font-weight: bold;
+    margin-bottom: 12pt;
+  }
+  
+  h2 {
+    font-size: 16pt;
+    font-weight: bold;
+    margin-bottom: 10pt;
+  }
+  
+  h3 {
+    font-size: 14pt;
+    font-weight: bold;
+    margin-bottom: 8pt;
+  }
+  
+  /* 차트 및 이미지 */
+  .recharts-wrapper,
+  .recharts-surface,
+  svg {
+    max-width: 100% !important;
+    height: auto !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  /* 카드 컴포넌트 */
+  .card,
+  [class*="Card"] {
+    border: 1px solid #ccc !important;
+    margin-bottom: 16pt;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    background: white !important;
+  }
+  
+  /* 테이블 */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 16pt;
+  }
+  
+  th, td {
+    border: 1px solid #ccc;
+    padding: 8pt;
+    text-align: left;
+  }
+  
+  th {
+    background: #f5f5f5 !important;
+    font-weight: bold;
+  }
+  
+  /* 링크 */
   a,
   a:visited {
     text-decoration: underline;
+    color: black !important;
   }
   
   a[href]:after {
     content: " (" attr(href) ")";
+    font-size: 10pt;
+    color: #666;
   }
   
-  abbr[title]:after {
-    content: " (" attr(title) ")";
-  }
-  
-  .no-print {
+  /* 숨김 요소 */
+  .no-print,
+  .print-hidden,
+  button,
+  .btn,
+  nav,
+  .navigation,
+  .sidebar,
+  .header-actions,
+  .floating-action {
     display: none !important;
   }
+  
+  /* 페이지 나누기 */
+  .page-break-before {
+    page-break-before: always;
+    break-before: page;
+  }
+  
+  .page-break-after {
+    page-break-after: always;
+    break-after: page;
+  }
+  
+  .page-break-inside-avoid {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  /* 그라데이션 대체 */
+  .gradient-primary,
+  .gradient-secondary,
+  .gradient-accent,
+  .gradient-success {
+    background: #f5f5f5 !important;
+    border: 1px solid #ccc !important;
+  }
+  
+  /* 아이콘 크기 조정 */
+  svg {
+    width: 16pt !important;
+    height: 16pt !important;
+  }
+  
+  /* 여백 조정 */
+  .print-mt-0 { margin-top: 0 !important; }
+  .print-mb-4 { margin-bottom: 16pt !important; }
+  .print-p-4 { padding: 16pt !important; }
 }
 
 /* 브라우저별 호환성 */
@@ -163,4 +367,174 @@ body {
 ::-moz-selection {
   background-color: rgb(var(--color-primary) / 0.2);
   color: rgb(var(--color-foreground));
+}
+
+/* 프리미엄 타이포그래피 클래스 */
+.typography-display {
+  font-size: 3.75rem;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.typography-h1 {
+  font-size: 3rem;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.typography-h2 {
+  font-size: 2.25rem;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.typography-h3 {
+  font-size: 1.875rem;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.typography-h4 {
+  font-size: 1.5rem;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.typography-body-large {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+.typography-body {
+  font-size: 1rem;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+.typography-body-small {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.typography-caption {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+
+/* 프리미엄 유틸리티 클래스 */
+.gradient-primary {
+  background: var(--gradient-primary);
+}
+
+.gradient-secondary {
+  background: var(--gradient-secondary);
+}
+
+.gradient-accent {
+  background: var(--gradient-accent);
+}
+
+.gradient-success {
+  background: var(--gradient-success);
+}
+
+.shadow-premium {
+  box-shadow: var(--shadow-xl);
+}
+
+.shadow-premium-lg {
+  box-shadow: var(--shadow-2xl);
+}
+
+.glass-effect {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass-effect {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 애니메이션 클래스 */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.6s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 호버 효과 */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl);
+}
+
+/* 반응형 타이포그래피 */
+@media (max-width: 768px) {
+  .typography-display {
+    font-size: 2.5rem;
+  }
+  
+  .typography-h1 {
+    font-size: 2rem;
+  }
+  
+  .typography-h2 {
+    font-size: 1.75rem;
+  }
+  
+  .typography-h3 {
+    font-size: 1.5rem;
+  }
 }

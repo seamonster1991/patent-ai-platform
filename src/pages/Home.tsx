@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, TrendingUp, FileText, Zap, ArrowRight } from 'lucide-react'
+import { Search, TrendingUp, Shield, Zap, Users, FileText, BarChart3, Brain, ArrowRight } from 'lucide-react'
 import Layout from '../components/Layout/Layout'
 import Button from '../components/UI/Button'
 import Input from '../components/UI/Input'
@@ -10,8 +10,41 @@ import { toast } from 'sonner'
 
 export default function Home() {
   const [searchKeyword, setSearchKeyword] = useState('')
+  const [popularKeywords, setPopularKeywords] = useState<string[]>([])
+  const [loadingKeywords, setLoadingKeywords] = useState(true)
   const navigate = useNavigate()
   const { setFilters } = useSearchStore()
+
+  // 인기 검색어 데이터 가져오기
+  useEffect(() => {
+    const fetchPopularKeywords = async () => {
+      try {
+        setLoadingKeywords(true)
+        const response = await fetch('/api/admin/user-activities?period=30&limit=5')
+        const data = await response.json()
+        
+        if (data.success && data.data.topKeywords) {
+          // 상위 5개 키워드만 추출
+          const keywords = data.data.topKeywords
+            .slice(0, 5)
+            .map((item: { keyword: string; count: number }) => item.keyword)
+          
+          setPopularKeywords(keywords)
+        } else {
+          // API 실패 시 기본 키워드 사용
+          setPopularKeywords(['인공지능', '블록체인', 'IoT', '자율주행', '바이오'])
+        }
+      } catch (error) {
+        console.error('인기 검색어 조회 실패:', error)
+        // 에러 시 기본 키워드 사용
+        setPopularKeywords(['인공지능', '블록체인', 'IoT', '자율주행', '바이오'])
+      } finally {
+        setLoadingKeywords(false)
+      }
+    }
+
+    fetchPopularKeywords()
+  }, [])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -111,16 +144,18 @@ export default function Home() {
                 </p>
               </div>
               <div className="flex flex-wrap justify-center gap-3">
-                {[
-                  '인공지능',
-                  '블록체인', 
-                  'IoT',
-                  '자율주행',
-                  '바이오',
-                  '반도체',
-                  '5G',
-                  '메타버스'
-                ].map((keyword) => (
+                {loadingKeywords ? (
+                  // 로딩 중일 때 스켈레톤 표시
+                  Array.from({ length: 5 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="px-4 py-2 bg-secondary-700/30 rounded-full animate-pulse"
+                    >
+                      <div className="w-16 h-4 bg-secondary-600/50 rounded"></div>
+                    </div>
+                  ))
+                ) : (
+                  popularKeywords.map((keyword) => (
                   <button
                     key={keyword}
                     onClick={() => {
@@ -134,7 +169,8 @@ export default function Home() {
                       {keyword}
                     </span>
                   </button>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           </div>

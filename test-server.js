@@ -62,6 +62,22 @@ app.post('/api/ai-analysis', async (req, res) => {
   }
 });
 
+app.post('/api/generate-report', async (req, res) => {
+  try {
+    console.log('📊 리포트 생성 API 호출:', req.body);
+    
+    const generateReportHandler = require('./api/generate-report.js');
+    await generateReportHandler(req, res);
+  } catch (error) {
+    console.error('❌ 리포트 생성 API 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
 // 검색 기록 API
 app.all('/api/users/search-history/:userId?', async (req, res) => {
   try {
@@ -175,6 +191,7 @@ app.listen(PORT, () => {
   console.log('  - POST /api/search');
   console.log('  - POST /api/detail');
   console.log('  - POST /api/ai-analysis');
+  console.log('  - POST /api/generate-report');
   console.log('  - GET /api/documents');
   console.log('  - POST/GET /api/users/search-history');
 });

@@ -43,9 +43,16 @@ import { generateMarketAnalysisPDF, generateBusinessInsightPDF } from '../lib/pd
 import { useSearchStore } from '../store/searchStore'
 import { useAuthStore } from '../store/authStore'
 import { ActivityTracker } from '../lib/activityTracker'
+import MarketAnalysisReport from '../components/Reports/MarketAnalysisReport'
+import BusinessInsightsReport from '../components/Reports/BusinessInsightsReport'
 
 export default function PatentDetail() {
+  console.log('🔍 [PatentDetail] 컴포넌트 로드됨');
+  
   const { applicationNumber } = useParams<{ applicationNumber: string }>()
+  console.log('🔍 [PatentDetail] applicationNumber:', applicationNumber);
+  console.log('🔍 [PatentDetail] 현재 URL:', window.location.href);
+  
   const navigate = useNavigate()
   const { loadSearchState } = useSearchStore()
   const [patent, setPatent] = useState<KiprisPatentDetailItem | null>(null)
@@ -63,7 +70,9 @@ export default function PatentDetail() {
   const [pdfGenerating, setPdfGenerating] = useState<{ market: boolean; business: boolean }>({ market: false, business: false })
 
   useEffect(() => {
+    console.log('🔍 [PatentDetail] useEffect 실행됨, applicationNumber:', applicationNumber);
     if (applicationNumber) {
+      console.log('🔍 [PatentDetail] fetchPatentDetail 호출 시작');
       fetchPatentDetail(applicationNumber)
       // applicationNumber가 변경될 때 AI 분석 관련 상태 초기화
       setAiAnalysis(null)
@@ -471,7 +480,8 @@ export default function PatentDetail() {
     { id: 'family', label: '패밀리', icon: Globe },
     { id: 'images', label: '도면', icon: ImageIcon },
     { id: 'documents', label: '문서 다운로드', icon: Download },
-    { id: 'ai-analysis', label: 'AI 분석', icon: Brain }
+    { id: 'market-analysis', label: '시장 분석', icon: TrendingUp },
+    { id: 'business-insights', label: '비즈니스 인사이트', icon: DollarSign }
   ]
 
   return (
@@ -551,6 +561,7 @@ export default function PatentDetail() {
                   <button
                     key={tab.id}
                     onClick={() => {
+                      console.log('🔄 [PatentDetail] 탭 클릭:', tab.id, tab.label)
                       setActiveTab(tab.id)
                       setRenderedTabs(prev => new Set([...prev, tab.id]))
                     }}
@@ -638,17 +649,30 @@ export default function PatentDetail() {
             </div>
           )}
           
-          {renderedTabs.has('ai-analysis') && (
-            <div className={activeTab === 'ai-analysis' ? 'block' : 'hidden'}>
-              <AIAnalysisTab 
+          {renderedTabs.has('market-analysis') && (
+            <div className={activeTab === 'market-analysis' ? 'block' : 'hidden'}>
+              <MarketAnalysisReport 
                 patent={patent} 
                 analysis={aiAnalysis}
                 loading={aiLoading}
                 error={aiError}
                 onGenerate={generateAIAnalysis}
-                pdfGenerating={pdfGenerating}
-                onGenerateMarketPDF={generateMarketAnalysisReport}
-                onGenerateBusinessPDF={generateBusinessInsightReport}
+                onGeneratePDF={generateMarketAnalysisReport}
+                pdfGenerating={pdfGenerating.market}
+              />
+            </div>
+          )}
+          
+          {renderedTabs.has('business-insights') && (
+            <div className={activeTab === 'business-insights' ? 'block' : 'hidden'}>
+              <BusinessInsightsReport 
+                patent={patent} 
+                analysis={aiAnalysis}
+                loading={aiLoading}
+                error={aiError}
+                onGenerate={generateAIAnalysis}
+                onGeneratePDF={generateBusinessInsightReport}
+                pdfGenerating={pdfGenerating.business}
               />
             </div>
           )}
@@ -1365,413 +1389,5 @@ function ImagesTab({ patent }: { patent: KiprisPatentDetailItem }) {
   )
 }
 
-interface AIAnalysisTabProps {
-  patent: KiprisPatentDetailItem
-  analysis: AIAnalysisReport | null
-  loading: boolean
-  error: string | null
-  onGenerate: () => void
-  pdfGenerating: { market: boolean; business: boolean }
-  onGenerateMarketPDF: () => void
-  onGenerateBusinessPDF: () => void
-}
-
-function AIAnalysisTab({ patent, analysis, loading, error, onGenerate, pdfGenerating, onGenerateMarketPDF, onGenerateBusinessPDF }: AIAnalysisTabProps) {
-  if (!analysis && !loading && !error) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center">
-            <Brain className="w-16 h-16 mx-auto mb-4 text-blue-500" />
-            <h3 className="text-xl font-semibold mb-2">AI 분석 리포트</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Gemini AI를 활용하여 이 특허의 시장분석과 비즈니스 인사이트를 생성합니다.
-            </p>
-            <Button onClick={onGenerate} className="flex items-center gap-2 mx-auto">
-              <Brain className="w-4 h-4" />
-              AI 분석 생성
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center">
-            <Loader2 className="w-16 h-16 mx-auto mb-4 text-blue-500 animate-spin" />
-            <h3 className="text-xl font-semibold mb-2">AI 분석 생성 중...</h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              Gemini AI가 특허 정보를 분석하고 있습니다. 잠시만 기다려주세요.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center">
-            <div className="w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
-              <Brain className="w-8 h-8 text-red-500" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2 text-red-600 dark:text-red-400">분석 생성 실패</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
-            <Button onClick={onGenerate} variant="outline" className="flex items-center gap-2 mx-auto">
-              <Brain className="w-4 h-4" />
-              다시 시도
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (!analysis) return null
-
-  // 새로운 API 응답 구조 처리
-  console.log('🔍 AI 분석 탭 - analysis 객체:', analysis)
-  console.log('🔍 AI 분석 탭 - analysis 타입:', typeof analysis)
-  console.log('🔍 AI 분석 탭 - analysis.analysis:', analysis.analysis)
-  console.log('🔍 AI 분석 탭 - analysis.sections:', 'sections' in analysis ? analysis.sections : 'No sections property')
-  
-  // 데이터 구조 확인
-  const hasDirectSections = 'sections' in analysis && analysis.sections && Array.isArray(analysis.sections)
-  const hasNestedAnalysis = 'analysis' in analysis && analysis.analysis && 'sections' in analysis.analysis && analysis.analysis.sections && Array.isArray(analysis.analysis.sections)
-  const isNewFormat = hasNestedAnalysis || hasDirectSections
-  const analysisData: AIAnalysisStructure = hasNestedAnalysis ? analysis.analysis : (analysis as any)
-  const analysisDate = analysis.analysisDate || analysis.generatedAt
-  const hasLegacyMarket = !!analysis.marketAnalysis && typeof analysis.marketAnalysis === 'object'
-  const hasLegacyBusiness = !!analysis.businessInsight && typeof analysis.businessInsight === 'object'
-  
-  console.log('🔍 AI 분석 탭 - hasDirectSections:', hasDirectSections)
-  console.log('🔍 AI 분석 탭 - hasNestedAnalysis:', hasNestedAnalysis)
-  console.log('🔍 AI 분석 탭 - isNewFormat:', isNewFormat)
-  console.log('🔍 AI 분석 탭 - analysisData:', analysisData)
-  console.log('🔍 AI 분석 탭 - analysisData.sections:', 'sections' in analysisData ? analysisData.sections : 'No sections property')
-
-  return (
-    <div className="space-y-6">
-      {/* 헤더 */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Brain className="w-5 h-5 text-blue-500" />
-              AI 분석 리포트
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">
-                생성일: {analysisDate ? new Date(analysisDate).toLocaleDateString() : '방금 전'}
-              </span>
-              <Button onClick={onGenerate} variant="outline" size="sm">
-                재생성
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-
-      {/* 새로운 형식의 분석 결과 표시 */}
-      {isNewFormat && analysisData.sections ? (
-        <div className="space-y-6">
-          {/* 요약 */}
-          {analysisData.summary && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-green-500" />
-                  분석 요약
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                    {analysisData.summary}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* 섹션별 분석 결과 */}
-          {analysisData.sections.map((section: any, index: number) => {
-            const colors = [
-              { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-600 dark:text-blue-400', icon: 'text-blue-500' },
-              { bg: 'bg-green-50 dark:bg-green-900/20', text: 'text-green-600 dark:text-green-400', icon: 'text-green-500' },
-              { bg: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-600 dark:text-purple-400', icon: 'text-purple-500' },
-              { bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-600 dark:text-orange-400', icon: 'text-orange-500' },
-              { bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-600 dark:text-red-400', icon: 'text-red-500' },
-            ]
-            const colorScheme = colors[index % colors.length]
-
-            return (
-              <Card key={index}>
-                <CardHeader>
-                  <CardTitle className={`flex items-center gap-2 ${colorScheme.text}`}>
-                    <TrendingUp className={`w-5 h-5 ${colorScheme.icon}`} />
-                    {section.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className={`${colorScheme.bg} p-4 rounded-lg`}>
-                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                      {section.content}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-
-          {/* 핵심 인사이트 */}
-          {analysisData.keyInsights && analysisData.keyInsights.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Eye className="w-5 h-5 text-yellow-500" />
-                  핵심 인사이트
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
-                  <ul className="space-y-2">
-                    {analysisData.keyInsights.map((insight: string, index: number) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <span className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></span>
-                        <span className="text-gray-700 dark:text-gray-300">{insight}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* 신뢰도 표시 */}
-          {typeof analysisData.confidence === 'number' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-indigo-500" />
-                  분석 신뢰도
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1">
-                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                        <div 
-                          className="bg-indigo-500 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${(analysisData.confidence * 100)}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                    <span className="text-indigo-600 dark:text-indigo-400 font-semibold">
-                      {Math.round(analysisData.confidence * 100)}%
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      ) : hasLegacyMarket || hasLegacyBusiness ? (
-        /* 기존 형식의 분석 결과 표시 (하위 호환성) */
-        <div className="space-y-6">
-          {/* 시장분석 리포트 */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-green-500" />
-                  시장분석 리포트
-                </CardTitle>
-                <Button 
-                  onClick={onGenerateMarketPDF}
-                  disabled={pdfGenerating.market}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2"
-                >
-                  {pdfGenerating.market ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      PDF 생성 중...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="w-4 h-4" />
-                      PDF 다운로드
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div>
-                  <h4 className="font-semibold text-lg mb-3 text-blue-600 dark:text-blue-400">
-                    1. 시장 침투력
-                  </h4>
-                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                      {analysis.marketAnalysis?.marketPenetration || '데이터가 없습니다.'}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-lg mb-3 text-green-600 dark:text-green-400">
-                    2. 경쟁 구도
-                  </h4>
-                  <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                      {analysis.marketAnalysis?.competitiveLandscape || '데이터가 없습니다.'}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-lg mb-3 text-purple-600 dark:text-purple-400">
-                    3. 시장 성장 동력
-                  </h4>
-                  <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
-                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                      {analysis.marketAnalysis?.marketGrowthDrivers || '데이터가 없습니다.'}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-lg mb-3 text-red-600 dark:text-red-400">
-                    4. 위험 요소
-                  </h4>
-                  <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
-                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                      {analysis.marketAnalysis?.riskFactors || '데이터가 없습니다.'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* 비즈니스 인사이트 리포트 */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="w-5 h-5 text-yellow-500" />
-                  비즈니스 인사이트 리포트
-                </CardTitle>
-                <Button 
-                  onClick={onGenerateBusinessPDF}
-                  disabled={pdfGenerating.business}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2"
-                >
-                  {pdfGenerating.business ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      PDF 생성 중...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="w-4 h-4" />
-                      PDF 다운로드
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div>
-                  <h4 className="font-semibold text-lg mb-3 text-blue-600 dark:text-blue-400">
-                    1. 수익 모델
-                  </h4>
-                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                      {analysis.businessInsight?.revenueModel || '데이터가 없습니다.'}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-lg mb-3 text-green-600 dark:text-green-400">
-                    2. 로열티 마진
-                  </h4>
-                  <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                      {analysis.businessInsight?.royaltyMargin || '데이터가 없습니다.'}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-lg mb-3 text-purple-600 dark:text-purple-400">
-                    3. 신사업 기회
-                  </h4>
-                  <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
-                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                      {analysis.businessInsight?.newBusinessOpportunities || '데이터가 없습니다.'}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-lg mb-3 text-orange-600 dark:text-orange-400">
-                    4. 경쟁사 대응 전략
-                  </h4>
-                  <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
-                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                      {analysis.businessInsight?.competitorResponseStrategy || '데이터가 없습니다.'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      ) : (
-        /* 완전한 폴백: 구조가 맞지 않는 경우 rawAnalysis 또는 JSON을 표시 */
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-red-500" />
-              분석 결과 표시 불가
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <p className="text-gray-700 dark:text-gray-300">
-                분석은 완료되었지만, 응답 데이터 구조가 예상과 달라 화면에 표시할 수 없습니다. 아래 원본 데이터를 참고하세요.
-              </p>
-              {analysis.rawAnalysis ? (
-                <div className="bg-gray-50 dark:bg-gray-900/30 p-4 rounded-lg whitespace-pre-line">
-                  {analysis.rawAnalysis}
-                </div>
-              ) : (
-                <pre className="bg-gray-50 dark:bg-gray-900/30 p-4 rounded-lg overflow-auto text-sm">
-                  {JSON.stringify(analysis, null, 2)}
-                </pre>
-              )}
-              <div className="flex gap-2">
-                <Button onClick={onGenerate} variant="outline" size="sm">재생성</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  )
-}
+// AI 분석이 필요할 때 자동으로 생성하는 로직을 각 보고서 컴포넌트에서 처리
+// 기존 AIAnalysisTab 컴포넌트는 제거되고 새로운 독립적인 보고서 컴포넌트들로 대체됨

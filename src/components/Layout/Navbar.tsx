@@ -1,15 +1,40 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Search, User, LogOut, Menu, X, Moon, Sun } from 'lucide-react'
 import { useState } from 'react'
 import { useAuthStore } from '../../store/authStore'
 import { useThemeStore } from '../../store/themeStore'
 import { cn } from '../../lib/utils'
+import { toast } from 'sonner'
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { user, signOut } = useAuthStore()
+  const { user, signOut, loading, initialized } = useAuthStore()
   const { isDark, toggleTheme } = useThemeStore()
   const location = useLocation()
+  const navigate = useNavigate()
+
+  // AuthStore가 초기화되지 않았으면 로딩 상태 표시
+  if (!initialized) {
+    return (
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-dark-900 border-b border-secondary-200 dark:border-secondary-700 transition-colors">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <Link to="/" className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <Search className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xl font-bold text-slate-900 dark:text-white">IP-Insight AI</span>
+              </Link>
+            </div>
+            <div className="animate-pulse">
+              <div className="h-4 w-20 bg-gray-300 dark:bg-gray-600 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </nav>
+    )
+  }
 
   const navigation = [
     { name: '홈', href: '/', icon: Search },
@@ -27,6 +52,15 @@ export default function Navbar() {
   const handleSignOut = async () => {
     await signOut()
     setIsMenuOpen(false)
+  }
+
+  const handleProtectedNavigation = (href: string, name: string) => {
+    if (!user) {
+      toast.error(`${name} 페이지는 로그인이 필요합니다.`)
+      navigate('/login')
+      return
+    }
+    navigate(href)
   }
 
   return (
@@ -47,23 +81,49 @@ export default function Navbar() {
 
             {/* Desktop navigation */}
             <div className="hidden md:ml-10 md:flex md:space-x-8">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={cn(
-                    'inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 transition-colors',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
-                    'focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900',
-                    isActive(item.href)
-                      ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                      : 'border-transparent text-secondary-600 dark:text-secondary-300 hover:text-primary-600 dark:hover:text-primary-400 hover:border-secondary-300 dark:hover:border-secondary-600'
-                  )}
-                >
-                  <item.icon className="w-4 h-4 mr-2" />
-                  {item.name}
-                </Link>
-              ))}
+              {navigation.map((item) => {
+                // 홈 페이지는 항상 표시, 검색과 대시보드는 로그인 상태에 따라 처리
+                if (item.href === '/') {
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      className={cn(
+                        'inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 transition-colors',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
+                        'focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900',
+                        isActive(item.href)
+                          ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                          : 'border-transparent text-secondary-600 dark:text-secondary-300 hover:text-primary-600 dark:hover:text-primary-400 hover:border-secondary-300 dark:hover:border-secondary-600'
+                      )}
+                    >
+                      <item.icon className="w-4 h-4 mr-2" />
+                      {item.name}
+                    </Link>
+                  )
+                }
+
+                // 검색과 대시보드는 로그인 상태에 따라 처리
+                return (
+                  <button
+                    key={item.name}
+                    onClick={() => handleProtectedNavigation(item.href, item.name)}
+                    className={cn(
+                      'inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 transition-colors',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
+                      'focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900',
+                      isActive(item.href)
+                        ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                        : 'border-transparent text-secondary-600 dark:text-secondary-300 hover:text-primary-600 dark:hover:text-primary-400 hover:border-secondary-300 dark:hover:border-secondary-600',
+                      !user && 'opacity-75'
+                    )}
+                  >
+                    <item.icon className="w-4 h-4 mr-2" />
+                    {item.name}
+                    {!user && <span className="ml-1 text-xs text-secondary-400">🔒</span>}
+                  </button>
+                )
+              })}
             </div>
           </div>
 
@@ -128,24 +188,53 @@ export default function Navbar() {
         {isMenuOpen && (
           <div className="md:hidden bg-white dark:bg-dark-900 border-t border-secondary-200 dark:border-secondary-700">
             <div className="px-2 pt-2 pb-3 space-y-1">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  onClick={() => setIsMenuOpen(false)}
-                  className={cn(
-                    'flex items-center px-3 py-2 text-base font-medium rounded-lg transition-colors',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
-                    'focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900',
-                    isActive(item.href)
-                      ? 'bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400'
-                      : 'text-secondary-600 dark:text-secondary-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-secondary-100 dark:hover:bg-secondary-800'
-                  )}
-                >
-                  <item.icon className="w-5 h-5 mr-3" />
-                  {item.name}
-                </Link>
-              ))}
+              {navigation.map((item) => {
+                // 홈 페이지는 항상 표시
+                if (item.href === '/') {
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      onClick={() => setIsMenuOpen(false)}
+                      className={cn(
+                        'flex items-center px-3 py-2 text-base font-medium rounded-lg transition-colors',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
+                        'focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900',
+                        isActive(item.href)
+                          ? 'bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400'
+                          : 'text-secondary-600 dark:text-secondary-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-secondary-100 dark:hover:bg-secondary-800'
+                      )}
+                    >
+                      <item.icon className="w-5 h-5 mr-3" />
+                      {item.name}
+                    </Link>
+                  )
+                }
+
+                // 검색과 대시보드는 로그인 상태에 따라 처리
+                return (
+                  <button
+                    key={item.name}
+                    onClick={() => {
+                      setIsMenuOpen(false)
+                      handleProtectedNavigation(item.href, item.name)
+                    }}
+                    className={cn(
+                      'flex items-center w-full px-3 py-2 text-base font-medium rounded-lg transition-colors',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
+                      'focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900',
+                      isActive(item.href)
+                        ? 'bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400'
+                        : 'text-secondary-600 dark:text-secondary-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-secondary-100 dark:hover:bg-secondary-800',
+                      !user && 'opacity-75'
+                    )}
+                  >
+                    <item.icon className="w-5 h-5 mr-3" />
+                    {item.name}
+                    {!user && <span className="ml-auto text-xs text-secondary-400">🔒</span>}
+                  </button>
+                )
+              })}
               
               {user ? (
                 <div className="border-t border-secondary-200 dark:border-secondary-700 pt-4 mt-4">

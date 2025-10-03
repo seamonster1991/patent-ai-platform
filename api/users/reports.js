@@ -17,7 +17,8 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { userId } = req.params;
+    // URL에서 userId 추출 또는 쿼리 파라미터에서 가져오기
+    const { userId } = req.query;
     
     if (!userId) {
       return res.status(400).json({
@@ -27,14 +28,77 @@ module.exports = async function handler(req, res) {
     }
 
     if (req.method === 'GET') {
-      // 리포트 조회
-      console.log('📊 리포트 조회 API 호출:', { userId });
+      // 쿼리 파라미터 추출
+      const { 
+        days = '100',
+        sortBy = 'created_at',
+        sortOrder = 'desc',
+        search = '',
+        startDate,
+        endDate,
+        page = '1',
+        limit = '50'
+      } = req.query;
 
-      const { data: reports, error } = await supabase
+      console.log('📊 리포트 조회 API 호출:', { 
+        userId, 
+        days, 
+        sortBy, 
+        sortOrder, 
+        search,
+        startDate,
+        endDate,
+        page,
+        limit
+      });
+
+      // 날짜 범위 계산
+      let dateFilter = {};
+      if (startDate && endDate) {
+        dateFilter = {
+          gte: startDate,
+          lte: endDate
+        };
+      } else {
+        const daysAgo = new Date();
+        daysAgo.setDate(daysAgo.getDate() - parseInt(days));
+        dateFilter = {
+          gte: daysAgo.toISOString()
+        };
+      }
+
+      // 기본 쿼리 구성
+      let query = supabase
         .from('ai_analysis_reports')
-        .select('*')
+        .select('id, invention_title, application_number, created_at, updated_at')
         .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+        .gte('created_at', dateFilter.gte);
+
+      if (dateFilter.lte) {
+        query = query.lte('created_at', dateFilter.lte);
+      }
+
+      // 검색 필터 적용
+      if (search) {
+        query = query.or(`invention_title.ilike.%${search}%,application_number.ilike.%${search}%`);
+      }
+
+      // 정렬 적용
+      const ascending = sortOrder === 'asc';
+      if (sortBy === 'title') {
+        query = query.order('invention_title', { ascending });
+      } else {
+        query = query.order('created_at', { ascending });
+      }
+
+      // 페이지네이션 적용
+      const pageNum = parseInt(page);
+      const limitNum = parseInt(limit);
+      const offset = (pageNum - 1) * limitNum;
+      
+      query = query.range(offset, offset + limitNum - 1);
+
+      const { data: reports, error, count } = await query;
 
       if (error) {
         console.error('리포트 조회 오류:', error);
@@ -44,12 +108,47 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      console.log('✅ 리포트 조회 성공:', reports?.length || 0, '개');
+      // 전체 개수 조회 (페이지네이션용)
+      const { count: totalCount, error: countError } = await supabase
+        .from('ai_analysis_reports')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', dateFilter.gte);
+
+      if (countError) {
+        console.error('리포트 개수 조회 오류:', countError);
+      }
+
+      // 리포트 데이터 가공
+      const processedReports = (reports || []).map(report => ({
+        id: report.id,
+        title: report.invention_title,
+        applicationNumber: report.application_number,
+        createdAt: report.created_at,
+        updatedAt: report.updated_at,
+        downloadUrl: `/api/generate-report?reportId=${report.id}&format=pdf`
+      }));
+
+      console.log('✅ 리포트 조회 성공:', processedReports?.length || 0, '개');
 
       return res.status(200).json({
         success: true,
         data: {
-          reports: reports || []
+          reports: processedReports,
+          pagination: {
+            currentPage: pageNum,
+            totalPages: Math.ceil((totalCount || 0) / limitNum),
+            totalCount: totalCount || 0,
+            limit: limitNum
+          },
+          filters: {
+            days: parseInt(days),
+            sortBy,
+            sortOrder,
+            search,
+            startDate,
+            endDate
+          }
         }
       });
 

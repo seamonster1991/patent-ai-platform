@@ -1,5 +1,11 @@
 const axios = require('axios');
 const { parseStringPromise } = require('xml2js');
+const { createClient } = require('@supabase/supabase-js');
+
+// Supabase 클라이언트 초기화
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 module.exports = async function handler(req, res) {
   // CORS 헤더 설정
@@ -129,15 +135,20 @@ module.exports = async function handler(req, res) {
     
     // XML 응답을 JSON으로 변환
     const xmlData = response.data;
-    console.log('🔍 원본 XML 응답 (처음 500자):', xmlData.substring(0, 500));
+    console.log('🔍 원본 XML 응답 (처음 1000자):', xmlData.substring(0, 1000));
     
+    // XML을 JSON으로 변환
+    console.log('🔄 XML을 JSON으로 변환 중...');
     const jsonData = await parseStringPromise(xmlData, {
       explicitArray: false,
-      ignoreAttrs: false,
-      trim: true
+      ignoreAttrs: true,
+      trim: true,
+      mergeAttrs: true
     });
     
+    console.log('🔍 [DEBUG] 전체 JSON 데이터:', JSON.stringify(jsonData, null, 2));
     console.log('📄 JSON 변환 완료');
+    console.log('🔍 [API] JSON 변환 결과 전체 구조:', JSON.stringify(jsonData, null, 2));
     
     // KIPRIS 응답 구조 파싱
     const kiprisResponse = {
@@ -160,6 +171,8 @@ module.exports = async function handler(req, res) {
     if (jsonData && jsonData.response) {
       const responseData = jsonData.response;
       
+      console.log('🔍 [API] responseData 전체 구조:', JSON.stringify(responseData, null, 2));
+      
       // 헤더 정보 처리
       if (responseData.header) {
         kiprisResponse.header = {
@@ -167,43 +180,90 @@ module.exports = async function handler(req, res) {
           resultCode: responseData.header.resultCode || '00',
           resultMsg: responseData.header.resultMsg || 'NORMAL_SERVICE'
         };
+        console.log('🔍 [API] 헤더 정보:', kiprisResponse.header);
       }
       
       // 바디 데이터 처리
       if (responseData.body) {
         const bodyData = responseData.body;
+        console.log('🔍 [API] bodyData 전체 구조:', JSON.stringify(bodyData, null, 2));
         
         // items 처리
-        if (bodyData.items && bodyData.items.item) {
-          const items = Array.isArray(bodyData.items.item) ? bodyData.items.item : [bodyData.items.item];
-          kiprisResponse.body.items = items.map(item => ({
-            indexNo: item.indexNo,
-            registerStatus: item.registerStatus,
-            inventionTitle: item.inventionTitle,
-            ipcNumber: item.ipcNumber,
-            registerNumber: item.registerNumber,
-            registerDate: item.registerDate,
-            applicationNumber: item.applicationNumber,
-            applicationDate: item.applicationDate,
-            openNumber: item.openNumber,
-            openDate: item.openDate,
-            publicationNumber: item.publicationNumber,
-            publicationDate: item.publicationDate,
-            astrtCont: item.astrtCont,
-            drawing: item.drawing,
-            bigDrawing: item.bigDrawing,
-            applicantName: item.applicantName
-          }));
+        if (bodyData.items) {
+          console.log('🔍 [API] bodyData.items 구조:', JSON.stringify(bodyData.items, null, 2));
+          
+          if (bodyData.items.item) {
+            const items = Array.isArray(bodyData.items.item) ? bodyData.items.item : [bodyData.items.item];
+            kiprisResponse.body.items = items.map(item => ({
+              indexNo: item.indexNo,
+              registerStatus: item.registerStatus,
+              inventionTitle: item.inventionTitle,
+              ipcNumber: item.ipcNumber,
+              registerNumber: item.registerNumber,
+              registerDate: item.registerDate,
+              applicationNumber: item.applicationNumber,
+              applicationDate: item.applicationDate,
+              openNumber: item.openNumber,
+              openDate: item.openDate,
+              publicationNumber: item.publicationNumber,
+              publicationDate: item.publicationDate,
+              astrtCont: item.astrtCont,
+              drawing: item.drawing,
+              bigDrawing: item.bigDrawing,
+              applicantName: item.applicantName
+            }));
+            console.log('🔍 [API] 파싱된 items 개수:', kiprisResponse.body.items.length);
+          }
         }
         
-        // count 처리
+        // count 처리 - 간단하게 bodyData.count.totalCount에서 직접 가져오기
+        console.log('🔍 [API] count 정보 처리 시작');
+        let totalCount = 0;
+        let pageNo = parseInt(searchParams.pageNo || 1);
+        let numOfRows = parseInt(searchParams.numOfRows || 30);
+
         if (bodyData.count) {
-          kiprisResponse.body.count = {
-            totalCount: parseInt(bodyData.count.totalCount || bodyData.count || 0),
-            pageNo: parseInt(bodyData.count.pageNo || searchParams.pageNo || 1),
-            numOfRows: parseInt(bodyData.count.numOfRows || searchParams.numOfRows || 30)
-          };
+          console.log('🔍 [API] bodyData.count 발견:', JSON.stringify(bodyData.count, null, 2));
+          
+          // totalCount 직접 추출 - 여러 방법 시도
+          if (bodyData.count.totalCount) {
+            totalCount = parseInt(bodyData.count.totalCount) || 0;
+            console.log('🔍 [API] bodyData.count.totalCount에서 추출:', totalCount);
+          } else if (bodyData.count.count) {
+            totalCount = parseInt(bodyData.count.count) || 0;
+            console.log('🔍 [API] bodyData.count.count에서 추출:', totalCount);
+          } else if (typeof bodyData.count === 'string' || typeof bodyData.count === 'number') {
+            totalCount = parseInt(bodyData.count) || 0;
+            console.log('🔍 [API] bodyData.count 직접 변환:', totalCount);
+          }
+          
+          // pageNo와 numOfRows도 추출
+          if (bodyData.count.pageNo) {
+            pageNo = parseInt(bodyData.count.pageNo) || pageNo;
+          }
+          if (bodyData.count.numOfRows) {
+            numOfRows = parseInt(bodyData.count.numOfRows) || numOfRows;
+          }
+          
+          console.log('🔍 [API] 최종 추출된 값들 - totalCount:', totalCount, 'pageNo:', pageNo, 'numOfRows:', numOfRows);
+        } else {
+          console.warn('⚠️ [API] body.count가 누락되었습니다.');
+          
+          // XML에서 직접 totalCount 추출 시도
+          const totalCountMatch = xmlData.match(/<totalCount>(\d+)<\/totalCount>/);
+          if (totalCountMatch) {
+            totalCount = parseInt(totalCountMatch[1]) || 0;
+            console.log('🔍 [API] XML에서 직접 추출한 totalCount:', totalCount);
+          }
         }
+        
+        kiprisResponse.body.count = {
+          totalCount: totalCount,
+          pageNo: pageNo,
+          numOfRows: numOfRows
+        };
+        
+        console.log('🔍 [API] 최종 파싱된 count:', JSON.stringify(kiprisResponse.body.count, null, 2));
       }
     }
     
@@ -233,9 +293,39 @@ module.exports = async function handler(req, res) {
       success: kiprisResponse.header.successYN === 'Y',
       itemCount: kiprisResponse.body.items.length,
       totalCount: kiprisResponse.body.count.totalCount,
+      pageNo: kiprisResponse.body.count.pageNo,
+      numOfRows: kiprisResponse.body.count.numOfRows,
       resultCode: kiprisResponse.header.resultCode,
       resultMsg: kiprisResponse.header.resultMsg
     });
+    
+    // 활동 추적 - 검색 기록
+    try {
+      const userId = req.body.userId;
+      if (userId && supabase) {
+        const searchKeyword = searchParams.word || searchParams.keyword || '';
+        const resultsCount = kiprisResponse.body.items.length;
+        
+        await supabase
+          .from('user_activities')
+          .insert({
+            user_id: userId,
+            activity_type: 'search',
+            activity_data: {
+              keyword: searchKeyword,
+              filters: searchParams,
+              results_count: resultsCount,
+              total_count: kiprisResponse.body.count.totalCount,
+              timestamp: new Date().toISOString()
+            }
+          });
+        
+        console.log('✅ 검색 활동 추적 완료:', { userId, keyword: searchKeyword, resultsCount });
+      }
+    } catch (activityError) {
+      console.error('❌ 검색 활동 추적 오류:', activityError);
+      // 활동 추적 실패는 검색 기능에 영향을 주지 않음
+    }
     
     return res.status(200).json({
       success: true,

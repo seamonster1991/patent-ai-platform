@@ -19,6 +19,9 @@ import UserManagement from "@/pages/Admin/UserManagement";
 import UsageStatistics from "@/pages/Admin/UsageStatistics";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
+import TestReportGeneration from "@/components/TestReportGeneration";
+import Reports from "@/pages/Reports";
+import TestLogin from "@/pages/TestLogin";
 import { useAuthStore } from "@/store/authStore";
 import { useThemeStore } from "@/store/themeStore";
 
@@ -89,6 +92,13 @@ export default function App() {
                   <Profile />
                 </ProtectedRoute>
               } />
+              <Route path="/reports" element={
+                <ProtectedRoute>
+                  <Reports />
+                </ProtectedRoute>
+              } />
+              <Route path="/test-report" element={<TestReportGeneration />} />
+              <Route path="/test-login" element={<TestLogin />} />
             </Routes>
           </Layout>
         } />

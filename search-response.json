@@ -1,0 +1,73 @@
+{
+  "success": true,
+  "data": {
+    "header": {
+      "successYN": "Y",
+      "resultCode": "00",
+      "resultMsg": "NORMAL SERVICE."
+    },
+    "body": {
+      "items": [
+        {
+          "indexNo": "1",
+          "registerStatus": "공개",
+          "inventionTitle": "화훼유통을 위한 디지털 플랫폼 서비스 제공 시스템",
+          "ipcNumber": "G06Q 10/0832|G06Q 50/10|G01D 21/02|G06Q 10/087|G06Q 10/0833|G06Q 10/083|G06Q 30/0601|G06Q 50/02|G16Y 10/40|G16Y 20/10|G16Y 40/10",
+          "registerNumber": "",
+          "registerDate": "",
+          "applicationNumber": "1020250136799",
+          "applicationDate": "20250923",
+          "openNumber": "1020250142280",
+          "openDate": "20250930",
+          "publicationNumber": "",
+          "publicationDate": "",
+          "astrtCont": "화훼유통을 위한 디지털 플랫폼 서비스 제공 시스템이 제공되며, 적어도 하나의 품종, 종류 및 수량의 화훼상품을 발주하고, 화훼상품의 실시간 위치정보 및 온습도 정보를 모니터링하도록 출력하는 가맹점 단말 및 가맹점 단말로부터 적어도 하나의 품종, 종류 및 수량의 화훼상품의 발주를 접수하는 접수부, 화훼상품의 배송을 위한 배송 프로세스를 개시하도록 하는 개시부, 화훼상품의 상차가 완료된 경우 기사 단말의 실시간 위치정보 및 컨테이너의 온습도 정보를 업로드받는 모니터링부, 가맹점 단말로 실시간 위치정보 및 온습도 정보를 제공하는 안내부를 포함하는 플랫폼 서비스 제공 서버를 포함한다.",
+          "drawing": "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf41278d8e0c9c5e5f11403e0577311c0123a5956aef6796e61e907c1a8c58bbd05f9bdcf5a681bdfaa5c43eaf95812eb7073ecb0b8aeae36f",
+          "bigDrawing": "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d776c9acbce09a4a9e86d8acdd0f560422579fce83e2b292128360ba789be5c478eebf9e6a7a95c898f9da0a8c964748b6dfd1d9e875bfe5",
+          "applicantName": "최진권"
+        },
+        {
+          "indexNo": "2",
+          "registerStatus": "공개",
+          "inventionTitle": "비-이진 로직들을 위한 강유전체 나노입자 커패시터 및 동작 방법",
+          "ipcNumber": "H10D 1/68|H10D 1/00|H10D 64/68|H10D 64/01|H10D 62/10|H10B 53/30|G11C 11/22|G11C 11/56|G06N 3/063",
+          "registerNumber": "",
+          "registerDate": "",
+          "applicationNumber": "1020250136178",
+          "applicationDate": "20250922",
+          "openNumber": "1020250143294",
+          "openDate": "20251001",
+          "publicationNumber": "",
+          "publicationDate": "",
+          "astrtCont": "강유전체 나노입자 커패시터 디바이스는 서로 전기적으로 절연된 전도성 요소들의 쌍, 및 쌍의 전도성 요소들 사이에 배열된 강유전체 나노입자들을 포함한다. 강유전체 나노입자들은 상이한 총 강유전체 분극들을 갖는 적어도 3개의 분극 상태를 제공하도록 적응된다.",
+          "drawing": "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cff2f2b17860f57c338298221a33e8f805506ed31c20ab4cd662d21dcb28f899f854f96c5ec9b256ef43cf940e296aabd4902b9d037b3caa9a",
+          "bigDrawing": "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=348aaf18c46825cf02d6c2de1c78338ea753fee2d631134c7883c2175c8100bdfe0d38de53c95693e9fb6df1e91a2a0c48bec99c36520b2309aaabcb6fccac4514b23a2a08369991",
+          "applicantName": "테라 퀀텀 아게"
+        },
+        {
+          "indexNo": "3",
+          "registerStatus": "공개",
+          "inventionTitle": "정보 처리 디바이스, 화상 형성 장치, 그 제어 방법 및 저장 매체",
+          "ipcNumber": "H04N 1/00|H04N 1/32",
+          "registerNumber": "",
+          "registerDate": "",
+          "applicationNumber": "1020250135906",
+          "applicationDate": "20250922",
+          "openNumber": "1020250142829",
+          "openDate": "20250930",
+          "publicationNumber": "",
+          "publicationDate": "",
+          "astrtCont": "사용자가 모바일 단말기로부터 스캔된 화상 데이터를 사용자에게 송신하는 처리를 수행하도록 화상 형성 장치에 지시할 경우, 사용자는 모바일 단말기 상에서 사용자의 이메일 어드레스를 입력할 필요가 있고, 이는 불편한 조작을 포함한다. 모바일 단말기로부터, 사용자는 화상 형성 장치에 미리 등록된 사용자의 이메일 어드레스에 데이터를 송신하도록 화상 형성 장치에 지시한다.",
+          "drawing": "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf41278d8e0c9c5e5f11403e0577311c01bfa4f88bb17cea7aa9ec91b103b253f3ae42ff694fe179d2632f92bdef37f89d2de14bcc2f072ca3",
+          "bigDrawing": "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d776c9acbce09a4a9e86d8acdd0f5604daa02e982d705851b1cca4159ccfdd7981713242eefd57df0c4e6173570ae09b595d1190f25863e4",
+          "applicantName": "캐논 가부시끼가이샤"
+        }
+      ],
+      "count": {
+        "totalCount": 3,
+        "pageNo": 1,
+        "numOfRows": 3
+      }
+    }
+  }
+}

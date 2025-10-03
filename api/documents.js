@@ -1,5 +1,11 @@
 const axios = require('axios');
 const { parseStringPromise } = require('xml2js');
+const { createClient } = require('@supabase/supabase-js');
+
+// Supabase 클라이언트 초기화 (서버 키 사용)
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 module.exports = async function handler(req, res) {
   // CORS 헤더 설정
@@ -38,7 +44,7 @@ module.exports = async function handler(req, res) {
     }
 
     // 출원번호와 문서 타입 파라미터 검증
-    const { applicationNumber, documentType = 'publication' } = req.query;
+    const { applicationNumber, documentType = 'publication', userId } = req.query;
     
     if (!applicationNumber) {
       return res.status(400).json({
@@ -150,6 +156,26 @@ module.exports = async function handler(req, res) {
       }
     }
     
+    // 활동 로깅: 문서 다운로드
+    if (userId) {
+      try {
+        await supabase.from('user_activities').insert({
+          user_id: userId,
+          activity_type: 'document_download',
+          activity_data: {
+            application_number: applicationNumber,
+            document_type: documentType,
+            files_count: (kiprisResponse?.data?.files || []).length,
+            files: (kiprisResponse?.data?.files || []).map(f => ({ name: f.docName, path: f.path })),
+            timestamp: new Date().toISOString()
+          }
+        });
+        console.log('✅ 사용자 활동 로깅: document_download');
+      } catch (logErr) {
+        console.error('❌ 사용자 활동 로깅 실패(document_download):', logErr);
+      }
+    }
+
     // 응답 반환
     console.log('✅ 문서 다운로드 정보 반환 완료');
     return res.status(200).json(kiprisResponse);

@@ -69,7 +69,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           >
             {label}
             {props.required && (
-              <span className="text-danger-500 ml-1" aria-label="필수 입력">*</span>
+              <span className="text-red-500 ml-1" aria-label="필수 입력">*</span>
             )}
           </label>
         )}
@@ -83,27 +83,27 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             className
           )}
           aria-invalid={error ? 'true' : 'false'}
-          aria-describedby={cn(
-            errorId,
-            helperTextId
-          ).trim() || undefined}
+          aria-describedby={[
+            error ? errorId : null,
+            helperText && !error ? helperTextId : null
+          ].filter(Boolean).join(' ') || undefined}
           {...props}
         />
         {error && (
           <p 
             id={errorId}
-            className="text-sm text-danger-600 dark:text-danger-400 flex items-start gap-1"
+            className="text-sm text-red-600 dark:text-red-400 flex items-start gap-1"
             role="alert"
             aria-live="polite"
           >
-            <span className="text-danger-500 mt-0.5" aria-hidden="true">⚠</span>
+            <span className="text-red-500 mt-0.5" aria-hidden="true">⚠</span>
             {error}
           </p>
         )}
         {helperText && !error && (
           <p 
             id={helperTextId}
-            className="text-sm text-secondary-500 dark:text-secondary-400"
+            className="text-sm text-slate-500 dark:text-slate-400"
           >
             {helperText}
           </p>

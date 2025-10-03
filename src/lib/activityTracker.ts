@@ -190,4 +190,4 @@ export class ActivityTracker {
 }
 
 // 싱글톤 인스턴스 내보내기
-export const activityTracker = ActivityTracker.getInstance
+export const activityTracker = ActivityTracker.getInstance()

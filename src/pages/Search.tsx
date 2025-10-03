@@ -34,6 +34,7 @@ export default function Search() {
 
   console.log('🔐 Search 페이지 - 사용자 인증 상태:', { user: !!user, userEmail: user?.email })
   console.log('🔐 Search 페이지 - 전체 사용자 객체:', user)
+  console.log('🔍 [Search] 현재 검색 스토어 상태:', { totalCount, resultsLength: results.length, currentPage, filters })
 
   useEffect(() => {
     // URL 파라미터에서 검색어 확인
@@ -135,6 +136,8 @@ export default function Search() {
             한국특허정보원(KIPI) KIPRIS API와 연동된 전문 특허 검색 시스템
           </p>
         </div>
+
+
 
 
 
@@ -515,6 +518,8 @@ export default function Search() {
                   검색 결과
                 </h2>
                 <p className="text-secondary-600 dark:text-secondary-400 mt-1">
+                  {console.log('🔍 [Search] totalCount 표시:', { totalCount, totalPages, resultsLength: results.length })}
+                  {console.log('🔍 [Search] 현재 검색 스토어 상태:', { totalCount, currentPage, filters })}
                   총 <span className="font-medium text-primary-600 dark:text-primary-400">{totalCount.toLocaleString()}</span>건의 특허가 검색되었습니다
                   {totalPages > 0 && (
                     <span className="ml-2">
@@ -546,6 +551,8 @@ export default function Search() {
                   <option value={30}>30개</option>
                   <option value={50}>50개</option>
                   <option value={100}>100개</option>
+                  <option value={200}>200개</option>
+                  <option value={500}>500개</option>
                 </select>
               </div>
             </div>
@@ -559,156 +566,54 @@ export default function Search() {
                   title: patent.inventionTitle,
                   hasApplicationNumber: !!patent.applicationNumber 
                 });
+                
                 return (
-                <Card 
-                  key={patent.indexNo || index} 
-                  variant="default"
-                  hover
-                  className="transition-all duration-200 hover:shadow-lg"
-                >
-                  <CardContent className="space-y-4">
-                    <div className="flex flex-col lg:flex-row lg:items-start gap-4">
-                      <div className="flex-1 space-y-3">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
-                            {patent.applicationNumber}
-                          </span>
-                          {patent.registerNumber && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900 dark:text-success-200">
-                              등록: {patent.registerNumber}
-                            </span>
-                          )}
-                          {patent.registerStatus && (
-                            <span className={cn(
-                              "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
-                              patent.registerStatus === '등록' 
-                                ? 'bg-success-100 text-success-800 dark:bg-success-900 dark:text-success-200'
-                                : 'bg-secondary-100 text-secondary-800 dark:bg-secondary-800 dark:text-secondary-200'
-                            )}>
-                            {patent.registerStatus}
-                          </span>
-                          )}
-                        </div>
-                        
-                        <h3 className="text-lg font-semibold">
-                          <Link 
-                            to={`/patent/${patent.applicationNumber}`}
-                            onClick={(e) => {
-                              console.log('🔗 특허 제목 링크 클릭됨:', patent.applicationNumber);
-                              console.log('🔗 특허 제목 클릭 이벤트:', e);
-                              console.log('🔗 특허 제목 Link to 경로:', `/patent/${patent.applicationNumber}`);
-                              console.log('🔗 특허 제목 현재 URL:', window.location.href);
-                              
-                              // 네비게이션이 작동하지 않는 경우를 위한 대체 방법
-                              if (!e.defaultPrevented) {
-                                console.log('🔗 특허 제목 기본 Link 네비게이션 시도 중...');
-                              }
-                            }}
-                            onMouseDown={() => {
-                              console.log('🖱️ 특허 제목 링크 마우스 다운:', patent.applicationNumber);
-                              console.log('🖱️ 특허 제목 마우스 다운 시 URL:', window.location.href);
-                            }}
-                            onMouseEnter={() => {
-                              console.log('🖱️ 특허 제목 링크 마우스 진입:', patent.applicationNumber);
-                              console.log('🖱️ 특허 제목 마우스 진입 시 Link href:', `/patent/${patent.applicationNumber}`);
-                            }}
-                            onMouseLeave={() => {
-                              console.log('🖱️ 특허 제목 링크 마우스 떠남:', patent.applicationNumber);
-                            }}
-                            className={cn(
-                              "block cursor-pointer",
-                              "text-primary-700 dark:text-primary-300",
-                              "hover:text-primary-800 dark:hover:text-primary-200",
-                              "visited:text-purple-700 dark:visited:text-purple-300",
-                              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2",
-                              "focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900",
-                              "rounded transition-colors duration-200",
-                              "underline decoration-primary-300 dark:decoration-primary-600",
-                              "hover:decoration-primary-500 dark:hover:decoration-primary-400"
-                            )}
-                          >
-                            {patent.inventionTitle}
-                          </Link>
-                        </h3>
-                        
-                        {patent.astrtCont && (
-                          <p className="text-secondary-600 dark:text-secondary-400 leading-relaxed">
-                            {truncateText(patent.astrtCont, 200)}
-                          </p>
+                  <div 
+                    key={patent.indexNo || index}
+                    className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <div className="mb-3">
+                      <span className="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+                        {patent.applicationNumber}
+                      </span>
+                    </div>
+                    
+                    <h3 className="text-lg font-semibold mb-3">
+                      <a 
+                        href={`/patent/${patent.applicationNumber}`}
+                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                      >
+                        {patent.inventionTitle}
+                      </a>
+                    </h3>
+                    
+                    {patent.astrtCont && (
+                      <div className="mb-4">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">특허 요약</h4>
+                        <p className="text-gray-600 text-sm leading-relaxed bg-gray-50 p-3 rounded-md">
+                          {patent.astrtCont.length > 300 
+                            ? `${patent.astrtCont.substring(0, 300)}...` 
+                            : patent.astrtCont}
+                        </p>
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-between items-center">
+                      <div className="text-sm text-gray-500">
+                        {patent.applicantName && (
+                          <span>출원인: {patent.applicantName}</span>
                         )}
-                        
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-secondary-500 dark:text-secondary-400">
-                          <div className="flex items-center">
-                            <Building className="w-4 h-4 mr-1 flex-shrink-0" />
-                            <span className="font-medium">{patent.applicantName}</span>
-                          </div>
-                          {patent.applicationDate && (
-                            <div className="flex items-center">
-                              <Calendar className="w-4 h-4 mr-1 flex-shrink-0" />
-                              출원: {formatDate(patent.applicationDate)}
-                            </div>
-                          )}
-                          {patent.registerDate && (
-                            <div className="flex items-center">
-                              <Calendar className="w-4 h-4 mr-1 flex-shrink-0" />
-                              등록: {formatDate(patent.registerDate)}
-                            </div>
-                          )}
-                          {patent.ipcNumber && (
-                            <div className="flex items-center">
-                              <FileText className="w-4 h-4 mr-1 flex-shrink-0" />
-                              IPC: {patent.ipcNumber}
-                            </div>
-                          )}
-                        </div>
                       </div>
                       
-                      {/* Patent Image and Actions */}
-                      <div className="flex lg:flex-col items-center lg:items-end gap-3">
-                        {patent.drawing && (
-                          <img 
-                            src={patent.drawing} 
-                            alt={`${patent.inventionTitle} 특허 도면`}
-                            className="w-20 h-20 object-cover rounded-lg border border-secondary-200 dark:border-secondary-700 shadow-sm"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none'
-                            }}
-                          />
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          asChild
-                        >
-                          <Link 
-                            to={`/patent/${patent.applicationNumber}`}
-                            onClick={(e) => {
-                              console.log('🔗 상세보기 버튼 클릭됨:', patent.applicationNumber);
-                              console.log('🔗 상세보기 클릭 이벤트:', e);
-                              console.log('🔗 상세보기 Link to 경로:', `/patent/${patent.applicationNumber}`);
-                              console.log('🔗 상세보기 현재 URL:', window.location.href);
-                              
-                              // 네비게이션이 작동하지 않는 경우를 위한 대체 방법
-                              if (!e.defaultPrevented) {
-                                console.log('🔗 상세보기 기본 Link 네비게이션 시도 중...');
-                              }
-                            }}
-                            onMouseEnter={() => {
-                              console.log('🖱️ 상세보기 버튼 마우스 진입:', patent.applicationNumber);
-                            }}
-                            onMouseLeave={() => {
-                              console.log('🖱️ 상세보기 버튼 마우스 떠남:', patent.applicationNumber);
-                            }}
-                          >
-                            <FileText className="w-4 h-4 mr-1" />
-                            상세보기
-                          </Link>
-                        </Button>
-                      </div>
+                      <a 
+                        href={`/patent/${patent.applicationNumber}`}
+                        className="inline-block bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                      >
+                        상세보기
+                      </a>
                     </div>
-                  </CardContent>
-                </Card>
-              );
+                  </div>
+                );
               })}
             </div>
 
@@ -758,21 +663,18 @@ export default function Search() {
                         <span className="sr-only">이전 페이지</span>
                       </Button>
                       
-                      {/* Page Numbers */}
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i
-                        return (
-                          <Button
-                            key={pageNum}
-                            variant={pageNum === currentPage ? "primary" : "outline"}
-                            size="sm"
-                            onClick={() => handleSearch(pageNum)}
-                            className="rounded-none"
-                          >
-                            {pageNum}
-                          </Button>
-                        )
-                      })}
+                      {/* Page Numbers - 모든 페이지 표시 (하드 제한 제거) */}
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                        <Button
+                          key={pageNum}
+                          variant={pageNum === currentPage ? "primary" : "outline"}
+                          size="sm"
+                          onClick={() => handleSearch(pageNum)}
+                          className="rounded-none"
+                        >
+                          {pageNum}
+                        </Button>
+                      ))}
                       
                       <Button
                         variant="outline"
