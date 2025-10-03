@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { User as SupabaseUser } from '@supabase/supabase-js'
 import { supabase, User } from '../lib/supabase'
 import { ActivityTracker } from '../lib/activityTracker'
+import { authGuard } from '../lib/authGuard'
 
 interface AuthState {
   user: SupabaseUser | null
@@ -21,8 +22,6 @@ let authListenerInitialized = false;
 
 // 사용자 세션 처리 헬퍼 함수
 const handleUserSession = async (user: SupabaseUser, set: any) => {
-  console.log('[AuthStore] 사용자 세션 처리 중...', { userId: user.id, email: user.email });
-  
   try {
     let profile = null;
     
@@ -34,10 +33,8 @@ const handleUserSession = async (user: SupabaseUser, set: any) => {
       .single();
 
     if (profileError) {
-      console.error('[AuthStore] 프로필 로드 오류:', profileError);
       // 프로필이 없는 경우 기본 프로필 생성 시도
       if (profileError.code === 'PGRST116') { // No rows returned
-        console.log('[AuthStore] 프로필이 없음, 기본 프로필 생성 시도...');
         const { error: insertError } = await supabase
           .from('users')
           .insert({
@@ -59,7 +56,6 @@ const handleUserSession = async (user: SupabaseUser, set: any) => {
             .eq('id', user.id)
             .single();
           profile = newProfile;
-          console.log('[AuthStore] 기본 프로필 생성 완료:', newProfile);
         }
       }
     } else {
@@ -72,13 +68,6 @@ const handleUserSession = async (user: SupabaseUser, set: any) => {
                    user.app_metadata?.role === 'admin' ||
                    profile?.role === 'admin' ||
                    profile?.role === 'super_admin';
-
-    console.log('[AuthStore] 인증 상태 설정:', { 
-      userId: user.id, 
-      email: user.email, 
-      isAdmin,
-      hasProfile: !!profile 
-    });
     
     set({ user, profile, isAdmin, loading: false, initialized: true });
     
@@ -97,68 +86,44 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initialized: false,
 
   signIn: async (email: string, password: string) => {
-    // 브라우저에서 확인할 수 있도록 alert도 추가
-    console.warn('🔥 [AuthStore] signIn 시작:', { email });
+    // AuthGuard 확인
+    if (!authGuard.canAttemptLogin()) {
+      console.error('[AuthStore] AuthGuard에 의해 로그인 차단');
+      return { error: '너무 많은 로그인 시도입니다. 잠시 후 다시 시도해주세요.' };
+    }
+
+    authGuard.startLogin();
+    set({ loading: true })
     
     try {
-      // 간단한 이메일 검증
-      if (!email || !password) {
-        console.warn('❌ [AuthStore] 이메일 또는 비밀번호 누락');
-        alert('❌ [AuthStore] 이메일 또는 비밀번호 누락');
-        return { error: '이메일과 비밀번호를 입력해주세요' }
-      }
-
-      console.warn('🔥 [AuthStore] Supabase 로그인 호출 시작');
-      alert('🔥 [AuthStore] Supabase 로그인 호출 시작');
-      
+      console.log('[AuthStore] 로그인 시도:', email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
-      
-      console.warn('🔥 [AuthStore] Supabase 로그인 호출 완료:', { 
-        hasData: !!data, 
-        hasUser: !!data?.user, 
-        hasError: !!error,
-        errorMessage: error?.message 
-      });
-      
-      alert(`🔥 [AuthStore] Supabase 로그인 호출 완료: hasData=${!!data}, hasUser=${!!data?.user}, hasError=${!!error}`);
 
       if (error) {
-        console.warn('❌ [AuthStore] 로그인 에러:', error.message);
-        alert(`❌ [AuthStore] 로그인 에러: ${error.message}`);
+        console.error('[AuthStore] 로그인 오류:', error);
+        authGuard.finishLogin(false);
+        set({ loading: false })
         return { error: error.message }
       }
 
       if (data.user) {
-        console.warn('✅ [AuthStore] 로그인 성공, 상태 업데이트');
-        alert('✅ [AuthStore] 로그인 성공, 상태 업데이트');
-        
-        // 간단한 상태 업데이트 (프로필 조회 없이)
-        const isAdmin = email === 'admin@p-ai.com'
-        
-        set({ 
-          user: data.user, 
-          profile: null, // 일단 null로 설정
-          isAdmin, 
-          loading: false, 
-          initialized: true 
-        })
-        
-        console.warn('✅ [AuthStore] 상태 업데이트 완료');
-        alert('✅ [AuthStore] 상태 업데이트 완료');
+        console.log('[AuthStore] 로그인 성공:', data.user.email);
+        await handleUserSession(data.user, set)
+        authGuard.finishLogin(true);
         return {}
+      } else {
+        authGuard.finishLogin(false);
+        set({ loading: false })
+        return { error: '로그인에 실패했습니다.' }
       }
-
-      console.warn('❌ [AuthStore] 사용자 데이터 없음');
-      alert('❌ [AuthStore] 사용자 데이터 없음');
-      return { error: '로그인에 실패했습니다' }
-      
     } catch (error) {
-      console.error('💥 [AuthStore] signIn 예외 발생:', error)
-      alert(`💥 [AuthStore] signIn 예외 발생: ${error}`);
-      return { error: '네트워크 연결을 확인해주세요' }
+      console.error('[AuthStore] 로그인 예외:', error);
+      authGuard.finishLogin(false);
+      set({ loading: false })
+      return { error: '로그인 중 오류가 발생했습니다.' }
     }
   },
 
@@ -238,96 +203,104 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
     
     await supabase.auth.signOut()
-    set({ user: null, profile: null, isAdmin: false, loading: false, initialized: false })
+    set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true })
   },
 
   initialize: async () => {
     const currentState = get();
     
-    // 강제 디버깅 로그
-    console.warn('🚀 [AuthStore] INITIALIZE CALLED!');
-    console.warn('🔍 [AuthStore] Current State:', { 
-      initialized: currentState.initialized, 
-      loading: currentState.loading,
-      hasUser: !!currentState.user 
-    });
-    
     // 이미 초기화되었다면 중복 실행 방지
     if (currentState.initialized) {
-      console.warn('⚠️ [AuthStore] 이미 초기화됨, 건너뛰기');
       return;
     }
     
-    console.warn('🔄 [AuthStore] 인증 상태 초기화 시작');
     set({ loading: true });
     
     try {
-      // Supabase 연결 테스트 (타임아웃 추가)
-      console.warn('[AuthStore] DEBUG: Supabase 연결 테스트 시작');
+      // Supabase 연결 테스트 (타임아웃 증가 및 재시도 로직 추가)
+      let sessionData = null;
+      let sessionError = null;
       
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Supabase connection timeout')), 10000)
-      );
-      
-      const sessionPromise = supabase.auth.getSession();
-      
-      const { data: testData, error: testError } = await Promise.race([
-        sessionPromise,
-        timeoutPromise
-      ]) as any;
-      
-      console.warn('[AuthStore] DEBUG: Supabase 연결 테스트 결과:', { testData: !!testData, testError });
+      try {
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Supabase connection timeout')), 20000) // 20초로 증가
+        );
+        
+        const sessionPromise = supabase.auth.getSession();
+        
+        const result = await Promise.race([
+          sessionPromise,
+          timeoutPromise
+        ]) as any;
+        
+        sessionData = result.data;
+        sessionError = result.error;
+      } catch (timeoutError) {
+        console.warn('[AuthStore] Supabase 연결 타임아웃, 오프라인 모드로 진행');
+        sessionData = { session: null };
+        sessionError = null;
+      }
       
       // onAuthStateChange 리스너를 한 번만 등록
       if (!authListenerInitialized) {
-        console.log('[AuthStore] 인증 상태 변경 리스너 등록');
-        console.warn('[AuthStore] DEBUG: 리스너 등록 중');
         supabase.auth.onAuthStateChange(async (event, session) => {
-          console.log('[AuthStore] 인증 상태 변경:', event, { 
-            hasSession: !!session, 
-            hasUser: !!session?.user,
-            userId: session?.user?.id 
-          });
+          console.log('[AuthStore] 인증 상태 변경:', event, session?.user?.email);
           
-          // 로딩 상태 설정 (상태 변경 중임을 표시)
-          set({ loading: true });
+          // 초기화가 완료된 후에만 상태 변경 처리
+          const currentState = get();
+          if (!currentState.initialized) {
+            console.log('[AuthStore] 초기화 미완료로 인증 상태 변경 무시');
+            return;
+          }
           
-          try {
-            if (session?.user) {
+          // INITIAL_SESSION 이벤트는 무시 (초기화 시에만 발생)
+          if (event === 'INITIAL_SESSION') {
+            console.log('[AuthStore] INITIAL_SESSION 이벤트 무시');
+            return;
+          }
+          
+          // 중복 처리 방지 - 현재 사용자와 동일한 경우 무시
+          if (event === 'SIGNED_IN' && session?.user && currentState.user?.id === session.user.id) {
+            console.log('[AuthStore] 동일한 사용자 SIGNED_IN 이벤트 무시');
+            return;
+          }
+          
+          // SIGNED_OUT 이벤트나 세션이 없는 경우에만 로딩 상태 설정
+          if (event === 'SIGNED_OUT' || !session?.user) {
+            console.log('[AuthStore] 로그아웃 처리');
+            set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true });
+            return;
+          }
+          
+          // SIGNED_IN 이벤트 처리
+          if (event === 'SIGNED_IN' && session?.user) {
+            console.log('[AuthStore] 로그인 이벤트 처리 시작');
+            try {
               await handleUserSession(session.user, set);
-            } else {
-              console.log('[AuthStore] 세션 없음, 게스트 상태로 설정');
+              console.log('[AuthStore] 로그인 이벤트 처리 완료');
+            } catch (error) {
+              console.error('[AuthStore] 로그인 이벤트 처리 오류:', error);
               set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true });
             }
-          } catch (error) {
-            console.error('[AuthStore] 인증 상태 변경 처리 오류:', error);
-            set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true });
           }
         });
         authListenerInitialized = true;
       }
       
       // 현재 세션 확인
-      console.log('[AuthStore] 현재 세션 확인 중...');
-      const { data: { session }, error } = testError ? { data: { session: null }, error: testError } : testData;
+      const { session } = sessionData || { session: null };
       
-      if (error) {
-        console.error('[AuthStore] 세션 가져오기 오류:', error);
+      if (sessionError) {
+        console.error('[AuthStore] 세션 가져오기 오류:', sessionError);
         set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true });
         return;
       }
       
-      console.log('[AuthStore] 세션 상태:', { 
-        hasSession: !!session, 
-        hasUser: !!session?.user,
-        userId: session?.user?.id,
-        email: session?.user?.email 
-      });
-      
       if (session?.user) {
+        console.log('[AuthStore] 기존 세션 발견, 사용자 정보 로드:', session.user.email);
         await handleUserSession(session.user, set);
       } else {
-        console.log('[AuthStore] 세션 없음, 게스트 상태로 설정');
+        console.log('[AuthStore] 세션 없음, 로그아웃 상태로 초기화');
         set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true });
       }
       
@@ -336,9 +309,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // 초기화 실패해도 앱이 동작하도록 기본 상태로 설정
       set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true });
     }
-    
-    console.log('[AuthStore] 초기화 완료');
-    console.warn('[AuthStore] DEBUG: 초기화 완료'); // 강제 출력
   },
 
   updateProfile: async (updates: Partial<User>) => {

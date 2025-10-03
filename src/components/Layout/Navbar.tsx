@@ -24,7 +24,7 @@ export default function Navbar() {
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                   <Search className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-xl font-bold text-slate-900 dark:text-white">IP-Insight AI</span>
+                <span className="text-xl font-bold text-slate-900 dark:text-white">P-AI</span>
               </Link>
             </div>
             <div className="animate-pulse">
@@ -50,8 +50,15 @@ export default function Navbar() {
   }
 
   const handleSignOut = async () => {
-    await signOut()
-    setIsMenuOpen(false)
+    try {
+      await signOut()
+      setIsMenuOpen(false)
+      toast.success('로그아웃되었습니다.')
+      navigate('/')
+    } catch (error) {
+      console.error('로그아웃 오류:', error)
+      toast.error('로그아웃 중 오류가 발생했습니다.')
+    }
   }
 
   const handleProtectedNavigation = (href: string, name: string) => {

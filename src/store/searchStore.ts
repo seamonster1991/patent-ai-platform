@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { PatentSearchResult, SearchHistory, Report } from '../lib/supabase'
 import { useAuthStore } from './authStore'
 import { ActivityTracker } from '../lib/activityTracker'
+import { searchPatents as apiSearchPatents } from '../lib/api'
 
 interface SearchFilters {
   // 기본 검색 필드
@@ -98,6 +99,7 @@ interface SearchState {
   filters: SearchFilters
   results: KiprisPatentItem[]
   loading: boolean
+  error: string | null
   totalCount: number
   currentPage: number
   
@@ -181,6 +183,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   },
   results: [],
   loading: false,
+  error: null,
   totalCount: 0,
   currentPage: 1,
   searchHistory: [],
@@ -211,109 +214,45 @@ export const useSearchStore = create<SearchState>((set, get) => ({
                          filters.keyword?.trim() // 기존 호환성
 
     if (!hasSearchTerm) {
+      set({ error: '최소 하나의 검색 조건을 입력해주세요.' })
       return { error: '최소 하나의 검색 조건을 입력해주세요.' }
     }
 
-    set({ loading: true, currentPage: page })
+    set({ loading: true, error: null, currentPage: page })
 
     try {
       // KIPRIS API 파라미터 준비
-      const baseParams = {
+      const searchParams = {
         ...filters,
         // 기존 keyword 필드를 word로 매핑 (호환성)
         word: filters.word || filters.keyword,
-      }
-
-      // 1) 우선 totalCount를 정확히 가져오기 위한 카운트 전용 호출 수행
-      const countParams = {
-        ...baseParams,
-        pageNo: 1,
-        numOfRows: 1, // 최소 아이템만 요청하여 totalCount만 정확히 파악
-      }
-
-      console.log('🔢 [SearchStore] 총 건수 확인용 API 호출 시작:', {
-        countParams,
-        url: '/api/search',
-        method: 'POST'
-      });
-
-      let accurateTotalCount = 0;
-      try {
-        const countResp = await fetch('/api/search', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(countParams),
-        })
-        const countData = await countResp.json()
-        if (countData.success && countData.data?.body?.count?.totalCount != null) {
-          accurateTotalCount = countData.data.body.count.totalCount
-          console.log('🔢 [SearchStore] 확인된 totalCount:', accurateTotalCount)
-        } else {
-          console.warn('⚠️ [SearchStore] 총 건수 확인 실패, 본 요청 응답에서 계산 예정:', countData)
-        }
-      } catch (err) {
-        console.warn('⚠️ [SearchStore] 총 건수 확인 호출 실패, 본 요청 응답에서 계산 예정:', err)
-      }
-
-      // 2) 실제 페이지 데이터 요청 (사용자 선택 페이지/행 수)
-      const searchParams = {
-        ...baseParams,
         pageNo: page,
         numOfRows: filters.numOfRows || 30,
       }
 
-      console.log('🔍 [SearchStore] API 호출 시작:', {
-        searchParams,
-        url: '/api/search',
-        method: 'POST'
-      });
+      console.log('🔍 [SearchStore] API 호출 시작:', { searchParams });
 
-      // Call API to search patents via KIPRIS
-      const response = await fetch('/api/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(searchParams),
-      })
+      // 새로운 API 유틸리티 사용
+      const data = await apiSearchPatents(searchParams)
 
-      console.log('🔍 [SearchStore] API 응답 상태:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok
-      });
-
-      const data = await response.json()
-
-      console.log('🔍 [SearchStore] API 응답 데이터 원본:', data);
+      console.log('🔍 [SearchStore] API 응답 데이터:', data);
 
       if (!data.success) {
-        set({ loading: false })
-        return { error: data.message || '검색 중 오류가 발생했습니다.' }
+        const errorMessage = data.error || data.message || '검색 중 오류가 발생했습니다.'
+        set({ loading: false, error: errorMessage })
+        return { error: errorMessage }
       }
 
       const kiprisResponse: KiprisSearchResponse = data.data
 
-      console.log('🔍 [SearchStore] API 응답 데이터:', {
-        success: data.success,
-        hasData: !!data.data,
-        headerSuccess: kiprisResponse?.header?.successYN,
-        resultCode: kiprisResponse?.header?.resultCode,
-        resultMsg: kiprisResponse?.header?.resultMsg,
-        itemsLength: kiprisResponse?.body?.items?.length || 0,
-        totalCount: kiprisResponse?.body?.count?.totalCount || 0
-      });
-
       // KIPRIS API 응답 검증
       if (kiprisResponse?.header?.successYN !== 'Y') {
-        set({ loading: false })
-        return { 
-          error: kiprisResponse?.header?.resultMsg || 'KIPRIS API 오류가 발생했습니다.' 
-        }
+        const errorMessage = kiprisResponse?.header?.resultMsg || 'KIPRIS API 오류가 발생했습니다.'
+        set({ loading: false, error: errorMessage })
+        return { error: errorMessage }
       }
 
-      // 카운트 전용 호출로 얻은 값이 있으면 우선 사용하고, 없으면 본 응답의 count 사용
-      const finalTotalCount = accurateTotalCount || (kiprisResponse.body.count?.totalCount || 0);
+      const finalTotalCount = kiprisResponse.body.count?.totalCount || 0;
       const currentResults = kiprisResponse.body.items || [];
       
       console.log('🔍 [SearchStore] API에서 받은 정확한 데이터:', {
@@ -325,8 +264,9 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       
       set({
         results: currentResults,
-        totalCount: finalTotalCount, // API에서 받은 정확한 값 사용
+        totalCount: finalTotalCount,
         loading: false,
+        error: null
       })
 
       console.log('✅ [SearchStore] 상태 업데이트 완료:', {
@@ -364,8 +304,10 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
       return {}
     } catch (error) {
-      set({ loading: false })
-      return { error: '네트워크 오류가 발생했습니다.' }
+      console.error('🔍 [SearchStore] 검색 오류:', error)
+      const errorMessage = error instanceof Error ? error.message : '네트워크 오류가 발생했습니다.'
+      set({ loading: false, error: errorMessage })
+      return { error: errorMessage }
     }
   },
 
@@ -374,6 +316,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       results: [],
       totalCount: 0,
       currentPage: 1,
+      error: null,
     })
   },
 

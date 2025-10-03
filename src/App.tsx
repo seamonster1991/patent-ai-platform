@@ -9,6 +9,7 @@ import Register from "@/pages/Register";
 import Search from "@/pages/Search";
 import PatentDetail from "@/pages/PatentDetail";
 import Dashboard from "@/pages/Dashboard";
+
 import Profile from "@/pages/Profile";
 import AuthCallback from "@/pages/AuthCallback";
 import AdminRoute from "@/components/Auth/AdminRoute";
@@ -87,6 +88,7 @@ export default function App() {
                   <Dashboard />
                 </ProtectedRoute>
               } />
+
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <Profile />

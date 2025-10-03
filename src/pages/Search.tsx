@@ -6,6 +6,7 @@ import Button from '../components/UI/Button'
 import Input from '../components/UI/Input'
 import Card, { CardContent, CardHeader, CardTitle } from '../components/UI/Card'
 import Loading from '../components/UI/Loading'
+import ErrorMessage from '../components/UI/ErrorMessage'
 import { useSearchStore } from '../store/searchStore'
 import { useAuthStore } from '../store/authStore'
 import { formatDate, truncateText, cn } from '../lib/utils'
@@ -23,6 +24,7 @@ export default function Search() {
     filters,
     results,
     loading,
+    error,
     totalCount,
     currentPage,
     setFilters,
@@ -508,6 +510,15 @@ export default function Search() {
         {loading ? (
           <div className="flex justify-center py-12">
             <Loading size="lg" text="KIPRIS에서 검색 중..." />
+          </div>
+        ) : error ? (
+          <div className="py-8">
+            <ErrorMessage
+              title="검색 오류"
+              message={error}
+              onRetry={() => handleSearch(currentPage)}
+              showRetryButton={true}
+            />
           </div>
         ) : results.length > 0 ? (
           <>

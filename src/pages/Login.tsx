@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Eye, EyeOff, Search } from 'lucide-react'
 import Layout from '../components/Layout/Layout'
 import Button from '../components/UI/Button'
@@ -8,6 +8,7 @@ import Card, { CardContent, CardHeader, CardTitle } from '../components/UI/Card'
 import { useAuthStore } from '../store/authStore'
 import { validateEmail } from '../lib/utils'
 import { toast } from 'sonner'
+import { redirectGuard } from '../lib/redirectGuard'
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -17,45 +18,56 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
+  const [lastRedirectAttempt, setLastRedirectAttempt] = useState<number>(0)
+  const [redirectBlocked, setRedirectBlocked] = useState(false)
   
   const { signIn, isAdmin, user, loading: authLoading, initialized } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
 
-  // 컴포넌트 마운트 확인
-  console.warn('🎯 [Login] 컴포넌트 마운트됨');
-  console.warn('🔍 [Login] AuthStore 상태:', { authLoading, initialized, hasUser: !!user });
-  
-  // Supabase 클라이언트 상태 확인
-  console.warn('🔍 [Login] Supabase 환경변수:', {
-    hasUrl: !!import.meta.env.VITE_SUPABASE_URL,
-    hasKey: !!import.meta.env.VITE_SUPABASE_ANON_KEY,
-    urlLength: import.meta.env.VITE_SUPABASE_URL?.length || 0,
-    keyLength: import.meta.env.VITE_SUPABASE_ANON_KEY?.length || 0
-  });
-
-  // 디버그 로깅
+  // 페이지 로드 시 이미 로그인된 사용자 확인 (한 번만 실행)
   useEffect(() => {
-    console.log('[Login] 상태:', { 
-      authLoading, 
-      initialized,
-      authed: !!user, 
-      userId: user?.id,
-      email: user?.email,
-      isAdmin
-    });
-  }, [authLoading, initialized, user, isAdmin]);
-
-  // 이미 로그인된 사용자는 리다이렉트
-  useEffect(() => {
+    // 초기화 완료되고 이미 로그인된 사용자가 있으면 리다이렉트
+    const fromPath = (location.state as any)?.from?.pathname as string | undefined;
     if (initialized && !authLoading && user) {
-      console.log('[Login] 이미 로그인됨, 리다이렉트');
-      if (isAdmin || user.email === 'admin@p-ai.com') {
-        navigate('/admin', { replace: true });
+      console.log('[Login] 페이지 로드 시 로그인된 사용자 감지, 리다이렉트:', user.email);
+
+      let targetPath = '/';
+      
+      if (fromPath) {
+        targetPath = fromPath;
+        console.log('[Login] 이전 페이지로 이동:', fromPath);
+      } else if (isAdmin || user.email === 'admin@p-ai.com') {
+        targetPath = '/admin';
+      }
+
+      // 추가 안전장치: 너무 빠른 연속 리다이렉트 방지
+      const now = Date.now();
+      if (now - lastRedirectAttempt < 1000) {
+        console.error('[Login] 너무 빠른 연속 리다이렉트 시도 차단');
+        setRedirectBlocked(true);
+        return;
+      }
+      
+      // 이미 블록된 상태라면 리다이렉트 중단
+      if (redirectBlocked) {
+        console.error('[Login] 리다이렉트 블록 상태');
+        return;
+      }
+
+      // 리다이렉트 가드 확인
+      if (redirectGuard.canRedirect(targetPath, 'Login-useEffect')) {
+        setLastRedirectAttempt(now);
+        redirectGuard.recordRedirect(targetPath, 'Login-useEffect');
+        navigate(targetPath, { replace: true });
       } else {
-        navigate('/', { replace: true });
+        console.warn('[Login] 리다이렉트 루프 방지로 인해 리다이렉트 취소:', targetPath);
+        console.error('[Login] RedirectGuard 상태:', redirectGuard.getStatus());
+        setRedirectBlocked(true);
+        toast.error('리다이렉트 오류가 발생했습니다. 페이지를 새로고침해주세요.');
       }
     }
-  }, [initialized, authLoading, user, isAdmin, navigate]);
+  }, [initialized, authLoading, user, isAdmin, navigate, location.state]); // loading 제거
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -77,37 +89,55 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    console.warn('🔥 [Login] 로그인 시도 시작:', { email: formData.email });
-    
     if (!formData.email || !formData.password) {
-      console.warn('❌ [Login] 이메일 또는 비밀번호 누락');
       toast.error('이메일과 비밀번호를 입력해주세요')
       return
     }
 
     setLoading(true)
-    console.warn('🔥 [Login] 로딩 상태 설정됨');
     
     try {
-      console.warn('🔥 [Login] signIn 함수 호출 시작');
+      console.log('[Login] 로그인 시도:', formData.email);
       const result = await signIn(formData.email, formData.password)
-      console.warn('🔥 [Login] signIn 함수 호출 완료, 결과:', result);
       
       if (result.error) {
-        console.warn('❌ [Login] 로그인 에러:', result.error);
+        console.log('[Login] 로그인 실패:', result.error);
         toast.error(result.error)
+        setLoading(false)
       } else {
-        console.warn('✅ [Login] 로그인 성공');
+        console.log('[Login] 로그인 성공, 즉시 리다이렉트 처리');
         toast.success('로그인되었습니다.')
         
-        console.warn('✅ [Login] 홈으로 이동');
-        navigate('/', { replace: true });
+        // 로그인 성공 시 즉시 리다이렉트 처리
+        setLoading(false)
+        
+        // 이전 페이지(from)가 있으면 우선 이동, 없으면 관리자 여부에 따라 기본 경로로 이동
+        const fromPath = (location.state as any)?.from?.pathname as string | undefined;
+        let targetPath = '/';
+        
+        if (fromPath) {
+          targetPath = fromPath;
+          console.log('[Login] 이전 페이지로 이동:', fromPath);
+        } else if (formData.email === 'admin@p-ai.com' || isAdmin) {
+          targetPath = '/admin';
+          console.log('[Login] 관리자 계정으로 /admin 이동');
+        } else {
+          console.log('[Login] 일반 사용자 계정으로 / 이동');
+        }
+
+        // 리다이렉트 가드 확인
+        if (redirectGuard.canRedirect(targetPath, 'Login-handleSubmit')) {
+          redirectGuard.recordRedirect(targetPath, 'Login-handleSubmit');
+          navigate(targetPath, { replace: true });
+        } else {
+          console.warn('[Login] 리다이렉트 루프 방지로 인해 리다이렉트 취소:', targetPath);
+          console.error('[Login] RedirectGuard 상태:', redirectGuard.getStatus());
+          toast.error('리다이렉트 오류가 발생했습니다. 페이지를 새로고침해주세요.');
+        }
       }
     } catch (error) {
-      console.error('💥 [Login] 로그인 예외:', error);
+      console.error('[Login] 로그인 예외:', error);
       toast.error('로그인 중 오류가 발생했습니다.')
-    } finally {
-      console.warn('🔥 [Login] 로딩 상태 해제');
       setLoading(false)
     }
   }
@@ -122,9 +152,7 @@ export default function Login() {
     }
   }
 
-
-
-  // authStore가 초기화되는 동안 로딩 표시 - 수정된 조건
+  // authStore가 초기화되는 동안 로딩 표시
   if (!initialized) {
     return (
       <Layout>
@@ -150,7 +178,7 @@ export default function Login() {
               </div>
             </div>
             <h2 className="mt-6 text-3xl font-bold text-white">
-              IP-Insight AI에 로그인
+              P-AI에 로그인
             </h2>
             <p className="mt-2 text-sm text-slate-400">
               AI 기반 특허 분석 서비스를 이용하세요
@@ -251,21 +279,52 @@ export default function Login() {
               </div>
               <Button
                 onClick={async () => {
-                  console.warn('🧪 [Login] 데모 로그인 테스트 시작');
                   setFormData({ email: 'demo@example.com', password: 'demo123456' });
+                  setLoading(true);
                   
-                  // 직접 signIn 호출
-                  const result = await signIn('demo@example.com', 'demo123456');
-                  console.warn('🧪 [Login] 데모 로그인 결과:', result);
-                  
-                  if (result.error) {
-                    console.warn('❌ [Login] 데모 로그인 실패:', result.error);
-                  } else {
-                    console.warn('✅ [Login] 데모 로그인 성공');
+                  try {
+                    console.log('[Login] 데모 로그인 시도');
+                    const result = await signIn('demo@example.com', 'demo123456');
+                    
+                    if (result.error) {
+                      console.log('[Login] 데모 로그인 실패:', result.error);
+                      toast.error(result.error);
+                      setLoading(false);
+                    } else {
+                      console.log('[Login] 데모 로그인 성공, 즉시 리다이렉트 처리');
+                      toast.success('데모 로그인 성공');
+                      
+                      // 로그인 성공 시 즉시 리다이렉트 처리 (handleSubmit과 동일한 로직)
+                      setLoading(false);
+                      const fromPath = (location.state as any)?.from?.pathname as string | undefined;
+                      let targetPath = '/';
+                      
+                      if (fromPath) {
+                        targetPath = fromPath;
+                        console.log('[Login] 이전 페이지로 이동:', fromPath);
+                      } else {
+                        console.log('[Login] 일반 사용자 계정으로 / 이동');
+                      }
+
+                      // 리다이렉트 가드 확인
+                      if (redirectGuard.canRedirect(targetPath, 'Login-demo')) {
+                        redirectGuard.recordRedirect(targetPath, 'Login-demo');
+                        navigate(targetPath, { replace: true });
+                      } else {
+                        console.warn('[Login] 리다이렉트 루프 방지로 인해 리다이렉트 취소:', targetPath);
+                        console.error('[Login] RedirectGuard 상태:', redirectGuard.getStatus());
+                        toast.error('리다이렉트 오류가 발생했습니다. 페이지를 새로고침해주세요.');
+                      }
+                    }
+                  } catch (error) {
+                    console.error('[Login] 데모 로그인 예외:', error);
+                    toast.error('로그인 중 오류가 발생했습니다.');
+                    setLoading(false);
                   }
                 }}
                 className="mt-3 w-full bg-blue-600 hover:bg-blue-700"
                 size="sm"
+                disabled={loading}
               >
                 🧪 데모 로그인 테스트
               </Button>

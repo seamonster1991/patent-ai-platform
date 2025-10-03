@@ -96,38 +96,55 @@ export default function Dashboard() {
 
   useEffect(() => {
     const loadUserStats = async () => {
-      if (!user?.id) {
-        console.log('🔍 [Dashboard] 사용자 정보 로딩 중...')
-        setLoading(false)
-        return
-      }
-
       try {
-        console.log('📊 [Dashboard] 사용자 통계 로딩 시작:', user.id)
+        console.log('📊 [Dashboard] 사용자 통계 로딩 시작')
         
-        // 임시로 실제 데이터가 있는 사용자 ID 사용
-        const actualUserId = '276975db-635b-4c77-87a0-548f91b14231'
-        console.log('📊 [Dashboard] 실제 사용할 사용자 ID:', actualUserId)
-
-        const response = await fetch(`/api/users/stats?userId=${actualUserId}`)
+        // 사용자 ID 결정 로직 개선 - 다중 fallback 전략
+        let userId = user?.id
         
-        if (!response.ok) {
-          if (response.status === 400) {
-            console.error('❌ [Dashboard] 잘못된 요청:', response.status)
-            setError('잘못된 요청입니다.')
-            setLoading(false)
-            return
-          }
-          if (response.status === 401) {
-            console.error('❌ [Dashboard] 인증 실패:', response.status)
-            setError('인증이 필요합니다.')
-            setLoading(false)
-            return
-          }
-          throw new Error(`HTTP error! status: ${response.status}`)
+        if (!userId) {
+          console.log('🔍 [Dashboard] 사용자 ID가 없음, fallback 전략 사용')
+          // 다중 fallback 전략
+          userId = 'guest_user' // 임시 사용자 ID
+          console.log('📊 [Dashboard] Guest 사용자로 처리:', userId)
         }
+        
+        console.log('📊 [Dashboard] 사용할 사용자 ID:', userId)
 
-        const data = await response.json()
+        // 개선된 API 유틸리티 사용
+        const { getUserStats } = await import('../lib/api')
+        const data = await getUserStats(userId)
+        
+        if (!data.success) {
+          console.error('❌ [Dashboard] API 요청 실패:', data.error)
+          
+          // API 실패 시 기본 데이터로 fallback
+          console.log('🔄 [Dashboard] 기본 데이터로 fallback 처리')
+          setUserStats({
+            totalSearches: 0,
+            reportsGenerated: 0,
+            monthlyActivity: 0,
+            savedPatents: 0,
+            totalLogins: 0,
+            engagementScore: 0,
+            averageSearchResults: 0,
+            aiAnalysisCount: 0,
+            documentDownloadCount: 0,
+            searchHistory: [],
+            searchKeywords: [],
+            recentSearches: [],
+            recentReports: [],
+            fieldDistribution: []
+          })
+          
+          setChartData({
+            hourlyActivity: [],
+            weeklyActivity: []
+          })
+          
+          setLoading(false)
+          return
+        }
         console.log('✅ [Dashboard] 사용자 통계 로딩 완료:', data)
         console.log('📊 [Dashboard] API 응답 구조:', {
           success: data.success,

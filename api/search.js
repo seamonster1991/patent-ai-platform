@@ -53,11 +53,14 @@ module.exports = async function handler(req, res) {
     // 검색 파라미터 준비 (KIPRIS API 문서 스펙에 따라)
     const params = new URLSearchParams();
     
-    // 기본 검색 필드 매핑
-    const searchWord = searchParams.word || searchParams.keyword;
+    // 기본 검색 필드 매핑 (다양한 필드명 지원)
+    const searchWord = searchParams.word || searchParams.keyword || searchParams.query;
+    console.log('🔍 [DEBUG] searchWord:', searchWord);
+    console.log('🔍 [DEBUG] searchParams:', searchParams);
     if (searchWord) {
       // 자유검색으로 처리
       params.append('word', searchWord);
+      console.log('🔍 [DEBUG] word 파라미터 추가됨:', searchWord);
     }
     
     // 발명의명칭 검색

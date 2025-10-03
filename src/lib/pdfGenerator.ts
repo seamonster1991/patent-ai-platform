@@ -17,23 +17,87 @@ interface DynamicReportData {
 }
 
 // 한글 폰트 지원을 위한 설정
-const addKoreanFont = (doc: jsPDF) => {
-  // Noto Sans KR 폰트를 Google Fonts에서 로드
-  const fontUrl = 'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap'
+const addKoreanFont = async (doc: jsPDF) => {
+  console.log('🔤 한글 폰트 설정 시작')
   
-  // 폰트 로드를 위한 CSS 추가 (브라우저에서 폰트 사용 가능하도록)
-  if (!document.querySelector(`link[href="${fontUrl}"]`)) {
-    const link = document.createElement('link')
-    link.href = fontUrl
-    link.rel = 'stylesheet'
-    document.head.appendChild(link)
+  try {
+    // Noto Sans KR 폰트를 Google Fonts에서 로드
+    const fontUrl = 'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap'
+    
+    // 폰트 로드를 위한 CSS 추가 (브라우저에서 폰트 사용 가능하도록)
+    if (!document.querySelector(`link[href="${fontUrl}"]`)) {
+      console.log('📥 Google Fonts 로드 중...')
+      const link = document.createElement('link')
+      link.href = fontUrl
+      link.rel = 'stylesheet'
+      document.head.appendChild(link)
+      
+      // 폰트 로드 대기 (document.fonts.ready 우선, 타임아웃 보강)
+      try {
+        if ((document as any).fonts && (document as any).fonts.ready) {
+          await Promise.race([
+            (document as any).fonts.ready,
+            new Promise(resolve => setTimeout(resolve, 2000)) // 타임아웃 단축
+          ])
+          console.log('✅ Google Fonts 로드 완료')
+        } else {
+          await new Promise(resolve => {
+            link.onload = () => {
+              console.log('✅ 폰트 링크 로드 완료')
+              resolve(undefined)
+            }
+            setTimeout(() => {
+              console.log('⏰ 폰트 로드 타임아웃')
+              resolve(undefined)
+            }, 2000)
+          })
+        }
+      } catch (fontError) {
+        console.warn('⚠️ 폰트 로드 실패, fallback 사용:', fontError)
+      }
+    } else {
+      console.log('✅ Google Fonts 이미 로드됨')
+    }
+    
+    // 추가 한글 폰트 fallback 설정
+    const style = document.createElement('style')
+    style.textContent = `
+      .korean-text {
+        font-family: "Noto Sans KR", "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", "Helvetica Neue", Arial, sans-serif !important;
+        font-feature-settings: "kern" 1;
+        text-rendering: optimizeLegibility;
+      }
+    `
+    if (!document.querySelector('style[data-korean-font]')) {
+      style.setAttribute('data-korean-font', 'true')
+      document.head.appendChild(style)
+    }
+    
+    // jsPDF 기본 폰트 설정
+    doc.setFont('helvetica')
+    
+  } catch (error) {
+    console.warn('⚠️ 한글 폰트 설정 실패:', error)
+    // 기본 폰트로 fallback
+    doc.setFont('helvetica')
   }
-  
-  // jsPDF 기본 폰트 설정
-  doc.setFont('helvetica')
 }
 
-// 한국어 텍스트를 이미지로 변환하여 PDF에 추가하는 함수
+// 기본 텍스트 렌더링 함수 (fallback용)
+const addBasicText = (doc: jsPDF, text: string, x: number, y: number, options: any = {}): number => {
+  const { fontSize = 12, fontWeight = 'normal', color = '#000000', maxWidth = 500 } = options
+  
+  doc.setFontSize(fontSize)
+  doc.setTextColor(color)
+  
+  // 긴 텍스트 자동 줄바꿈 처리
+  const lines = doc.splitTextToSize(text, maxWidth)
+  doc.text(lines, x, y)
+  
+  return y + (lines.length * fontSize * 1.2) + 5
+}
+
+// 한국어 텍스트를 이미지로 변환하여 PDF에 추가하는 함수 (개선된 버전)
 const addKoreanTextAsImage = async (
   doc: jsPDF,
   text: string,
@@ -55,56 +119,100 @@ const addKoreanTextAsImage = async (
     lineHeight = 1.5
   } = options
 
-  // 임시 div 요소 생성
-  const tempDiv = document.createElement('div')
-  tempDiv.style.position = 'absolute'
-  tempDiv.style.left = '-9999px'
-  tempDiv.style.top = '-9999px'
-  tempDiv.style.fontFamily = '"Noto Sans KR", "Malgun Gothic", "맑은 고딕", sans-serif'
-  tempDiv.style.fontSize = `${fontSize}px`
-  tempDiv.style.fontWeight = fontWeight
-  tempDiv.style.color = color
-  tempDiv.style.lineHeight = lineHeight.toString()
-  tempDiv.style.maxWidth = `${maxWidth}px`
-  tempDiv.style.wordWrap = 'break-word'
-  tempDiv.style.whiteSpace = 'pre-wrap'
-  tempDiv.style.padding = '10px'
-  tempDiv.style.backgroundColor = 'white'
-  tempDiv.textContent = text
+  // 텍스트가 비어있거나 너무 긴 경우 기본 텍스트 렌더링 사용
+  if (!text || text.trim() === '' || text.length > 1000) {
+    console.log('📝 기본 텍스트 렌더링 사용 (텍스트 길이 또는 빈 텍스트)')
+    return addBasicText(doc, text, x, y, options)
+  }
 
-  document.body.appendChild(tempDiv)
+  let tempDiv: HTMLElement | null = null
 
   try {
-    // html2canvas로 텍스트를 이미지로 변환
-    const canvas = await html2canvas(tempDiv, {
+    // 임시 div 요소 생성
+    tempDiv = document.createElement('div')
+    tempDiv.className = 'korean-text'
+    tempDiv.style.cssText = `
+      position: absolute;
+      left: -9999px;
+      top: -9999px;
+      font-family: "Noto Sans KR", "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", "Helvetica Neue", Arial, sans-serif;
+      font-size: ${fontSize}px;
+      font-weight: ${fontWeight};
+      color: ${color};
+      line-height: ${lineHeight};
+      max-width: ${maxWidth}px;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+      padding: 10px;
+      background-color: white;
+      font-feature-settings: "kern" 1;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      border: 1px solid transparent;
+    `
+    tempDiv.textContent = text
+    document.body.appendChild(tempDiv)
+
+    // 짧은 대기 시간으로 DOM 렌더링 완료 대기
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    // html2canvas로 텍스트를 이미지로 변환 (타임아웃 설정)
+    const canvasPromise = html2canvas(tempDiv, {
       backgroundColor: 'white',
-      scale: 2, // 고해상도를 위해 스케일 증가
+      scale: 1.5, // 스케일 조정으로 성능 개선
       useCORS: true,
-      allowTaint: true
+      allowTaint: false,
+      foreignObjectRendering: false,
+      removeContainer: false,
+      logging: false,
+      width: tempDiv.offsetWidth,
+      height: tempDiv.offsetHeight
     })
 
+    // 5초 타임아웃 설정
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Canvas 생성 타임아웃')), 5000)
+    )
+
+    const canvas = await Promise.race([canvasPromise, timeoutPromise]) as HTMLCanvasElement
+
+    // 캔버스 유효성 검사
+    if (!canvas || canvas.width === 0 || canvas.height === 0) {
+      throw new Error('유효하지 않은 캔버스')
+    }
+
     // 캔버스를 이미지 데이터로 변환
-    const imgData = canvas.toDataURL('image/png')
+    const imgData = canvas.toDataURL('image/png', 0.8) // 품질 조정으로 성능 개선
+    
+    if (!imgData || imgData === 'data:,') {
+      throw new Error('이미지 데이터 생성 실패')
+    }
     
     // PDF에 이미지 추가
-    const imgWidth = canvas.width / 2 // 스케일 2로 인한 조정
-    const imgHeight = canvas.height / 2
+    const imgWidth = canvas.width / 1.5 // 스케일 1.5로 인한 조정
+    const imgHeight = canvas.height / 1.5
     
     // PDF 좌표계에 맞게 크기 조정
-    const pdfWidth = Math.min(imgWidth * 0.75, maxWidth) // 0.75는 픽셀을 포인트로 변환하는 비율
+    const pdfWidth = Math.min(imgWidth * 0.75, maxWidth)
     const pdfHeight = (imgHeight * pdfWidth) / imgWidth
 
     doc.addImage(imgData, 'PNG', x, y, pdfWidth, pdfHeight)
     
-    return y + pdfHeight + 5 // 다음 요소를 위한 Y 좌표 반환
+    return y + pdfHeight + 5
+    
   } catch (error) {
-    console.warn('한국어 텍스트 이미지 변환 실패:', error)
-    // 실패 시 기본 텍스트로 대체
-    doc.text(text, x, y)
-    return y + fontSize + 5
+    console.warn('⚠️ 한국어 텍스트 이미지 변환 실패, 기본 텍스트 사용:', error.message)
+    return addBasicText(doc, text, x, y, options)
   } finally {
-    // 임시 요소 제거
-    document.body.removeChild(tempDiv)
+    // 임시 요소 안전하게 제거
+    if (tempDiv && tempDiv.parentNode) {
+      try {
+        document.body.removeChild(tempDiv)
+      } catch (removeError) {
+        console.warn('임시 요소 제거 실패:', removeError)
+      }
+    }
   }
 }
 
@@ -150,7 +258,7 @@ const addPDFHeader = async (doc: jsPDF, title: string, patent: KiprisPatentDetai
 }
 
 // 공통 PDF 푸터 생성
-const addPDFFooter = (doc: jsPDF, pageNumber: number) => {
+const addPDFFooter = async (doc: jsPDF, pageNumber: number) => {
   const pageWidth = doc.internal.pageSize.getWidth()
   const pageHeight = doc.internal.pageSize.getHeight()
   
@@ -158,13 +266,19 @@ const addPDFFooter = (doc: jsPDF, pageNumber: number) => {
   doc.setDrawColor(200, 200, 200)
   doc.line(20, pageHeight - 30, pageWidth - 20, pageHeight - 30)
   
-  // 페이지 번호
-  doc.setFontSize(10)
-  doc.setTextColor(100, 100, 100)
-  doc.text(`페이지 ${pageNumber}`, pageWidth - 40, pageHeight - 15)
+  // 페이지 번호를 이미지로 렌더링 (한국어 지원)
+  await addKoreanTextAsImage(doc, `페이지 ${pageNumber}`, pageWidth - 60, pageHeight - 20, {
+    fontSize: 10,
+    color: '#666666',
+    maxWidth: 50
+  })
   
-  // 면책 조항
-  doc.text('본 리포트는 AI 분석 결과이며, 투자 결정의 참고용으로만 사용하시기 바랍니다.', 20, pageHeight - 15)
+  // 면책 조항을 이미지로 렌더링 (한국어 지원)
+  await addKoreanTextAsImage(doc, '본 리포트는 AI 분석 결과이며, 투자 결정의 참고용으로만 사용하시기 바랍니다.', 20, pageHeight - 20, {
+    fontSize: 10,
+    color: '#666666',
+    maxWidth: pageWidth - 100
+  })
 }
 
 // 섹션 제목 추가
@@ -187,121 +301,369 @@ const addTextBlock = async (doc: jsPDF, text: string, x: number, y: number, maxW
   })
 }
 
-// 새로운 동적 리포트 PDF 생성 함수
+// 새로운 동적 리포트 PDF 생성 함수 (강화된 오류 처리)
 export const generateDynamicReportPDF = async (
   patent: KiprisPatentDetailItem,
   reportData: DynamicReportData
 ): Promise<void> => {
-  const doc = new jsPDF()
-  addKoreanFont(doc)
+  console.log('🔄 PDF 생성 시작:', { 
+    reportType: reportData.reportType, 
+    sectionsCount: reportData.sections.length,
+    timestamp: new Date().toISOString()
+  })
   
-  let currentY = 80
-  
-  // 리포트 타입에 따른 제목 설정
-  const reportTitle = reportData.reportType === 'market' 
-    ? '기술/시장 분석 리포트' 
-    : '비즈니스 전략 인사이트 리포트'
-  
-  // 헤더 추가
-  await addPDFHeader(doc, reportTitle, patent)
-  
-  // 목차 생성
-  currentY = await addSectionTitle(doc, '목차', currentY)
-  for (const [index, section] of reportData.sections.entries()) {
-    currentY = await addTextBlock(doc, `${index + 1}. ${section.title}`, 30, currentY, 150)
-    currentY += 5
+  // 입력 데이터 유효성 검사
+  if (!patent || !reportData) {
+    throw new Error('필수 데이터가 누락되었습니다 (patent 또는 reportData)')
   }
   
-  // 새 페이지
-  doc.addPage()
-  currentY = 30
+  if (!reportData.sections || reportData.sections.length === 0) {
+    throw new Error('리포트 섹션 데이터가 없습니다')
+  }
   
-  // 개요 섹션
-  currentY = await addSectionTitle(doc, '개요', currentY)
-  const overview = `본 리포트는 "${patent.biblioSummaryInfo?.inventionTitle || '특허'}"에 대한 ${reportTitle.toLowerCase()}을 제공합니다. AI 기반 분석을 통해 생성된 전문적인 인사이트를 담고 있습니다.`
-  currentY = await addTextBlock(doc, overview, 20, currentY, 170)
-  currentY += 15
+  let doc: jsPDF | null = null
+  let currentY = 80
   
-  // 각 섹션 추가
-  for (const [index, section] of reportData.sections.entries()) {
-    // 페이지 공간 확인
-    if (currentY > 250) {
-      doc.addPage()
-      currentY = 30
+  try {
+    // jsPDF 인스턴스 생성
+    console.log('📄 jsPDF 인스턴스 생성 중...')
+    doc = new jsPDF()
+    console.log('✅ jsPDF 인스턴스 생성 완료')
+    
+    // 한글 폰트 설정 (타임아웃 적용)
+    console.log('🔤 한글 폰트 설정 중...')
+    const fontPromise = addKoreanFont(doc)
+    const fontTimeout = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('폰트 로딩 타임아웃')), 10000)
+    )
+    
+    try {
+      await Promise.race([fontPromise, fontTimeout])
+      console.log('✅ 한글 폰트 설정 완료')
+    } catch (fontError) {
+      console.warn('⚠️ 한글 폰트 설정 실패, 기본 폰트 사용:', fontError.message)
+      // 폰트 설정 실패해도 계속 진행
     }
     
-    currentY = await addSectionTitle(doc, `${index + 1}. ${section.title}`, currentY)
+    // 리포트 타입에 따른 제목 설정
+    const reportTitle = reportData.reportType === 'market_analysis'
+      ? '기술/시장 분석 리포트'
+      : '비즈니스 전략 인사이트 리포트'
     
-    // 섹션 내용을 문단별로 처리
-    const paragraphs = section.content.split('\n').filter(p => p.trim() !== '')
+    console.log('📋 PDF 헤더 생성 중...')
+    // 헤더 추가 (오류 처리)
+    try {
+      await addPDFHeader(doc, reportTitle, patent)
+      console.log('✅ PDF 헤더 생성 완료')
+    } catch (headerError) {
+      console.warn('⚠️ 헤더 생성 실패, 기본 제목 사용:', headerError.message)
+      doc.setFontSize(20)
+      doc.text(reportTitle, 20, 30)
+      currentY = 50
+    }
     
-    for (const paragraph of paragraphs) {
-      // 페이지 공간 재확인
-      if (currentY > 260) {
+    console.log('📑 목차 생성 중...')
+    // 목차 생성 (오류 처리)
+    try {
+      currentY = await addSectionTitle(doc, '목차', currentY)
+      for (const [index, section] of reportData.sections.entries()) {
+        if (section && section.title) {
+          currentY = await addTextBlock(doc, `${index + 1}. ${section.title}`, 30, currentY, 150)
+          currentY += 5
+        }
+      }
+      console.log('✅ 목차 생성 완료')
+    } catch (tocError) {
+      console.warn('⚠️ 목차 생성 실패:', tocError.message)
+      // 목차 생성 실패해도 계속 진행
+    }
+    
+    // 새 페이지
+    doc.addPage()
+    currentY = 30
+    
+    console.log('📝 개요 섹션 생성 중...')
+    // 개요 섹션 (오류 처리)
+    try {
+      currentY = await addSectionTitle(doc, '개요', currentY)
+      const overview = `본 리포트는 "${patent.biblioSummaryInfo?.inventionTitle || '특허'}"에 대한 ${reportTitle.toLowerCase()}을 제공합니다. AI 기반 분석을 통해 생성된 전문적인 인사이트를 담고 있습니다.`
+      currentY = await addTextBlock(doc, overview, 20, currentY, 170)
+      currentY += 15
+      console.log('✅ 개요 섹션 생성 완료')
+    } catch (overviewError) {
+      console.warn('⚠️ 개요 섹션 생성 실패:', overviewError.message)
+      currentY += 20 // 공간 확보 후 계속 진행
+    }
+    
+    console.log('📄 리포트 섹션 생성 중...')
+    // 각 섹션 추가 (개별 오류 처리)
+    for (const [index, section] of reportData.sections.entries()) {
+      try {
+        if (!section || !section.title || !section.content) {
+          console.warn(`⚠️ 섹션 ${index + 1} 데이터 누락, 건너뜀`)
+          continue
+        }
+        
+        // 페이지 공간 확인
+        if (currentY > 250) {
+          doc.addPage()
+          currentY = 30
+        }
+        
+        console.log(`📝 섹션 ${index + 1} 처리 중: ${section.title}`)
+        currentY = await addSectionTitle(doc, `${index + 1}. ${section.title}`, currentY)
+        
+        // 섹션 내용을 문단별로 처리
+        const paragraphs = section.content.split('\n').filter(p => p.trim() !== '')
+        
+        for (const paragraph of paragraphs) {
+          try {
+            // 페이지 공간 재확인
+            if (currentY > 260) {
+              doc.addPage()
+              currentY = 30
+            }
+            
+            // 볼드 텍스트 처리
+            if (paragraph.includes('**')) {
+              const cleanText = paragraph.replace(/\*\*(.*?)\*\*/g, '$1')
+              currentY = await addTextBlock(doc, cleanText, 20, currentY, 170)
+            } 
+            // 리스트 아이템 처리
+            else if (paragraph.trim().startsWith('-') || paragraph.trim().startsWith('•')) {
+              const cleanText = paragraph.replace(/^[-•]\s*/, '')
+              
+              // 불릿 포인트 추가
+              try {
+                doc.setFillColor(59, 130, 246)
+                doc.circle(25, currentY + 5, 1, 'F')
+              } catch (bulletError) {
+                console.warn('불릿 포인트 생성 실패:', bulletError.message)
+              }
+              
+              currentY = await addTextBlock(doc, `• ${cleanText}`, 30, currentY, 165)
+              currentY += 3
+            }
+            // 일반 문단 처리
+            else {
+              currentY = await addTextBlock(doc, paragraph, 20, currentY, 170)
+              currentY += 8
+            }
+          } catch (paragraphError) {
+            console.warn(`문단 처리 실패, 기본 텍스트 사용:`, paragraphError.message)
+            // 기본 텍스트 렌더링으로 fallback
+            doc.text(paragraph.substring(0, 100), 20, currentY)
+            currentY += 15
+          }
+        }
+        
+        currentY += 10
+        console.log(`✅ 섹션 ${index + 1} 완료`)
+        
+      } catch (sectionError) {
+        console.warn(`⚠️ 섹션 ${index + 1} 처리 실패:`, sectionError.message)
+        // 섹션 실패해도 다음 섹션 계속 처리
+        currentY += 20
+      }
+    }
+    
+    console.log('📄 요약 섹션 생성 중...')
+    // 요약 섹션 (있는 경우)
+    if (reportData.summary && reportData.summary.trim() !== '') {
+      try {
+        if (currentY > 220) {
+          doc.addPage()
+          currentY = 30
+        }
+        
+        currentY = await addSectionTitle(doc, '요약', currentY)
+        currentY = await addTextBlock(doc, reportData.summary, 20, currentY, 170)
+        console.log('✅ 요약 섹션 생성 완료')
+      } catch (summaryError) {
+        console.warn('⚠️ 요약 섹션 생성 실패:', summaryError.message)
+      }
+    }
+    
+    console.log('📄 푸터 생성 중...')
+    // 푸터 추가 (오류 처리)
+    try {
+      const totalPages = doc.getNumberOfPages()
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i)
+        await addPDFFooter(doc, i)
+      }
+      console.log('✅ 푸터 생성 완료')
+    } catch (footerError) {
+      console.warn('⚠️ 푸터 생성 실패:', footerError.message)
+      // 푸터 실패해도 PDF 다운로드는 계속 진행
+    }
+    
+    // 활동 추적 (실패해도 PDF 다운로드에 영향 없음)
+    try {
+      await activityTracker.trackDocumentDownload(
+        patent.biblioSummaryInfo?.applicationNumber || 'unknown',
+        `${reportData.reportType}_report_pdf`
+      )
+    } catch (trackingError) {
+      console.warn('활동 추적 실패 (PDF 다운로드는 계속 진행):', trackingError.message)
+    }
+
+    // PDF 다운로드
+    const reportTypeKorean = reportData.reportType === 'market_analysis' ? '시장분석' : '비즈니스인사이트'
+    const fileName = `${reportTypeKorean}리포트_${patent.biblioSummaryInfo?.applicationNumber || 'unknown'}_${new Date().toISOString().split('T')[0]}.pdf`
+    
+    console.log('💾 PDF 파일 저장 시도:', fileName)
+    
+    // PDF 저장 (최종 단계)
+    try {
+      doc.save(fileName)
+      console.log('✅ PDF 다운로드 완료')
+    } catch (saveError) {
+      console.error('❌ PDF 저장 실패:', saveError)
+      
+      // 대체 저장 방법 시도
+      try {
+        const pdfBlob = doc.output('blob')
+        const url = URL.createObjectURL(pdfBlob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = fileName
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+        console.log('✅ 대체 방법으로 PDF 다운로드 완료')
+      } catch (alternativeError) {
+        console.error('❌ 대체 저장 방법도 실패:', alternativeError)
+        throw new Error(`PDF 저장에 실패했습니다: ${saveError.message}`)
+      }
+    }
+    
+  } catch (error) {
+    console.error('❌ PDF 생성 중 치명적 오류 발생:', error)
+    console.error('오류 상세:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      timestamp: new Date().toISOString()
+    })
+    
+    // 사용자에게 더 친화적인 오류 메시지 제공
+    let userMessage = 'PDF 생성 중 오류가 발생했습니다.'
+    
+    if (error.message.includes('타임아웃')) {
+      userMessage = 'PDF 생성 시간이 초과되었습니다. 다시 시도해주세요.'
+    } else if (error.message.includes('메모리')) {
+      userMessage = 'PDF 생성 중 메모리 부족이 발생했습니다. 브라우저를 새로고침 후 다시 시도해주세요.'
+    } else if (error.message.includes('권한')) {
+      userMessage = 'PDF 다운로드 권한이 없습니다. 브라우저 설정을 확인해주세요.'
+    }
+    
+    throw new Error(userMessage)
+  }
+}
+
+// 간단한 PDF 생성 함수 (fallback용 - 기본 텍스트만 사용)
+export const generateSimplePDF = async (
+  patent: KiprisPatentDetailItem,
+  reportData: DynamicReportData
+): Promise<void> => {
+  console.log('🔄 간단한 PDF 생성 시작 (fallback 모드)')
+  
+  try {
+    const doc = new jsPDF()
+    
+    // 기본 폰트 설정
+    doc.setFont('helvetica')
+    doc.setFontSize(16)
+    
+    // 제목
+    const reportTitle = reportData.reportType === 'market_analysis'
+      ? '기술/시장 분석 리포트'
+      : '비즈니스 전략 인사이트 리포트'
+    
+    doc.text(reportTitle, 20, 30)
+    
+    // 특허 정보
+    doc.setFontSize(12)
+    let currentY = 50
+    
+    if (patent.biblioSummaryInfo?.inventionTitle) {
+      doc.text(`특허명: ${patent.biblioSummaryInfo.inventionTitle}`, 20, currentY)
+      currentY += 10
+    }
+    
+    if (patent.biblioSummaryInfo?.applicationNumber) {
+      doc.text(`출원번호: ${patent.biblioSummaryInfo.applicationNumber}`, 20, currentY)
+      currentY += 10
+    }
+    
+    currentY += 10
+    
+    // 섹션 내용 (기본 텍스트만)
+    for (const [index, section] of reportData.sections.entries()) {
+      if (currentY > 250) {
         doc.addPage()
         currentY = 30
       }
       
-      // 볼드 텍스트 처리
-      if (paragraph.includes('**')) {
-        // 볼드 마크다운을 제거하고 일반 텍스트로 처리
-        const cleanText = paragraph.replace(/\*\*(.*?)\*\*/g, '$1')
-        currentY = await addTextBlock(doc, cleanText, 20, currentY, 170)
-      } 
-      // 리스트 아이템 처리
-      else if (paragraph.trim().startsWith('-') || paragraph.trim().startsWith('•')) {
-        const cleanText = paragraph.replace(/^[-•]\s*/, '')
-        
-        // 불릿 포인트 추가
-        doc.setFillColor(59, 130, 246)
-        doc.circle(25, currentY + 5, 1, 'F')
-        
-        currentY = await addTextBlock(doc, `• ${cleanText}`, 30, currentY, 165)
-        currentY += 3
-      }
-      // 일반 문단 처리
-      else {
-        currentY = await addTextBlock(doc, paragraph, 20, currentY, 170)
-        currentY += 8
+      // 섹션 제목
+      doc.setFontSize(14)
+      doc.setFont('helvetica', 'bold')
+      const lines = doc.splitTextToSize(`${index + 1}. ${section.title}`, 170)
+      doc.text(lines, 20, currentY)
+      currentY += lines.length * 7 + 5
+      
+      // 섹션 내용
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'normal')
+      
+      if (section.content) {
+        const contentLines = doc.splitTextToSize(section.content, 170)
+        doc.text(contentLines, 20, currentY)
+        currentY += contentLines.length * 5 + 10
       }
     }
     
-    currentY += 10
-  }
-  
-  // 요약 섹션 (있는 경우)
-  if (reportData.summary && reportData.summary.trim() !== '') {
-    if (currentY > 220) {
-      doc.addPage()
-      currentY = 30
+    // 요약 (있는 경우)
+    if (reportData.summary && reportData.summary.trim() !== '') {
+      if (currentY > 220) {
+        doc.addPage()
+        currentY = 30
+      }
+      
+      doc.setFontSize(14)
+      doc.setFont('helvetica', 'bold')
+      doc.text('요약', 20, currentY)
+      currentY += 10
+      
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'normal')
+      const summaryLines = doc.splitTextToSize(reportData.summary, 170)
+      doc.text(summaryLines, 20, currentY)
     }
     
-    currentY = await addSectionTitle(doc, '요약', currentY)
-    currentY = await addTextBlock(doc, reportData.summary, 20, currentY, 170)
-  }
-  
-  // 푸터 추가
-  const totalPages = doc.getNumberOfPages()
-  for (let i = 1; i <= totalPages; i++) {
-    doc.setPage(i)
-    addPDFFooter(doc, i)
-  }
-  
-  // 활동 추적 - PDF 다운로드 기록
-  try {
-    await activityTracker.trackDocumentDownload(
-      patent.biblioSummaryInfo?.applicationNumber || 'unknown',
-      `${reportData.reportType}_report_pdf`
-    )
+    // 푸터 (간단한 버전)
+    const totalPages = doc.getNumberOfPages()
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i)
+      const pageHeight = doc.internal.pageSize.getHeight()
+      doc.setFontSize(10)
+      doc.text(`페이지 ${i}`, 20, pageHeight - 20)
+      doc.text('본 리포트는 AI 분석 결과입니다.', 20, pageHeight - 10)
+    }
+    
+    // PDF 저장
+    const reportTypeKorean = reportData.reportType === 'market_analysis' ? '시장분석' : '비즈니스인사이트'
+    const fileName = `${reportTypeKorean}리포트_간단버전_${patent.biblioSummaryInfo?.applicationNumber || 'unknown'}_${new Date().toISOString().split('T')[0]}.pdf`
+    
+    doc.save(fileName)
+    console.log('✅ 간단한 PDF 다운로드 완료')
+    
   } catch (error) {
-    console.error('PDF 다운로드 활동 추적 오류:', error)
-    // 활동 추적 실패는 PDF 다운로드에 영향을 주지 않음
+    console.error('❌ 간단한 PDF 생성도 실패:', error)
+    throw new Error('PDF 생성에 실패했습니다. 브라우저를 새로고침 후 다시 시도해주세요.')
   }
-
-  // PDF 다운로드
-  const reportTypeKorean = reportData.reportType === 'market' ? '시장분석' : '비즈니스인사이트'
-  const fileName = `${reportTypeKorean}리포트_${patent.biblioSummaryInfo?.applicationNumber || 'unknown'}_${new Date().toISOString().split('T')[0]}.pdf`
-  doc.save(fileName)
 }
 
 // 기존 시장 분석 리포트 PDF 생성 (호환성 유지)
@@ -310,7 +672,7 @@ export const generateMarketAnalysisPDF = async (
   analysis: MarketAnalysisReport
 ): Promise<void> => {
   const doc = new jsPDF()
-  addKoreanFont(doc)
+  await addKoreanFont(doc)
   
   let currentY = 90
   
@@ -389,7 +751,7 @@ export const generateMarketAnalysisPDF = async (
   const totalPages = doc.getNumberOfPages()
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i)
-    addPDFFooter(doc, i)
+    await addPDFFooter(doc, i)
   }
   
   // 활동 추적 - PDF 다운로드 기록
@@ -414,7 +776,7 @@ export const generateBusinessInsightPDF = async (
   analysis: BusinessInsightReport
 ): Promise<void> => {
   const doc = new jsPDF()
-  addKoreanFont(doc)
+  await addKoreanFont(doc)
   
   let currentY = 90
   
@@ -493,7 +855,7 @@ export const generateBusinessInsightPDF = async (
   const totalPages = doc.getNumberOfPages()
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i)
-    addPDFFooter(doc, i)
+    await addPDFFooter(doc, i)
   }
   
   // 활동 추적 - PDF 다운로드 기록

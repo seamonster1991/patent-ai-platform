@@ -131,9 +131,32 @@ const AdminDashboard: React.FC = () => {
         if (response.ok) {
           const data = await response.json();
           setAdminStats(data);
+        } else {
+          // API 응답이 실패한 경우 fallback 데이터 설정
+          console.warn('Admin API response failed, using fallback data');
+          setAdminStats({
+            totalActivities: 0,
+            activityTypes: [],
+            dailyActivity: [],
+            topUsers: []
+          });
         }
       } catch (error) {
         console.error('Error fetching admin statistics:', error);
+        // 네트워크 오류 등의 경우 fallback 데이터 설정
+        setAdminStats({
+          totalActivities: 0,
+          activityTypes: [
+            { activity_type: '검색', count: 0 },
+            { activity_type: '로그인', count: 0 },
+            { activity_type: '보고서 생성', count: 0 }
+          ],
+          dailyActivity: Array.from({ length: 7 }, (_, i) => ({
+            date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString(),
+            count: 0
+          })),
+          topUsers: []
+        });
       } finally {
         setAdminLoading(false);
       }

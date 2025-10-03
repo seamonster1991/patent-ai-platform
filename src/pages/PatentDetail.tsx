@@ -22,15 +22,15 @@ import {
   Search,
   Award,
   Brain,
-  TrendingUp,
-  DollarSign,
   Loader2,
   File,
   CheckCircle,
   XCircle,
   AlertCircle,
   Eye,
-  BarChart3
+  BarChart3,
+  TrendingUp,
+  DollarSign
 } from 'lucide-react'
 import Layout from '../components/Layout/Layout'
 import Button from '../components/UI/Button'
@@ -39,12 +39,13 @@ import { LoadingPage } from '../components/UI/Loading'
 import { KiprisPatentDetailItem, AIAnalysisReport, AIAnalysisStructure, DocumentType, DOCUMENT_TYPES, DocumentDownloadResponse } from '../types/kipris'
 import { formatDate } from '../lib/utils'
 import { toast } from 'sonner'
-import { generateMarketAnalysisPDF, generateBusinessInsightPDF } from '../lib/pdfGenerator'
+
 import { useSearchStore } from '../store/searchStore'
 import { useAuthStore } from '../store/authStore'
 import { ActivityTracker } from '../lib/activityTracker'
 import MarketAnalysisReport from '../components/Reports/MarketAnalysisReport'
 import BusinessInsightsReport from '../components/Reports/BusinessInsightsReport'
+
 
 export default function PatentDetail() {
   console.log('🔍 [PatentDetail] 컴포넌트 로드됨');
@@ -265,6 +266,94 @@ export default function PatentDetail() {
     }
   }
 
+  const generateMarketAnalysisReport = async () => {
+    if (!patent || !aiAnalysis) {
+      toast.error('특허 정보와 AI 분석 결과가 필요합니다.')
+      return
+    }
+
+    try {
+      setPdfGenerating(prev => ({ ...prev, market: true }))
+      
+      const response = await fetch('/api/generate-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          type: 'market-analysis',
+          patent,
+          analysis: aiAnalysis
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('PDF 생성에 실패했습니다.')
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `시장분석_${patent.biblioSummaryInfo?.inventionTitle || 'patent'}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      
+      toast.success('시장 분석 PDF가 다운로드되었습니다.')
+    } catch (error) {
+      console.error('PDF 생성 오류:', error)
+      toast.error('PDF 생성에 실패했습니다.')
+    } finally {
+      setPdfGenerating(prev => ({ ...prev, market: false }))
+    }
+  }
+
+  const generateBusinessInsightReport = async () => {
+    if (!patent || !aiAnalysis) {
+      toast.error('특허 정보와 AI 분석 결과가 필요합니다.')
+      return
+    }
+
+    try {
+      setPdfGenerating(prev => ({ ...prev, business: true }))
+      
+      const response = await fetch('/api/generate-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          type: 'business-insights',
+          patent,
+          analysis: aiAnalysis
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('PDF 생성에 실패했습니다.')
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `비즈니스인사이트_${patent.biblioSummaryInfo?.inventionTitle || 'patent'}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      
+      toast.success('비즈니스 인사이트 PDF가 다운로드되었습니다.')
+    } catch (error) {
+      console.error('PDF 생성 오류:', error)
+      toast.error('PDF 생성에 실패했습니다.')
+    } finally {
+      setPdfGenerating(prev => ({ ...prev, business: false }))
+    }
+  }
+
   const checkDocumentAvailability = async () => {
     if (!applicationNumber) return
     
@@ -369,79 +458,7 @@ export default function PatentDetail() {
     }
   }
 
-  const generateMarketAnalysisReport = async () => {
-    if (!patent || !aiAnalysis) return
-    
-    try {
-      setPdfGenerating(prev => ({ ...prev, market: true }))
-      toast.info('시장분석 리포트 PDF를 생성하고 있습니다...')
-      
-      await generateMarketAnalysisPDF(patent, aiAnalysis.marketAnalysis)
-      toast.success('시장분석 리포트 PDF가 다운로드되었습니다.')
-      
-      // 사용자 활동 추적 - 리포트 생성
-      try {
-        const { user } = useAuthStore.getState()
-        if (user) {
-          const activityTracker = ActivityTracker.getInstance()
-          activityTracker.setUserId(user.id)
-          await activityTracker.trackReportGenerate(
-            applicationNumber || '',
-            'market_analysis',
-            {
-              patentTitle: patent.biblioSummaryInfo?.inventionTitle,
-              reportType: '시장분석 리포트'
-            }
-          )
-        }
-      } catch (error) {
-        console.error('리포트 생성 활동 추적 오류:', error)
-        // 활동 추적 실패는 리포트 생성 기능에 영향을 주지 않음
-      }
-    } catch (err: any) {
-      console.error('Error generating market analysis PDF:', err)
-      toast.error('PDF 생성에 실패했습니다.')
-    } finally {
-      setPdfGenerating(prev => ({ ...prev, market: false }))
-    }
-  }
 
-  const generateBusinessInsightReport = async () => {
-    if (!patent || !aiAnalysis) return
-    
-    try {
-      setPdfGenerating(prev => ({ ...prev, business: true }))
-      toast.info('비즈니스 인사이트 리포트 PDF를 생성하고 있습니다...')
-      
-      await generateBusinessInsightPDF(patent, aiAnalysis.businessInsight)
-      toast.success('비즈니스 인사이트 리포트 PDF가 다운로드되었습니다.')
-      
-      // 사용자 활동 추적 - 리포트 생성
-      try {
-        const { user } = useAuthStore.getState()
-        if (user) {
-          const activityTracker = ActivityTracker.getInstance()
-          activityTracker.setUserId(user.id)
-          await activityTracker.trackReportGenerate(
-            applicationNumber || '',
-            'business_insight',
-            {
-              patentTitle: patent.biblioSummaryInfo?.inventionTitle,
-              reportType: '비즈니스 인사이트 리포트'
-            }
-          )
-        }
-      } catch (error) {
-        console.error('리포트 생성 활동 추적 오류:', error)
-        // 활동 추적 실패는 리포트 생성 기능에 영향을 주지 않음
-      }
-    } catch (err: any) {
-      console.error('Error generating business insight PDF:', err)
-      toast.error('PDF 생성에 실패했습니다.')
-    } finally {
-      setPdfGenerating(prev => ({ ...prev, business: false }))
-    }
-  }
 
   if (loading) {
     return <LoadingPage />
