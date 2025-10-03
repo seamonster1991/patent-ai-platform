@@ -79,19 +79,66 @@ module.exports = async function handler(req, res) {
     console.log('🤖 AI 분석 시작...');
     console.log('프롬프트 길이:', prompt.length);
     
-    // AI 분석 실행 (타임아웃 설정)
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('AI 분석 요청이 90초를 초과하여 타임아웃되었습니다.')), 90000);
-    });
+    // AI 분석 실행 (재시도 메커니즘 포함)
+    let analysisText;
+    let lastError;
+    const maxRetries = 3;
+    const retryDelay = 2000; // 2초
     
-    const analysisPromise = (async () => {
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const analysisText = response.text();
-      return analysisText;
-    })();
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`🔄 AI 분석 시도 ${attempt}/${maxRetries}`);
+        
+        // 타임아웃 설정 (시도 횟수에 따라 증가)
+        const timeoutMs = 60000 + (attempt - 1) * 30000; // 60초, 90초, 120초
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error(`AI 분석 요청이 ${timeoutMs/1000}초를 초과하여 타임아웃되었습니다.`)), timeoutMs);
+        });
+        
+        const analysisPromise = (async () => {
+          const result = await model.generateContent(prompt);
+          const response = await result.response;
+          const text = response.text();
+          
+          // 응답 유효성 검증
+          if (!text || text.trim().length < 50) {
+            throw new Error('AI 응답이 너무 짧거나 비어있습니다.');
+          }
+          
+          return text;
+        })();
+        
+        analysisText = await Promise.race([analysisPromise, timeoutPromise]);
+        console.log(`✅ AI 분석 성공 (시도 ${attempt}/${maxRetries}), 응답 길이:`, analysisText.length);
+        break; // 성공하면 루프 종료
+        
+      } catch (error) {
+        lastError = error;
+        console.error(`❌ AI 분석 시도 ${attempt}/${maxRetries} 실패:`, error.message);
+        
+        // 마지막 시도가 아니면 재시도
+        if (attempt < maxRetries) {
+          // 특정 오류는 재시도하지 않음
+          if (error.message.includes('API_KEY') || 
+              error.message.includes('authentication') || 
+              error.message.includes('unauthorized') ||
+              error.message.includes('quota') ||
+              error.message.includes('limit')) {
+            console.log('❌ 재시도 불가능한 오류 타입, 즉시 실패 처리');
+            throw error;
+          }
+          
+          console.log(`⏳ ${retryDelay/1000}초 후 재시도...`);
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+        }
+      }
+    }
     
-    const analysisText = await Promise.race([analysisPromise, timeoutPromise]);
+    // 모든 시도가 실패한 경우
+    if (!analysisText) {
+      console.error(`❌ ${maxRetries}번의 시도 모두 실패`);
+      throw lastError || new Error('AI 분석에 실패했습니다.');
+    }
     
     console.log('✅ AI 분석 완료, 응답 길이:', analysisText.length);
     
@@ -115,35 +162,74 @@ module.exports = async function handler(req, res) {
     return res.status(200).json(aiResponse);
     
   } catch (error) {
-    console.error('❌ AI 분석 오류:', error);
-    console.error('오류 스택:', error.stack);
+    console.error('❌ AI 분석 오류 발생:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+      timestamp: new Date().toISOString(),
+      requestBody: req.body,
+      geminiKeyExists: !!process.env.GEMINI_API_KEY,
+      geminiKeyLength: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.length : 0
+    });
     
     let errorMessage = 'AI 분석 중 오류가 발생했습니다.';
     let statusCode = 500;
+    let errorCode = 'UNKNOWN_ERROR';
     
     // 구체적인 오류 타입별 처리
-    if (error.message.includes('타임아웃')) {
-      errorMessage = 'AI 분석 요청이 시간 초과되었습니다. 잠시 후 다시 시도해주세요.';
+    if (error.message.includes('타임아웃') || error.message.includes('timeout')) {
+      errorMessage = 'AI 분석 요청이 시간 초과되었습니다. 특허 데이터가 복잡하거나 서버가 바쁠 수 있습니다. 잠시 후 다시 시도해주세요.';
       statusCode = 408;
-    } else if (error.message.includes('API_KEY')) {
-      errorMessage = 'AI 서비스 인증에 실패했습니다.';
+      errorCode = 'TIMEOUT_ERROR';
+    } else if (error.message.includes('API_KEY') || error.message.includes('authentication') || error.message.includes('unauthorized')) {
+      errorMessage = 'AI 서비스 인증에 실패했습니다. API 키 설정을 확인해주세요.';
       statusCode = 401;
-    } else if (error.message.includes('quota') || error.message.includes('limit')) {
+      errorCode = 'AUTH_ERROR';
+    } else if (error.message.includes('quota') || error.message.includes('limit') || error.message.includes('rate')) {
       errorMessage = 'AI 서비스 사용량 한도에 도달했습니다. 잠시 후 다시 시도해주세요.';
       statusCode = 429;
-    } else if (error.message.includes('network') || error.message.includes('fetch')) {
-      errorMessage = '네트워크 연결에 문제가 있습니다. 잠시 후 다시 시도해주세요.';
+      errorCode = 'QUOTA_ERROR';
+    } else if (error.message.includes('network') || error.message.includes('fetch') || error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
+      errorMessage = '네트워크 연결에 문제가 있습니다. 인터넷 연결을 확인하고 잠시 후 다시 시도해주세요.';
       statusCode = 503;
+      errorCode = 'NETWORK_ERROR';
+    } else if (error.message.includes('JSON') || error.message.includes('parse')) {
+      errorMessage = 'AI 응답 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+      statusCode = 500;
+      errorCode = 'PARSE_ERROR';
+    } else if (error.message.includes('model') || error.message.includes('invalid')) {
+      errorMessage = 'AI 모델 설정에 문제가 있습니다. 관리자에게 문의해주세요.';
+      statusCode = 500;
+      errorCode = 'MODEL_ERROR';
     } else {
       errorMessage = error.message || errorMessage;
+      errorCode = 'GENERAL_ERROR';
     }
     
-    return res.status(statusCode).json({
+    // 상세한 오류 응답 반환
+    const errorResponse = {
       success: false,
-      error: 'AI analysis error',
+      error: errorCode,
       message: errorMessage,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
+      timestamp: new Date().toISOString(),
+      statusCode: statusCode
+    };
+    
+    // 개발 환경에서만 상세 정보 포함
+    if (process.env.NODE_ENV === 'development') {
+      errorResponse.details = {
+        originalError: error.message,
+        stack: error.stack,
+        requestData: {
+          hasPatentData: !!req.body.patentData,
+          analysisType: req.body.analysisType,
+          bodyKeys: Object.keys(req.body || {})
+        }
+      };
+    }
+    
+    console.error('❌ 오류 응답 전송:', errorResponse);
+    return res.status(statusCode).json(errorResponse);
   }
 };
 

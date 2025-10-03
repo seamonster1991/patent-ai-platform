@@ -434,20 +434,76 @@ export default function BusinessInsightsReport({
 
       if (!response.ok) {
         let errorMessage = '리포트 생성에 실패했습니다.'
+        let errorDetails = ''
         
-        if (response.status === 400) {
-          errorMessage = '잘못된 요청입니다. 특허 번호를 확인해주세요.'
-        } else if (response.status === 401) {
-          errorMessage = '인증이 필요합니다. 다시 로그인해주세요.'
-        } else if (response.status === 408) {
-          errorMessage = '요청 시간이 초과되었습니다. 다시 시도해주세요.'
-        } else if (response.status === 429) {
-          errorMessage = '너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.'
-        } else if (response.status === 503) {
-          errorMessage = 'AI 서비스가 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해주세요.'
+        try {
+          const errorData = await response.json()
+          console.log('❌ API 오류 응답:', errorData)
+          
+          // 서버에서 제공하는 구체적인 오류 메시지 사용
+          if (errorData.message) {
+            errorMessage = errorData.message
+          }
+          
+          // 오류 코드별 상세 처리
+          if (errorData.error) {
+            switch (errorData.error) {
+              case 'TIMEOUT_ERROR':
+                errorMessage = 'AI 분석 요청이 시간 초과되었습니다. 특허 데이터가 복잡하거나 서버가 바쁠 수 있습니다.'
+                errorDetails = '잠시 후 다시 시도하거나, 더 간단한 특허로 테스트해보세요.'
+                break
+              case 'AUTH_ERROR':
+                errorMessage = 'AI 서비스 인증에 실패했습니다.'
+                errorDetails = 'API 키 설정을 확인하거나 관리자에게 문의하세요.'
+                break
+              case 'QUOTA_ERROR':
+                errorMessage = 'AI 서비스 사용량 한도에 도달했습니다.'
+                errorDetails = '잠시 후 다시 시도하거나, 사용량 한도를 확인해보세요.'
+                break
+              case 'NETWORK_ERROR':
+                errorMessage = '네트워크 연결에 문제가 있습니다.'
+                errorDetails = '인터넷 연결을 확인하고 다시 시도해주세요.'
+                break
+              case 'PARSE_ERROR':
+                errorMessage = 'AI 응답 처리 중 오류가 발생했습니다.'
+                errorDetails = '잠시 후 다시 시도해주세요.'
+                break
+              case 'MODEL_ERROR':
+                errorMessage = 'AI 모델 설정에 문제가 있습니다.'
+                errorDetails = '관리자에게 문의해주세요.'
+                break
+            }
+          }
+        } catch (parseError) {
+          console.error('❌ 오류 응답 파싱 실패:', parseError)
+          
+          // HTTP 상태 코드별 기본 메시지
+          switch (response.status) {
+            case 400:
+              errorMessage = '잘못된 요청입니다. 특허 번호를 확인해주세요.'
+              break
+            case 401:
+              errorMessage = '인증이 필요합니다. 다시 로그인해주세요.'
+              break
+            case 408:
+              errorMessage = '요청 시간이 초과되었습니다. 다시 시도해주세요.'
+              break
+            case 429:
+              errorMessage = '너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.'
+              break
+            case 500:
+              errorMessage = '서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
+              break
+            case 503:
+              errorMessage = 'AI 서비스가 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해주세요.'
+              break
+            default:
+              errorMessage = `서버 오류 (${response.status}): 잠시 후 다시 시도해주세요.`
+          }
         }
         
-        throw new Error(errorMessage)
+        const fullErrorMessage = errorDetails ? `${errorMessage}\n\n${errorDetails}` : errorMessage
+        throw new Error(fullErrorMessage)
       }
 
       const data = await response.json()
@@ -479,14 +535,29 @@ export default function BusinessInsightsReport({
     } catch (error) {
       console.error('❌ 리포트 생성 실패:', {
         message: error.message,
+        name: error.name,
         type: error.type,
         status: error.status,
-        stack: error.stack
+        stack: error.stack,
+        timestamp: new Date().toISOString()
       });
       
-      setError(error.message);
+      let displayError = error.message || '알 수 없는 오류가 발생했습니다.'
       
-      toast.error(error.message);
+      // 네트워크 오류 처리
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        displayError = '네트워크 연결에 문제가 있습니다.\n\n해결 방법:\n• 인터넷 연결을 확인해주세요\n• 방화벽 설정을 확인해주세요\n• VPN 연결을 확인해주세요'
+      } else if (error.message.includes('Failed to fetch')) {
+        displayError = '서버에 연결할 수 없습니다.\n\n해결 방법:\n• 서버가 실행 중인지 확인해주세요\n• 네트워크 연결을 확인해주세요\n• 잠시 후 다시 시도해주세요'
+      } else if (error.message.includes('timeout') || error.message.includes('시간 초과')) {
+        displayError = '요청 시간이 초과되었습니다.\n\n해결 방법:\n• 잠시 후 다시 시도해주세요\n• 특허 데이터가 복잡할 수 있습니다\n• 네트워크 상태를 확인해주세요'
+      }
+      
+      setError(displayError);
+      
+      // 토스트 메시지는 간단하게 표시
+      const toastMessage = displayError.split('\n')[0] || '리포트 생성에 실패했습니다.'
+      toast.error(toastMessage);
     } finally {
       setLoading(false);
       console.log('🏁 리포트 생성 프로세스 완료');
