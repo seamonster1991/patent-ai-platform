@@ -289,8 +289,7 @@ export const generateDynamicReportPDF = async (
   
   // 활동 추적 - PDF 다운로드 기록
   try {
-    const tracker = activityTracker()
-    await tracker.trackDocumentDownload(
+    await activityTracker.trackDocumentDownload(
       patent.biblioSummaryInfo?.applicationNumber || 'unknown',
       `${reportData.reportType}_report_pdf`
     )
@@ -395,8 +394,7 @@ export const generateMarketAnalysisPDF = async (
   
   // 활동 추적 - PDF 다운로드 기록
   try {
-    const tracker = activityTracker()
-    await tracker.trackDocumentDownload(
+    await activityTracker.trackDocumentDownload(
       patent.biblioSummaryInfo?.applicationNumber || 'unknown',
       'market_analysis_pdf'
     )
@@ -500,8 +498,7 @@ export const generateBusinessInsightPDF = async (
   
   // 활동 추적 - PDF 다운로드 기록
   try {
-    const tracker = activityTracker()
-    await tracker.trackDocumentDownload(
+    await activityTracker.trackDocumentDownload(
       patent.biblioSummaryInfo?.applicationNumber || 'unknown',
       'business_insight_pdf'
     )

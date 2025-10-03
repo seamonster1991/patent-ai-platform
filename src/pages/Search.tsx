@@ -518,8 +518,6 @@ export default function Search() {
                   검색 결과
                 </h2>
                 <p className="text-secondary-600 dark:text-secondary-400 mt-1">
-                  {console.log('🔍 [Search] totalCount 표시:', { totalCount, totalPages, resultsLength: results.length })}
-                  {console.log('🔍 [Search] 현재 검색 스토어 상태:', { totalCount, currentPage, filters })}
                   총 <span className="font-medium text-primary-600 dark:text-primary-400">{totalCount.toLocaleString()}</span>건의 특허가 검색되었습니다
                   {totalPages > 0 && (
                     <span className="ml-2">

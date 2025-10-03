@@ -3,7 +3,7 @@ import { cn } from '../../lib/utils'
 import { LoadingSpinner } from './Loading'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success' | 'warning'
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success' | 'warning' | 'default'
   size?: 'sm' | 'md' | 'lg' | 'xl'
   loading?: boolean
   children: ReactNode
@@ -89,6 +89,14 @@ function Button({
       'focus-visible:ring-warning-500 focus-visible:ring-offset-dark-900',
       'shadow-sm hover:shadow-md',
       'border border-transparent'
+    ].join(' '),
+    
+    default: [
+      'bg-gray-100 hover:bg-gray-200 active:bg-gray-300',
+      'dark:bg-gray-700 dark:hover:bg-gray-600 dark:active:bg-gray-500',
+      'text-gray-900 dark:text-gray-100',
+      'border border-gray-300 dark:border-gray-600',
+      'focus-visible:ring-gray-500 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900'
     ].join(' ')
   }
 

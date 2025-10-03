@@ -39,6 +39,14 @@ import FieldDistributionChart from '../components/Charts/FieldDistributionChart'
 import HourlyActivityChart from '../components/Charts/HourlyActivityChart'
 import WeeklyActivityChart from '../components/Charts/WeeklyActivityChart'
 
+interface WeeklyActivityData {
+  day: string;
+  dayIndex: number;
+  count: number;
+  searchCount: number;
+  aiAnalysisCount: number;
+}
+
 export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -80,8 +88,8 @@ export default function Dashboard() {
     }>
   })
   const [chartData, setChartData] = useState({
-    hourlyActivity: [] as Array<{ hour: string; searches: number }>,
-    weeklyActivity: [] as Array<{ day: string; searches: number; reports: number }>
+    hourlyActivity: [] as Array<{ hour: number; count: number }>,
+    weeklyActivity: [] as WeeklyActivityData[]
   })
 
   const { user } = useAuthStore()
@@ -156,9 +164,22 @@ export default function Dashboard() {
         })
 
         // 차트 데이터 설정 (실제 DB 데이터 활용)
+        const weeklyData = (apiData.weekly_activities || []).map((item: any, index: number) => ({
+          day: item.day || `Day ${index}`,
+          dayIndex: index,
+          count: (item.searches || 0) + (item.reports || 0),
+          searchCount: item.searches || 0,
+          aiAnalysisCount: item.reports || 0
+        }))
+
+        const hourlyData = (apiData.hourly_activities || []).map((item: any) => ({
+          hour: parseInt(item.hour) || 0,
+          count: item.searches || 0
+        }))
+
         setChartData({
-          hourlyActivity: apiData.hourly_activities || [],
-          weeklyActivity: apiData.weekly_activities || []
+          hourlyActivity: hourlyData,
+          weeklyActivity: weeklyData
         })
 
       } catch (error) {
@@ -254,7 +275,7 @@ export default function Dashboard() {
         acc[date] = { count: 0, searchCount: 0 }
       }
       acc[date].count += item.count || 0
-      acc[date].searchCount += item.searchCount || item.count || 0
+      acc[date].searchCount += item.count || 0
       return acc
     }, {} as Record<string, { count: number; searchCount: number }>)
 

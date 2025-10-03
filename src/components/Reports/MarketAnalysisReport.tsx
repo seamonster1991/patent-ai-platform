@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import Button from '../UI/Button'
 import Card, { CardContent, CardHeader, CardTitle } from '../UI/Card'
-import { KiprisPatentDetailItem } from '../../types/kipris'
+import { KiprisPatentDetailItem, AIAnalysisReport } from '../../types/kipris'
 import { generateDynamicReportPDF } from '../../lib/pdfGenerator'
 import { toast } from 'sonner'
 import ReportLoadingState from './ReportLoadingState'
@@ -18,6 +18,10 @@ import { useAuthStore } from '../../store/authStore'
 
 interface MarketAnalysisReportProps {
   patent: KiprisPatentDetailItem
+  analysis?: AIAnalysisReport
+  loading?: boolean
+  error?: string
+  onGenerate?: () => Promise<void>
   onGeneratePDF: () => void
   pdfGenerating: boolean
 }
@@ -36,6 +40,10 @@ interface ReportData {
 
 export default function MarketAnalysisReport({ 
   patent, 
+  analysis,
+  loading: propLoading = false,
+  error: propError = '',
+  onGenerate,
   onGeneratePDF,
   pdfGenerating
 }: MarketAnalysisReportProps) {
@@ -79,7 +87,7 @@ export default function MarketAnalysisReport({
     console.log('📋 특허 데이터 구조:', {
       keys: Object.keys(patent || {}),
       hasTitle: !!(patent?.biblioSummaryInfo?.inventionTitle),
-      hasAbstract: !!(patent?.abstractInfo?.abstractTextKor || patent?.abstractInfo?.abstractText),
+      hasAbstract: !!(patent?.abstractInfo?.astrtCont),
       hasClaims: !!(patent?.claimInfo),
       applicationNumber: patent?.biblioSummaryInfo?.applicationNumber
     });
@@ -158,7 +166,7 @@ export default function MarketAnalysisReport({
             errorType = 'general';
         }
 
-        const error = new Error(errorMessage);
+        const error = new Error(errorMessage) as any;
         error.type = errorType;
         error.status = response.status;
         throw error;
@@ -190,11 +198,7 @@ export default function MarketAnalysisReport({
         stack: error.stack
       });
       
-      setError({
-        message: error.message,
-        type: error.type || 'general',
-        status: error.status
-      });
+      setError(error.message);
       
       toast.error(error.message);
     } finally {
@@ -220,7 +224,7 @@ export default function MarketAnalysisReport({
     }
   }
 
-  if (loading) {
+  if (loading || propLoading) {
     return (
       <ReportLoadingState
         title="기술/시장 분석 리포트"
@@ -231,15 +235,11 @@ export default function MarketAnalysisReport({
     )
   }
 
-  if (error) {
+  if (error || propError) {
     return (
       <ReportErrorState
-        title="기술/시장 분석 리포트"
-        description="AI가 특허 기술의 시장성과 사업화 가능성을 분석합니다"
-        error={error}
+        error={error || propError}
         onRetry={handleRetry}
-        iconColor="bg-blue-100 dark:bg-blue-900"
-        Icon={({ className }) => <TrendingUp className={`${className} text-blue-600 dark:text-blue-400`} />}
       />
     )
   }
