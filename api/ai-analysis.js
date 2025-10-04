@@ -4,6 +4,9 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const analysisCache = new Map();
 const CACHE_TTL = 5 * 60 * 1000; // 5분 캐시
 
+// 캐시 클리어 (맥킨지 언급 제거를 위해)
+analysisCache.clear();
+
 // 캐시 초기화 (디버깅용) - 제거됨
 module.exports = async function handler(req, res) {
   // CORS 헤더 설정
@@ -79,12 +82,12 @@ module.exports = async function handler(req, res) {
     console.log('🔍 Step 4: 특허 정보 추출 시작');
     const patentInfo = extractPatentInfo(patentData);
     
-    // 캐시 키 생성 (특허 번호 + 분석 타입)
-    const cacheKey = `${patentInfo.applicationNumber}_${analysisType}`;
+    // 캐시 키 생성 (특허 번호 + 분석 타입 + 버전)
+    const cacheKey = `${patentInfo.applicationNumber}_${analysisType}_v2_no_mckinsey`;
     
-    // 캐시 확인
-    const cachedResult = analysisCache.get(cacheKey);
-    if (cachedResult && (Date.now() - cachedResult.timestamp) < CACHE_TTL) {
+    // 캐시 확인 (임시로 비활성화)
+    const cachedResult = null; // analysisCache.get(cacheKey);
+    if (false && cachedResult && (Date.now() - cachedResult.timestamp) < CACHE_TTL) {
       console.log('💾 캐시된 분석 결과 반환:', cacheKey);
       console.log('💾 캐시된 데이터 구조:', {
         sectionsCount: cachedResult.data?.analysis?.sections?.length,
@@ -149,10 +152,12 @@ module.exports = async function handler(req, res) {
              const result = await model.generateContent({
               contents: [{ role: "user", parts: [{ text: prompt }] }],
               generationConfig: {
-                  temperature: isVercel ? 0.3 : 0.7,  // Vercel에서는 더 결정적인 응답
-                  topK: isVercel ? 20 : 40,           // 더 적은 토큰 고려
-                  topP: isVercel ? 0.8 : 0.95,        // 더 집중된 응답
-                  maxOutputTokens: isVercel ? 4096 : 8192,   // Vercel에서도 충분한 응답 길이 확보
+                  temperature: isVercel ? 0.5 : 0.7,  // Vercel에서 더 균형잡힌 응답
+                  topK: isVercel ? 30 : 40,           // 더 다양한 토큰 고려
+                  topP: isVercel ? 0.9 : 0.95,        // 더 풍부한 응답
+                  maxOutputTokens: isVercel ? 6144 : 8192,   // Vercel에서 더 긴 응답 허용
+                  candidateCount: 1,                  // 안정성을 위해 단일 후보
+                  stopSequences: [],                  // 중단 시퀀스 없음
               },
              });
              
@@ -165,20 +170,33 @@ module.exports = async function handler(req, res) {
              console.log(`✅ [시도 ${attempt}/${maxRetries}] Gemini API 응답 완료 (${endTime - startTime}ms)`);
              console.log(`📊 응답 길이: ${text?.length || 0}자`);
              
-             if (!text || text.trim().length < 20) {
+             // 프로덕션 환경에서 더 관대한 응답 검증
+             const minLength = isVercel ? 10 : 20;
+             if (!text || text.trim().length < minLength) {
                 console.error('❌ AI 응답이 너무 짧거나 비어있습니다:', text?.substring(0, 100));
                 console.error('📊 응답 상세 정보:', {
                   hasText: !!text,
                   length: text?.length || 0,
                   trimmedLength: text?.trim().length || 0,
                   isVercel: isVercel,
-                  attempt: attempt
+                  attempt: attempt,
+                  minLength: minLength,
+                  modelUsed: "gemini-2.5-flash"
                 });
-                throw new Error('AI 응답이 너무 짧거나 비어있습니다.');
+                
+                // Vercel 환경에서는 더 구체적인 오류 메시지
+                if (isVercel) {
+                  throw new Error(`프로덕션 환경에서 AI 응답이 예상보다 짧습니다. (응답 길이: ${text?.length || 0}자, 최소 요구: ${minLength}자)`);
+                } else {
+                  throw new Error('AI 응답이 너무 짧거나 비어있습니다.');
+                }
              }
              
-             // Vercel 환경에서는 로깅 최소화
-             if (!isVercel) {
+             // 프로덕션 환경에서도 디버깅을 위한 최소한의 로깅
+             if (isVercel) {
+               console.log('🔍 [Vercel] AI 응답 미리보기 (처음 300자):', text.substring(0, 300) + '...');
+               console.log('🔍 [Vercel] AI 응답 끝부분 (마지막 100자):', text.substring(Math.max(0, text.length - 100)));
+             } else {
                console.log('🔍 === AI 응답 전체 내용 (디버깅) ===');
                console.log(text);
                console.log('🔍 === AI 응답 끝 ===');
@@ -254,17 +272,46 @@ module.exports = async function handler(req, res) {
     
 
     
+    // 맥킨지 언급 제거 후처리
+    const cleanedAnalysisText = removeMcKinseyReferences(analysisText);
+    const cleanedParsed = parsed ? {
+      ...parsed,
+      sections: parsed.sections?.map(section => ({
+        ...section,
+        title: removeMcKinseyReferences(section.title || ''),
+        content: removeMcKinseyReferences(section.content || '')
+      }))
+    } : null;
+
+    // 프로덕션 환경에서 더 안정적인 구조화 분석 생성
+    const fallbackSections = [
+      {
+        title: '분석 결과',
+        content: cleanedAnalysisText.substring(0, 1500) + (cleanedAnalysisText.length > 1500 ? '...' : '')
+      }
+    ];
+    
+    // 섹션이 비어있거나 너무 적을 때 추가 처리
+    let finalSections = Array.isArray(cleanedParsed?.sections) && cleanedParsed.sections.length > 0
+      ? cleanedParsed.sections
+      : fallbackSections;
+    
+    // 각 섹션의 내용이 너무 짧은 경우 보완
+    finalSections = finalSections.map(section => {
+      if (!section.content || section.content.trim().length < 50) {
+        console.log('⚠️ 섹션 내용이 너무 짧음, 보완 처리:', section.title);
+        return {
+          ...section,
+          content: section.content || '분석 내용을 생성하는 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.'
+        };
+      }
+      return section;
+    });
+
     const structuredAnalysis = {
-      reportName: parsed?.reportName || (analysisType === 'market_analysis' ? '시장 분석 리포트' : '비즈니스 인사이트 리포트'),
-      sections: Array.isArray(parsed?.sections) && parsed.sections.length > 0
-        ? parsed.sections
-        : [
-            {
-              title: '분석 결과',
-              content: analysisText.substring(0, 1000) + (analysisText.length > 1000 ? '...' : '')
-            }
-          ],
-      rawAnalysis: analysisText
+      reportName: cleanedParsed?.reportName || (analysisType === 'market_analysis' ? '시장 분석 리포트' : '비즈니스 인사이트 리포트'),
+      sections: finalSections,
+      rawAnalysis: cleanedAnalysisText
     };
     console.log('✅ 구조화 섹션 생성 완료:', {
       sectionsCount: structuredAnalysis.sections.length,
@@ -288,7 +335,8 @@ module.exports = async function handler(req, res) {
         patentTitle: patentInfo.inventionTitle,
         analysisDate: new Date().toISOString(),
         analysis: structuredAnalysis,
-        rawAnalysis: analysisText
+        rawAnalysis: analysisText,
+        disclaimer: "AI can make mistakes. This report is for idea generation purposes only; please use it as a reference."
       }
     };
     
@@ -371,8 +419,21 @@ module.exports = async function handler(req, res) {
       statusCode = 500;
       errorCode = 'MODEL_ERROR';
     } else {
-      errorMessage = error.message || errorMessage;
-      errorCode = 'GENERAL_ERROR';
+      // 프로덕션 환경에서 더 구체적인 오류 메시지
+      if (isVercel && error.message.includes('프로덕션 환경에서 AI 응답이 예상보다 짧습니다')) {
+        errorMessage = `AI 분석 중 응답 길이 문제가 발생했습니다. 
+        
+가능한 해결 방법:
+• 잠시 후 다시 시도해주세요
+• 특허 데이터가 복잡한 경우 분석에 시간이 더 걸릴 수 있습니다
+• 문제가 지속되면 관리자에게 문의해주세요
+
+기술적 정보: ${error.message}`;
+        errorCode = 'AI_RESPONSE_SHORT';
+      } else {
+        errorMessage = error.message || errorMessage;
+        errorCode = 'GENERAL_ERROR';
+      }
     }
     
     const errorResponse = {
@@ -380,7 +441,8 @@ module.exports = async function handler(req, res) {
       error: errorCode,
       message: errorMessage,
       timestamp: new Date().toISOString(),
-      statusCode: statusCode
+      statusCode: statusCode,
+      environment: isVercel ? 'production' : 'development'
     };
     
     return res.status(statusCode).json(errorResponse);
@@ -393,10 +455,10 @@ function getTimeoutMs(attempt) {
   console.log(`🔧 getTimeoutMs 호출: attempt=${attempt}, isVercel=${isVercel}`);
   
   if (isVercel) {
-    // Vercel 환경 최적화: 50초로 증가하여 복잡한 특허 분석 지원
-    const base = 50000; // 50초로 증가
+    // Vercel 환경 최적화: 55초로 증가하여 복잡한 특허 분석 지원 (60초 제한 고려)
+    const base = 55000; // 55초로 증가
     const step = 0; // 재시도 시에도 동일한 타임아웃 유지
-    const result = Math.min(base + (attempt - 1) * step, 50000); // 최대 50초
+    const result = Math.min(base + (attempt - 1) * step, 55000); // 최대 55초
     console.log(`🔧 Vercel 환경 타임아웃: ${result}ms (${result/1000}초)`);
     return result;
   } else {
@@ -494,12 +556,12 @@ function generateAnalysisPrompt(patentInfo, analysisType) {
 `;
 
   if (isVercel) {
-    // Vercel 환경에서도 McKinsey 수준의 상세한 프롬프트 사용
+    // 전문적인 상세한 프롬프트 사용
     if (analysisType === 'market_analysis') {
-      return `# 맥킨지 & 컴퍼니 스타일 시장 분석 리포트
+      return `# 전문 시장 분석 리포트
 
 ## 역할 정의 및 분석 프레임워크
-당신은 **맥킨지 & 컴퍼니의 수석 파트너**로서 Fortune 500 기업의 CEO와 이사회를 위한 전략적 의사결정 보고서를 작성합니다.
+당신은 **전문 컨설턴트**로서 기업의 CEO와 이사회를 위한 전략적 의사결정 보고서를 작성합니다.
 
 ${baseInfo}
 
@@ -526,10 +588,16 @@ ${baseInfo}
 #### 전략적 포지셔닝
 본 특허 기술의 최적 시장 포지셔닝을 제안하고, **프리미엄 전략 vs 시장 침투 전략**의 장단점을 비교 분석하세요. 고객 세그먼트별 가치 제안을 구체화하세요.`;
     } else {
-      return `# 맥킨지 & 컴퍼니 스타일 비즈니스 인사이트 리포트
+      return `# 전문 비즈니스 인사이트 리포트
 
 ## 역할 정의 및 분석 프레임워크
-당신은 **맥킨지 & 컴퍼니의 수석 파트너**로서 Fortune 500 기업의 CEO와 이사회를 위한 전략적 의사결정 보고서를 작성합니다.
+당신은 **전문 컨설턴트**로서 기업의 CEO와 이사회를 위한 전략적 의사결정 보고서를 작성합니다.
+
+**절대 금지 사항: 
+- 맥킨지, 보스턴컨설팅, 베인앤컴퍼니, 딜로이트, PwC, EY, KPMG 등 어떤 컨설팅 회사명도 절대 언급하지 마세요
+- 제목에도 회사명을 포함하지 마세요
+- "전문 시장 분석 리포트" 또는 "시장 기회 분석 보고서" 등의 일반적 제목을 사용하세요
+- 독립적인 전문 컨설턴트로서 작성하세요**
 
 ${baseInfo}
 
@@ -568,12 +636,18 @@ B2B, B2G, B2C 각 채널별 **수익성과 확장성**을 평가하고, 단계�
     }
   }
 
-  // 로컬 환경에서도 McKinsey 수준의 상세한 프롬프트 사용
+  // 로컬 환경에서도 전문적인 상세한 프롬프트 사용
   if (analysisType === 'market_analysis') {
-    return `# 맥킨지 & 컴퍼니 스타일 시장 분석 리포트 (상세 버전)
+    return `# 전문 시장 분석 리포트 (상세 버전)
 
 ## 역할 정의 및 분석 프레임워크
-당신은 **맥킨지 & 컴퍼니의 수석 파트너**로서 Fortune 500 기업의 CEO와 이사회를 위한 전략적 의사결정 보고서를 작성합니다. 본 분석은 **수십억 원 규모의 투자 결정**을 좌우하는 최종 보고서입니다.
+당신은 **전문 컨설턴트**로서 기업의 CEO와 이사회를 위한 전략적 의사결정 보고서를 작성합니다. 본 분석은 **수십억 원 규모의 투자 결정**을 좌우하는 최종 보고서입니다.
+
+**절대 금지 사항: 
+- 맥킨지, 보스턴컨설팅, 베인앤컴퍼니, 딜로이트, PwC, EY, KPMG 등 어떤 컨설팅 회사명도 절대 언급하지 마세요
+- 제목에도 회사명을 포함하지 마세요
+- "전문 비즈니스 인사이트 리포트" 또는 "CEO 전략 보고서" 등의 일반적 제목을 사용하세요
+- 독립적인 전문 컨설턴트로서 작성하세요**
 
 ${baseInfo}
 
@@ -609,10 +683,10 @@ ${baseInfo}
 ### 전략적 시장 포지셔닝
 본 특허 기술의 최적 시장 포지셔닝을 제안하고, **프리미엄 전략 vs 시장 침투 전략**의 장단점을 비교 분석하세요. 고객 세그먼트별 가치 제안을 구체화하고, 시장별 진입 우선순위와 타이밍을 제시하세요.`;
   } else {
-    return `# 맥킨지 & 컴퍼니 스타일 비즈니스 인사이트 리포트 (상세 버전)
+    return `# 전문 비즈니스 인사이트 리포트 (상세 버전)
 
 ## 역할 정의 및 분석 프레임워크
-당신은 **맥킨지 & 컴퍼니의 수석 파트너**로서 Fortune 500 기업의 CEO와 이사회를 위한 전략적 의사결정 보고서를 작성합니다. 본 분석은 **수십억 원 규모의 투자 결정**을 좌우하는 최종 보고서입니다.
+당신은 **전문 컨설턴트**로서 기업의 CEO와 이사회를 위한 전략적 의사결정 보고서를 작성합니다. 본 분석은 **수십억 원 규모의 투자 결정**을 좌우하는 최종 보고서입니다.
 
 ${baseInfo}
 
@@ -1095,4 +1169,41 @@ function formatBusinessInsightContent(content) {
     });
 
     return formatted;
+}
+
+function removeMcKinseyReferences(text) {
+  if (!text) return '';
+  
+  console.log('🧹 맥킨지 언급 제거 전:', text.substring(0, 200));
+  
+  let cleaned = text
+    // 사용자가 요청한 특정 헤더 부분 완전 제거
+    .replace(/맥킨지&컴퍼니스타일비즈니스인사이트리포트[^]*?일자:\s*\d{4}년\s*\d{1,2}월\s*\d{1,2}일/gi, '')
+    .replace(/맥킨지\s*&?\s*컴퍼니\s*스타일\s*비즈니스\s*인사이트\s*리포트[^]*?일자:[^]*?\d{4}년[^]*?\d{1,2}월[^]*?\d{1,2}일/gi, '')
+    // 수신/발신 정보 제거
+    .replace(/수신:\s*Fortune\s*500\s*CEO\s*및\s*이사회[^\n]*/gi, '')
+    .replace(/발신:\s*맥킨지\s*&\s*컴퍼니\s*수석\s*파트너[^\n]*/gi, '')
+    .replace(/일자:\s*\d{4}년\s*\d{1,2}월\s*\d{1,2}일[^\n]*/gi, '')
+    // 맥킨지 관련 언급 제거 (더 강력한 패턴)
+    .replace(/맥킨지\s*&?\s*컴퍼니?[^가-힣\s]*/gi, '전문 컨설팅')
+    .replace(/맥킨지[^가-힣\s]*/gi, '전문 컨설팅')
+    .replace(/McKinsey\s*&?\s*Company?[^\w\s]*/gi, 'Professional Consulting')
+    .replace(/McKinsey[^\w\s]*/gi, 'Professional Consulting')
+    .replace(/보스턴\s*컨설팅[^가-힣\s]*/gi, '전문 컨설팅')
+    .replace(/Boston\s*Consulting[^\w\s]*/gi, 'Professional Consulting')
+    .replace(/베인\s*&?\s*컴퍼니?[^가-힣\s]*/gi, '전문 컨설팅')
+    .replace(/Bain\s*&?\s*Company?[^\w\s]*/gi, 'Professional Consulting')
+    // 제목에서 회사명이 포함된 경우 일반적인 제목으로 변경
+    .replace(/^.*맥킨지.*전략.*보고서.*$/gmi, '전문 시장 분석 리포트')
+    .replace(/^.*McKinsey.*Strategic.*Report.*$/gmi, 'Professional Market Analysis Report')
+    .replace(/^.*맥킨지.*보고서.*$/gmi, '전문 전략 보고서')
+    .replace(/^.*CEO.*보고서.*$/gmi, 'CEO 전략 보고서')
+    // 맥킨지 스타일 언급도 제거
+    .replace(/맥킨지\s*스타일/gi, '전문 컨설팅 스타일')
+    .replace(/McKinsey\s*style/gi, 'Professional consulting style')
+    .trim();
+  
+  console.log('🧹 맥킨지 언급 제거 후:', cleaned.substring(0, 200));
+  
+  return cleaned;
 }

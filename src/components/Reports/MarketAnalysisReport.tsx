@@ -608,6 +608,21 @@ export default function MarketAnalysisReport({
         ))}
       </div>
 
+      {/* AI Disclaimer */}
+      <Card className="border border-amber-200 bg-amber-50/70">
+        <CardContent className="pt-5">
+          <div className="flex items-start gap-3">
+            <div className="w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-amber-600 text-xs font-bold">!</span>
+            </div>
+            <div className="text-sm text-amber-800">
+              <p className="font-medium mb-1">AI 생성 리포트 안내</p>
+              <p>AI can make mistakes. This report is for idea generation purposes only; please use it as a reference.</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Footer */}
       <Card className="border border-ms-line bg-white/70">
         <CardContent className="pt-5">

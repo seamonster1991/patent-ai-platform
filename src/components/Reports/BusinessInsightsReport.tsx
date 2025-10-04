@@ -191,35 +191,93 @@ const parseRawAnalysis = (rawText: string): ReportSection[] => {
     ]
   }
 
-// 개선된 parseComplexContent 함수
 const parseComplexContent = (data: any): ReportSection[] => {
-  // 1. 구조화된 데이터가 있는 경우
-  if (data && data.sections && Array.isArray(data.sections)) {
-    return data.sections.map((section: any) => ({
-      title: String(section.title || '제목 없음').replace(/[#\d\.\-\s]+/g, '').trim(),
-      content: String(section.content || '내용 없음')
-    })).filter(s => s.content !== '내용 없음')
+  console.log('🔍 [BusinessInsights] parseComplexContent 시작:', {
+    dataType: typeof data,
+    isArray: Array.isArray(data),
+    hasAnalysis: !!data?.analysis,
+    hasSections: !!data?.analysis?.sections,
+    sectionsLength: data?.analysis?.sections?.length,
+    keys: Object.keys(data || {}),
+    analysisKeys: Object.keys(data?.analysis || {})
+  });
+
+  try {
+    // 1. 새로운 API 응답 구조 처리 (data.analysis.sections)
+    if (data?.analysis?.sections && Array.isArray(data.analysis.sections)) {
+      console.log('✅ [BusinessInsights] 새로운 API 구조 감지 - data.analysis.sections 사용');
+      const sections = data.analysis.sections.map((section: any, index: number) => {
+        console.log(`📄 [BusinessInsights] 섹션 ${index + 1}:`, {
+          title: section.title?.substring(0, 50),
+          contentLength: section.content?.length,
+          hasTitle: !!section.title,
+          hasContent: !!section.content
+        });
+        
+        return {
+          title: section.title || `섹션 ${index + 1}`,
+          content: section.content || ''
+        };
+      });
+      
+      console.log('✅ [BusinessInsights] 새로운 API 구조 파싱 완료:', sections.length, '개 섹션');
+      return sections;
+    }
+
+    // 2. 기존 구조화된 데이터 처리 (data.sections)
+    if (data?.sections && Array.isArray(data.sections)) {
+      console.log('✅ [BusinessInsights] 기존 구조화된 데이터 감지 - data.sections 사용');
+      const sections = data.sections.map((section: any, index: number) => ({
+        title: section.title || `섹션 ${index + 1}`,
+        content: section.content || ''
+      }));
+      
+      console.log('✅ [BusinessInsights] 기존 구조화된 데이터 파싱 완료:', sections.length, '개 섹션');
+      return sections;
+    }
+
+    // 3. 원시 분석 텍스트 처리 (data.rawAnalysis)
+    if (data?.rawAnalysis && typeof data.rawAnalysis === 'string') {
+      console.log('✅ [BusinessInsights] 원시 분석 텍스트 감지 - parseRawAnalysis 사용');
+      const sections = parseRawAnalysis(data.rawAnalysis);
+      console.log('✅ [BusinessInsights] 원시 분석 텍스트 파싱 완료:', sections.length, '개 섹션');
+      return sections;
+    }
+
+    // 4. 일반적인 문자열/객체 데이터 처리
+    if (typeof data === 'string') {
+      console.log('✅ [BusinessInsights] 문자열 데이터 감지 - parseRawAnalysis 사용');
+      const sections = parseRawAnalysis(data);
+      console.log('✅ [BusinessInsights] 문자열 데이터 파싱 완료:', sections.length, '개 섹션');
+      return sections;
+    }
+
+    // 5. 객체에서 텍스트 추출 시도
+    if (data && typeof data === 'object') {
+      console.log('✅ [BusinessInsights] 객체 데이터 감지 - 텍스트 추출 시도');
+      const textContent = JSON.stringify(data, null, 2);
+      const sections = parseRawAnalysis(textContent);
+      console.log('✅ [BusinessInsights] 객체 데이터 파싱 완료:', sections.length, '개 섹션');
+      return sections;
+    }
+
+    // 6. 모든 방법이 실패한 경우 기본값 반환
+    console.warn('⚠️ [BusinessInsights] 모든 파싱 방법 실패 - 기본 섹션 반환');
+    return [{
+      title: '분석 결과',
+      content: '데이터를 파싱할 수 없습니다. 다시 시도해주세요.'
+    }];
+
+  } catch (error) {
+    console.error('❌ [BusinessInsights] parseComplexContent 오류:', error);
+    console.error('❌ [BusinessInsights] 오류 발생 데이터:', data);
+    
+    return [{
+      title: '오류 발생',
+      content: `데이터 파싱 중 오류가 발생했습니다: ${error.message}`
+    }];
   }
-  
-  // 2. rawAnalysis가 있는 경우
-  if (data && data.rawAnalysis && typeof data.rawAnalysis === 'string') {
-    return parseRawAnalysis(data.rawAnalysis)
-  }
-  
-  // 3. 문자열 데이터인 경우
-  if (typeof data === 'string') {
-    return parseRawAnalysis(data)
-  }
-  
-  // 4. 기타 객체 형태인 경우
-  if (data && typeof data === 'object') {
-    const textContent = JSON.stringify(data, null, 2)
-    return parseRawAnalysis(textContent)
-  }
-  
-  // 5. 모든 파싱 실패 시
-  return [{ title: '분석 결과 없음', content: '분석 데이터를 불러올 수 없습니다.' }]
-}
+};
 
 // 콘텐츠 렌더링 함수 (마크다운 리스트/강조 보존)
 const renderContent = (content: string) => {
@@ -609,6 +667,21 @@ export default function BusinessInsightsReport({
           />
         ))}
       </div>
+
+      {/* AI Disclaimer */}
+      <Card className="border border-amber-200 bg-amber-50/70">
+        <CardContent className="pt-5">
+          <div className="flex items-start gap-3">
+            <div className="w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-amber-600 text-xs font-bold">!</span>
+            </div>
+            <div className="text-sm text-amber-800">
+              <p className="font-medium mb-1">AI 생성 리포트 안내</p>
+              <p>AI can make mistakes. This report is for idea generation purposes only; please use it as a reference.</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Footer */}
       <Card className="border border-ms-line bg-white/70">

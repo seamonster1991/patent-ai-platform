@@ -1,0 +1,9 @@
+{
+  "patentData": {
+    "applicationNumber": "1020230123456",
+    "title": "AI 기반 특허 분석 시스템",
+    "abstract": "본 발명은 인공지능을 활용한 특허 분석 시스템에 관한 것이다.",
+    "claims": ["청구항 1: AI 기반 특허 분석 방법"]
+  },
+  "analysisType": "business_insights"
+}
