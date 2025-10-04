@@ -186,11 +186,11 @@ export default function PatentDetail() {
         analysisType: 'comprehensive'
       }
       console.log('📤 AI 분석 요청 데이터:', requestBody)
-      // AbortController를 사용해 요청 타임아웃(60초) 적용
+      // AbortController를 사용해 요청 타임아웃(5분) 적용 - Vercel 함수 제한 고려
       const controller = new AbortController()
-      const timeoutMs = 60_000
+      const timeoutMs = 300_000 // 5분 (300초)
       const timeoutId = setTimeout(() => {
-        console.warn(`⏱️ AI 분석 요청이 ${timeoutMs}ms를 초과하여 중단됩니다`)
+        console.warn(`⏱️ AI 분석 요청이 ${timeoutMs/1000}초를 초과하여 중단됩니다`)
         controller.abort()
       }, timeoutMs)
 
@@ -254,12 +254,13 @@ export default function PatentDetail() {
       // 요청 타임아웃/중단 처리
       if (err?.name === 'AbortError') {
         console.error('⏱️ AI 분석 요청 시간 초과로 중단됨')
-        setAiError('AI 분석 요청이 시간 초과(60초)로 중단되었습니다. 잠시 후 다시 시도해주세요.')
-        toast.error('AI 분석 요청이 시간 초과(60초)로 중단되었습니다.')
+        setAiError('AI 분석 요청이 시간 초과(5분)로 중단되었습니다. 특허 데이터가 복잡하거나 서버가 바쁠 수 있습니다. 잠시 후 다시 시도해주세요.')
+        toast.error('AI 분석 요청이 시간 초과(5분)로 중단되었습니다. 잠시 후 다시 시도해주세요.')
       } else {
         console.error('❌ AI 분석 전체 오류:', err)
-        setAiError(err.message)
-        toast.error(`AI 분석 생성에 실패했습니다: ${err.message}`)
+        const errorMessage = err.message || 'AI 분석 생성 중 오류가 발생했습니다.'
+        setAiError(`${errorMessage}\n\n해결 방법:\n• 페이지를 새로고침 후 재시도\n• 브라우저 캐시를 삭제해보세요\n• 다른 브라우저에서 시도해보세요\n• 문제가 지속되면 관리자에게 문의하세요`)
+        toast.error(`AI 분석 생성에 실패했습니다: ${errorMessage}`)
       }
     } finally {
       // 로딩 해제
@@ -278,7 +279,7 @@ export default function PatentDetail() {
 
       const { user } = useAuthStore.getState()
       const controller = new AbortController()
-      const timeoutMs = 60_000
+      const timeoutMs = 300_000 // 5분 타임아웃 (Vercel 함수 제한 고려)
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
 
       const response = await fetch('/api/generate-report', {
@@ -343,7 +344,7 @@ export default function PatentDetail() {
       toast.success('시장 분석 PDF가 생성되었습니다.')
     } catch (err: any) {
       if (err?.name === 'AbortError') {
-        toast.error('시장 분석 생성이 시간 초과(60초)로 중단되었습니다.')
+        toast.error('시장 분석 생성이 시간 초과(5분)로 중단되었습니다. 특허 데이터가 복잡하거나 서버가 바쁠 수 있습니다.')
       } else {
         console.error('시장 분석 리포트 생성 오류:', err)
         toast.error(`시장 분석 리포트 생성 실패: ${err.message}`)
@@ -364,7 +365,7 @@ export default function PatentDetail() {
 
       const { user } = useAuthStore.getState()
       const controller = new AbortController()
-      const timeoutMs = 60_000
+      const timeoutMs = 300_000 // 5분 타임아웃 (Vercel 함수 제한 고려)
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
 
       const response = await fetch('/api/generate-report', {
@@ -429,7 +430,7 @@ export default function PatentDetail() {
       toast.success('비즈니스 인사이트 PDF가 생성되었습니다.')
     } catch (err: any) {
       if (err?.name === 'AbortError') {
-        toast.error('비즈니스 인사이트 생성이 시간 초과(60초)로 중단되었습니다.')
+        toast.error('비즈니스 인사이트 생성이 시간 초과(5분)로 중단되었습니다. 특허 데이터가 복잡하거나 서버가 바쁠 수 있습니다.')
       } else {
         console.error('비즈니스 인사이트 리포트 생성 오류:', err)
         toast.error(`비즈니스 인사이트 리포트 생성 실패: ${err.message}`)

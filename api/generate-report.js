@@ -1,25 +1,69 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { createClient } = require('@supabase/supabase-js');
 
-// Supabase 클라이언트 초기화 (안전한 초기화)
+// Supabase 클라이언트 초기화 (강화된 안전한 초기화)
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 let supabase = null;
 
-try {
-  if (supabaseUrl && supabaseServiceKey) {
-    supabase = createClient(supabaseUrl, supabaseServiceKey);
-    console.log('✅ Supabase 클라이언트 초기화 성공');
-  } else {
-    console.warn('⚠️ Supabase 환경변수 누락:', {
-      hasUrl: !!supabaseUrl,
-      hasServiceKey: !!supabaseServiceKey
+// Supabase 연결 상태 추적
+let supabaseConnectionStatus = 'disconnected';
+
+async function initializeSupabase() {
+  try {
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.warn('⚠️ Supabase 환경변수 누락:', {
+        hasUrl: !!supabaseUrl,
+        hasServiceKey: !!supabaseServiceKey,
+        urlLength: supabaseUrl?.length,
+        keyLength: supabaseServiceKey?.length
+      });
+      supabaseConnectionStatus = 'missing_credentials';
+      return null;
+    }
+
+    console.log('🔄 Supabase 클라이언트 초기화 시도...');
+    supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      },
+      db: {
+        schema: 'public'
+      },
+      global: {
+        headers: {
+          'x-application-name': 'patent-ai-platform'
+        }
+      }
     });
+
+    // 연결 테스트
+    const { data, error } = await supabase.from('users').select('count').limit(1);
+    if (error) {
+      console.error('❌ Supabase 연결 테스트 실패:', error.message);
+      supabaseConnectionStatus = 'connection_failed';
+      return null;
+    }
+
+    console.log('✅ Supabase 클라이언트 초기화 및 연결 테스트 성공');
+    supabaseConnectionStatus = 'connected';
+    return supabase;
+
+  } catch (error) {
+    console.error('❌ Supabase 클라이언트 초기화 실패:', {
+      message: error.message,
+      code: error.code,
+      details: error.details
+    });
+    supabaseConnectionStatus = 'initialization_failed';
+    supabase = null;
+    return null;
   }
-} catch (error) {
-  console.error('❌ Supabase 클라이언트 초기화 실패:', error.message);
-  supabase = null;
 }
+
+// 초기화 실행
+initializeSupabase();
 
 module.exports = async function handler(req, res) {
   // CORS 헤더 설정
@@ -45,6 +89,16 @@ module.exports = async function handler(req, res) {
   console.log('🚀 리포트 생성 API 호출됨 - 시작 시간:', new Date().toISOString());
 
   try {
+    // Supabase 연결 상태 확인 및 재연결 시도
+    if (supabaseConnectionStatus !== 'connected') {
+      console.log('🔄 Supabase 재연결 시도 중... 현재 상태:', supabaseConnectionStatus);
+      await initializeSupabase();
+      
+      if (supabaseConnectionStatus !== 'connected') {
+        console.warn('⚠️ Supabase 연결 실패, 로깅 없이 계속 진행');
+      }
+    }
+
     // Gemini API 키 확인 - 더 엄격한 검증
     const apiKey = process.env.GEMINI_API_KEY;
     console.log('🔑 API 키 확인 중...');
@@ -137,43 +191,108 @@ module.exports = async function handler(req, res) {
     const prompt = generateReportPrompt(patentInfo, reportType);
     console.log('✅ 프롬프트 생성 완료 - 길이:', prompt.length);
 
-    // AI 분석 실행 (재시도 로직 포함)
+    // AI 분석 실행 (최적화된 재시도 로직)
     console.log('🧠 AI 분석 시작...');
     const maxRetries = 3;
-    const baseTimeoutMs = 120000; // 기본 120초로 증가
+    const baseTimeoutMs = 240000; // 기본 240초로 증가 (Vercel 300초 제한 고려)
     
     let analysisText;
     let lastError;
     
+    // Gemini API 연결 테스트
+    try {
+      console.log('🔍 Gemini API 연결 테스트 중...');
+      const testModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+      await testModel.generateContent("test");
+      console.log('✅ Gemini API 연결 확인됨');
+    } catch (testError) {
+      console.error('❌ Gemini API 연결 실패:', testError.message);
+      return res.status(500).json({
+        success: false,
+        error: 'API connection failed',
+        message: 'Gemini API에 연결할 수 없습니다. API 키를 확인해주세요.',
+        details: testError.message
+      });
+    }
+    
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      const currentTimeoutMs = baseTimeoutMs + (attempt - 1) * 30000; // 시도마다 30초씩 증가
+      const currentTimeoutMs = Math.min(baseTimeoutMs + (attempt - 1) * 30000, 280000); // 최대 280초
       console.log(`⏰ [시도 ${attempt}/${maxRetries}] 타임아웃 설정: ${currentTimeoutMs/1000}초`);
       
       try {
-        const analysisPromise = model.generateContent(prompt);
+        // 진행 상황 로깅을 위한 인터벌
+        const progressInterval = setInterval(() => {
+          const elapsed = (Date.now() - startTime) / 1000;
+          console.log(`⏳ AI 분석 진행 중... (경과 시간: ${elapsed.toFixed(1)}초, 시도: ${attempt}/${maxRetries})`);
+        }, 15000); // 15초마다 진행 상황 로그
         
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => {
-            console.error(`⏰ [시도 ${attempt}/${maxRetries}] AI 분석 타임아웃 발생`);
-            reject(new Error(`AI 분석 시간 초과 (${currentTimeoutMs/1000}초)`));
-          }, currentTimeoutMs);
-        });
+        try {
+          console.log(`📡 [시도 ${attempt}/${maxRetries}] Gemini API 호출 중... (프롬프트 길이: ${prompt.length}자)`);
+          
+          const analysisPromise = model.generateContent({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 8192,
+            },
+            safetySettings: [
+              {
+                category: 'HARM_CATEGORY_HARASSMENT',
+                threshold: 'BLOCK_NONE',
+              },
+              {
+                category: 'HARM_CATEGORY_HATE_SPEECH',
+                threshold: 'BLOCK_NONE',
+              },
+              {
+                category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+                threshold: 'BLOCK_NONE',
+              },
+              {
+                category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+                threshold: 'BLOCK_NONE',
+              },
+            ],
+          });
+          
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => {
+              console.error(`⏰ [시도 ${attempt}/${maxRetries}] AI 분석 타임아웃 발생`);
+              reject(new Error(`AI 분석 시간 초과 (${currentTimeoutMs/1000}초)`));
+            }, currentTimeoutMs);
+          });
 
-        console.log(`📡 [시도 ${attempt}/${maxRetries}] Gemini API 호출 중...`);
-        const result = await Promise.race([analysisPromise, timeoutPromise]);
-        console.log(`📡 [시도 ${attempt}/${maxRetries}] Gemini API 응답 받음`);
-        
-        const response = await result.response;
-        console.log(`📄 [시도 ${attempt}/${maxRetries}] 응답 텍스트 추출 중...`);
-        analysisText = response.text();
-        
-        // 응답 검증
-        if (!analysisText || analysisText.trim().length < 100) {
-          throw new Error('응답이 너무 짧거나 비어있음');
+          const result = await Promise.race([analysisPromise, timeoutPromise]);
+          clearInterval(progressInterval);
+          
+          console.log(`📡 [시도 ${attempt}/${maxRetries}] Gemini API 응답 받음`);
+          
+          const response = await result.response;
+          console.log(`📄 [시도 ${attempt}/${maxRetries}] 응답 텍스트 추출 중...`);
+          analysisText = response.text();
+          
+          // 응답 검증 강화
+          if (!analysisText || analysisText.trim().length < 100) {
+            throw new Error(`응답이 너무 짧거나 비어있음 (길이: ${analysisText?.length || 0})`);
+          }
+          
+          // 응답 품질 검증
+          if (!analysisText.includes('###') && !analysisText.includes('##')) {
+            console.warn(`⚠️ [시도 ${attempt}/${maxRetries}] 응답 형식이 예상과 다름, 재시도 고려`);
+            if (attempt < maxRetries) {
+              throw new Error('응답 형식이 예상과 다름');
+            }
+          }
+          
+          console.log(`✅ [시도 ${attempt}/${maxRetries}] 응답 텍스트 추출 완료 (${analysisText.length}자)`);
+          break; // 성공 시 루프 종료
+          
+        } catch (innerError) {
+          clearInterval(progressInterval);
+          throw innerError;
         }
-        
-        console.log(`✅ [시도 ${attempt}/${maxRetries}] 응답 텍스트 추출 완료 (${analysisText.length}자)`);
-        break; // 성공 시 루프 종료
         
       } catch (apiError) {
         lastError = apiError;
@@ -182,8 +301,17 @@ module.exports = async function handler(req, res) {
           status: apiError.status,
           statusText: apiError.statusText,
           code: apiError.code,
-          details: apiError.details
+          details: apiError.details,
+          stack: apiError.stack?.substring(0, 500)
         });
+        
+        // 특정 오류에 대한 즉시 실패 처리
+        if (apiError.message?.includes('API_KEY_INVALID') || 
+            apiError.message?.includes('PERMISSION_DENIED') ||
+            apiError.status === 401 || apiError.status === 403) {
+          console.error('❌ 인증 오류 발생, 재시도 중단');
+          throw apiError;
+        }
         
         if (attempt === maxRetries) {
           console.error('❌ 모든 재시도 실패, 최종 오류 발생');
@@ -191,7 +319,7 @@ module.exports = async function handler(req, res) {
         }
         
         // 재시도 전 대기 (지수 백오프)
-        const waitTime = Math.min(5000 * Math.pow(2, attempt - 1), 30000);
+        const waitTime = Math.min(3000 * Math.pow(2, attempt - 1), 20000);
         console.log(`⏳ [시도 ${attempt}/${maxRetries}] ${waitTime/1000}초 후 재시도...`);
         await new Promise(resolve => setTimeout(resolve, waitTime));
       }

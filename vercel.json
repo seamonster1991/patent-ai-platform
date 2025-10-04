@@ -4,7 +4,15 @@
   "functions": {
     "api/**/*.js": {
       "runtime": "@vercel/node@3.1.5",
-      "maxDuration": 60
+      "maxDuration": 300
+    },
+    "api/generate-report.js": {
+      "runtime": "@vercel/node@3.1.5",
+      "maxDuration": 300
+    },
+    "api/ai-analysis.js": {
+      "runtime": "@vercel/node@3.1.5",
+      "maxDuration": 300
     }
   },
   "rewrites": [
