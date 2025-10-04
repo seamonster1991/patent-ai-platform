@@ -216,24 +216,30 @@ module.exports = async function handler(req, res) {
     console.log('🔄 Step 5: 파싱 시작 - AI 응답 길이:', analysisText?.length || 0);
     console.log('🔄 Step 5: 파싱 시작 - 분석 타입:', analysisType);
     
-    // 임시: 파싱 우회하고 원시 응답 반환 (디버깅용)
+    // Vercel 환경에서는 매우 간단한 응답 구조 사용
     let structuredAnalysis;
     
-    // Vercel 환경에서는 간단한 응답 구조 사용
     if (isVercel) {
-      console.log('🔧 Step 6: Vercel 간단 모드');
+      console.log('🔧 Step 6: Vercel 초간단 모드');
+      // AI 응답이 있는지 확인
+      if (!analysisText || analysisText.trim().length === 0) {
+        console.error('❌ AI 응답이 비어있음');
+        throw new Error('AI 응답이 비어있습니다.');
+      }
+      
       structuredAnalysis = {
-        reportName: analysisType === 'market_analysis' ? '시장 분석 리포트' : '비즈니스 인사이트 리포트',
+        reportName: '분석 리포트',
         sections: [
           {
             title: '분석 결과',
-            content: analysisText
+            content: analysisText.substring(0, 500) + (analysisText.length > 500 ? '...' : '')
           }
         ],
         rawAnalysis: analysisText
       };
+      console.log('✅ Vercel 간단 구조 생성 완료');
     } else {
-      console.log('🔧 Step 6: 임시 디버깅 모드: 파싱 우회');
+      console.log('🔧 Step 6: 로컬 디버깅 모드');
       structuredAnalysis = {
         reportName: analysisType === 'market' ? '시장 분석 리포트' : '비즈니스 인사이트 리포트',
         sections: [
