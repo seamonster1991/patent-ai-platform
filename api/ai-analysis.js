@@ -33,6 +33,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    console.log('🔍 Step 1: API 키 확인 시작');
     const geminiApiKey = process.env.GEMINI_API_KEY;
     
     if (!geminiApiKey || geminiApiKey.includes('JKJKJK') || geminiApiKey.length < 30) {
@@ -43,6 +44,7 @@ module.exports = async function handler(req, res) {
       });
     }
     
+    console.log('🔍 Step 2: 요청 데이터 파싱 시작');
     const { patentData, analysisType = 'comprehensive' } = req.body;
     
     if (!patentData) {
@@ -53,6 +55,7 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    console.log('🔍 Step 3: GoogleGenerativeAI 초기화 시작');
     const genAI = new GoogleGenerativeAI(geminiApiKey);
     
     // JSON 출력을 위해 강력한 모델 사용 권장 및 responseSchema 지정
@@ -60,6 +63,7 @@ module.exports = async function handler(req, res) {
       model: "gemini-2.5-flash"
     });
 
+    console.log('🔍 Step 4: 특허 정보 추출 시작');
     const patentInfo = extractPatentInfo(patentData);
     
     // 캐시 키 생성 (특허 번호 + 분석 타입)
