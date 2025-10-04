@@ -3,6 +3,8 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 // 간단한 메모리 캐시 (서버리스 환경에서는 제한적이지만 동일 요청 내에서는 유효)// 캐시 관리
 const analysisCache = new Map();
 const CACHE_TTL = 5 * 60 * 1000; // 5분 캐시
+
+// 캐시 초기화 (디버깅용) - 제거됨
 module.exports = async function handler(req, res) {
   // CORS 헤더 설정
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -14,8 +16,10 @@ module.exports = async function handler(req, res) {
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
   
+  // 캐시 초기화 제거됨 (정상 운영)
+  
   // 버전 정보 추가 (디버깅용) - 강제 캐시 무효화
-  const version = '2.3-ENHANCED-' + Date.now();
+  const version = '2.4-FIXED-PARSING-' + Date.now();
   console.log('🚀 AI Analysis API v' + version);
   console.log('🔧 Environment:', process.env.VERCEL ? 'Vercel' : 'Local');
   console.log('🕒 Timestamp:', new Date().toISOString());
@@ -67,6 +71,7 @@ module.exports = async function handler(req, res) {
     const genAI = new GoogleGenerativeAI(geminiApiKey);
     
     // JSON 출력을 위해 강력한 모델 사용 권장 및 responseSchema 지정
+    // 모델 호환성 개선: Vercel 환경에서 검증된 모델로 통일
     const model = genAI.getGenerativeModel({ 
       model: "gemini-2.5-flash"
     });
@@ -81,12 +86,18 @@ module.exports = async function handler(req, res) {
     const cachedResult = analysisCache.get(cacheKey);
     if (cachedResult && (Date.now() - cachedResult.timestamp) < CACHE_TTL) {
       console.log('💾 캐시된 분석 결과 반환:', cacheKey);
+      console.log('💾 캐시된 데이터 구조:', {
+        sectionsCount: cachedResult.data?.analysis?.sections?.length,
+        reportName: cachedResult.data?.analysis?.reportName
+      });
       return res.status(200).json({
         success: true,
         data: cachedResult.data,
         cached: true,
         timestamp: new Date().toISOString()
       });
+    } else {
+      console.log('🔍 캐시 미스 - 새로운 분석 시작:', cacheKey);
     }
     
     // Vercel 무료 플랜 최적화: 텍스트 길이 대폭 축소
@@ -231,42 +242,35 @@ module.exports = async function handler(req, res) {
     console.log('🔄 Step 5: 파싱 시작 - AI 응답 길이:', analysisText?.length || 0);
     console.log('🔄 Step 5: 파싱 시작 - 분석 타입:', analysisType);
     
-    // Vercel 환경에서는 매우 간단한 응답 구조 사용
-    let structuredAnalysis;
+    // 모든 환경에서 구조화 파서를 사용해 고품질 섹션을 생성
+    console.log('🔧 Step 6: 구조화 파서로 섹션 생성');
+    console.log('🔄 파싱 함수 호출:', { analysisType, textLength: analysisText?.length });
+      const parsed = parseAnalysisResult(analysisText, analysisType);
+      console.log('🔄 파싱 결과:', { 
+        sectionsCount: parsed?.sections?.length, 
+        hasError: !!parsed?.error,
+        reportName: parsed?.reportName
+      });
     
-    if (isVercel) {
-      console.log('🔧 Step 6: Vercel 초간단 모드');
-      // AI 응답이 있는지 확인
-      if (!analysisText || analysisText.trim().length === 0) {
-        console.error('❌ AI 응답이 비어있음');
-        throw new Error('AI 응답이 비어있습니다.');
-      }
-      
-      structuredAnalysis = {
-        reportName: '분석 리포트',
-        sections: [
-          {
-            title: '분석 결과',
-            content: analysisText.substring(0, 500) + (analysisText.length > 500 ? '...' : '')
-          }
-        ],
-        rawAnalysis: analysisText
-      };
-      console.log('✅ Vercel 간단 구조 생성 완료');
-    } else {
-      console.log('🔧 Step 6: 로컬 디버깅 모드');
-      structuredAnalysis = {
-        reportName: analysisType === 'market' ? '시장 분석 리포트' : '비즈니스 인사이트 리포트',
-        sections: [
-          {
-            title: 'AI 분석 결과 (원시 데이터)',
-            content: analysisText
-          }
-        ],
-        rawAnalysis: analysisText,
-        debug: true
-      };
-    }
+
+    
+    const structuredAnalysis = {
+      reportName: parsed?.reportName || (analysisType === 'market_analysis' ? '시장 분석 리포트' : '비즈니스 인사이트 리포트'),
+      sections: Array.isArray(parsed?.sections) && parsed.sections.length > 0
+        ? parsed.sections
+        : [
+            {
+              title: '분석 결과',
+              content: analysisText.substring(0, 1000) + (analysisText.length > 1000 ? '...' : '')
+            }
+          ],
+      rawAnalysis: analysisText
+    };
+    console.log('✅ 구조화 섹션 생성 완료:', {
+      sectionsCount: structuredAnalysis.sections.length,
+      firstTitle: structuredAnalysis.sections[0]?.title,
+      firstContentLen: structuredAnalysis.sections[0]?.content?.length || 0
+    });
     
     console.log('✅ 파싱 완료 - 생성된 섹션 수:', structuredAnalysis?.sections?.length || 0);
     console.log('📊 파싱 결과 미리보기:', {
@@ -656,8 +660,6 @@ B2B, B2G, B2C 각 채널별 **수익성과 확장성**을 평가하고, 단계�
 ### 투자 권고사항 및 재무 전망
 **투자 규모**, **예상 ROI**, **회수 기간**을 구체적으로 제시하고, 보수적/기본/낙관적 시나리오별 재무 전망을 모델링하세요. NPV, IRR 등 주요 재무 지표를 포함한 투자 타당성 분석을 제공하세요.`;
   }
-    ### R&D 투자 방향
-
 }
 
 // 마크다운 텍스트 분석 결과 파싱 및 구조화
@@ -715,18 +717,30 @@ function parseAnalysisResult(analysisText, analysisType) {
         const sections = [];
         const lines = analysisText.split('\n');
         
+        // 비즈니스 인사이트 리포트 여부 확인 (함수 전체에서 사용)
+        const isBizInsight = analysisType === 'business_insight' || analysisType === 'business_insights';
+        
         console.log('📝 텍스트 라인 수:', lines.length);
-        console.log('📝 첫 10줄 미리보기:');
-        lines.slice(0, 10).forEach((line, index) => {
-            console.log(`  ${index + 1}: "${line}"`);
-        });
 
         // 비즈니스 인사이트 리포트를 위한 강화된 헤더 패턴 정의
         const headerPatterns = [
-            /^#{1,6}\s+(.+)$/,           // # ~ ###### 헤더
-            /^(.+)\n[=\-]{3,}$/,        // 밑줄 스타일 헤더
-            /^\*\*(.+)\*\*$/,           // **굵은 글씨** 헤더
-            /^__(.+)__$/,               // __굵은 글씨__ 헤더
+            /^#{1,6}\s*(.+)$/,                    // # ~ ###### 헤더 (공백 선택적)
+            /^#{1,6}\s*\*\*(.+?)\*\*\s*$/,       // ## **헤더**
+            /^#{1,6}\s*\*\*\[(.+?)\]\*\*\s*$/,   // ### **[헤더]**
+            /^(.+)\n[=\-]{3,}$/,                 // 밑줄 스타일 헤더
+            /^\*\*(.+)\*\*$/,                    // **굵은 글씨** 헤더
+            /^\*\*\[(.+?)\]\*\*\s*$/,            // **[헤더]**
+            /^__(.+)__$/,                        // __굵은 글씨__ 헤더
+            /^([가-힣\s]{2,30})\s*분석/,         // XX 분석
+            /^([가-힣\s]{2,30})\s*현황/,         // XX 현황
+            /^([가-힣\s]{2,30})\s*전망/,         // XX 전망
+            /^([가-힣\s]{2,30})\s*요약/,         // XX 요약
+            /^([가-힣\s]{2,30})\s*개요/,         // XX 개요
+            /^([가-힣\s]{2,30})\s*리포트/,       // XX 리포트
+            /^([가-힣\s]{2,30})\s*특징/,         // XX 특징
+            /^([가-힣\s]{2,30})\s*환경/,         // XX 환경
+            /^([가-힣\s]{2,30})\s*전략/,         // XX 전략
+            /^([가-힣\s]{2,30})\s*방안/          // XX 방안
         ];
 
         // 비즈니스 인사이트 리포트 전용 패턴 (더 세밀한 구조 인식)
@@ -768,12 +782,13 @@ function parseAnalysisResult(analysisText, analysisType) {
                     headerTitle = match[1].trim();
                     isHeader = true;
                     foundAnyHeader = true;
+                    // 헤더 발견 로그 제거됨
                     break;
                 }
             }
 
-            // 비즈니스 인사이트 리포트 전용 패턴 확인
-            if (!isHeader && analysisType === 'business_insight') {
+            // 비즈니스 인사이트 리포트 전용 패턴 확인 (business_insight/business_insights 모두 허용)
+            if (!isHeader && isBizInsight) {
                 for (const pattern of businessInsightPatterns) {
                     const match = line.match(pattern);
                     if (match) {
@@ -799,7 +814,7 @@ function parseAnalysisResult(analysisText, analysisType) {
                     let content = currentContent.join('\n').trim();
                     
                     // 비즈니스 인사이트 리포트의 경우 추가 포맷팅 적용
-                    if (analysisType === 'business_insight' && content.length > 0) {
+                    if (isBizInsight && content.length > 0) {
                         content = formatBusinessInsightContent(content);
                     }
                     
@@ -814,12 +829,12 @@ function parseAnalysisResult(analysisText, analysisType) {
                 
                 currentSection = headerTitle;
                 currentContent = [];
-                console.log(`📝 헤더 발견: "${headerTitle}"`);
+                // 헤더 발견 로그 제거됨
             }
             // 일반 내용
             else {
                 // 비즈니스 인사이트 리포트의 특별한 내용 구조 처리
-                if (analysisType === 'business_insight') {
+                if (isBizInsight) {
                     // 하위 항목 패턴 확인 및 포맷팅
                     const subItemPatterns = [
                         /^-\s*\*\*([^*]+)\*\*:\s*(.+)$/,     // "- **과제명**: 설명"
@@ -860,7 +875,7 @@ function parseAnalysisResult(analysisText, analysisType) {
             let content = currentContent.join('\n').trim();
             
             // 비즈니스 인사이트 리포트의 경우 추가 포맷팅 적용
-            if (analysisType === 'business_insight' && content.length > 0) {
+            if (isBizInsight && content.length > 0) {
                 content = formatBusinessInsightContent(content);
             }
             
@@ -874,6 +889,7 @@ function parseAnalysisResult(analysisText, analysisType) {
         }
 
         // 헤더가 전혀 없는 경우 전체 텍스트를 섹션으로 분할
+        console.log(`🔍 파싱 상태 체크: foundAnyHeader=${foundAnyHeader}, sections.length=${sections.length}`);
         if (!foundAnyHeader || sections.length === 0) {
             console.log('📄 헤더가 없어 텍스트를 자동 분할합니다.');
             
@@ -916,45 +932,13 @@ function parseAnalysisResult(analysisText, analysisType) {
             console.warn('⚠️ 생성된 리포트의 전체 내용이 부족합니다. 더 상세한 분석이 필요합니다.');
         }
 
-        // 강화된 폴백 메커니즘
+        // 간소화된 폴백 메커니즘 - 섹션이 없을 때만 적용
         if (validSections.length === 0) {
-            console.warn('⚠️ 구조화된 섹션을 찾을 수 없어 강화된 폴백 메커니즘을 적용합니다.');
-            
-            // 1차 폴백: 문장 단위로 분할하여 섹션 생성
-            const sentences = analysisText.split(/[.!?]\s+/).filter(s => s.trim().length > 20);
-            
-            if (sentences.length > 3) {
-                console.log('📝 문장 단위로 섹션을 생성합니다.');
-                
-                // 문장들을 그룹화하여 섹션 생성 (3-5문장씩)
-                const sentenceGroups = [];
-                for (let i = 0; i < sentences.length; i += 3) {
-                    const group = sentences.slice(i, i + 3);
-                    if (group.length > 0) {
-                        sentenceGroups.push(group.join('. ') + '.');
-                    }
-                }
-                
-                sentenceGroups.forEach((group, index) => {
-                    if (group.trim().length > 50) {
-                        const title = `분석 내용 ${index + 1}`;
-                        validSections.push({
-                            title: `**${title}**`,
-                            content: group.trim()
-                        });
-                        console.log(`📋 폴백 섹션 생성: "${title}" (${group.length}자)`);
-                    }
-                });
-            }
-            
-            // 2차 폴백: 전체 텍스트를 단일 섹션으로 처리
-            if (validSections.length === 0) {
-                console.warn('⚠️ 최종 폴백: 전체 텍스트를 단일 섹션으로 처리합니다.');
-                validSections.push({
-                    title: `**${structured.reportName}**`,
-                    content: analysisText.trim()
-                });
-            }
+            console.warn('⚠️ 구조화된 섹션을 찾을 수 없어 폴백 메커니즘을 적용합니다.');
+            validSections.push({
+                title: '**AI 분석 결과 (원시 데이터)**',
+                content: analysisText.trim()
+            });
         }
 
         // 최소 품질 보장

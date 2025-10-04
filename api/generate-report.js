@@ -71,8 +71,8 @@ module.exports = async function handler(req, res) {
 
     // 서버리스 환경(Vercel 등) 고려한 타임아웃 설정 - 비즈니스 리포트는 더 긴 시간 필요
     const isVercel = !!process.env.VERCEL;
-    // 시간 제한 완화: 시장/비즈니스 모두 60초로 통일 (서버리스 환경에서는 실제 제한이 더 짧을 수 있음)
-    const TIMEOUT_MS = 60000;
+    // 리포트 타입별 차별화된 타임아웃: 비즈니스 리포트는 더 복잡한 분석이 필요
+    const TIMEOUT_MS = reportType === 'business' ? 90000 : 60000; // 비즈니스: 90초, 시장분석: 60초
     
     // 요청 데이터 검증
     const { patentData, reportType, userId } = req.body;
@@ -122,16 +122,16 @@ module.exports = async function handler(req, res) {
     // 리포트 타입별 프롬프트 생성
     const prompt = generateReportPrompt(patentInfo, reportType);
 
-    // AI 분석 실행 (검색 API 패턴 적용) - 비즈니스 리포트는 더 많은 재시도
+    // AI 분석 실행 - 비즈니스 리포트는 더 많은 재시도와 긴 대기시간
     console.log('AI analysis starting...');
-    const maxRetries = 3; // 모든 리포트 타입에서 3회 재시도
+    const maxRetries = reportType === 'business' ? 4 : 3; // 비즈니스: 4회, 시장분석: 3회
     
     let analysisText;
     let lastError;
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(`Attempt ${attempt}/${maxRetries} - Calling Gemini API...`);
+        console.log(`Attempt ${attempt}/${maxRetries} - Calling Gemini API (timeout: ${TIMEOUT_MS/1000}s)...`);
         
         const analysisPromise = model.generateContent({
           contents: [{ role: 'user', parts: [{ text: prompt }] }]
@@ -147,8 +147,8 @@ module.exports = async function handler(req, res) {
         const response = await result.response;
         analysisText = response.text();
         
-        // 응답 검증 - 비즈니스 리포트는 더 엄격한 검증
-        const minLength = reportType === 'business' ? 200 : 20;
+        // 응답 검증 - 비즈니스 리포트는 더 엄격한 검증 (500자 이상)
+        const minLength = reportType === 'business' ? 500 : 200;
         if (!analysisText || analysisText.trim().length < minLength) {
           console.error('📊 응답 검증 실패 상세 정보:', {
             hasText: !!analysisText,
@@ -187,9 +187,11 @@ module.exports = async function handler(req, res) {
           throw lastError;
         }
         
-        // 재시도 전 대기 (2초 간격)
-        console.log(`Waiting 2 seconds before retry ${attempt + 1}/${maxRetries}...`);
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // 지수적 백오프: 비즈니스 리포트는 더 긴 대기시간
+        const baseDelay = reportType === 'business' ? 3000 : 2000; // 비즈니스: 3초, 시장분석: 2초
+        const delay = baseDelay * Math.pow(1.5, attempt - 1); // 지수적 증가
+        console.log(`Waiting ${delay/1000}s before retry ${attempt + 1}/${maxRetries}...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
 
