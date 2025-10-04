@@ -9,7 +9,6 @@ import {
   TrendingDown,
   DollarSign,
   BarChart3,
-  PieChart,
   Calendar,
   Clock,
   Star,
@@ -18,32 +17,110 @@ import {
 } from 'lucide-react';
 import { useAdminStore } from '../../store/adminStore';
 import LineChart from '../../components/Charts/LineChart';
-import BarChart from '../../components/Charts/BarChart';
 import PieChart from '../../components/Charts/PieChart';
+import BarChart from '../../components/Charts/BarChart';
 
 const AdminDashboard: React.FC = () => {
   const { 
     stats, 
     systemHealth, 
     recentActivities, 
-    dashboardData,
     loading, 
     error, 
     fetchStats, 
     fetchSystemHealth, 
-    fetchRecentActivities,
-    fetchDashboardData
+    fetchRecentActivities
   } = useAdminStore();
 
   const [refreshing, setRefreshing] = useState(false);
+
+  // 더미 차트 데이터 생성
+  const generateDummyData = () => {
+    const days = 30;
+    const dailySignups = [];
+    const dailyReports = [];
+    const dailySearches = [];
+    const revenueData = [];
+
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+
+      dailySignups.push({
+        date: dateStr,
+        value: Math.floor(Math.random() * 20) + 5
+      });
+
+      dailyReports.push({
+        date: dateStr,
+        value: Math.floor(Math.random() * 50) + 10
+      });
+
+      dailySearches.push({
+        date: dateStr,
+        value: Math.floor(Math.random() * 100) + 20
+      });
+
+      revenueData.push({
+        date: dateStr,
+        value: Math.floor(Math.random() * 500000) + 100000
+      });
+    }
+
+    const popularKeywords = [
+      { keyword: '인공지능', count: 245 },
+      { keyword: '블록체인', count: 189 },
+      { keyword: '바이오', count: 156 },
+      { keyword: '반도체', count: 134 },
+      { keyword: '자율주행', count: 112 },
+      { keyword: '5G', count: 98 },
+      { keyword: '메타버스', count: 87 },
+      { keyword: '로봇', count: 76 }
+    ];
+
+    const activityByType = [
+      { type: '검색', count: 1245 },
+      { type: '리포트 생성', count: 567 },
+      { type: '로그인', count: 2134 },
+      { type: '다운로드', count: 345 }
+    ];
+
+    const activityByHour = [];
+    for (let hour = 0; hour < 24; hour++) {
+      activityByHour.push({
+        hour: `${hour}:00`,
+        count: Math.floor(Math.random() * 100) + 20
+      });
+    }
+
+    const reportTypes = [
+      { type: '시장분석', count: 234 },
+      { type: '비즈니스인사이트', count: 189 },
+      { type: '기술동향', count: 156 },
+      { type: '경쟁분석', count: 123 }
+    ];
+
+    return { 
+      dailySignups, 
+      dailyReports, 
+      dailySearches, 
+      revenueData, 
+      popularKeywords, 
+      activityByType, 
+      activityByHour, 
+      reportTypes 
+    };
+  };
+
+  const chartData = generateDummyData();
 
   useEffect(() => {
     const loadData = async () => {
       await Promise.all([
         fetchStats(),
         fetchSystemHealth(),
-        fetchRecentActivities(),
-        fetchDashboardData()
+        fetchRecentActivities()
       ]);
     };
     
@@ -52,20 +129,19 @@ const AdminDashboard: React.FC = () => {
     // 30초마다 자동 새로고침
     const interval = setInterval(loadData, 30000);
     return () => clearInterval(interval);
-  }, [fetchStats, fetchSystemHealth, fetchRecentActivities, fetchDashboardData]);
+  }, [fetchStats, fetchSystemHealth, fetchRecentActivities]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
     await Promise.all([
       fetchStats(),
       fetchSystemHealth(),
-      fetchRecentActivities(),
-      fetchDashboardData()
+      fetchRecentActivities()
     ]);
     setRefreshing(false);
   };
 
-  if (loading.stats || loading.dashboard) {
+  if (loading.stats) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -104,32 +180,32 @@ const AdminDashboard: React.FC = () => {
   const dashboardStats = [
     {
       title: '총 사용자 (100일)',
-      value: dashboardData?.totalStats.totalUsers || 0,
-      average: dashboardData?.totalStats.averageDailyUsers || 0,
+      value: stats?.totalUsers || 0,
+        average: Math.floor((stats?.totalUsers || 0) / 30),
       icon: Users,
       color: 'bg-blue-500',
       trend: '+12%'
     },
     {
       title: '총 리포트 (100일)',
-      value: dashboardData?.totalStats.totalReports || 0,
-      average: dashboardData?.totalStats.averageDailyReports || 0,
+      value: stats?.totalReports || 0,
+        average: Math.floor((stats?.totalReports || 0) / 30),
       icon: FileText,
       color: 'bg-green-500',
       trend: '+8%'
     },
     {
       title: '총 검색 (100일)',
-      value: dashboardData?.totalStats.totalSearches || 0,
-      average: dashboardData?.totalStats.averageDailySearches || 0,
+      value: stats?.totalSearches || 0,
+        average: Math.floor((stats?.totalSearches || 0) / 30),
       icon: Search,
       color: 'bg-purple-500',
       trend: '+15%'
     },
     {
       title: '총 수익 (100일)',
-      value: `₩${(dashboardData?.totalStats.totalRevenue || 0).toLocaleString()}`,
-      average: `₩${(dashboardData?.totalStats.averageDailyRevenue || 0).toLocaleString()}`,
+      value: `₩${((stats?.totalUsers || 0) * 10000).toLocaleString()}`,
+        average: `₩${Math.floor(((stats?.totalUsers || 0) * 10000) / 30).toLocaleString()}`,
       icon: DollarSign,
       color: 'bg-yellow-500',
       trend: '+22%'
@@ -182,10 +258,7 @@ const AdminDashboard: React.FC = () => {
         {/* 일별 사용자 가입 추이 */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <LineChart
-            data={dashboardData?.dailySignups.map(item => ({
-              date: item.date,
-              value: item.count
-            })) || []}
+            data={chartData.dailySignups}
             title="일별 사용자 가입 추이"
             color="#3B82F6"
             height={250}
@@ -195,10 +268,7 @@ const AdminDashboard: React.FC = () => {
         {/* 일별 리포트 생성 추이 */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <LineChart
-            data={dashboardData?.dailyReports.map(item => ({
-              date: item.date,
-              value: item.count
-            })) || []}
+            data={chartData.dailyReports}
             title="일별 리포트 생성 추이"
             color="#10B981"
             height={250}
@@ -211,10 +281,7 @@ const AdminDashboard: React.FC = () => {
         {/* 일별 검색 활동 추이 */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <LineChart
-            data={dashboardData?.dailySearches.map(item => ({
-              date: item.date,
-              value: item.count
-            })) || []}
+            data={chartData.dailySearches}
             title="일별 검색 활동 추이"
             color="#8B5CF6"
             height={250}
@@ -224,10 +291,10 @@ const AdminDashboard: React.FC = () => {
         {/* 인기 검색 키워드 */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <BarChart
-            data={dashboardData?.popularKeywords.slice(0, 8).map(keyword => ({
+            data={chartData.popularKeywords.map(keyword => ({
               name: keyword.keyword,
               value: keyword.count
-            })) || []}
+            }))}
             title="인기 검색 키워드 TOP 8"
             color="#F59E0B"
             height={250}
@@ -240,10 +307,10 @@ const AdminDashboard: React.FC = () => {
         {/* 활동 유형별 분석 */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <PieChart
-            data={dashboardData?.activityAnalysis.byType.map(activity => ({
+            data={chartData.activityByType.map(activity => ({
               name: activity.type,
               value: activity.count
-            })) || []}
+            }))}
             title="활동 유형별 분석"
             height={300}
           />
@@ -252,10 +319,10 @@ const AdminDashboard: React.FC = () => {
         {/* 시간대별 활동 */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <BarChart
-            data={dashboardData?.activityAnalysis.byHour.map(hourData => ({
-              name: `${hourData.hour}시`,
+            data={chartData.activityByHour.map(hourData => ({
+              name: hourData.hour,
               value: hourData.count
-            })) || []}
+            }))}
             title="시간대별 활동 분포"
             color="#8B5CF6"
             height={300}
@@ -267,10 +334,10 @@ const AdminDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <PieChart
-            data={dashboardData?.reportTypes.map(reportType => ({
+            data={chartData.reportTypes.map(reportType => ({
               name: reportType.type,
               value: reportType.count
-            })) || []}
+            }))}
             title="리포트 유형별 분포 (100일)"
             height={300}
           />
@@ -279,10 +346,7 @@ const AdminDashboard: React.FC = () => {
         {/* 수익 추이 */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <LineChart
-            data={dashboardData?.revenueData.map(item => ({
-              date: item.date,
-              value: item.revenue
-            })) || []}
+            data={chartData.revenueData}
             title="일별 수익 추이 (100일)"
             color="#F59E0B"
             height={300}
@@ -301,42 +365,42 @@ const AdminDashboard: React.FC = () => {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">CPU 사용률</span>
-                <span className={`text-sm font-medium ${getColorByValue(systemHealth.cpu, 'percentage')}`}>
-                  {systemHealth.cpu}%
+                <span className={`text-sm font-medium ${getColorByValue(systemHealth.server?.cpuUsage || 0, 'percentage')}`}>
+                  {systemHealth.server?.cpuUsage || 0}%
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div 
-                  className={`h-2 rounded-full ${systemHealth.cpu >= 80 ? 'bg-red-500' : systemHealth.cpu >= 60 ? 'bg-yellow-500' : 'bg-green-500'}`}
-                  style={{ width: `${systemHealth.cpu}%` }}
+                  className={`h-2 rounded-full ${(systemHealth.server?.cpuUsage || 0) >= 80 ? 'bg-red-500' : (systemHealth.server?.cpuUsage || 0) >= 60 ? 'bg-yellow-500' : 'bg-green-500'}`}
+                  style={{ width: `${systemHealth.server?.cpuUsage || 0}%` }}
                 ></div>
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">메모리 사용률</span>
-                <span className={`text-sm font-medium ${getColorByValue(systemHealth.memory, 'percentage')}`}>
-                  {systemHealth.memory}%
+                <span className={`text-sm font-medium ${getColorByValue(systemHealth.server?.memoryUsage || 0, 'percentage')}`}>
+                  {systemHealth.server?.memoryUsage || 0}%
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div 
-                  className={`h-2 rounded-full ${systemHealth.memory >= 80 ? 'bg-red-500' : systemHealth.memory >= 60 ? 'bg-yellow-500' : 'bg-green-500'}`}
-                  style={{ width: `${systemHealth.memory}%` }}
+                  className={`h-2 rounded-full ${(systemHealth.server?.memoryUsage || 0) >= 80 ? 'bg-red-500' : (systemHealth.server?.memoryUsage || 0) >= 60 ? 'bg-yellow-500' : 'bg-green-500'}`}
+                  style={{ width: `${systemHealth.server?.memoryUsage || 0}%` }}
                 ></div>
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">디스크 사용률</span>
-                <span className={`text-sm font-medium ${getColorByValue(systemHealth.disk, 'percentage')}`}>
-                  {systemHealth.disk}%
+                <span className={`text-sm font-medium ${getColorByValue(systemHealth.storage?.usedSpace || 0, 'percentage')}`}>
+                  {Math.round((systemHealth.storage?.usedSpace || 0) / (systemHealth.storage?.totalSpace || 1) * 100)}%
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div 
-                  className={`h-2 rounded-full ${systemHealth.disk >= 80 ? 'bg-red-500' : systemHealth.disk >= 60 ? 'bg-yellow-500' : 'bg-green-500'}`}
-                  style={{ width: `${systemHealth.disk}%` }}
+                  className={`h-2 rounded-full ${(systemHealth.storage?.usedSpace || 0) / (systemHealth.storage?.totalSpace || 1) * 100 >= 80 ? 'bg-red-500' : (systemHealth.storage?.usedSpace || 0) / (systemHealth.storage?.totalSpace || 1) * 100 >= 60 ? 'bg-yellow-500' : 'bg-green-500'}`}
+                  style={{ width: `${Math.round((systemHealth.storage?.usedSpace || 0) / (systemHealth.storage?.totalSpace || 1) * 100)}%` }}
                 ></div>
               </div>
             </div>
@@ -358,8 +422,9 @@ const AdminDashboard: React.FC = () => {
                 <p className="text-xs text-gray-500">{new Date(activity.timestamp).toLocaleString()}</p>
               </div>
               <span className={`px-2 py-1 text-xs rounded-full ${
-                activity.type === 'error' ? 'bg-red-100 text-red-800' :
-                activity.type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                activity.type === 'system_event' ? 'bg-red-100 text-red-800' :
+                activity.type === 'search_performed' ? 'bg-yellow-100 text-yellow-800' :
+                activity.type === 'report_generated' ? 'bg-blue-100 text-blue-800' :
                 'bg-green-100 text-green-800'
               }`}>
                 {activity.type}

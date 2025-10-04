@@ -46,4 +46,22 @@ const LineChart: React.FC<LineChartProps> = ({
               boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
             }}
             labelFormatter={(value) => {
-              const date =
+              const date = new Date(value);
+              return date.toLocaleDateString('ko-KR');
+            }}
+          />
+          <Line 
+            type="monotone" 
+            dataKey={dataKey} 
+            stroke={color} 
+            strokeWidth={2}
+            dot={{ fill: color, strokeWidth: 2, r: 4 }}
+            activeDot={{ r: 6, stroke: color, strokeWidth: 2 }}
+          />
+        </RechartsLineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
+export default LineChart;

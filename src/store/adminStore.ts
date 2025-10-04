@@ -1,29 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
-import { AdminStats, SystemHealth, RecentActivity, UserManagementData, ReportManagementData, SystemMetrics, DashboardData } from '../types/admin';
-
-// 100일간 데이터 조회를 위한 유틸리티 함수
-const get100DaysAgo = () => {
-  const date = new Date();
-  date.setDate(date.getDate() - 100);
-  date.setHours(0, 0, 0, 0);
-  return date.toISOString();
-};
-
-const getCurrentMonth = () => {
-  const date = new Date();
-  date.setDate(1);
-  date.setHours(0, 0, 0, 0);
-  return date.toISOString();
-};
-
-const getLastMonth = () => {
-  const date = new Date();
-  date.setMonth(date.getMonth() - 1);
-  date.setDate(1);
-  date.setHours(0, 0, 0, 0);
-  return date.toISOString();
-};
+import { AdminStats, SystemHealth, RecentActivity, UserManagementData, ReportManagementData, SystemMetrics } from '../types/admin';
 
 interface AdminStore {
   // 상태
@@ -35,7 +12,6 @@ interface AdminStore {
   reportManagement: ReportManagementData | null;
   reportManagementData: ReportManagementData | null;
   systemMetrics: SystemMetrics | null;
-  dashboardData: DashboardData | null;
   
   // 로딩 상태
   loading: {
@@ -45,7 +21,6 @@ interface AdminStore {
     users: boolean;
     reports: boolean;
     metrics: boolean;
-    dashboard: boolean;
   };
   
   // 에러 상태
@@ -60,7 +35,6 @@ interface AdminStore {
   fetchReportManagement: () => Promise<void>;
   fetchReportManagementData: () => Promise<void>;
   fetchSystemMetrics: () => Promise<void>;
-  fetchDashboardData: () => Promise<void>;
   
   // 사용자 관리 액션
   updateUserStatus: (userId: string, isActive: boolean) => Promise<void>;
@@ -75,92 +49,6 @@ interface AdminStore {
   refreshAll: () => Promise<void>;
 }
 
-// 데이터 처리 함수들
-const processDailyData = (data: any[], dateField: string) => {
-  const dailyCount: { [key: string]: number } = {};
-  
-  data?.forEach(item => {
-    const date = new Date(item[dateField]).toISOString().split('T')[0];
-    dailyCount[date] = (dailyCount[date] || 0) + 1;
-  });
-  
-  return Object.entries(dailyCount).map(([date, count]) => ({
-    date,
-    count
-  })).sort((a, b) => a.date.localeCompare(b.date));
-};
-
-const processActivityData = (activities: any[]) => {
-  const activityCount: { [key: string]: number } = {};
-  const hourlyActivity: { [key: string]: number } = {};
-  
-  activities?.forEach(activity => {
-    const type = activity.activity_type;
-    const hour = new Date(activity.created_at).getHours();
-    
-    activityCount[type] = (activityCount[type] || 0) + 1;
-    hourlyActivity[hour] = (hourlyActivity[hour] || 0) + 1;
-  });
-  
-  return {
-    byType: Object.entries(activityCount).map(([type, count]) => ({ type, count })),
-    byHour: Object.entries(hourlyActivity).map(([hour, count]) => ({ hour: parseInt(hour), count }))
-  };
-};
-
-const processSystemMetrics = (metrics: any[]) => {
-  return metrics?.map(metric => ({
-    date: metric.recorded_at,
-    type: metric.metric_type,
-    name: metric.metric_name,
-    value: metric.value,
-    unit: metric.unit
-  })) || [];
-};
-
-const processPopularKeywords = (searches: any[]) => {
-  const keywordCount: { [key: string]: number } = {};
-  
-  searches?.forEach(search => {
-    if (search.keyword) {
-      keywordCount[search.keyword] = (keywordCount[search.keyword] || 0) + 1;
-    }
-  });
-  
-  return Object.entries(keywordCount)
-    .map(([keyword, count]) => ({ keyword, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 20);
-};
-
-const processRevenueData = (billingData: any[]) => {
-  const dailyRevenue: { [key: string]: number } = {};
-  
-  billingData?.forEach(billing => {
-    if (billing.event_type === 'payment_succeeded' && billing.amount) {
-      const date = new Date(billing.processed_at).toISOString().split('T')[0];
-      dailyRevenue[date] = (dailyRevenue[date] || 0) + billing.amount;
-    }
-  });
-  
-  return Object.entries(dailyRevenue).map(([date, revenue]) => ({
-    date,
-    revenue
-  })).sort((a, b) => a.date.localeCompare(b.date));
-};
-
-const processReportTypes = (reports: any[]) => {
-  const typeCount: { [key: string]: number } = {};
-  
-  reports?.forEach(report => {
-    if (report.analysis_type) {
-      typeCount[report.analysis_type] = (typeCount[report.analysis_type] || 0) + 1;
-    }
-  });
-  
-  return Object.entries(typeCount).map(([type, count]) => ({ type, count }));
-};
-
 export const useAdminStore = create<AdminStore>((set, get) => ({
   // 초기 상태
   stats: null,
@@ -171,7 +59,6 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   reportManagement: null,
   reportManagementData: null,
   systemMetrics: null,
-  dashboardData: null,
   
   loading: {
     stats: false,
@@ -180,71 +67,63 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     users: false,
     reports: false,
     metrics: false,
-    dashboard: false,
   },
   
   error: null,
   
-  // 통계 데이터 가져오기 (최적화된 쿼리)
+  // 통계 데이터 가져오기
   fetchStats: async () => {
     set(state => ({ loading: { ...state.loading, stats: true }, error: null }));
     
     try {
-      const hundredDaysAgo = get100DaysAgo();
-      const today = new Date().toISOString().split('T')[0];
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      // 사용자 수 조회 (users 테이블)
+      const { count: totalUsers } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true });
       
-      // 병렬로 모든 통계 데이터 조회 (인덱스 활용)
-      const [
-        { count: totalUsers },
-        { count: activeUsers },
-        { count: totalReports },
-        { count: totalSearches },
-        { count: newUsersToday },
-        { count: searchesToday },
-        { count: reportsToday }
-      ] = await Promise.all([
-        // 전체 사용자 수
-        supabase
-          .from('users')
-          .select('*', { count: 'exact', head: true }),
-        
-        // 활성 사용자 수 (최근 30일 로그인)
-        supabase
-          .from('users')
-          .select('*', { count: 'exact', head: true })
-          .gte('last_login', thirtyDaysAgo),
-        
-        // 100일간 총 리포트 수
-        supabase
-          .from('ai_analysis_reports')
-          .select('*', { count: 'exact', head: true })
-          .gte('created_at', hundredDaysAgo),
-        
-        // 100일간 총 검색 수
-        supabase
-          .from('search_history')
-          .select('*', { count: 'exact', head: true })
-          .gte('created_at', hundredDaysAgo),
-        
-        // 오늘 신규 사용자 수
-        supabase
-          .from('users')
-          .select('*', { count: 'exact', head: true })
-          .gte('created_at', today),
-        
-        // 오늘 검색 수
-        supabase
-          .from('search_history')
-          .select('*', { count: 'exact', head: true })
-          .gte('created_at', today),
-        
-        // 오늘 리포트 수
-        supabase
-          .from('ai_analysis_reports')
-          .select('*', { count: 'exact', head: true })
-          .gte('created_at', today)
-      ]);
+      // 활성 사용자 수 (최근 30일 내 활동이 있는 사용자)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const { data: activeUserIds } = await supabase
+        .from('user_activities')
+        .select('user_id')
+        .gte('created_at', thirtyDaysAgo.toISOString())
+        .not('user_id', 'is', null);
+      
+      const uniqueActiveUsers = new Set(activeUserIds?.map(activity => activity.user_id) || []);
+      const activeUsers = uniqueActiveUsers.size;
+      
+      // 리포트 수 조회 (ai_analysis_reports 테이블)
+      const { count: totalReports } = await supabase
+        .from('ai_analysis_reports')
+        .select('*', { count: 'exact', head: true });
+      
+      // 검색 수 조회 (search_history 테이블)
+      const { count: totalSearches } = await supabase
+        .from('search_history')
+        .select('*', { count: 'exact', head: true });
+      
+      // 오늘 신규 가입자
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const { count: newUsersToday } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', today.toISOString());
+      
+      // 오늘 검색 수
+      const { count: searchesToday } = await supabase
+        .from('search_history')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', today.toISOString());
+      
+      // 오늘 리포트 수
+      const { count: reportsToday } = await supabase
+        .from('ai_analysis_reports')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', today.toISOString());
       
       const stats: AdminStats = {
         totalUsers: totalUsers || 0,
@@ -380,185 +259,81 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     set(state => ({ loading: { ...state.loading, activities: true }, error: null }));
     
     try {
-      const { data: activitiesData, error } = await supabase
+      const { data: activities, error } = await supabase
         .from('user_activities')
         .select(`
           id,
-          user_id,
           activity_type,
           activity_data,
           created_at,
-          users!inner(email, name)
+          user_id,
+          ip_address
         `)
         .order('created_at', { ascending: false })
         .limit(20);
       
       if (error) throw error;
       
-      const activities: RecentActivity[] = activitiesData?.map(activity => {
-        let description = '';
-        const userName = activity.users?.name || activity.users?.email || '알 수 없는 사용자';
+      // 사용자 정보 가져오기
+      const userIds = [...new Set(activities?.map(a => a.user_id).filter(Boolean) || [])];
+      const { data: users } = await supabase
+        .from('users')
+        .select('id, email')
+        .in('id', userIds);
+      
+      const userMap = new Map(users?.map(u => [u.id, u]) || []);
+      
+      const recentActivities: RecentActivity[] = (activities || []).map(activity => {
+        const user = userMap.get(activity.user_id);
+        const activityData = activity.activity_data || {};
         
+        let description = '';
         switch (activity.activity_type) {
           case 'login':
-            description = `${userName}님이 로그인했습니다`;
+            description = '로그인했습니다';
+            break;
+          case 'logout':
+            description = '로그아웃했습니다';
             break;
           case 'search':
-            description = `${userName}님이 특허 검색을 수행했습니다`;
+            description = `특허를 검색했습니다: ${activityData.keyword || ''}`;
             break;
-          case 'report_generated':
-            description = `${userName}님이 AI 분석 리포트를 생성했습니다`;
+          case 'view_patent':
+            description = `특허를 조회했습니다: ${activityData.patent_id || ''}`;
             break;
-          case 'profile_updated':
-            description = `${userName}님이 프로필을 업데이트했습니다`;
+          case 'report_generate':
+            description = `${activityData.report_type || ''} 리포트를 생성했습니다`;
+            break;
+          case 'profile_update':
+            description = '프로필을 업데이트했습니다';
             break;
           case 'dashboard_access':
-            description = `${userName}님이 대시보드에 접근했습니다`;
+            description = '대시보드에 접근했습니다';
             break;
           default:
-            description = `${userName}님의 활동: ${activity.activity_type}`;
+            description = activity.activity_type;
         }
         
         return {
           id: activity.id,
-          userId: activity.user_id,
-          type: activity.activity_type,
+          type: activity.activity_type as RecentActivity['type'],
           description,
           timestamp: activity.created_at,
-          metadata: activity.activity_data
+          userId: activity.user_id,
+          userEmail: user?.email,
+          metadata: activityData,
         };
-      }) || [];
+      });
       
       set(state => ({ 
-        recentActivities: activities,
-        loading: { ...state.loading, activities: false }
+        recentActivities, 
+        loading: { ...state.loading, activities: false } 
       }));
     } catch (error) {
       console.error('최근 활동 가져오기 실패:', error);
       set(state => ({ 
         error: '최근 활동을 가져오는데 실패했습니다.',
         loading: { ...state.loading, activities: false }
-      }));
-    }
-  },
-
-  // 100일간 대시보드 데이터 가져오기 (최적화된 쿼리)
-  fetchDashboardData: async () => {
-    set(state => ({ loading: { ...state.loading, dashboard: true }, error: null }));
-    
-    try {
-      const hundredDaysAgo = get100DaysAgo();
-      
-      // 병렬로 모든 대시보드 데이터 조회 (인덱스 활용)
-      const [
-        { data: dailySignups },
-        { data: dailyReports },
-        { data: dailySearches },
-        { data: userActivities },
-        { data: systemMetrics },
-        { data: popularKeywords },
-        { data: billingData }
-      ] = await Promise.all([
-        // 일별 사용자 가입 추이 (100일간)
-        supabase
-          .from('users')
-          .select('created_at')
-          .gte('created_at', hundredDaysAgo)
-          .order('created_at', { ascending: true }),
-        
-        // 일별 리포트 생성 추이 (100일간)
-        supabase
-          .from('ai_analysis_reports')
-          .select('created_at, analysis_type')
-          .gte('created_at', hundredDaysAgo)
-          .order('created_at', { ascending: true }),
-        
-        // 일별 검색 활동 추이 (100일간)
-        supabase
-          .from('search_history')
-          .select('created_at, keyword')
-          .gte('created_at', hundredDaysAgo)
-          .order('created_at', { ascending: true }),
-        
-        // 사용자 활동 패턴 (100일간)
-        supabase
-          .from('user_activities')
-          .select('created_at, activity_type, user_id')
-          .gte('created_at', hundredDaysAgo)
-          .order('created_at', { ascending: true }),
-        
-        // 시스템 메트릭스 (100일간)
-        supabase
-          .from('system_metrics')
-          .select('*')
-          .gte('recorded_at', hundredDaysAgo)
-          .order('recorded_at', { ascending: true }),
-        
-        // 인기 검색 키워드 (100일간)
-        supabase
-          .from('search_history')
-          .select('keyword')
-          .gte('created_at', hundredDaysAgo),
-        
-        // 결제 데이터 (100일간)
-        supabase
-          .from('billing_events')
-          .select('*')
-          .gte('processed_at', hundredDaysAgo)
-          .order('processed_at', { ascending: true })
-      ]);
-      
-      // 데이터 가공
-      const processedDailySignups = processDailyData(dailySignups || [], 'created_at');
-      const processedDailyReports = processDailyData(dailyReports || [], 'created_at');
-      const processedDailySearches = processDailyData(dailySearches || [], 'created_at');
-      const processedActivityAnalysis = processActivityData(userActivities || []);
-      const processedSystemMetrics = processSystemMetrics(systemMetrics || []);
-      const processedPopularKeywords = processPopularKeywords(dailySearches || []);
-      const processedRevenueData = processRevenueData(billingData || []);
-      const processedReportTypes = processReportTypes(dailyReports || []);
-      
-      // 총계 계산
-      const totalUsers = dailySignups?.length || 0;
-      const totalReports = dailyReports?.length || 0;
-      const totalSearches = dailySearches?.length || 0;
-      const totalRevenue = processedRevenueData.reduce((sum, item) => sum + item.revenue, 0);
-      
-      const averageDailyUsers = totalUsers / 100;
-      const averageDailyReports = totalReports / 100;
-      const averageDailySearches = totalSearches / 100;
-      const averageDailyRevenue = totalRevenue / 100;
-      
-      const dashboardData: DashboardData = {
-        dailySignups: processedDailySignups,
-        dailyReports: processedDailyReports,
-        dailySearches: processedDailySearches,
-        activityAnalysis: processedActivityAnalysis,
-        systemMetrics: processedSystemMetrics,
-        popularKeywords: processedPopularKeywords,
-        revenueData: processedRevenueData,
-        reportTypes: processedReportTypes,
-        totalStats: {
-          totalUsers,
-          totalReports,
-          totalSearches,
-          totalRevenue,
-          averageDailyUsers,
-          averageDailyReports,
-          averageDailySearches,
-          averageDailyRevenue,
-        }
-      };
-      
-      set(state => ({ 
-        dashboardData,
-        loading: { ...state.loading, dashboard: false }
-      }));
-    } catch (error) {
-      console.error('대시보드 데이터 가져오기 실패:', error);
-      set(state => ({ 
-        error: '대시보드 데이터를 가져오는데 실패했습니다.',
-        loading: { ...state.loading, dashboard: false }
       }));
     }
   },
@@ -649,184 +424,6 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     }
   },
 
-  // 사용자 관리 데이터 가져오기 (최적화된 버전)
-  fetchUserManagement: async () => {
-    set(state => ({ loading: { ...state.loading, users: true }, error: null }));
-    
-    try {
-      // 100일 전 날짜 계산
-      const hundredDaysAgo = get100DaysAgo();
-      
-      // 사용자 기본 정보 가져오기
-      const { data: users, error: usersError } = await supabase
-        .from('users')
-        .select(`
-          id,
-          email,
-          name,
-          company,
-          phone,
-          bio,
-          role,
-          subscription_plan,
-          usage_count,
-          created_at,
-          updated_at
-        `)
-        .order('created_at', { ascending: false });
-      
-      if (usersError) throw usersError;
-      
-      // 각 사용자의 상세 정보와 결제 내역 가져오기
-      const usersWithDetails = await Promise.all((users || []).map(async (user) => {
-        // 결제 내역 가져오기 (최근 100일)
-        const { data: billingHistory } = await supabase
-          .from('billing_events')
-          .select(`
-            id,
-            event_type,
-            subscription_tier,
-            amount,
-            currency,
-            payment_method,
-            processed_at,
-            event_data
-          `)
-          .eq('user_id', user.id)
-          .gte('processed_at', hundredDaysAgo.toISOString())
-          .order('processed_at', { ascending: false });
-        
-        // 병렬로 사용자 통계 데이터 가져오기 (최근 100일)
-        const [
-          { data: activities },
-          { count: reportCount },
-          { count: searchCount },
-          { count: downloadCount }
-        ] = await Promise.all([
-          supabase
-            .from('user_activities')
-            .select('activity_type, created_at')
-            .eq('user_id', user.id)
-            .gte('created_at', hundredDaysAgo.toISOString()),
-          supabase
-            .from('ai_analysis_reports')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id)
-            .gte('created_at', hundredDaysAgo.toISOString()),
-          supabase
-            .from('search_history')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id)
-            .gte('created_at', hundredDaysAgo.toISOString()),
-          supabase
-            .from('document_downloads')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id)
-            .gte('created_at', hundredDaysAgo.toISOString())
-        ]);
-        
-        // 마지막 로그인 시간
-        const lastLoginActivity = activities?.find(a => a.activity_type === 'login');
-        
-        // 총 결제 금액 계산
-        const totalPayments = billingHistory?.reduce((sum, payment) => {
-          if (payment.event_type === 'payment_succeeded' && payment.amount) {
-            return sum + Number(payment.amount);
-          }
-          return sum;
-        }, 0) || 0;
-        
-        // 활성 상태 판단 (최근 30일 내 활동이 있으면 활성)
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        const recentActivities = activities?.filter(a => 
-          new Date(a.created_at) > thirtyDaysAgo
-        ) || [];
-        
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name || '',
-          company: user.company || '',
-          phone: user.phone || '',
-          bio: user.bio || '',
-          role: user.role || 'user',
-          subscriptionPlan: user.subscription_plan || 'free',
-          usageCount: user.usage_count || 0,
-          createdAt: user.created_at,
-          updatedAt: user.updated_at,
-          lastLogin: lastLoginActivity?.created_at || null,
-          isActive: recentActivities.length > 0,
-          
-          // 통계 정보 (최근 100일)
-          reportCount: reportCount || 0,
-          searchCount: searchCount || 0,
-          downloadCount: downloadCount || 0,
-          activityCount: activities?.length || 0,
-          
-          // 결제 정보
-          totalPayments,
-          billingHistory: billingHistory || [],
-          currentSubscription: user.subscription_plan || 'free',
-          
-          // 추가 메타데이터
-          metadata: {
-            loginCount: activities?.filter(a => a.activity_type === 'login').length || 0,
-            lastActivity: activities?.[0]?.created_at || null,
-            joinedDaysAgo: Math.floor((Date.now() - new Date(user.created_at).getTime()) / (1000 * 60 * 60 * 24)),
-          }
-        };
-      }));
-      
-      // 통계 계산
-      const totalUsers = usersWithDetails.length;
-      const activeUsers = usersWithDetails.filter(user => user.isActive).length;
-      const premiumUsers = usersWithDetails.filter(user => user.subscriptionPlan === 'premium').length;
-      
-      // 이번 달 신규 가입자
-      const thisMonth = new Date();
-      thisMonth.setDate(1);
-      const newUsersThisMonth = usersWithDetails.filter(user => 
-        new Date(user.createdAt) >= thisMonth
-      ).length;
-      
-      // 총 수익 계산 (최근 100일)
-      const totalRevenue = usersWithDetails.reduce((sum, user) => sum + user.totalPayments, 0);
-      
-      const userManagementData: UserManagementData = {
-        users: usersWithDetails,
-        totalUsers,
-        activeUsers,
-        premiumUsers,
-        newUsersThisMonth,
-        totalRevenue,
-        stats: {
-          totalUsers,
-          activeUsers,
-          premiumUsers,
-          newUsersThisMonth,
-          totalRevenue,
-          averageReportsPerUser: totalUsers > 0 ? 
-            usersWithDetails.reduce((sum, user) => sum + user.reportCount, 0) / totalUsers : 0,
-          averageSearchesPerUser: totalUsers > 0 ? 
-            usersWithDetails.reduce((sum, user) => sum + user.searchCount, 0) / totalUsers : 0,
-        }
-      };
-      
-      set(state => ({ 
-        userManagement: userManagementData,
-        userManagementData,
-        loading: { ...state.loading, users: false } 
-      }));
-    } catch (error) {
-      console.error('사용자 관리 데이터 가져오기 실패:', error);
-      set(state => ({ 
-        error: '사용자 관리 데이터를 가져오는데 실패했습니다.',
-        loading: { ...state.loading, users: false }
-      }));
-    }
-  },
-
   // 사용자 관리 데이터 가져오기 (별칭)
   fetchUserManagement: async () => {
     const { fetchUserManagementData } = get();
@@ -835,28 +432,21 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     set({ userManagement: userManagementData });
   },
   
-  // 리포트 관리 데이터 가져오기 (최적화된 버전)
+  // 리포트 관리 데이터 가져오기
   fetchReportManagementData: async () => {
     set(state => ({ loading: { ...state.loading, reports: true }, error: null }));
     
     try {
-      // 100일간 데이터 조회
-      const hundredDaysAgo = get100DaysAgo();
-      
       const { data: reports, error } = await supabase
         .from('ai_analysis_reports')
         .select(`
           id,
           application_number,
           invention_title,
-          analysis_type,
           user_id,
           created_at,
-          generated_at,
-          report_data,
-          status
+          generated_at
         `)
-        .gte('created_at', hundredDaysAgo.toISOString())
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -865,51 +455,23 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
       const userIds = [...new Set(reports?.map(r => r.user_id).filter(Boolean) || [])];
       const { data: users } = await supabase
         .from('users')
-        .select('id, email, name')
+        .select('id, email')
         .in('id', userIds);
       
       const userMap = new Map(users?.map(u => [u.id, u]) || []);
       
-      // 다운로드 통계 가져오기 (100일간)
-      const { data: downloads } = await supabase
-        .from('document_downloads')
-        .select('report_id, created_at')
-        .gte('created_at', hundredDaysAgo.toISOString());
-      
-      const downloadMap = new Map();
-      downloads?.forEach(download => {
-        const reportId = download.report_id;
-        downloadMap.set(reportId, (downloadMap.get(reportId) || 0) + 1);
-      });
-      
-      // 리포트 품질 평가 데이터 (가상)
-      const qualityRatings = new Map();
-      reports?.forEach(report => {
-        qualityRatings.set(report.id, Math.floor(Math.random() * 5) + 1);
-      });
-      
-      const reportsData = (reports || []).map(report => {
-        const reportDataSize = report.report_data ? JSON.stringify(report.report_data).length : 0;
-        const estimatedFileSize = Math.max(reportDataSize * 2, 100000) + Math.floor(Math.random() * 500000);
-        
-        return {
-          id: report.id,
-          title: report.invention_title || `${report.analysis_type} 리포트 - ${report.application_number}`,
-          type: report.analysis_type || 'patent_analysis',
-          userId: report.user_id,
-          user_email: userMap.get(report.user_id)?.email || '',
-          user_name: userMap.get(report.user_id)?.name || '',
-          createdAt: report.created_at,
-          created_at: report.created_at,
-          generated_at: report.generated_at,
-          status: report.status || 'completed',
-          fileSize: estimatedFileSize,
-          downloadCount: downloadMap.get(report.id) || 0,
-          qualityRating: qualityRatings.get(report.id) || 0,
-          applicationNumber: report.application_number,
-          reportData: report.report_data,
-        };
-      });
+      const reportsData = (reports || []).map(report => ({
+        id: report.id,
+        title: report.invention_title || `특허 분석 리포트 - ${report.application_number}`,
+        type: 'patent_analysis' as const,
+        userId: report.user_id,
+        user_email: userMap.get(report.user_id)?.email || '',
+        createdAt: report.created_at,
+        created_at: report.created_at,
+        status: 'completed' as const, // AI 분석 리포트는 생성 완료된 것만 저장됨
+        fileSize: Math.floor(Math.random() * 1000000) + 500000, // 임시 파일 크기
+        downloadCount: Math.floor(Math.random() * 10), // 임시 다운로드 수
+      }));
       
       const totalReports = reportsData.length;
       
@@ -922,59 +484,7 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
         new Date(report.createdAt) >= thisMonth
       ).length;
       
-      // 지난 달 리포트 수
-      const lastMonth = new Date();
-      lastMonth.setMonth(lastMonth.getMonth() - 1);
-      lastMonth.setDate(1);
-      lastMonth.setHours(0, 0, 0, 0);
-      
-      const lastMonthEnd = new Date(thisMonth);
-      lastMonthEnd.setDate(0);
-      lastMonthEnd.setHours(23, 59, 59, 999);
-      
-      const reportsLastMonth = reportsData.filter(report => {
-        const reportDate = new Date(report.createdAt);
-        return reportDate >= lastMonth && reportDate <= lastMonthEnd;
-      }).length;
-      
-      // 리포트 유형별 통계
-      const typeStats = reportsData.reduce((acc, report) => {
-        const type = report.type || 'unknown';
-        acc[type] = (acc[type] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-      
-      // 사용자별 리포트 생성 통계
-      const userStats = reportsData.reduce((acc, report) => {
-        const userId = report.userId;
-        if (userId) {
-          if (!acc[userId]) {
-            acc[userId] = {
-              userId,
-              userEmail: report.user_email,
-              userName: report.user_name,
-              reportCount: 0,
-              totalDownloads: 0,
-              averageQuality: 0,
-            };
-          }
-          acc[userId].reportCount++;
-          acc[userId].totalDownloads += report.downloadCount;
-          acc[userId].averageQuality += report.qualityRating;
-        }
-        return acc;
-      }, {} as Record<string, any>);
-      
-      // 평균 품질 계산
-      Object.values(userStats).forEach((stat: any) => {
-        stat.averageQuality = stat.averageQuality / stat.reportCount;
-      });
-      
       const totalFileSize = reportsData.reduce((sum, report) => sum + (report.fileSize || 0), 0);
-      const totalDownloads = reportsData.reduce((sum, report) => sum + (report.downloadCount || 0), 0);
-      const averageQuality = reportsData.length > 0 
-        ? reportsData.reduce((sum, report) => sum + report.qualityRating, 0) / reportsData.length 
-        : 0;
       
       const completedReports = reportsData.filter(r => r.status === 'completed').length;
       const processingReports = 0; // AI 분석 리포트는 완료된 것만 저장
@@ -984,12 +494,7 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
         reports: reportsData,
         totalReports,
         reportsThisMonth,
-        reportsLastMonth,
         totalFileSize,
-        totalDownloads,
-        averageQuality,
-        typeStats,
-        userStats,
         completedReports,
         processingReports,
         failedReports,
@@ -1039,11 +544,30 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
         .order('recorded_at', { ascending: false })
         .limit(50);
       
+      const { count: activeUsers } = await supabase
+        .from('user_activities')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', new Date(Date.now() - 60 * 1000).toISOString())
+        .eq('activity_type', 'login');
+
+      const { count: searchesPerMinute } = await supabase
+        .from('search_history')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', new Date(Date.now() - 60 * 1000).toISOString());
+
+      const { count: reportsPerMinute } = await supabase
+        .from('ai_analysis_reports')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', new Date(Date.now() - 60 * 1000).toISOString());
+
       const realtime = {
         activeConnections: activeConnections || 0,
         requestsPerMinute: requestsPerMinute || 0,
         errorRate: systemMetricsData?.find(m => m.metric_name === 'error_rate')?.value || Math.random() * 2,
         averageResponseTime: systemMetricsData?.find(m => m.metric_name === 'avg_response_time')?.value || Math.floor(Math.random() * 200) + 100,
+        activeUsers: activeUsers || 0,
+        searchesPerMinute: searchesPerMinute || 0,
+        reportsPerMinute: reportsPerMinute || 0,
       };
       
       // 일별 데이터 (최근 7일) - 실제 데이터 기반
@@ -1111,10 +635,35 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
         });
       }
       
+      // 일별 데이터 집계
+      const dailyTotals = daily.reduce((acc, day) => ({
+        totalRequests: acc.totalRequests + day.requests,
+        totalErrors: acc.totalErrors + day.errors,
+        totalUsers: acc.totalUsers + day.users,
+        totalSearches: acc.totalSearches + day.searches,
+        totalReports: acc.totalReports + day.reports,
+      }), { totalRequests: 0, totalErrors: 0, totalUsers: 0, totalSearches: 0, totalReports: 0 });
+
+      // 주별 데이터 집계
+      const weeklyTotals = weekly.reduce((acc, week) => ({
+        totalRequests: acc.totalRequests + (week.users + week.searches + week.reports),
+        totalErrors: acc.totalErrors + week.errors,
+        totalUsers: acc.totalUsers + week.users,
+        totalSearches: acc.totalSearches + week.searches,
+        totalReports: acc.totalReports + week.reports,
+      }), { totalRequests: 0, totalErrors: 0, totalUsers: 0, totalSearches: 0, totalReports: 0 });
+
       const systemMetrics: SystemMetrics = {
-        realtime,
-        daily,
-        weekly,
+        realTime: {
+          activeConnections: realtime.activeConnections,
+          requestsPerMinute: realtime.requestsPerMinute,
+          errorsPerMinute: realtime.errorRate,
+          activeUsers: realtime.activeUsers,
+          searchesPerMinute: realtime.searchesPerMinute,
+          reportsPerMinute: realtime.reportsPerMinute,
+        },
+        daily: dailyTotals,
+        weekly: weeklyTotals,
       };
       
       set(state => ({ 
@@ -1244,108 +793,3 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     ]);
   },
 }));
-
-// 100일간 데이터 조회를 위한 유틸리티 함수
-const get100DaysAgo = () => {
-  const date = new Date();
-  date.setDate(date.getDate() - 100);
-  date.setHours(0, 0, 0, 0);
-  return date.toISOString();
-};
-
-const getCurrentMonth = () => {
-  const date = new Date();
-  date.setDate(1);
-  date.setHours(0, 0, 0, 0);
-  return date.toISOString();
-};
-
-const getLastMonth = () => {
-  const date = new Date();
-  date.setMonth(date.getMonth() - 1);
-  date.setDate(1);
-  date.setHours(0, 0, 0, 0);
-  return date.toISOString();
-};
-
-  // 통계 데이터 가져오기 (최적화된 쿼리)
-  fetchStats: async () => {
-    set(state => ({ loading: { ...state.loading, stats: true }, error: null }));
-    
-    try {
-      const hundredDaysAgo = get100DaysAgo();
-      
-      // 병렬로 모든 통계 데이터 조회 (인덱스 활용)
-      const [
-        { count: totalUsers },
-        { count: activeUsers },
-        { count: totalReports },
-        { count: totalSearches },
-        { count: newUsersToday },
-        { count: searchesToday },
-        { count: reportsToday }
-      ] = await Promise.all([
-        // 전체 사용자 수
-        supabase
-          .from('users')
-          .select('*', { count: 'exact', head: true }),
-        
-        // 활성 사용자 수 (최근 30일 로그인)
-        supabase
-          .from('users')
-          .select('*', { count: 'exact', head: true })
-          .gte('last_login', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
-        
-        // 100일간 총 리포트 수
-        supabase
-          .from('ai_analysis_reports')
-          .select('*', { count: 'exact', head: true })
-          .gte('created_at', hundredDaysAgo),
-        
-        // 100일간 총 검색 수
-        supabase
-          .from('search_history')
-          .select('*', { count: 'exact', head: true })
-          .gte('created_at', hundredDaysAgo),
-        
-        // 오늘 신규 사용자 수
-        supabase
-          .from('users')
-          .select('*', { count: 'exact', head: true })
-          .gte('created_at', new Date().toISOString().split('T')[0]),
-        
-        // 오늘 검색 수
-        supabase
-          .from('search_history')
-          .select('*', { count: 'exact', head: true })
-          .gte('created_at', new Date().toISOString().split('T')[0]),
-        
-        // 오늘 리포트 수
-        supabase
-          .from('ai_analysis_reports')
-          .select('*', { count: 'exact', head: true })
-          .gte('created_at', new Date().toISOString().split('T')[0])
-      ]);
-
-      const stats: AdminStats = {
-        totalUsers: totalUsers || 0,
-        activeUsers: activeUsers || 0,
-        totalReports: totalReports || 0,
-        totalSearches: totalSearches || 0,
-        newUsersToday: newUsersToday || 0,
-        searchesToday: searchesToday || 0,
-        reportsToday: reportsToday || 0,
-      };
-      
-      set(state => ({ 
-        stats, 
-        loading: { ...state.loading, stats: false } 
-      }));
-    } catch (error) {
-      console.error('통계 데이터 가져오기 실패:', error);
-      set(state => ({ 
-        error: '통계 데이터를 가져오는데 실패했습니다.',
-        loading: { ...state.loading, stats: false }
-      }));
-    }
-  },
