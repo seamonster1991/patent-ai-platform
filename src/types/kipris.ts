@@ -130,6 +130,8 @@ export interface KiprisPatentDetailItem {
   legalStatusInfo: LegalStatusInfo[];
   imagePathInfo: ImagePathInfo | null;
   rndInfo: RndInfo[];
+  applicationNumber?: string; // 출원번호
+  registrationNumber?: string; // 등록번호
 }
 
 export interface KiprisDetailApiResponse {
@@ -204,6 +206,12 @@ export interface MarketAnalysisReport {
   competitiveLandscape: string; // 경쟁 구도
   marketGrowthDrivers: string; // 시장 성장 동력
   riskFactors: string; // 위험 요소
+  summary?: string; // 요약
+  marketSize?: string; // 시장 규모
+  competitors?: string; // 경쟁사
+  trends?: string; // 트렌드
+  opportunities?: string; // 기회
+  risks?: string; // 위험
 }
 
 export interface BusinessInsightReport {
@@ -211,6 +219,12 @@ export interface BusinessInsightReport {
   royaltyMargin: string; // 로열티 마진
   newBusinessOpportunities: string; // 신사업 기회
   competitorResponseStrategy: string; // 경쟁사 대응 전략
+  technicalStrengths?: string; // 기술적 강점
+  commercialPotential?: string; // 상업적 잠재력
+  investmentValue?: string; // 투자 가치
+  licensingOpportunities?: string; // 라이선싱 기회
+  strategicRecommendations?: string; // 전략적 권고사항
+  summary?: string; // 요약
 }
 
 // 새로운 AI 분석 섹션 타입

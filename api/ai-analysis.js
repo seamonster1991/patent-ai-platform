@@ -61,7 +61,9 @@ module.exports = async function handler(req, res) {
     let analysisText;
     let lastError;
     const maxRetries = 3;
-    const retryDelay = 2000;
+    const isVercel = !!process.env.VERCEL;
+    // Vercel 환경에서는 더 긴 재시도 간격 사용
+    const retryDelay = isVercel ? 3000 : 2000;
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -137,7 +139,9 @@ module.exports = async function handler(req, res) {
           message: error.message,
           name: error.name,
           code: error.code,
-          status: error.status
+          status: error.status,
+          isVercel: isVercel,
+          timeoutMs: getTimeoutMs(attempt)
         });
         
         if (attempt < maxRetries) {
@@ -268,9 +272,9 @@ module.exports = async function handler(req, res) {
 // 환경/플랫폼에 맞춘 타임아웃 계산
 function getTimeoutMs(attempt) {
   const isVercel = !!process.env.VERCEL;
-  // 타임아웃 값 대폭 증가: 기본 60초, 단계별 30초 증가 (60s, 90s, 120s)
-  const base = Number(process.env.ANALYSIS_TIMEOUT_MS) || (isVercel ? 15000 : 60000);
-  const step = Number(process.env.ANALYSIS_TIMEOUT_STEP_MS) || (isVercel ? 5000 : 30000);
+  // Vercel 환경에서 타임아웃 증가: 기본 45초, 단계별 10초 증가 (45s, 55s, 65s)
+  const base = Number(process.env.ANALYSIS_TIMEOUT_MS) || (isVercel ? 45000 : 60000);
+  const step = Number(process.env.ANALYSIS_TIMEOUT_STEP_MS) || (isVercel ? 10000 : 30000);
   return base + (attempt - 1) * step;
 }
 

@@ -16,15 +16,37 @@ interface DynamicReportData {
   generatedAt: string
 }
 
-// 한글 폰트 지원을 위한 설정
+// A4 용지 기준 상수 정의 (210mm x 297mm)
+const A4_CONFIG = {
+  width: 210, // mm
+  height: 297, // mm
+  margin: {
+    top: 25, // mm
+    bottom: 25, // mm
+    left: 20, // mm
+    right: 20, // mm
+  },
+  header: {
+    height: 20, // mm
+  },
+  footer: {
+    height: 15, // mm
+  },
+  content: {
+    width: 170, // 210 - 20 - 20 = 170mm
+    height: 237, // 297 - 25 - 25 - 10 = 237mm (헤더/푸터 고려)
+  }
+}
+
+// 한글 폰트 지원을 위한 설정 (A4 최적화)
 const addKoreanFont = async (doc: jsPDF) => {
   console.log('🔤 한글 폰트 설정 시작')
   
   try {
     // Noto Sans KR 폰트를 Google Fonts에서 로드
-    const fontUrl = 'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap'
+    const fontUrl = 'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap'
     
-    // 폰트 로드를 위한 CSS 추가 (브라우저에서 폰트 사용 가능하도록)
+    // 폰트 로드를 위한 CSS 추가
     if (!document.querySelector(`link[href="${fontUrl}"]`)) {
       console.log('📥 Google Fonts 로드 중...')
       const link = document.createElement('link')
@@ -32,12 +54,12 @@ const addKoreanFont = async (doc: jsPDF) => {
       link.rel = 'stylesheet'
       document.head.appendChild(link)
       
-      // 폰트 로드 대기 (document.fonts.ready 우선, 타임아웃 보강)
+      // 폰트 로드 대기
       try {
         if ((document as any).fonts && (document as any).fonts.ready) {
           await Promise.race([
             (document as any).fonts.ready,
-            new Promise(resolve => setTimeout(resolve, 2000)) // 타임아웃 단축
+            new Promise(resolve => setTimeout(resolve, 3000))
           ])
           console.log('✅ Google Fonts 로드 완료')
         } else {
@@ -49,23 +71,23 @@ const addKoreanFont = async (doc: jsPDF) => {
             setTimeout(() => {
               console.log('⏰ 폰트 로드 타임아웃')
               resolve(undefined)
-            }, 2000)
+            }, 3000)
           })
         }
       } catch (fontError) {
         console.warn('⚠️ 폰트 로드 실패, fallback 사용:', fontError)
       }
-    } else {
-      console.log('✅ Google Fonts 이미 로드됨')
     }
     
-    // 추가 한글 폰트 fallback 설정
+    // 한글 폰트 스타일 추가
     const style = document.createElement('style')
     style.textContent = `
       .korean-text {
         font-family: "Noto Sans KR", "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", "Helvetica Neue", Arial, sans-serif !important;
         font-feature-settings: "kern" 1;
         text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
     `
     if (!document.querySelector('style[data-korean-font]')) {
@@ -78,26 +100,25 @@ const addKoreanFont = async (doc: jsPDF) => {
     
   } catch (error) {
     console.warn('⚠️ 한글 폰트 설정 실패:', error)
-    // 기본 폰트로 fallback
     doc.setFont('helvetica')
   }
 }
 
-// 기본 텍스트 렌더링 함수 (fallback용)
+// 기본 텍스트 렌더링 함수 (A4 최적화)
 const addBasicText = (doc: jsPDF, text: string, x: number, y: number, options: any = {}): number => {
-  const { fontSize = 12, fontWeight = 'normal', color = '#000000', maxWidth = 500 } = options
+  const { fontSize = 12, fontWeight = 'normal', color = '#000000', maxWidth = A4_CONFIG.content.width } = options
   
   doc.setFontSize(fontSize)
   doc.setTextColor(color)
   
-  // 긴 텍스트 자동 줄바꿈 처리
+  // 긴 텍스트 자동 줄바꿈 처리 (A4 기준)
   const lines = doc.splitTextToSize(text, maxWidth)
   doc.text(lines, x, y)
   
-  return y + (lines.length * fontSize * 1.2) + 5
+  return y + (lines.length * fontSize * 0.35) + 3 // mm 단위로 조정
 }
 
-// 한국어 텍스트를 이미지로 변환하여 PDF에 추가하는 함수 (개선된 버전)
+// 한국어 텍스트를 이미지로 변환하여 PDF에 추가하는 함수 (A4 최적화)
 const addKoreanTextAsImage = async (
   doc: jsPDF,
   text: string,
@@ -115,7 +136,7 @@ const addKoreanTextAsImage = async (
     fontSize = 12,
     fontWeight = 'normal',
     color = '#000000',
-    maxWidth = 500,
+    maxWidth = A4_CONFIG.content.width,
     lineHeight = 1.5
   } = options
 
@@ -128,7 +149,7 @@ const addKoreanTextAsImage = async (
   let tempDiv: HTMLElement | null = null
 
   try {
-    // 임시 div 요소 생성
+    // 임시 div 요소 생성 (A4 최적화)
     tempDiv = document.createElement('div')
     tempDiv.className = 'korean-text'
     tempDiv.style.cssText = `
@@ -140,7 +161,7 @@ const addKoreanTextAsImage = async (
       font-weight: ${fontWeight};
       color: ${color};
       line-height: ${lineHeight};
-      max-width: ${maxWidth}px;
+      max-width: ${maxWidth * 3.78}px;
       word-wrap: break-word;
       white-space: pre-wrap;
       padding: 10px;
@@ -189,17 +210,19 @@ const addKoreanTextAsImage = async (
       throw new Error('이미지 데이터 생성 실패')
     }
     
-    // PDF에 이미지 추가
-    const imgWidth = canvas.width / 1.5 // 스케일 1.5로 인한 조정
-    const imgHeight = canvas.height / 1.5
+    // PDF에 이미지 추가 (A4 최적화)
+    const imgWidth = (canvas.width / 1.5) * 0.264583 // px to mm 변환
+    const imgHeight = (canvas.height / 1.5) * 0.264583
     
-    // PDF 좌표계에 맞게 크기 조정
-    const pdfWidth = Math.min(imgWidth * 0.75, maxWidth)
-    const pdfHeight = (imgHeight * pdfWidth) / imgWidth
+    // A4 페이지 경계 확인
+    if (y + imgHeight > A4_CONFIG.height - A4_CONFIG.margin.bottom) {
+      doc.addPage()
+      y = A4_CONFIG.margin.top + A4_CONFIG.header.height
+    }
 
-    doc.addImage(imgData, 'PNG', x, y, pdfWidth, pdfHeight)
+    doc.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight)
     
-    return y + pdfHeight + 5
+    return y + imgHeight + 5
     
   } catch (error) {
     console.warn('⚠️ 한국어 텍스트 이미지 변환 실패, 기본 텍스트 사용:', error.message)
@@ -213,6 +236,228 @@ const addKoreanTextAsImage = async (
         console.warn('임시 요소 제거 실패:', removeError)
       }
     }
+  }
+}
+
+// 전문적인 리포트 헤더 생성
+const addReportHeader = (doc: jsPDF, reportData: any, reportType: string): void => {
+  const currentDate = new Date().toLocaleDateString('ko-KR')
+  const shortTitle = reportData.title ? reportData.title.substring(0, 40) + '...' : '특허 분석 리포트'
+  
+  // 헤더 배경
+  doc.setFillColor(248, 250, 252) // bg-slate-50
+  doc.rect(0, 0, A4_CONFIG.width, A4_CONFIG.header.height, 'F')
+  
+  // 헤더 구분선
+  doc.setDrawColor(226, 232, 240) // border-slate-200
+  doc.setLineWidth(0.5)
+  doc.line(0, A4_CONFIG.header.height, A4_CONFIG.width, A4_CONFIG.header.height)
+  
+  // 제목
+  doc.setFontSize(16)
+  doc.setTextColor(15, 23, 42) // text-slate-900
+  doc.text(shortTitle, A4_CONFIG.margin.left, 15)
+  
+  // 리포트 타입
+  doc.setFontSize(12)
+  doc.setTextColor(71, 85, 105) // text-slate-600
+  doc.text(reportType, A4_CONFIG.margin.left, 25)
+  
+  // 특허 번호 (우측 상단)
+  if (reportData.patentNumber) {
+    doc.setFontSize(10)
+    doc.setTextColor(100, 116, 139) // text-slate-500
+    const patentText = `특허번호: ${reportData.patentNumber}`
+    const textWidth = doc.getTextWidth(patentText)
+    doc.text(patentText, A4_CONFIG.width - A4_CONFIG.margin.right - textWidth, 15)
+  }
+  
+  // 생성 날짜 (우측 하단)
+  doc.setFontSize(10)
+  doc.setTextColor(100, 116, 139) // text-slate-500
+  const dateText = `생성일: ${currentDate}`
+  const dateWidth = doc.getTextWidth(dateText)
+  doc.text(dateText, A4_CONFIG.width - A4_CONFIG.margin.right - dateWidth, 25)
+}
+
+// 전문적인 리포트 푸터 생성
+const addReportFooter = (doc: jsPDF, pageNumber: number, totalPages: number): void => {
+  const footerY = A4_CONFIG.height - A4_CONFIG.footer.height + 10
+  
+  // 푸터 구분선
+  doc.setDrawColor(226, 232, 240) // border-slate-200
+  doc.setLineWidth(0.5)
+  doc.line(A4_CONFIG.margin.left, footerY - 5, A4_CONFIG.width - A4_CONFIG.margin.right, footerY - 5)
+  
+  // 페이지 번호 (중앙)
+  doc.setFontSize(10)
+  doc.setTextColor(100, 116, 139) // text-slate-500
+  const pageText = `${pageNumber} / ${totalPages}`
+  const pageWidth = doc.getTextWidth(pageText)
+  doc.text(pageText, (A4_CONFIG.width - pageWidth) / 2, footerY)
+  
+  // 생성 정보 (좌측)
+  doc.setFontSize(8)
+  doc.text('Patent AI Analysis Report', A4_CONFIG.margin.left, footerY)
+}
+
+// 강화된 마크다운 파싱 및 렌더링 함수 (A4 최적화)
+const parseAndRenderMarkdownA4 = async (
+  doc: jsPDF,
+  content: string,
+  startX: number,
+  startY: number,
+  maxWidth: number = A4_CONFIG.content.width
+): Promise<number> => {
+  let currentY = startY
+  const lineHeight = 5
+  const sectionSpacing = 8
+  
+  if (!content || content.trim() === '') {
+    return currentY
+  }
+
+  try {
+    // 마크다운 내용을 줄 단위로 분할
+    const lines = content.split('\n').filter(line => line.trim() !== '')
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim()
+      
+      // 페이지 경계 확인
+      if (currentY > A4_CONFIG.height - A4_CONFIG.margin.bottom - 20) {
+        doc.addPage()
+        currentY = A4_CONFIG.margin.top + A4_CONFIG.header.height
+      }
+      
+      // ### 헤딩 3 (주요 섹션)
+      if (line.startsWith('### ')) {
+        const headingText = line.replace('### ', '').trim()
+        doc.setFontSize(14)
+        doc.setTextColor(30, 41, 59) // text-slate-800
+        currentY = await addKoreanTextAsImage(doc, headingText, startX, currentY, {
+          fontSize: 14,
+          fontWeight: '600',
+          color: '#1e293b',
+          maxWidth
+        })
+        currentY += sectionSpacing
+      }
+      
+      // #### 헤딩 4 (하위 섹션)
+      else if (line.startsWith('#### ')) {
+        const headingText = line.replace('#### ', '').trim()
+        doc.setFontSize(12)
+        doc.setTextColor(51, 65, 85) // text-slate-700
+        currentY = await addKoreanTextAsImage(doc, headingText, startX, currentY, {
+          fontSize: 12,
+          fontWeight: '600',
+          color: '#334155',
+          maxWidth
+        })
+        currentY += lineHeight
+      }
+      
+      // ##### 헤딩 5 (세부 항목)
+      else if (line.startsWith('##### ')) {
+        const headingText = line.replace('##### ', '').trim()
+        doc.setFontSize(11)
+        doc.setTextColor(71, 85, 105) // text-slate-600
+        currentY = await addKoreanTextAsImage(doc, headingText, startX, currentY, {
+          fontSize: 11,
+          fontWeight: '500',
+          color: '#475569',
+          maxWidth
+        })
+        currentY += lineHeight
+      }
+      
+      // 불릿 포인트 (- 또는 *)
+      else if (line.match(/^[\-\*]\s+/)) {
+        const bulletText = line.replace(/^[\-\*]\s+/, '').trim()
+        
+        // 불릿 포인트 추가
+        doc.setFontSize(10)
+        doc.setTextColor(100, 116, 139) // text-slate-500
+        doc.text('•', startX + 5, currentY)
+        
+        // 불릿 텍스트 추가
+        currentY = await addKoreanTextAsImage(doc, bulletText, startX + 15, currentY, {
+          fontSize: 10,
+          fontWeight: '400',
+          color: '#475569',
+          maxWidth: maxWidth - 15
+        })
+        currentY += 2
+      }
+      
+      // 번호 리스트 (1. 2. 3. ...)
+      else if (line.match(/^\d+\.\s+/)) {
+        const match = line.match(/^(\d+)\.\s+(.+)/)
+        if (match) {
+          const number = match[1]
+          const listText = match[2].trim()
+          
+          // 번호 추가
+          doc.setFontSize(10)
+          doc.setTextColor(100, 116, 139) // text-slate-500
+          doc.text(`${number}.`, startX + 5, currentY)
+          
+          // 리스트 텍스트 추가
+          currentY = await addKoreanTextAsImage(doc, listText, startX + 20, currentY, {
+            fontSize: 10,
+            fontWeight: '400',
+            color: '#475569',
+            maxWidth: maxWidth - 20
+          })
+          currentY += 2
+        }
+      }
+      
+      // 일반 텍스트
+      else if (line.length > 0) {
+        // 볼드 텍스트 처리 (**text**)
+        if (line.includes('**')) {
+          const parts = line.split(/(\*\*[^*]+\*\*)/)
+          let tempY = currentY
+          
+          for (const part of parts) {
+            if (part.startsWith('**') && part.endsWith('**')) {
+              const boldText = part.replace(/\*\*/g, '')
+              tempY = await addKoreanTextAsImage(doc, boldText, startX, tempY, {
+                fontSize: 10,
+                fontWeight: '600',
+                color: '#374151',
+                maxWidth
+              })
+            } else if (part.trim()) {
+              tempY = await addKoreanTextAsImage(doc, part, startX, tempY, {
+                fontSize: 10,
+                fontWeight: '400',
+                color: '#4b5563',
+                maxWidth
+              })
+            }
+          }
+          currentY = tempY
+        } else {
+          // 일반 텍스트
+          currentY = await addKoreanTextAsImage(doc, line, startX, currentY, {
+            fontSize: 10,
+            fontWeight: '400',
+            color: '#4b5563',
+            maxWidth
+          })
+        }
+        currentY += 2
+      }
+    }
+    
+    return currentY + sectionSpacing
+    
+  } catch (error) {
+    console.warn('⚠️ 마크다운 파싱 실패, 기본 텍스트 사용:', error.message)
+    return addBasicText(doc, content, startX, startY, { maxWidth })
   }
 }
 
@@ -302,6 +547,102 @@ const addTextBlock = async (doc: jsPDF, text: string, x: number, y: number, maxW
 }
 
 // 새로운 동적 리포트 PDF 생성 함수 (강화된 오류 처리)
+// 새로운 A4 최적화 PDF 생성 함수
+export const generateA4ReportPDF = async (
+  patent: KiprisPatentDetailItem,
+  reportData: DynamicReportData
+): Promise<void> => {
+  console.log('🚀 A4 최적화 PDF 생성 시작...')
+  
+  try {
+    // jsPDF 인스턴스 생성 (A4 크기)
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    })
+    
+    // 한국어 폰트 로드
+    console.log('🔤 한국어 폰트 로드 중...')
+    await addKoreanFont(doc)
+    
+    // 리포트 헤더 추가
+    const reportType = reportData.reportType || '분석 리포트'
+    addReportHeader(doc, {
+      title: patent.biblioSummaryInfo?.inventionTitle || '특허 분석',
+      patentNumber: patent.applicationNumber || patent.registrationNumber
+    }, reportType)
+    
+    let currentY = A4_CONFIG.margin.top + A4_CONFIG.header.height + 10
+    
+    // 개요 섹션
+    console.log('📝 개요 섹션 생성 중...')
+    currentY = await parseAndRenderMarkdownA4(
+      doc,
+      `### 개요\n\n본 리포트는 "${patent.biblioSummaryInfo?.inventionTitle || '특허'}"에 대한 ${reportType}을 제공합니다. AI 기반 분석을 통해 생성된 전문적인 인사이트를 담고 있습니다.`,
+      A4_CONFIG.margin.left,
+      currentY
+    )
+    
+    // 각 섹션 처리
+    console.log('📄 리포트 섹션 생성 중...')
+    for (const [index, section] of reportData.sections.entries()) {
+      if (!section || !section.title || !section.content) {
+        console.warn(`⚠️ 섹션 ${index + 1} 데이터 누락, 건너뜀`)
+        continue
+      }
+      
+      console.log(`📝 섹션 ${index + 1} 처리 중: ${section.title}`)
+      
+      // 섹션 제목과 내용을 마크다운으로 렌더링
+      const sectionMarkdown = `### ${section.title}\n\n${section.content}`
+      currentY = await parseAndRenderMarkdownA4(
+        doc,
+        sectionMarkdown,
+        A4_CONFIG.margin.left,
+        currentY
+      )
+      
+      currentY += 10 // 섹션 간 여백
+    }
+    
+    // 요약 섹션
+    if (reportData.summary) {
+      console.log('📋 요약 섹션 생성 중...')
+      const summaryMarkdown = `### 요약\n\n${reportData.summary}`
+      currentY = await parseAndRenderMarkdownA4(
+        doc,
+        summaryMarkdown,
+        A4_CONFIG.margin.left,
+        currentY
+      )
+    }
+    
+    // 모든 페이지에 푸터 추가
+    const totalPages = doc.getNumberOfPages()
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i)
+      addReportFooter(doc, i, totalPages)
+    }
+    
+    // PDF 저장
+    const fileName = `${reportType}_${patent.applicationNumber || 'report'}_${new Date().toISOString().split('T')[0]}.pdf`
+    doc.save(fileName)
+    
+    console.log('✅ A4 최적화 PDF 생성 완료!')
+    
+    // 활동 추적
+    activityTracker.trackDocumentDownload(
+      patent.applicationNumber || patent.biblioSummaryInfo?.applicationNumber || 'unknown',
+      'pdf_report'
+    )
+    
+  } catch (error) {
+    console.error('❌ A4 PDF 생성 실패:', error)
+    throw new Error(`PDF 생성 중 오류가 발생했습니다: ${error.message}`)
+  }
+}
+
 export const generateDynamicReportPDF = async (
   patent: KiprisPatentDetailItem,
   reportData: DynamicReportData
@@ -667,6 +1008,46 @@ export const generateMarketAnalysisPDF = async (
   patent: KiprisPatentDetailItem,
   analysis: MarketAnalysisReport
 ): Promise<void> => {
+  console.log('🚀 시장분석 리포트 PDF 생성 시작...')
+  
+  // 시장분석 데이터를 DynamicReportData 형식으로 변환
+  const reportData: DynamicReportData = {
+    reportType: '시장분석 리포트',
+    sections: [
+      {
+        title: '시장 규모 분석',
+        content: analysis.marketSize || '시장 규모 데이터를 분석 중입니다.'
+      },
+      {
+        title: '경쟁사 분석',
+        content: analysis.competitors || '경쟁사 정보를 분석 중입니다.'
+      },
+      {
+        title: '시장 동향',
+        content: analysis.trends || '시장 동향을 분석 중입니다.'
+      },
+      {
+        title: '기회 요인',
+        content: analysis.opportunities || '시장 기회를 분석 중입니다.'
+      },
+      {
+        title: '위험 요인',
+        content: analysis.risks || '시장 위험을 분석 중입니다.'
+      }
+    ],
+    summary: analysis.summary || '시장분석 요약을 생성 중입니다.',
+    generatedAt: new Date().toISOString()
+  }
+  
+  // 새로운 A4 최적화 함수 사용
+  return generateA4ReportPDF(patent, reportData)
+}
+
+// 기존 함수 (fallback용)
+export const generateMarketAnalysisPDFLegacy = async (
+  patent: KiprisPatentDetailItem,
+  analysis: MarketAnalysisReport
+): Promise<void> => {
   const doc = new jsPDF()
   await addKoreanFont(doc)
   
@@ -768,6 +1149,46 @@ export const generateMarketAnalysisPDF = async (
 
 // 기존 비즈니스 인사이트 리포트 PDF 생성 (호환성 유지)
 export const generateBusinessInsightPDF = async (
+  patent: KiprisPatentDetailItem,
+  analysis: BusinessInsightReport
+): Promise<void> => {
+  console.log('🚀 비즈니스 인사이트 리포트 PDF 생성 시작...')
+  
+  // 비즈니스 인사이트 데이터를 DynamicReportData 형식으로 변환
+  const reportData: DynamicReportData = {
+    reportType: '비즈니스 인사이트 리포트',
+    sections: [
+      {
+        title: '기술적 강점',
+        content: analysis.technicalStrengths || '기술적 강점을 분석 중입니다.'
+      },
+      {
+        title: '상업적 잠재력',
+        content: analysis.commercialPotential || '상업적 잠재력을 분석 중입니다.'
+      },
+      {
+        title: '투자 가치',
+        content: analysis.investmentValue || '투자 가치를 분석 중입니다.'
+      },
+      {
+        title: '라이선싱 기회',
+        content: analysis.licensingOpportunities || '라이선싱 기회를 분석 중입니다.'
+      },
+      {
+        title: '전략적 권고사항',
+        content: analysis.strategicRecommendations || '전략적 권고사항을 분석 중입니다.'
+      }
+    ],
+    summary: analysis.summary || '비즈니스 인사이트 요약을 생성 중입니다.',
+    generatedAt: new Date().toISOString()
+  }
+  
+  // 새로운 A4 최적화 함수 사용
+  return generateA4ReportPDF(patent, reportData)
+}
+
+// 기존 함수 (fallback용)
+export const generateBusinessInsightPDFLegacy = async (
   patent: KiprisPatentDetailItem,
   analysis: BusinessInsightReport
 ): Promise<void> => {
