@@ -442,20 +442,23 @@ export default function PatentDetail() {
   const checkDocumentAvailability = async () => {
     if (!applicationNumber) return
     
-    // 캐시된 데이터 확인 (24시간 유효)
     const cacheKey = `doc_availability_${applicationNumber}`
-    const cached = localStorage.getItem(cacheKey)
-    if (cached) {
-      try {
-        const { data, timestamp } = JSON.parse(cached)
-        const isValid = Date.now() - timestamp < 24 * 60 * 60 * 1000 // 24시간
-        if (isValid) {
-          setDocumentAvailability(data)
-          return
+    
+    // 캐시된 데이터 확인 (24시간 유효) - 클라이언트 사이드에서만 실행
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem(cacheKey)
+      if (cached) {
+        try {
+          const { data, timestamp } = JSON.parse(cached)
+          const isValid = Date.now() - timestamp < 24 * 60 * 60 * 1000 // 24시간
+          if (isValid) {
+            setDocumentAvailability(data)
+            return
+          }
+        } catch (e) {
+          // 캐시 데이터가 손상된 경우 삭제
+          localStorage.removeItem(cacheKey)
         }
-      } catch (e) {
-        // 캐시 데이터가 손상된 경우 삭제
-        localStorage.removeItem(cacheKey)
       }
     }
     
@@ -480,11 +483,13 @@ export default function PatentDetail() {
       
       setDocumentAvailability(availability)
       
-      // 결과를 캐시에 저장
-      localStorage.setItem(cacheKey, JSON.stringify({
-        data: availability,
-        timestamp: Date.now()
-      }))
+      // 결과를 캐시에 저장 - 클라이언트 사이드에서만 실행
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(cacheKey, JSON.stringify({
+          data: availability,
+          timestamp: Date.now()
+        }))
+      }
     } catch (err: any) {
       console.error('Error checking document availability:', err)
       toast.error('문서 가용성 확인에 실패했습니다.')

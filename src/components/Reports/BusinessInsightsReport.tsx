@@ -246,7 +246,7 @@ export default function BusinessInsightsReport({
         reportType: 'business_insights',
         reportName: '비즈니스 인사이트 리포트',
         sections: sections,
-        generatedAt: new Date().toISOString()
+        generatedAt: typeof window !== 'undefined' ? new Date().toISOString() : ''
       }
       
       setReportData(newReportData)
@@ -346,7 +346,7 @@ export default function BusinessInsightsReport({
           reportType: 'business_insights',
           reportName: analysis.reportName || '비즈니스 인사이트 리포트',
           sections: sections,
-          generatedAt: new Date().toISOString()
+          generatedAt: typeof window !== 'undefined' ? new Date().toISOString() : ''
         };
         
         setReportData(reportData);

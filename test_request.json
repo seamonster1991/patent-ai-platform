@@ -1,0 +1,13 @@
+{
+  "patentData": {
+    "applicationNumber": "10-2023-0001234",
+    "title": "Test Patent",
+    "applicant": "Test Company",
+    "inventor": "Test Inventor",
+    "filingDate": "2023-01-01",
+    "publicationDate": "2023-07-01",
+    "abstract": "Test abstract"
+  },
+  "reportType": "market",
+  "userId": "test-user-123"
+}

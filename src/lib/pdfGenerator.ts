@@ -241,7 +241,7 @@ const addKoreanTextAsImage = async (
 
 // 전문적인 리포트 헤더 생성
 const addReportHeader = (doc: jsPDF, reportData: any, reportType: string): void => {
-  const currentDate = new Date().toLocaleDateString('ko-KR')
+  const currentDate = typeof window !== 'undefined' ? new Date().toLocaleDateString('ko-KR') : 'unknown'
   const shortTitle = reportData.title ? reportData.title.substring(0, 40) + '...' : '특허 분석 리포트'
   
   // 헤더 배경
@@ -493,7 +493,7 @@ const addPDFHeader = async (doc: jsPDF, title: string, patent: KiprisPatentDetai
   })
   
   // 생성 일시
-  const currentDate = new Date().toLocaleDateString('ko-KR')
+  const currentDate = typeof window !== 'undefined' ? new Date().toLocaleDateString('ko-KR') : 'unknown'
   const dateInfo = `생성일: ${currentDate}`
   await addKoreanTextAsImage(doc, dateInfo, pageWidth - 120, 35, {
     fontSize: 12,
@@ -847,7 +847,8 @@ export const generateDynamicReportPDF = async (
 
     // PDF 다운로드
     const reportTypeKorean = reportData.reportType === 'market_analysis' ? '시장분석' : '비즈니스인사이트'
-    const fileName = `${reportTypeKorean}리포트_${patent.biblioSummaryInfo?.applicationNumber || 'unknown'}_${new Date().toISOString().split('T')[0]}.pdf`
+    const dateString = typeof window !== 'undefined' ? new Date().toISOString().split('T')[0] : 'unknown'
+    const fileName = `${reportTypeKorean}리포트_${patent.biblioSummaryInfo?.applicationNumber || 'unknown'}_${dateString}.pdf`
     
     console.log('💾 PDF 파일 저장 시도:', fileName)
     
@@ -882,7 +883,7 @@ export const generateDynamicReportPDF = async (
       message: error.message,
       stack: error.stack,
       name: error.name,
-      timestamp: new Date().toISOString()
+      timestamp: typeof window !== 'undefined' ? new Date().toISOString() : 'unknown'
     })
     
     // 사용자에게 더 친화적인 오류 메시지 제공
@@ -992,7 +993,8 @@ export const generateSimplePDF = async (
     
     // PDF 저장
     const reportTypeKorean = reportData.reportType === 'market_analysis' ? '시장분석' : '비즈니스인사이트'
-    const fileName = `${reportTypeKorean}리포트_간단버전_${patent.biblioSummaryInfo?.applicationNumber || 'unknown'}_${new Date().toISOString().split('T')[0]}.pdf`
+    const dateString = typeof window !== 'undefined' ? new Date().toISOString().split('T')[0] : 'unknown'
+    const fileName = `${reportTypeKorean}리포트_간단버전_${patent.biblioSummaryInfo?.applicationNumber || 'unknown'}_${dateString}.pdf`
     
     doc.save(fileName)
     console.log('✅ 간단한 PDF 다운로드 완료')
@@ -1143,7 +1145,8 @@ export const generateMarketAnalysisPDFLegacy = async (
   }
 
   // PDF 다운로드
-  const fileName = `시장분석리포트_${patent.biblioSummaryInfo?.applicationNumber || 'unknown'}_${new Date().toISOString().split('T')[0]}.pdf`
+  const dateString = typeof window !== 'undefined' ? new Date().toISOString().split('T')[0] : 'unknown'
+  const fileName = `시장분석리포트_${patent.biblioSummaryInfo?.applicationNumber || 'unknown'}_${dateString}.pdf`
   doc.save(fileName)
 }
 

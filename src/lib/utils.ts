@@ -66,7 +66,14 @@ export function validatePassword(password: string) {
 }
 
 export function generateId() {
-  return Math.random().toString(36).substr(2, 9)
+  // 서버/클라이언트 안전한 ID 생성
+  if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+    const array = new Uint32Array(1);
+    window.crypto.getRandomValues(array);
+    return array[0].toString(36);
+  }
+  // 폴백: 타임스탬프 기반 ID
+  return Date.now().toString(36) + Math.floor(Math.random() * 1000).toString(36);
 }
 
 export function sleep(ms: number) {

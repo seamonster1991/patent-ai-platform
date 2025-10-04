@@ -1,10 +1,25 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { createClient } = require('@supabase/supabase-js');
 
-// Supabase 클라이언트 초기화
-const supabaseUrl = process.env.SUPABASE_URL;
+// Supabase 클라이언트 초기화 (안전한 초기화)
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+let supabase = null;
+
+try {
+  if (supabaseUrl && supabaseServiceKey) {
+    supabase = createClient(supabaseUrl, supabaseServiceKey);
+    console.log('✅ Supabase 클라이언트 초기화 성공');
+  } else {
+    console.warn('⚠️ Supabase 환경변수 누락:', {
+      hasUrl: !!supabaseUrl,
+      hasServiceKey: !!supabaseServiceKey
+    });
+  }
+} catch (error) {
+  console.error('❌ Supabase 클라이언트 초기화 실패:', error.message);
+  supabase = null;
+}
 
 module.exports = async function handler(req, res) {
   // CORS 헤더 설정
@@ -204,7 +219,7 @@ module.exports = async function handler(req, res) {
     console.log('✅ 결과 구조화 완료 - 섹션 수:', structuredResult.sections.length);
 
     // 활동 추적 - 보고서 생성 기록
-    if (userId) {
+    if (userId && supabase) {
       try {
         console.log('📊 보고서 생성 활동 추적 중...');
         
@@ -276,6 +291,8 @@ module.exports = async function handler(req, res) {
         console.error('❌ 활동 추적 오류:', trackingError);
         // 활동 추적 실패는 리포트 생성에 영향을 주지 않음
       }
+    } else if (userId && !supabase) {
+      console.warn('⚠️ Supabase 연결이 없어 활동 추적을 건너뜁니다.');
     }
 
     // 성공 응답

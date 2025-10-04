@@ -2,10 +2,25 @@ const axios = require('axios');
 const { parseStringPromise } = require('xml2js');
 const { createClient } = require('@supabase/supabase-js');
 
-// Supabase 클라이언트 초기화 (서버 키 사용)
-const supabaseUrl = process.env.SUPABASE_URL;
+// Supabase 클라이언트 초기화 (안전한 초기화)
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+let supabase = null;
+
+try {
+  if (supabaseUrl && supabaseServiceKey) {
+    supabase = createClient(supabaseUrl, supabaseServiceKey);
+    console.log('✅ [documents.js] Supabase 클라이언트 초기화 성공');
+  } else {
+    console.warn('⚠️ [documents.js] Supabase 환경변수 누락:', {
+      hasUrl: !!supabaseUrl,
+      hasServiceKey: !!supabaseServiceKey
+    });
+  }
+} catch (error) {
+  console.error('❌ [documents.js] Supabase 클라이언트 초기화 실패:', error.message);
+  supabase = null;
+}
 
 module.exports = async function handler(req, res) {
   // CORS 헤더 설정
@@ -30,6 +45,11 @@ module.exports = async function handler(req, res) {
   try {
     console.log('=== KIPRIS API 문서 다운로드 요청 시작 ===');
     console.log('Query parameters:', req.query);
+    
+    // Supabase 연결 상태 확인 (경고만 출력, 계속 진행)
+    if (!supabase) {
+      console.warn('⚠️ Supabase 연결이 없어 활동 로깅을 건너뜁니다.');
+    }
 
     // 환경변수에서 KIPRIS API 키 가져오기
     const kiprisApiKey = process.env.KIPRIS_API_KEY;
@@ -157,7 +177,7 @@ module.exports = async function handler(req, res) {
     }
     
     // 활동 로깅: 문서 다운로드
-    if (userId) {
+    if (userId && supabase) {
       try {
         await supabase.from('user_activities').insert({
           user_id: userId,

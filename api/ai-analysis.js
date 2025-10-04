@@ -82,7 +82,6 @@ module.exports = async function handler(req, res) {
     let analysisText;
     let lastError;
     const maxRetries = 3;
-    const isVercel = !!process.env.VERCEL;
     // Vercel 환경에서는 더 긴 재시도 간격 사용
     const retryDelay = isVercel ? 3000 : 2000;
     

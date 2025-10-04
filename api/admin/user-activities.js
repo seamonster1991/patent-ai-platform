@@ -1,9 +1,24 @@
 const { createClient } = require('@supabase/supabase-js');
 
-// Supabase 클라이언트 초기화
-const supabaseUrl = process.env.SUPABASE_URL;
+// Supabase 클라이언트 초기화 (안전한 초기화)
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+let supabase = null;
+
+try {
+  if (supabaseUrl && supabaseServiceKey) {
+    supabase = createClient(supabaseUrl, supabaseServiceKey);
+    console.log('✅ [user-activities.js] Supabase 클라이언트 초기화 성공');
+  } else {
+    console.warn('⚠️ [user-activities.js] Supabase 환경변수 누락:', {
+      hasUrl: !!supabaseUrl,
+      hasServiceKey: !!supabaseServiceKey
+    });
+  }
+} catch (error) {
+  console.error('❌ [user-activities.js] Supabase 클라이언트 초기화 실패:', error.message);
+  supabase = null;
+}
 
 module.exports = async function handler(req, res) {
   // CORS 헤더 설정
@@ -27,6 +42,16 @@ module.exports = async function handler(req, res) {
 
   try {
     console.log('=== 관리자 전체 통계 조회 요청 ===');
+    
+    // Supabase 연결 확인
+    if (!supabase) {
+      console.error('❌ Supabase 클라이언트가 초기화되지 않음');
+      return res.status(500).json({
+        success: false,
+        error: 'Database connection error',
+        message: 'Database connection is not available'
+      });
+    }
     
     // 쿼리 파라미터에서 기간 설정
     const { period = '30', limit = '100' } = req.query;

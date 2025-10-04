@@ -380,6 +380,8 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
   // 검색 상태 저장 기능
   saveSearchState: () => {
+    if (typeof window === 'undefined') return
+    
     const { filters, results, totalCount, currentPage } = get()
     const searchState = {
       filters,
@@ -398,6 +400,8 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
   // 검색 상태 복원 기능
   loadSearchState: () => {
+    if (typeof window === 'undefined') return false
+    
     try {
       const savedState = localStorage.getItem('patent_search_state')
       if (savedState) {
@@ -426,6 +430,8 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
   // 저장된 검색 상태 삭제
   clearSavedState: () => {
+    if (typeof window === 'undefined') return
+    
     try {
       localStorage.removeItem('patent_search_state')
     } catch (error) {

@@ -1,13 +1,24 @@
 const { createClient } = require('@supabase/supabase-js')
 
-const supabaseUrl = process.env.SUPABASE_URL
-const supabaseKey = process.env.SUPABASE_ANON_KEY
+// Supabase 클라이언트 초기화 (안전한 초기화)
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
+let supabase = null
 
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Supabase URL과 Key가 설정되지 않았습니다.')
+try {
+  if (supabaseUrl && supabaseKey) {
+    supabase = createClient(supabaseUrl, supabaseKey)
+    console.log('✅ [search-history.js] Supabase 클라이언트 초기화 성공')
+  } else {
+    console.warn('⚠️ [search-history.js] Supabase 환경변수 누락:', {
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseKey
+    })
+  }
+} catch (error) {
+  console.error('❌ [search-history.js] Supabase 클라이언트 초기화 실패:', error.message)
+  supabase = null
 }
-
-const supabase = createClient(supabaseUrl, supabaseKey)
 
 module.exports = async function handler(req, res) {
   // CORS 헤더 설정
@@ -20,6 +31,16 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    // Supabase 연결 확인
+    if (!supabase) {
+      console.error('❌ Supabase 클라이언트가 초기화되지 않음')
+      return res.status(500).json({
+        success: false,
+        error: 'Database connection error',
+        message: 'Database connection is not available'
+      })
+    }
+
     if (req.method === 'POST') {
       // 검색 기록 저장
       const { user_id, keyword, filters, results_count } = req.body

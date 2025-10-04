@@ -87,12 +87,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   if (timeoutReached || (initialized && !loading && hasCheckedSession && !user)) {
     console.warn('[ProtectedRoute] 인증되지 않음. 로그인으로 리다이렉트:', location.pathname);
     
-    // 추가 안전장치: 너무 빠른 연속 리다이렉트 방지
-    const now = Date.now();
-    if (now - lastRedirectAttempt < 1000) {
-      console.error('[ProtectedRoute] 너무 빠른 연속 리다이렉트 시도 차단');
-      setRedirectBlocked(true);
-      return <LoadingPage />
+    // 추가 안전장치: 너무 빠른 연속 리다이렉트 방지 - 클라이언트 사이드에서만 실행
+    if (typeof window !== 'undefined') {
+      const now = Date.now();
+      if (now - lastRedirectAttempt < 1000) {
+        console.error('[ProtectedRoute] 너무 빠른 연속 리다이렉트 시도 차단');
+        setRedirectBlocked(true);
+        return <LoadingPage />
+      }
     }
     
     // 이미 블록된 상태라면 로딩 페이지 유지
@@ -101,8 +103,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       return <LoadingPage />
     }
     
-    // 리다이렉트 가드 확인
-    if (redirectGuard.canRedirect('/login', 'ProtectedRoute')) {
+    // 리다이렉트 가드 확인 - 클라이언트 사이드에서만 실행
+    if (typeof window !== 'undefined' && redirectGuard.canRedirect('/login', 'ProtectedRoute')) {
+      const now = Date.now();
       setLastRedirectAttempt(now);
       redirectGuard.recordRedirect('/login', 'ProtectedRoute');
       return <Navigate to="/login" replace state={{ from: location }} />

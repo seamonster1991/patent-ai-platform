@@ -10,6 +10,11 @@ class RedirectGuard {
   private blockUntil = 0;
 
   canRedirect(path: string, source: string = 'unknown'): boolean {
+    // 클라이언트 사이드에서만 실행
+    if (typeof window === 'undefined') {
+      return true; // 서버 사이드에서는 항상 허용
+    }
+    
     const now = Date.now();
     
     // 전역 블록 상태 확인
@@ -57,6 +62,11 @@ class RedirectGuard {
   }
 
   recordRedirect(path: string, source: string = 'unknown'): void {
+    // 클라이언트 사이드에서만 실행
+    if (typeof window === 'undefined') {
+      return;
+    }
+    
     const now = Date.now();
     const count = this.redirectCount.get(path) || 0;
     
@@ -67,6 +77,11 @@ class RedirectGuard {
   }
 
   block(duration: number): void {
+    // 클라이언트 사이드에서만 실행
+    if (typeof window === 'undefined') {
+      return;
+    }
+    
     this.isBlocked = true;
     this.blockUntil = Date.now() + duration;
     console.error(`[RedirectGuard] 전역 블록 활성화 - ${duration}ms 동안`);

@@ -16,6 +16,11 @@ class AuthGuard {
   }
 
   canAttemptLogin(): boolean {
+    // 클라이언트 사이드에서만 실행
+    if (typeof window === 'undefined') {
+      return true; // 서버 사이드에서는 항상 허용
+    }
+    
     const now = Date.now();
     
     // 리셋 간격이 지났으면 카운터 리셋
@@ -46,6 +51,11 @@ class AuthGuard {
   }
 
   startLogin(): void {
+    // 클라이언트 사이드에서만 실행
+    if (typeof window === 'undefined') {
+      return;
+    }
+    
     const now = Date.now();
     this.isLoginInProgress = true;
     this.lastLoginAttempt = now;

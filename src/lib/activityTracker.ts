@@ -54,7 +54,7 @@ export class ActivityTracker {
       keyword,
       filters,
       results_count: resultsCount,
-      timestamp: new Date().toISOString()
+      timestamp: typeof window !== 'undefined' ? new Date().toISOString() : new Date().toISOString()
     })
   }
 
@@ -63,7 +63,7 @@ export class ActivityTracker {
     await this.trackActivity('patent_view', {
       application_number: applicationNumber,
       patent_title: patentTitle,
-      timestamp: new Date().toISOString()
+      timestamp: typeof window !== 'undefined' ? new Date().toISOString() : new Date().toISOString()
     })
   }
 
@@ -72,7 +72,7 @@ export class ActivityTracker {
     await this.trackActivity('ai_analysis', {
       application_number: applicationNumber,
       analysis_type: analysisType,
-      timestamp: new Date().toISOString()
+      timestamp: typeof window !== 'undefined' ? new Date().toISOString() : new Date().toISOString()
     })
   }
 
@@ -81,34 +81,34 @@ export class ActivityTracker {
     await this.trackActivity('document_download', {
       application_number: applicationNumber,
       document_type: documentType,
-      timestamp: new Date().toISOString()
+      timestamp: typeof window !== 'undefined' ? new Date().toISOString() : new Date().toISOString()
     })
   }
 
   // 로그인 추적
   public async trackUserLogin() {
     await this.trackActivity('login', {
-      timestamp: new Date().toISOString()
+      timestamp: typeof window !== 'undefined' ? new Date().toISOString() : new Date().toISOString()
     })
   }
 
   // 로그아웃 추적
   public async trackUserLogout() {
     await this.trackActivity('logout', {
-      timestamp: new Date().toISOString()
+      timestamp: typeof window !== 'undefined' ? new Date().toISOString() : new Date().toISOString()
     })
   }
 
   public async trackLogin(data: Record<string, any>) {
     await this.trackActivity('login', {
-      timestamp: new Date().toISOString(),
+      timestamp: typeof window !== 'undefined' ? new Date().toISOString() : new Date().toISOString(),
       ...data
     })
   }
 
   public async trackLogout(data: Record<string, any>) {
     await this.trackActivity('logout', {
-      timestamp: new Date().toISOString(),
+      timestamp: typeof window !== 'undefined' ? new Date().toISOString() : new Date().toISOString(),
       ...data
     })
   }
@@ -117,7 +117,7 @@ export class ActivityTracker {
     await this.trackActivity('document_download', {
       applicationNumber,
       reportType,
-      timestamp: new Date().toISOString(),
+      timestamp: typeof window !== 'undefined' ? new Date().toISOString() : new Date().toISOString(),
       ...data
     })
   }
@@ -125,7 +125,7 @@ export class ActivityTracker {
   public async trackProfileUpdate(data: Record<string, any>) {
     await this.trackActivity('login', {
       action: 'profile_update',
-      timestamp: new Date().toISOString(),
+      timestamp: typeof window !== 'undefined' ? new Date().toISOString() : new Date().toISOString(),
       ...data
     })
   }
@@ -140,7 +140,7 @@ export class ActivityTracker {
         .from('user_activities')
         .select('*')
         .eq('user_id', userId)
-        .gte('created_at', startDate.toISOString())
+        .gte('created_at', typeof window !== 'undefined' ? startDate.toISOString() : startDate.toISOString())
         .order('created_at', { ascending: false })
 
       if (error) {

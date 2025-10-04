@@ -267,7 +267,7 @@ export default function MarketAnalysisReport({
         reportType: 'market_analysis',
         reportName: '시장 분석 리포트',
         sections: sections,
-        generatedAt: new Date().toISOString()
+        generatedAt: typeof window !== 'undefined' ? new Date().toISOString() : ''
       }
       
       setReportData(newReportData)
