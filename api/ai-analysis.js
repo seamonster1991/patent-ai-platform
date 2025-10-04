@@ -93,9 +93,10 @@ module.exports = async function handler(req, res) {
     
     let analysisText;
     let lastError;
-    const maxRetries = 3;
-    // Vercel 환경에서는 더 긴 재시도 간격 사용
-    const retryDelay = isVercel ? 3000 : 2000;
+    // Vercel 환경에서는 재시도 횟수 줄이기
+    const maxRetries = isVercel ? 1 : 3;
+    // Vercel 환경에서는 재시도 간격 단축
+    const retryDelay = isVercel ? 1000 : 2000;
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -124,13 +125,15 @@ module.exports = async function handler(req, res) {
            }, 10000); // 10초마다 진행 상황 로그
            
            try {
+             // Vercel 환경에서는 더 빠른 응답을 위해 설정 최적화
+             const isVercel = !!process.env.VERCEL;
              const result = await model.generateContent({
               contents: [{ role: "user", parts: [{ text: prompt }] }],
               generationConfig: {
-                  temperature: 0.7,
-                  topK: 40,
-                  topP: 0.95,
-                  maxOutputTokens: 8192,
+                  temperature: isVercel ? 0.3 : 0.7,  // Vercel에서는 더 결정적인 응답
+                  topK: isVercel ? 20 : 40,           // 더 적은 토큰 고려
+                  topP: isVercel ? 0.8 : 0.95,        // 더 집중된 응답
+                  maxOutputTokens: isVercel ? 2048 : 8192,  // Vercel에서는 더 짧은 응답
               },
              });
              
@@ -346,10 +349,10 @@ function getTimeoutMs(attempt) {
   console.log(`🔧 getTimeoutMs 호출: attempt=${attempt}, isVercel=${isVercel}`);
   
   if (isVercel) {
-    // Vercel 함수 제한: 280초로 안전 마진 확보 (300초 - 20초 여유)
-    const base = 280000; // 280초
+    // Vercel 무료 플랜 제한: 10초로 안전 마진 확보 (10초 - 2초 여유)
+    const base = 8000; // 8초
     const step = 0; // 재시도 시에도 동일한 타임아웃 유지
-    const result = Math.min(base + (attempt - 1) * step, 280000); // 최대 280초
+    const result = Math.min(base + (attempt - 1) * step, 8000); // 최대 8초
     console.log(`🔧 Vercel 환경 타임아웃: ${result}ms (${result/1000}초)`);
     return result;
   } else {
