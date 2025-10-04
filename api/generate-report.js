@@ -60,7 +60,8 @@ module.exports = async function handler(req, res) {
 
     // 서버리스 환경(Vercel 등) 고려한 타임아웃 설정 - 비즈니스 리포트는 더 긴 시간 필요
     const isVercel = !!process.env.VERCEL;
-    const TIMEOUT_MS = reportType === 'business' ? 60000 : (isVercel ? 25000 : 60000);
+    // 시간 제한 완화: 시장/비즈니스 모두 60초로 통일 (서버리스 환경에서는 실제 제한이 더 짧을 수 있음)
+    const TIMEOUT_MS = 60000;
     
     // 요청 데이터 검증
     const { patentData, reportType, userId } = req.body;
@@ -112,7 +113,7 @@ module.exports = async function handler(req, res) {
 
     // AI 분석 실행 (검색 API 패턴 적용) - 비즈니스 리포트는 더 많은 재시도
     console.log('AI analysis starting...');
-    const maxRetries = reportType === 'business' ? 3 : (isVercel ? 2 : 3);
+    const maxRetries = 3; // 모든 리포트 타입에서 3회 재시도
     
     let analysisText;
     let lastError;
@@ -265,7 +266,7 @@ module.exports = async function handler(req, res) {
       statusCode = 408;
       const isVercel = !!process.env.VERCEL;
       if (isVercel) {
-        errorMessage = `리포트 생성이 시간 초과되었습니다 (25초 제한).
+        errorMessage = `리포트 생성이 시간 초과되었습니다 (서버리스 실행 제한).
 
 해결 방법:
 • 페이지를 새로고침 후 재시도해주세요
@@ -273,7 +274,7 @@ module.exports = async function handler(req, res) {
 • 네트워크 상태를 확인해주세요
 • 문제가 지속되면 관리자에게 문의해주세요
 
-기술적 정보: 서버리스 환경에서 복잡한 특허 분석에 시간이 오래 걸릴 수 있습니다.`;
+기술적 정보: 서버리스 환경에서 복잡한 특허 분석은 실행 시간 제한에 걸릴 수 있습니다.`;
       } else {
         errorMessage = 'AI 분석 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.';
       }
@@ -462,6 +463,21 @@ TAM(Total Addressable Market) 규모를 5년 전망으로 추정하고, 주요 �
 #### 4.2.3. 신사업 기회 발굴 및 포트폴리오 확장
 본 특허 기술을 활용한 고부가가치 제품 및 서비스 포트폴리오를 제안합니다. 시장 메가트렌드와 기술적 차별화 요소를 기반으로 프리미엄 제품군과 구독 기반 서비스 모델을 설계하여 지속 가능한 성장 동력을 확보합니다.
 
+#### 4.2.4. 구체적인 신사업 제안 (최소 3개)
+각 제안에 대해 다음 항목을 포함하세요: 목표 고객 세그먼트, 제공 가치(정량 지표 포함), 예상 가격/ARPU, 연간 매출 잠재력(억원/백만 USD), 마진 구조, 채널 전략(B2B/B2G/B2C), 초기 실행 리소스 및 파트너.
+예시 형식:
+- **제안 A: [제품/서비스명]**
+  - 대상: [산업/고객]
+  - 제공 가치: [효율 개선 %, 비용 절감 %, 성능 향상 %]
+  - 가격/ARPU: [숫자]
+  - 연매출 잠재력(3년): [숫자]
+  - 마진/수익 모델: [라이선스/구독/하드웨어+서비스]
+  - 채널/파트너: [주요 파트너/총판]
+
+#### 4.2.5. 최적의 수익 창출 경로 (단계별 로드맵)
+직접 사업화 vs 라이선싱의 ROI 비교표를 제시하고, 0-6개월/6-12개월/12-36개월 단계별 KPI와 재무 목표를 제시합니다. 각 단계에 필요한 인력/CapEx/Opex와 리스크 완화 활동을 포함하세요.
+예시 KPI: 초기 PoC 수, 파일럿 계약 수, 연간 MRR/라이선스 수익, 고객 유지율, 파트너 확장 수.
+
 ### 4.3. 실행 전략 및 리스크 관리 프레임워크
 #### 4.3.1. 우선순위 액션 플랜 및 실행 로드맵
 6개월, 1년, 3년 단위의 구체적 실행 계획을 수립하고, 각 단계별 필요 투자 규모와 자원 배분 전략을 제시합니다. 핵심 성과 지표(KPI)를 설정하여 진행 상황을 모니터링하고 성과를 측정할 수 있는 체계를 구축합니다.
@@ -481,14 +497,16 @@ DCF(현금흐름할인) 모델을 기반으로 본 특허 기술의 경제적 �
 
 #### 4.4.3. M&A 가치 및 전략적 옵션 평가
 본 특허 기술이 M&A 시장에서 갖는 프리미엄 가치를 평가하고, 전략적 인수 후보군을 식별합니다. 기술 매각, 라이선싱, 조인트벤처 등 다양한 전략적 옵션의 장단점을 비교 분석하여 최적의 Exit 전략을 제안합니다.
+#### 4.4.4. 재무 모델 스냅샷 (시나리오별)
+보수/기본/낙관 3개 시나리오에 대해 연매출, 영업이익, FCF, ROI, 회수기간, 기술 가치(DCF/로열티) 범위를 표 또는 리스트로 요약합니다.
 `;
 
   // 리포트 타입에 따라 강조 섹션을 달리하되 동일한 엄격한 구조/톤을 유지
   if (reportType === 'market') {
-    return `${roleConstraints}\n${baseInfo}\n${part1TechMarket}\n${part2BizStrategy}\n### 출력 지시\n#### 형식 준수\n- 위 구조를 그대로 따르고, 모든 **####** 아래는 규칙을 준수하여 간결하게 작성`;
+    return `${roleConstraints}\n${baseInfo}\n${part1TechMarket}\n${part2BizStrategy}\n### 출력 지시\n#### 형식 준수\n- 위 구조를 그대로 따르고, 모든 **####** 하위 항목을 **충분히 상세하게 작성** (최소 2-3문장, 정량 수치와 구체적 사례 포함).`;
   }
   // business
-  return `${roleConstraints}\n${baseInfo}\n${part2BizStrategy}\n${part1TechMarket}\n### 출력 지시\n#### 형식 준수\n- 위 구조를 그대로 따르고, 모든 **####** 아래는 규칙을 준수하여 간결하게 작성`;
+  return `${roleConstraints}\n${baseInfo}\n${part2BizStrategy}\n${part1TechMarket}\n### 출력 지시\n#### 형식 준수\n- 위 구조를 그대로 따르고, 모든 **####** 하위 항목을 **충분히 상세하게 작성** (최소 2-3문장, 정량 수치와 구체적 사례 포함).`;
 }
 
 // AI 응답을 구조화된 형태로 파싱 - 강화된 검증 및 파싱

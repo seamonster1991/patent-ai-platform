@@ -222,57 +222,74 @@ const parseComplexContent = (data: any): ReportSection[] => {
   return [{ title: '분석 결과 없음', content: '분석 데이터를 불러올 수 없습니다.' }]
 }
 
-// 콘텐츠 렌더링 함수 (미니멀/고급스러움 강조)
+// 콘텐츠 렌더링 함수 (마크다운 리스트/강조를 보존하여 가독성 향상)
 const renderContent = (content: string) => {
-  // 이모지, 불릿, 숫자, 기호 제거 함수
-  const cleanText = (text: string) => {
-    return text
-      .replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '') // 이모지 제거
-      .replace(/#{1,6}\s*/g, '') // 마크다운 헤더 기호 제거
-      .replace(/`([^`]+)`/g, '$1') // 코드 블록 기호 제거
-      .replace(/\[.*?\]/gi, '') // 플레이스홀더 제거
-      .replace(/^[\s]*[-•*]\s*/gm, '') // 라인 시작 불릿 제거
-      .replace(/^\s*[0-9]+\.\s*/gm, '') // 라인 시작 숫자 목록 제거
-      .replace(/\s+/g, ' ') // 연속 공백 정리
-      .trim()
+  let processed = parseMarkdownTable(content)
+  if (processed.includes('<table')) {
+    return <div dangerouslySetInnerHTML={{ __html: processed }} />
   }
-  
-  // 마크다운 테이블 처리
-  let processedContent = parseMarkdownTable(content)
-  
-  if (processedContent.includes('<table')) {
-    return <div dangerouslySetInnerHTML={{ __html: processedContent }} />
-  }
-  
-  // 텍스트 정리
-  processedContent = cleanText(processedContent)
-  
-  const paragraphs = processedContent.split('\n')
-    .map(p => p.trim())
-    .filter(p => p.length > 5) // 짧은 줄 제거
 
-  return (
-    <div className="space-y-3">
-      {paragraphs.map((paragraph, pIndex) => {
-        // '---' 구분선 처리
-        if (paragraph.trim() === '---') {
-          return <div key={pIndex} className="my-5 border-t border-ms-line/50" />
-        }
-        
-        // 볼드체 강조 (모든 볼드체는 전문 용어로 간주하고 텍스트 색상을 다르게 처리)
-        const processedParagraph = paragraph.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-ms-text/90">$1</strong>')
-        
-        // 단답형 구조를 위해 <p> 태그 사용
-        return (
-          <p 
-            key={pIndex} 
-            className="text-sm leading-relaxed text-gray-700 font-medium" // 미니멀 디자인 폰트 강조
-            dangerouslySetInnerHTML={{ __html: processedParagraph }}
-          />
-        )
-      })}
-    </div>
-  )
+  const toHtml = (text: string) => text
+    .replace(/#{1,6}\s*/g, '')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-ms-text/90">$1</strong>')
+    .trim()
+
+  const lines = processed.split('\n').map(l => l.trim()).filter(Boolean)
+  const elements: React.ReactNode[] = []
+  let ul: string[] = []
+  let ol: string[] = []
+
+  const flush = () => {
+    if (ul.length) {
+      elements.push(
+        <ul className="list-disc ml-6 space-y-1">
+          {ul.map((item, i) => (
+            <li key={`ul-${i}`} className="text-sm leading-relaxed text-gray-700 font-medium" dangerouslySetInnerHTML={{ __html: toHtml(item) }} />
+          ))}
+        </ul>
+      )
+      ul = []
+    }
+    if (ol.length) {
+      elements.push(
+        <ol className="list-decimal ml-6 space-y-1">
+          {ol.map((item, i) => (
+            <li key={`ol-${i}`} className="text-sm leading-relaxed text-gray-700 font-medium" dangerouslySetInnerHTML={{ __html: toHtml(item) }} />
+          ))}
+        </ol>
+      )
+      ol = []
+    }
+  }
+
+  for (const line of lines) {
+    if (/^[-•*]\s+/.test(line)) { // 불릿 리스트
+      ol.length && flush()
+      ul.push(line.replace(/^[-•*]\s+/, ''))
+      continue
+    }
+    if (/^\d+\.\s+/.test(line)) { // 번호 매긴 리스트
+      ul.length && flush()
+      ol.push(line.replace(/^\d+\.\s+/, ''))
+      continue
+    }
+    if (line === '---') { // 구분선
+      flush()
+      elements.push(<div key={`divider-${elements.length}`} className="my-5 border-t border-ms-line/50" />)
+      continue
+    }
+    // 일반 문단
+    if (line.length > 3) {
+      flush()
+      elements.push(
+        <p key={`p-${elements.length}`} className="text-sm leading-relaxed text-gray-700 font-medium" dangerouslySetInnerHTML={{ __html: toHtml(line) }} />
+      )
+    }
+  }
+  flush()
+
+  return <div className="space-y-3">{elements}</div>
 }
 
 // 섹션 컴포넌트
