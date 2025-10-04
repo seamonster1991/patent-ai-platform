@@ -317,16 +317,22 @@ module.exports = async function handler(req, res) {
 // 환경/플랫폼에 맞춘 타임아웃 계산
 function getTimeoutMs(attempt) {
   const isVercel = !!process.env.VERCEL;
+  console.log(`🔧 getTimeoutMs 호출: attempt=${attempt}, isVercel=${isVercel}`);
+  
   if (isVercel) {
     // Vercel 함수 제한: 280초로 안전 마진 확보 (300초 - 20초 여유)
     const base = 280000; // 280초
     const step = 0; // 재시도 시에도 동일한 타임아웃 유지
-    return Math.min(base + (attempt - 1) * step, 280000); // 최대 280초
+    const result = Math.min(base + (attempt - 1) * step, 280000); // 최대 280초
+    console.log(`🔧 Vercel 환경 타임아웃: ${result}ms (${result/1000}초)`);
+    return result;
   } else {
     // 로컬 환경에서는 기존 설정 유지
     const base = Number(process.env.ANALYSIS_TIMEOUT_MS) || 300000;
     const step = Number(process.env.ANALYSIS_TIMEOUT_STEP_MS) || 30000;
-    return base + (attempt - 1) * step;
+    const result = base + (attempt - 1) * step;
+    console.log(`🔧 로컬 환경 타임아웃: ${result}ms (${result/1000}초)`);
+    return result;
   }
 }
 
