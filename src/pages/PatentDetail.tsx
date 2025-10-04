@@ -194,7 +194,7 @@ export default function PatentDetail() {
         controller.abort()
       }, timeoutMs)
 
-      const response = await fetch('/api/ai-analysis', {
+      const response = await fetch('/api/ai-analysis-v2', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

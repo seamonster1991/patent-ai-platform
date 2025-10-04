@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 // API Routes
 app.use('/api/search', require('./api/search.js'));
 app.use('/api/detail', require('./api/detail.js'));
-app.use('/api/ai-analysis', require('./api/ai-analysis.js'));
+app.use('/api/ai-analysis-v2', require('./api/ai-analysis-v2.js'));
 app.use('/api/generate-report', require('./api/generate-report.js'));
 app.use('/api/documents', require('./api/documents.js'));
 
@@ -73,7 +73,7 @@ app.listen(PORT, () => {
   console.log(`   GET  /health`);
   console.log(`   POST /api/search`);
   console.log(`   POST /api/detail`);
-  console.log(`   POST /api/ai-analysis`);
+  console.log(`   POST /api/ai-analysis-v2`);
   console.log(`   POST /api/generate-report`);
   console.log(`   POST /api/documents`);
   console.log(`   GET  /api/users/stats/:userId`);
