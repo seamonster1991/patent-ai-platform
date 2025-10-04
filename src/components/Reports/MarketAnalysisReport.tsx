@@ -285,7 +285,7 @@ export default function MarketAnalysisReport({
     setError('')
 
     try {
-      const response = await fetch('/api/ai-analysis-v2', {
+      const response = await fetch('/api/ai-analysis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ patentData: patent, analysisType: 'market_analysis' }),

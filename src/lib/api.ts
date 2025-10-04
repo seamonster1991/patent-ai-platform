@@ -175,7 +175,7 @@ export async function getPatentDetail(applicationNumber: string): Promise<ApiRes
 export async function requestAiAnalysis(patentData: any, analysisType: string): Promise<ApiResponse> {
   console.log('🤖 [API] AI 분석 요청:', { analysisType });
   
-  return apiPost('/api/ai-analysis-v2', { patentData, analysisType }, {
+  return apiPost('/api/ai-analysis', { patentData, analysisType }, {
     timeout: 300000, // AI 분석은 시간이 오래 걸림 (5분)
     retries: 1,
     retryDelay: 3000,

@@ -26,7 +26,7 @@ async function testAiAnalysisAPI() {
       controller.abort();
     }, 60000); // 60초 타임아웃
 
-    const response = await fetch('https://p-ai-seongwankim-1691-re-chip.vercel.app/api/ai-analysis-v2', {
+    const response = await fetch('https://p-ai-seongwankim-1691-re-chip.vercel.app/api/ai-analysis', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

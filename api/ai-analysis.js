@@ -9,9 +9,16 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
-  // 버전 정보 추가 (디버깅용)
-  console.log('🚀 AI Analysis API v2.1 - 2025-10-04 14:43 KST');
+  // 캐시 무효화 헤더 추가
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  
+  // 버전 정보 추가 (디버깅용) - 강제 캐시 무효화
+  const version = '2.2-CACHE-BUST-' + Date.now();
+  console.log('🚀 AI Analysis API v' + version);
   console.log('🔧 Environment:', process.env.VERCEL ? 'Vercel' : 'Local');
+  console.log('🕒 Timestamp:', new Date().toISOString());
   
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
