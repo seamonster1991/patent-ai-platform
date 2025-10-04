@@ -208,7 +208,15 @@ module.exports = async function handler(req, res) {
     console.log('🔄 파싱 시작 - AI 응답 길이:', analysisText?.length || 0);
     console.log('🔄 파싱 시작 - 분석 타입:', analysisType);
     
-    const structuredAnalysis = parseAnalysisResult(analysisText, analysisType);
+    let structuredAnalysis;
+    try {
+      structuredAnalysis = parseAnalysisResult(analysisText, analysisType);
+    } catch (parseError) {
+      console.error('❌ 파싱 중 오류 발생:', parseError);
+      console.error('❌ 파싱 오류 스택:', parseError.stack);
+      console.error('❌ AI 응답 샘플 (처음 500자):', analysisText?.substring(0, 500));
+      throw new Error(`AI 응답 파싱 실패: ${parseError.message}`);
+    }
     
     console.log('✅ 파싱 완료 - 생성된 섹션 수:', structuredAnalysis?.sections?.length || 0);
     console.log('📊 파싱 결과 미리보기:', {
