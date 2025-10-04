@@ -490,7 +490,7 @@ export default function PatentDetail() {
         {/* Tabs */}
         <div className="mb-6">
           <div className="border-b border-gray-200 dark:border-gray-700">
-            <nav className="-mb-px flex space-x-8 overflow-x-auto">
+            <nav className="-mb-px flex flex-wrap gap-x-8 gap-y-2">
               {tabs.map((tab) => {
                 const Icon = tab.icon
                 return (
@@ -505,6 +505,10 @@ export default function PatentDetail() {
                       activeTab === tab.id
                         ? 'border-ms-olive text-ms-olive'
                         : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                    } ${
+                      (tab.id === 'market-analysis' || tab.id === 'business-insights')
+                        ? 'border-2 border-red-500 rounded-md'
+                        : ''
                     }`}
                   >
                     <Icon className="w-4 h-4" />
