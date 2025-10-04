@@ -182,7 +182,7 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
       // 시스템 상태 구성
       const systemHealth: SystemHealth = {
         status: dbError ? 'critical' : dbResponseTime > 1000 ? 'warning' : 'healthy',
-        overallStatus: dbError ? 'critical' : dbResponseTime > 1000 ? 'warning' : 'healthy',
+        overallStatus: dbError ? 'error' : dbResponseTime > 1000 ? 'warning' : 'healthy',
         uptime: Date.now() - (Math.random() * 86400000 * 7), // 임시 업타임
         activeUsers: activeConnections || 0,
         requestsPerMinute: requestsLastMinute || 0,
