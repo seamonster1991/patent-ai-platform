@@ -5,14 +5,6 @@
     "api/**/*.js": {
       "runtime": "@vercel/node@3.1.5",
       "maxDuration": 60
-    },
-    "api/generate-report.js": {
-      "runtime": "@vercel/node@3.1.5",
-      "maxDuration": 60
-    },
-    "api/ai-analysis.js": {
-      "runtime": "@vercel/node@3.1.5",
-      "maxDuration": 60
     }
   },
   "rewrites": [
