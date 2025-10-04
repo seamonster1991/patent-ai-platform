@@ -93,10 +93,10 @@ module.exports = async function handler(req, res) {
     
     let analysisText;
     let lastError;
-    // Vercel 환경에서는 재시도 횟수 줄이기
+    // Vercel 환경에서는 재시도 없이 한 번만 시도
     const maxRetries = isVercel ? 1 : 3;
-    // Vercel 환경에서는 재시도 간격 단축
-    const retryDelay = isVercel ? 1000 : 2000;
+    // Vercel 환경에서는 재시도 간격 없음
+    const retryDelay = isVercel ? 0 : 2000;
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -118,8 +118,8 @@ module.exports = async function handler(req, res) {
            console.log(`📝 프롬프트 길이: ${prompt.length}자`);
            const startTime = Date.now();
            
-           // 진행 상황 표시를 위한 중간 로그
-           const progressInterval = setInterval(() => {
+           // Vercel 환경에서는 진행 상황 로그 제거
+           const progressInterval = isVercel ? null : setInterval(() => {
              const elapsed = (Date.now() - startTime) / 1000;
              console.log(`⏳ AI 분석 진행 중... (경과 시간: ${elapsed.toFixed(1)}초)`);
            }, 10000); // 10초마다 진행 상황 로그
@@ -133,11 +133,11 @@ module.exports = async function handler(req, res) {
                   temperature: isVercel ? 0.2 : 0.7,  // Vercel에서는 더 결정적인 응답
                   topK: isVercel ? 10 : 40,           // 더 적은 토큰 고려
                   topP: isVercel ? 0.7 : 0.95,        // 더 집중된 응답
-                  maxOutputTokens: isVercel ? 1024 : 8192,  // Vercel에서는 더 짧은 응답 (1024로 단축)
+                  maxOutputTokens: isVercel ? 512 : 8192,   // Vercel에서는 더 짧은 응답 (512로 단축)
               },
              });
              
-             clearInterval(progressInterval);
+             if (progressInterval) clearInterval(progressInterval);
              
              const response = await result.response;
              const text = response.text();
@@ -151,15 +151,16 @@ module.exports = async function handler(req, res) {
                 throw new Error('AI 응답이 너무 짧거나 비어있습니다.');
              }
              
-             // 전체 AI 응답을 로그로 출력 (디버깅용)
-             console.log('🔍 === AI 응답 전체 내용 (디버깅) ===');
-             console.log(text);
-             console.log('🔍 === AI 응답 끝 ===');
-             
-             console.log('📄 AI 응답 미리보기:', text.substring(0, 200) + '...');
+             // Vercel 환경에서는 로깅 최소화
+             if (!isVercel) {
+               console.log('🔍 === AI 응답 전체 내용 (디버깅) ===');
+               console.log(text);
+               console.log('🔍 === AI 응답 끝 ===');
+               console.log('📄 AI 응답 미리보기:', text.substring(0, 200) + '...');
+             }
              return text;
            } catch (error) {
-             clearInterval(progressInterval);
+             if (progressInterval) clearInterval(progressInterval);
              throw error;
            }
         })();
@@ -349,10 +350,10 @@ function getTimeoutMs(attempt) {
   console.log(`🔧 getTimeoutMs 호출: attempt=${attempt}, isVercel=${isVercel}`);
   
   if (isVercel) {
-    // Vercel 무료 플랜 제한: 10초로 더 안전한 마진 확보 (10초 - 4초 여유)
-    const base = 6000; // 6초로 단축
+    // Vercel 무료 플랜 제한: 10초로 더 안전한 마진 확보 (10초 - 2초 여유)
+    const base = 8000; // 8초로 증가
     const step = 0; // 재시도 시에도 동일한 타임아웃 유지
-    const result = Math.min(base + (attempt - 1) * step, 6000); // 최대 6초
+    const result = Math.min(base + (attempt - 1) * step, 8000); // 최대 8초
     console.log(`🔧 Vercel 환경 타임아웃: ${result}ms (${result/1000}초)`);
     return result;
   } else {
@@ -429,20 +430,15 @@ function generateAnalysisPrompt(patentInfo, analysisType) {
   const isVercel = !!process.env.VERCEL;
   
   if (isVercel) {
-    // Vercel 환경에서는 매우 간단한 프롬프트 사용
-    return `특허 분석 요청:
-
-출원번호: ${patentInfo.applicationNumber}
-발명명: ${patentInfo.inventionTitle}
+    // Vercel 환경에서는 극도로 간단한 프롬프트 사용 (토큰 최소화)
+    return `특허: ${patentInfo.inventionTitle}
 초록: ${patentInfo.abstract}
 청구항: ${patentInfo.claims}
 
 ${analysisType === 'market_analysis' ? 
-  '시장 분석 리포트를 작성해주세요. 기술 혁신성, 시장 규모, 경쟁 환경을 간단히 분석해주세요.' : 
-  '비즈니스 인사이트 리포트를 작성해주세요. 신사업 기회, 수익 모델, 리스크를 간단히 분석해주세요.'
-}
-
-마크다운 형식으로 간결하게 작성해주세요.`;
+  '시장성과 기술혁신성을 3줄로 분석하세요.' : 
+  '사업기회와 수익모델을 3줄로 분석하세요.'
+}`;
   }
 
   // 로컬 환경에서는 기존의 상세한 프롬프트 유지
