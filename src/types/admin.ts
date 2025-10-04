@@ -85,6 +85,17 @@ export interface AdminUser {
   isActive: boolean;
 }
 
+export interface BillingEvent {
+  id: string;
+  event_type: string;
+  subscription_tier?: string;
+  amount?: number;
+  currency?: string;
+  payment_method?: string;
+  processed_at: string;
+  event_data?: Record<string, any>;
+}
+
 export interface UserManagementData {
   users: Array<{
     id: string;
@@ -92,15 +103,41 @@ export interface UserManagementData {
     name?: string;
     company?: string;
     phone?: string;
+    bio?: string;
+    role?: string;
+    subscriptionPlan?: string;
+    usageCount?: number;
     createdAt: string;
+    updatedAt?: string;
     lastLogin?: string;
     isActive: boolean;
     reportCount: number;
     searchCount: number;
+    downloadCount?: number;
+    activityCount?: number;
+    totalPayments?: number;
+    billingHistory?: BillingEvent[];
+    currentSubscription?: string;
+    metadata?: {
+      loginCount: number;
+      lastActivity?: string;
+      joinedDaysAgo: number;
+    };
   }>;
   totalUsers: number;
   activeUsers: number;
+  premiumUsers?: number;
   newUsersThisMonth: number;
+  totalRevenue?: number;
+  stats?: {
+    totalUsers: number;
+    activeUsers: number;
+    premiumUsers: number;
+    newUsersThisMonth: number;
+    totalRevenue: number;
+    averageReportsPerUser: number;
+    averageSearchesPerUser: number;
+  };
 }
 
 export interface ReportManagementData {
@@ -110,7 +147,12 @@ export interface ReportManagementData {
     type: string;
     userId: string;
     user_email?: string;
+    user_name?: string;
     createdAt: string;
+    generated_at?: string;
+    applicationNumber?: string;
+    qualityRating?: number;
+    reportData?: any;
     created_at: string;
     status: 'completed' | 'processing' | 'failed' | 'pending';
     fileSize?: number;
@@ -121,28 +163,107 @@ export interface ReportManagementData {
   processingReports: number;
   failedReports: number;
   reportsThisMonth: number;
+  reportsLastMonth?: number;
   totalFileSize: number;
+  totalDownloads?: number;
+  averageQuality?: number;
+  typeStats?: Record<string, number>;
+  userStats?: Record<string, {
+    userId: string;
+    userEmail: string;
+    userName: string;
+    reportCount: number;
+    totalDownloads: number;
+    averageQuality: number;
+  }>;
 }
 
 export interface SystemMetrics {
-  realtime: {
+  realTime: {
     activeConnections: number;
     requestsPerMinute: number;
-    errorRate: number;
-    averageResponseTime: number;
+    errorsPerMinute: number;
+    activeUsers: number;
+    searchesPerMinute: number;
+    reportsPerMinute: number;
   };
-  daily: Array<{
-    date: string;
-    users: number;
-    searches: number;
-    reports: number;
-    errors: number;
-  }>;
-  weekly: Array<{
-    week: string;
-    users: number;
-    searches: number;
-    reports: number;
-    errors: number;
-  }>;
+  daily: {
+    totalRequests: number;
+    totalErrors: number;
+    totalUsers: number;
+    totalSearches: number;
+    totalReports: number;
+  };
+  weekly: {
+    totalRequests: number;
+    totalErrors: number;
+    totalUsers: number;
+    totalSearches: number;
+    totalReports: number;
+  };
+}
+
+// 대시보드 100일 데이터 타입들
+export interface DailyDataPoint {
+  date: string;
+  count: number;
+}
+
+export interface ActivityDataPoint {
+  type: string;
+  count: number;
+}
+
+export interface HourlyActivityPoint {
+  hour: number;
+  count: number;
+}
+
+export interface ActivityAnalysis {
+  byType: ActivityDataPoint[];
+  byHour: HourlyActivityPoint[];
+}
+
+export interface SystemMetricPoint {
+  date: string;
+  type: string;
+  name: string;
+  value: number;
+  unit: string;
+}
+
+export interface PopularKeyword {
+  keyword: string;
+  count: number;
+}
+
+export interface RevenueDataPoint {
+  date: string;
+  revenue: number;
+}
+
+export interface ReportTypeData {
+  type: string;
+  count: number;
+}
+
+export interface DashboardData {
+  dailySignups: DailyDataPoint[];
+  dailyReports: DailyDataPoint[];
+  dailySearches: DailyDataPoint[];
+  activityAnalysis: ActivityAnalysis;
+  systemMetrics: SystemMetricPoint[];
+  popularKeywords: PopularKeyword[];
+  revenueData: RevenueDataPoint[];
+  reportTypes: ReportTypeData[];
+  totalStats: {
+    totalUsers: number;
+    totalReports: number;
+    totalSearches: number;
+    totalRevenue: number;
+    averageDailyUsers: number;
+    averageDailyReports: number;
+    averageDailySearches: number;
+    averageDailyRevenue: number;
+  };
 }
