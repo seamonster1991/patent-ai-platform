@@ -45,6 +45,7 @@ import { useAuthStore } from '../store/authStore'
 import { ActivityTracker } from '../lib/activityTracker'
 import MarketAnalysisReport from '../components/Reports/MarketAnalysisReport'
 import BusinessInsightsReport from '../components/Reports/BusinessInsightsReport'
+import { generateDynamicReportPDF } from '../lib/pdfGenerator'
 
 
 export default function PatentDetail() {
@@ -267,88 +268,172 @@ export default function PatentDetail() {
   }
 
   const generateMarketAnalysisReport = async () => {
-    if (!patent || !aiAnalysis) {
-      toast.error('특허 정보와 AI 분석 결과가 필요합니다.')
+    if (!patent) {
+      toast.error('특허 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.')
       return
     }
 
     try {
       setPdfGenerating(prev => ({ ...prev, market: true }))
-      
-      const response = await fetch('/api/generate-pdf', {
+
+      const { user } = useAuthStore.getState()
+      const controller = new AbortController()
+      const timeoutMs = 60_000
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+      const response = await fetch('/api/generate-report', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          type: 'market-analysis',
-          patent,
-          analysis: aiAnalysis
-        })
+          patentData: patent,
+          reportType: 'market',
+          userId: user?.id || undefined
+        }),
+        signal: controller.signal
       })
 
+      clearTimeout(timeoutId)
+
       if (!response.ok) {
-        throw new Error('PDF 생성에 실패했습니다.')
+        const errText = await response.text()
+        let msg = `HTTP ${response.status}: ${response.statusText}`
+        try {
+          const errJson = JSON.parse(errText)
+          msg = errJson.message || errJson.error || msg
+        } catch {}
+        throw new Error(msg)
       }
 
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `시장분석_${patent.biblioSummaryInfo?.inventionTitle || 'patent'}.pdf`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-      
-      toast.success('시장 분석 PDF가 다운로드되었습니다.')
-    } catch (error) {
-      console.error('PDF 생성 오류:', error)
-      toast.error('PDF 생성에 실패했습니다.')
+      const data = await response.json()
+      if (!data?.success || !data?.data?.content) {
+        throw new Error(data?.message || '서버에서 시장 분석 결과를 받지 못했습니다.')
+      }
+
+      const structured = data.data.content
+
+      // UI 표시를 위해 aiAnalysis 형태로 동기화 (섹션 렌더링 호환)
+      setAiAnalysis(prev => ({
+        analysisType: 'market',
+        patentNumber: patent.biblioSummaryInfo?.applicationNumber || '',
+        patentTitle: patent.biblioSummaryInfo?.inventionTitle || '',
+        analysisDate: new Date().toISOString(),
+        rawAnalysis: Array.isArray(structured.sections)
+          ? structured.sections.map((s: any) => `### ${s.title}\n${s.content}`).join('\n\n')
+          : '',
+        analysis: {
+          summary: structured.summary || '요약 없음',
+          sections: (structured.sections || []).map((s: any) => ({
+            title: s.title,
+            content: s.content
+          })),
+          analysisType: 'market',
+          confidence: 0.85,
+          keyInsights: []
+        }
+      }))
+
+      // 클라이언트 측 PDF 생성
+      await generateDynamicReportPDF(patent, {
+        reportType: 'market-analysis',
+        sections: (structured.sections || []).map((s: any) => ({ title: s.title, content: s.content })),
+        summary: structured.summary || '요약 없음',
+        generatedAt: data.data.generatedAt || new Date().toISOString()
+      })
+
+      toast.success('시장 분석 PDF가 생성되었습니다.')
+    } catch (err: any) {
+      if (err?.name === 'AbortError') {
+        toast.error('시장 분석 생성이 시간 초과(60초)로 중단되었습니다.')
+      } else {
+        console.error('시장 분석 리포트 생성 오류:', err)
+        toast.error(`시장 분석 리포트 생성 실패: ${err.message}`)
+      }
     } finally {
       setPdfGenerating(prev => ({ ...prev, market: false }))
     }
   }
 
   const generateBusinessInsightReport = async () => {
-    if (!patent || !aiAnalysis) {
-      toast.error('특허 정보와 AI 분석 결과가 필요합니다.')
+    if (!patent) {
+      toast.error('특허 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.')
       return
     }
 
     try {
       setPdfGenerating(prev => ({ ...prev, business: true }))
-      
-      const response = await fetch('/api/generate-pdf', {
+
+      const { user } = useAuthStore.getState()
+      const controller = new AbortController()
+      const timeoutMs = 60_000
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+      const response = await fetch('/api/generate-report', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          type: 'business-insights',
-          patent,
-          analysis: aiAnalysis
-        })
+          patentData: patent,
+          reportType: 'business',
+          userId: user?.id || undefined
+        }),
+        signal: controller.signal
       })
 
+      clearTimeout(timeoutId)
+
       if (!response.ok) {
-        throw new Error('PDF 생성에 실패했습니다.')
+        const errText = await response.text()
+        let msg = `HTTP ${response.status}: ${response.statusText}`
+        try {
+          const errJson = JSON.parse(errText)
+          msg = errJson.message || errJson.error || msg
+        } catch {}
+        throw new Error(msg)
       }
 
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `비즈니스인사이트_${patent.biblioSummaryInfo?.inventionTitle || 'patent'}.pdf`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-      
-      toast.success('비즈니스 인사이트 PDF가 다운로드되었습니다.')
-    } catch (error) {
-      console.error('PDF 생성 오류:', error)
-      toast.error('PDF 생성에 실패했습니다.')
+      const data = await response.json()
+      if (!data?.success || !data?.data?.content) {
+        throw new Error(data?.message || '서버에서 비즈니스 인사이트 결과를 받지 못했습니다.')
+      }
+
+      const structured = data.data.content
+
+      // UI 표시를 위해 aiAnalysis 형태로 동기화 (섹션 렌더링 호환)
+      setAiAnalysis(prev => ({
+        analysisType: 'business',
+        patentNumber: patent.biblioSummaryInfo?.applicationNumber || '',
+        patentTitle: patent.biblioSummaryInfo?.inventionTitle || '',
+        analysisDate: new Date().toISOString(),
+        rawAnalysis: Array.isArray(structured.sections)
+          ? structured.sections.map((s: any) => `### ${s.title}\n${s.content}`).join('\n\n')
+          : '',
+        analysis: {
+          summary: structured.summary || '요약 없음',
+          sections: (structured.sections || []).map((s: any) => ({
+            title: s.title,
+            content: s.content
+          })),
+          analysisType: 'business',
+          confidence: 0.85,
+          keyInsights: []
+        }
+      }))
+
+      // 클라이언트 측 PDF 생성
+      await generateDynamicReportPDF(patent, {
+        reportType: 'business-insights',
+        sections: (structured.sections || []).map((s: any) => ({ title: s.title, content: s.content })),
+        summary: structured.summary || '요약 없음',
+        generatedAt: data.data.generatedAt || new Date().toISOString()
+      })
+
+      toast.success('비즈니스 인사이트 PDF가 생성되었습니다.')
+    } catch (err: any) {
+      if (err?.name === 'AbortError') {
+        toast.error('비즈니스 인사이트 생성이 시간 초과(60초)로 중단되었습니다.')
+      } else {
+        console.error('비즈니스 인사이트 리포트 생성 오류:', err)
+        toast.error(`비즈니스 인사이트 리포트 생성 실패: ${err.message}`)
+      }
     } finally {
       setPdfGenerating(prev => ({ ...prev, business: false }))
     }
@@ -509,18 +594,18 @@ export default function PatentDetail() {
           <Button 
             variant="outline" 
             onClick={handleBackToSearch}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 ms-olive-text ms-olive-hover"
           >
             <ArrowLeft className="w-4 h-4" />
             검색으로 돌아가기
           </Button>
           
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={handleShare}>
+            <Button variant="outline" onClick={handleShare} className="ms-olive-text ms-olive-hover">
               <Share2 className="w-4 h-4 mr-2" />
               공유
             </Button>
-            <Button variant="outline" onClick={handleBookmark}>
+            <Button variant="outline" onClick={handleBookmark} className="ms-olive-text ms-olive-hover">
               <Bookmark className="w-4 h-4 mr-2" />
               북마크
             </Button>
@@ -582,10 +667,10 @@ export default function PatentDetail() {
                       setActiveTab(tab.id)
                       setRenderedTabs(prev => new Set([...prev, tab.id]))
                     }}
-                    className={`flex items-center gap-2 py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                    className={`flex items-center gap-2 py-2 px-1 border-b-2 font-bold text-sm whitespace-nowrap ${
                       activeTab === tab.id
-                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                        ? 'border-ms-olive text-ms-olive'
+                        : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -1265,7 +1350,7 @@ function ImagesTab({ patent }: { patent: KiprisPatentDetailItem }) {
             )}
 
             {/* 도면 정보 테이블 */}
-            <div className="bg-secondary-50 dark:bg-secondary-800 p-4 rounded-lg">
+            <div className="bg-secondary-50 dark:bg-secondary-800 p-4 rounded-lg ms-line-frame">
               <h4 className="font-medium mb-3 text-secondary-900 dark:text-secondary-100">도면 정보</h4>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">

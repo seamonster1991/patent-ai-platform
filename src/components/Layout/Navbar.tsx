@@ -16,15 +16,15 @@ export default function Navbar() {
   // AuthStore가 초기화되지 않았으면 로딩 상태 표시
   if (!initialized) {
     return (
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-dark-900 border-b border-secondary-200 dark:border-secondary-700 transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/70 dark:bg-slate-900/60 backdrop-blur border-b border-ms-line transition-colors">
+        <div className="ms-container">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Link to="/" className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                  <Search className="w-5 h-5 text-white" />
+                <div className="w-8 h-8 rounded-md border border-ms-line bg-white/70 flex items-center justify-center">
+                  <Search className="w-5 h-5 text-ms-olive" />
                 </div>
-                <span className="text-xl font-bold text-slate-900 dark:text-white">P-AI</span>
+                <span className="text-xl font-bold text-ms-text">P-AI</span>
               </Link>
             </div>
             <div className="animate-pulse">
@@ -71,19 +71,19 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-dark-900 border-b border-secondary-200 dark:border-secondary-700 transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/70 dark:bg-slate-900/60 backdrop-blur border-b border-ms-line">
+      <div className="ms-container">
         <div className="flex justify-between items-center h-16">
           {/* Logo and main navigation */}
           <div className="flex items-center">
             <Link 
               to="/" 
-              className="flex items-center space-x-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900 rounded-lg"
+              className="flex items-center space-x-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ms-olive focus-visible:ring-offset-2 focus-visible:ring-offset-white rounded-md"
             >
-              <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
-                <Search className="w-5 h-5 text-white" />
+              <div className="w-8 h-8 rounded-md border border-ms-line bg-white/70 flex items-center justify-center">
+                <Search className="w-5 h-5 text-ms-olive" />
               </div>
-              <span className="text-xl font-bold text-secondary-900 dark:text-secondary-100">P-AI</span>
+              <span className="text-xl font-semibold text-ms-text">P-AI</span>
             </Link>
 
             {/* Desktop navigation */}
@@ -97,11 +97,11 @@ export default function Navbar() {
                       to={item.href}
                       className={cn(
                         'inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 transition-colors',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
-                        'focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ms-olive focus-visible:ring-offset-2',
+                        'focus-visible:ring-offset-white',
                         isActive(item.href)
-                          ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                          : 'border-transparent text-secondary-600 dark:text-secondary-300 hover:text-primary-600 dark:hover:text-primary-400 hover:border-secondary-300 dark:hover:border-secondary-600'
+                          ? 'border-ms-olive text-ms-olive'
+                          : 'border-transparent text-gray-700 hover:text-ms-olive hover:border-ms-line'
                       )}
                     >
                       <item.icon className="w-4 h-4 mr-2" />
@@ -117,11 +117,11 @@ export default function Navbar() {
                     onClick={() => handleProtectedNavigation(item.href, item.name)}
                     className={cn(
                       'inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 transition-colors',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
-                      'focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ms-olive focus-visible:ring-offset-2',
+                      'focus-visible:ring-offset-white',
                       isActive(item.href)
-                        ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                        : 'border-transparent text-secondary-600 dark:text-secondary-300 hover:text-primary-600 dark:hover:text-primary-400 hover:border-secondary-300 dark:hover:border-secondary-600',
+                        ? 'border-ms-olive text-ms-olive'
+                        : 'border-transparent text-gray-700 hover:text-ms-olive hover:border-ms-line',
                       !user && 'opacity-75'
                     )}
                   >
@@ -139,7 +139,7 @@ export default function Navbar() {
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="text-secondary-600 dark:text-secondary-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900 rounded-lg p-1"
+              className="text-gray-700 hover:text-ms-olive transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ms-olive focus-visible:ring-offset-2 focus-visible:ring-offset-white rounded-md p-1"
               aria-label={isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}
             >
               {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
@@ -149,14 +149,14 @@ export default function Navbar() {
               <>
                 <Link
                   to="/profile"
-                  className="text-secondary-600 dark:text-secondary-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900 rounded-lg p-1"
+                  className="text-gray-700 hover:text-ms-olive transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ms-olive focus-visible:ring-offset-2 focus-visible:ring-offset-white rounded-md p-1"
                   aria-label="개인정보 수정"
                 >
                   <User className="h-5 w-5" />
                 </Link>
                 <button
                   onClick={handleSignOut}
-                  className="text-secondary-600 dark:text-secondary-300 hover:text-danger-600 dark:hover:text-danger-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900 rounded-lg p-1"
+                  className="text-gray-700 hover:text-danger-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white rounded-md p-1"
                   aria-label="로그아웃"
                 >
                   <LogOut className="h-5 w-5" />
@@ -166,13 +166,13 @@ export default function Navbar() {
               <div className="flex items-center space-x-2">
                 <Link
                   to="/login"
-                  className="text-secondary-600 dark:text-secondary-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900 rounded-lg"
+                  className="text-gray-800 hover:text-ms-olive transition-colors px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ms-olive focus-visible:ring-offset-2 focus-visible:ring-offset-white rounded-md"
                 >
                   로그인
                 </Link>
                 <Link
                   to="/register"
-                  className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900"
+                  className="border border-ms-line text-ms-olive px-4 py-2 rounded-md hover:bg-ms-olive/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ms-olive focus-visible:ring-offset-2 focus-visible:ring-offset-white"
                 >
                   회원가입
                 </Link>
@@ -182,7 +182,7 @@ export default function Navbar() {
             {/* Mobile menu button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden text-secondary-600 dark:text-secondary-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900 rounded-lg p-1"
+              className="md:hidden text-secondary-600 dark:text-secondary-300 hover:text-ms-olive transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ms-olive focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900 rounded-lg p-1"
               aria-label={isMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
               aria-expanded={isMenuOpen}
             >
@@ -193,7 +193,7 @@ export default function Navbar() {
 
         {/* Mobile menu */}
         {isMenuOpen && (
-          <div className="md:hidden bg-white dark:bg-dark-900 border-t border-secondary-200 dark:border-secondary-700">
+          <div className="md:hidden bg-white/70 dark:bg-slate-900/60 backdrop-blur border-t border-ms-line">
             <div className="px-2 pt-2 pb-3 space-y-1">
               {navigation.map((item) => {
                 // 홈 페이지는 항상 표시
@@ -205,11 +205,11 @@ export default function Navbar() {
                       onClick={() => setIsMenuOpen(false)}
                       className={cn(
                         'flex items-center px-3 py-2 text-base font-medium rounded-lg transition-colors',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
-                        'focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ms-olive focus-visible:ring-offset-2',
+                        'focus-visible:ring-offset-white',
                         isActive(item.href)
-                          ? 'bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400'
-                          : 'text-secondary-600 dark:text-secondary-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-secondary-100 dark:hover:bg-secondary-800'
+                          ? 'text-ms-olive'
+                          : 'text-gray-600 hover:text-ms-olive'
                       )}
                     >
                       <item.icon className="w-5 h-5 mr-3" />
@@ -228,11 +228,11 @@ export default function Navbar() {
                     }}
                     className={cn(
                       'flex items-center w-full px-3 py-2 text-base font-medium rounded-lg transition-colors',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
-                      'focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ms-olive focus-visible:ring-offset-2',
+                      'focus-visible:ring-offset-white',
                       isActive(item.href)
-                        ? 'bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400'
-                        : 'text-secondary-600 dark:text-secondary-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-secondary-100 dark:hover:bg-secondary-800',
+                        ? 'text-ms-olive'
+                        : 'text-gray-600 hover:text-ms-olive',
                       !user && 'opacity-75'
                     )}
                   >

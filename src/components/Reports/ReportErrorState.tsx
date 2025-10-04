@@ -20,23 +20,8 @@ const ReportErrorState: React.FC<ReportErrorStateProps> = ({ error, onRetry }) =
     ? { message: error, type: 'general' }
     : error;
 
-  const getErrorIcon = () => {
-    switch (normalizedError.type) {
-      case 'network':
-        return '🌐';
-      case 'timeout':
-        return '⏰';
-      case 'api':
-      case 'authentication':
-        return '🔑';
-      case 'quota':
-        return '📊';
-      case 'validation':
-        return '📝';
-      default:
-        return '❌';
-    }
-  };
+  // 이모지 제거: 아이콘 대신 중립 라인 프레임과 텍스트만 사용
+  const getErrorIcon = () => null;
 
   const getErrorInfo = () => {
     switch (normalizedError.type) {
@@ -50,7 +35,7 @@ const ReportErrorState: React.FC<ReportErrorStateProps> = ({ error, onRetry }) =
             '방화벽 또는 보안 소프트웨어 설정 확인',
             '다른 네트워크에서 시도'
           ],
-          color: 'blue'
+          color: 'neutral'
         };
       
       case 'timeout':
@@ -63,7 +48,7 @@ const ReportErrorState: React.FC<ReportErrorStateProps> = ({ error, onRetry }) =
             '네트워크 연결 상태를 확인해주세요',
             '브라우저를 새로고침 후 재시도'
           ],
-          color: 'yellow'
+          color: 'neutral'
         };
       
       case 'api':
@@ -76,7 +61,7 @@ const ReportErrorState: React.FC<ReportErrorStateProps> = ({ error, onRetry }) =
             '문제가 지속되면 관리자에게 문의하세요',
             '브라우저 쿠키 및 캐시를 삭제해보세요'
           ],
-          color: 'red'
+          color: 'neutral'
         };
       
       case 'quota':
@@ -88,7 +73,7 @@ const ReportErrorState: React.FC<ReportErrorStateProps> = ({ error, onRetry }) =
             '사용량이 초기화될 때까지 기다려주세요',
             '관리자에게 사용량 증설을 요청하세요'
           ],
-          color: 'orange'
+          color: 'neutral'
         };
       
       case 'validation':
@@ -101,7 +86,7 @@ const ReportErrorState: React.FC<ReportErrorStateProps> = ({ error, onRetry }) =
             '다른 특허로 시도해보세요',
             '페이지를 새로고침 후 재시도'
           ],
-          color: 'purple'
+          color: 'neutral'
         };
       
       default:
@@ -114,7 +99,7 @@ const ReportErrorState: React.FC<ReportErrorStateProps> = ({ error, onRetry }) =
             '다른 브라우저에서 시도해보세요',
             '문제가 지속되면 관리자에게 문의하세요'
           ],
-          color: 'red'
+          color: 'neutral'
         };
     }
   };
@@ -122,56 +107,21 @@ const ReportErrorState: React.FC<ReportErrorStateProps> = ({ error, onRetry }) =
   const errorInfo = getErrorInfo();
   
   const getColorClasses = (color: string) => {
-    const colorMap = {
-      red: {
-        bg: 'bg-red-50',
-        border: 'border-red-200',
-        title: 'text-red-800',
-        description: 'text-red-600',
-        tips: 'text-red-600',
-        button: 'bg-red-600 hover:bg-red-700'
-      },
-      blue: {
-        bg: 'bg-blue-50',
-        border: 'border-blue-200',
-        title: 'text-blue-800',
-        description: 'text-blue-600',
-        tips: 'text-blue-600',
-        button: 'bg-blue-600 hover:bg-blue-700'
-      },
-      yellow: {
-        bg: 'bg-yellow-50',
-        border: 'border-yellow-200',
-        title: 'text-yellow-800',
-        description: 'text-yellow-600',
-        tips: 'text-yellow-600',
-        button: 'bg-yellow-600 hover:bg-yellow-700'
-      },
-      orange: {
-        bg: 'bg-orange-50',
-        border: 'border-orange-200',
-        title: 'text-orange-800',
-        description: 'text-orange-600',
-        tips: 'text-orange-600',
-        button: 'bg-orange-600 hover:bg-orange-700'
-      },
-      purple: {
-        bg: 'bg-purple-50',
-        border: 'border-purple-200',
-        title: 'text-purple-800',
-        description: 'text-purple-600',
-        tips: 'text-purple-600',
-        button: 'bg-purple-600 hover:bg-purple-700'
-      }
+    // 모든 에러 타입을 중립 라인 프레임과 다크 올리브 포인트로 통일
+    return {
+      bg: 'bg-white dark:bg-neutral-900/40',
+      border: 'border-ms-line',
+      title: 'text-ms-olive',
+      description: 'text-neutral-700 dark:text-neutral-300',
+      tips: 'text-neutral-600 dark:text-neutral-400',
+      button: 'bg-[var(--ms-olive-700)] hover:bg-[var(--ms-olive-800)]'
     };
-    return colorMap[color] || colorMap.red;
   };
 
   const colors = getColorClasses(errorInfo.color);
 
   return (
     <div className={`flex flex-col items-center justify-center p-8 text-center ${colors.bg} rounded-lg border ${colors.border}`}>
-      <div className="text-6xl mb-4">{getErrorIcon()}</div>
       
       <h3 className={`text-xl font-semibold ${colors.title} mb-2`}>
         {errorInfo.title}
@@ -194,7 +144,7 @@ const ReportErrorState: React.FC<ReportErrorStateProps> = ({ error, onRetry }) =
       )}
 
       <div className="mb-6 text-left max-w-md">
-        <h4 className={`font-medium ${colors.title} mb-2`}>해결 방법:</h4>
+        <h4 className={`font-medium ${colors.title} mb-2`}>해결 방법</h4>
         <ul className={`text-sm ${colors.tips} space-y-1`}>
           {errorInfo.tips.map((tip, index) => (
             <li key={index} className="flex items-start">

@@ -140,7 +140,7 @@ export default function Profile() {
                       onChange={handleChange}
                       placeholder="자기소개를 입력하세요"
                       rows={4}
-                      className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                      className="w-full px-3 py-2 bg-slate-800 border border-ms-line dark:border-dark-700 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-ms-olive focus:border-ms-olive resize-none"
                     />
                   </div>
 

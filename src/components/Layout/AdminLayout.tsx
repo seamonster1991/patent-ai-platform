@@ -68,7 +68,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-screen relative bg-transparent overflow-hidden">
+      {/* Global bold wallpaper */}
+      <div className="ms-wallpaper" aria-hidden="true" />
       <div className="flex h-screen overflow-hidden">
         {/* Mobile sidebar backdrop */}
         {sidebarOpen && (
@@ -84,7 +86,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}>
           {/* Sidebar header */}
-          <div className="flex items-center justify-between h-16 px-6 bg-gradient-to-r from-blue-600 to-purple-600">
+          <div className="flex items-center justify-between h-16 px-6 bg-slate-800/80 backdrop-blur">
             <div className="flex items-center space-x-3">
               <div className="flex items-center justify-center w-8 h-8 bg-white/20 rounded-lg">
                 <Shield className="w-5 h-5 text-white" />
@@ -114,13 +116,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     className={`
                       flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200
                       ${item.current
-                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-r-2 border-blue-600'
+                        ? 'bg-ms-olive/10 dark:bg-ms-olive/15 text-ms-olive dark:text-ms-olive border-r-2 border-ms-olive'
                         : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white'
                       }
                     `}
                     onClick={() => setSidebarOpen(false)}
                   >
-                    <Icon className={`mr-3 h-5 w-5 ${item.current ? 'text-blue-600 dark:text-blue-400' : ''}`} />
+                    <Icon className={`mr-3 h-5 w-5 ${item.current ? 'text-ms-olive' : ''}`} />
                     {item.name}
                   </Link>
                 );
@@ -130,9 +132,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
           {/* Sidebar footer */}
           <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex-shrink-0">
-            <div className="flex items-center space-x-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
-              <div className="flex items-center justify-center w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full">
-                <Shield className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <div className="flex items-center space-x-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+              <div className="flex items-center justify-center w-8 h-8 bg-ms-olive/10 dark:bg-ms-olive/20 rounded-full">
+                <Shield className="w-4 h-4 text-ms-olive" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
@@ -149,7 +151,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         {/* Main content */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* Top navigation */}
-          <header className="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+          <header className="bg-white/70 dark:bg-slate-900/60 backdrop-blur shadow-sm border-b border-ms-line flex-shrink-0">
             <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
               {/* Mobile menu button */}
               <button
@@ -176,7 +178,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                     className="flex items-center space-x-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                   >
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <div className="w-8 h-8 bg-[var(--ms-olive-600)] rounded-full flex items-center justify-center">
                       <Shield className="w-4 h-4 text-white" />
                     </div>
                     <ChevronDown className="w-4 h-4" />

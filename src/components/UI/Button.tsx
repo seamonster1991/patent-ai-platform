@@ -23,8 +23,8 @@ function Button({
   ...props
 }: ButtonProps) {
   const baseClasses = [
-    'inline-flex items-center justify-center font-medium rounded-lg',
-    'transition-all duration-200 ease-in-out',
+    'inline-flex items-center justify-center font-medium rounded-md',
+    'transition-colors duration-200 ease-in-out',
     'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
     'disabled:opacity-60 disabled:cursor-not-allowed disabled:pointer-events-none',
     'select-none touch-manipulation',
@@ -35,43 +35,42 @@ function Button({
   
   const variantClasses = {
     primary: [
-      'bg-primary-600 hover:bg-primary-700 active:bg-primary-800',
-      'text-white',
-      'focus-visible:ring-primary-500 focus-visible:ring-offset-dark-900',
-      'shadow-sm hover:shadow-md',
+      'bg-ms-olive hover:bg-ms-olive/90 active:bg-ms-olive/80',
+      'text-white font-semibold tracking-tight',
+      'focus-visible:ring-ms-olive focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900',
+      'shadow-none',
       'border border-transparent'
     ].join(' '),
     
     secondary: [
-      'bg-secondary-600 hover:bg-secondary-700 active:bg-secondary-800',
-      'text-white',
-      'focus-visible:ring-secondary-500 focus-visible:ring-offset-dark-900',
-      'shadow-sm hover:shadow-md',
-      'border border-transparent'
+      'bg-white hover:bg-secondary-50 active:bg-secondary-100',
+      'text-secondary-900 dark:text-secondary-100',
+      'border border-ms-line dark:border-secondary-700',
+      'shadow-none',
+      'focus-visible:ring-ms-olive focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900'
     ].join(' '),
     
     outline: [
-      'bg-transparent hover:bg-secondary-50 active:bg-secondary-100',
-      'dark:hover:bg-secondary-800 dark:active:bg-secondary-700',
-      'text-secondary-700 dark:text-secondary-300',
-      'border border-secondary-300 dark:border-secondary-600',
-      'hover:border-secondary-400 dark:hover:border-secondary-500',
-      'focus-visible:ring-secondary-500 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900'
+      'bg-transparent hover:bg-ms-olive/5 active:bg-ms-olive/10',
+      'text-secondary-900 dark:text-secondary-100',
+      'border border-ms-line',
+      'hover:border-ms-olive/40',
+      'focus-visible:ring-ms-olive focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900'
     ].join(' '),
     
     ghost: [
-      'bg-transparent hover:bg-secondary-100 active:bg-secondary-200',
-      'dark:hover:bg-secondary-800 dark:active:bg-secondary-700',
-      'text-secondary-700 dark:text-secondary-300',
+      'bg-transparent hover:bg-ms-olive/5 active:bg-ms-olive/10',
+      'text-ms-olive',
       'border border-transparent',
-      'focus-visible:ring-secondary-500 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900'
+      'shadow-none',
+      'focus-visible:ring-ms-olive focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900'
     ].join(' '),
     
     danger: [
       'bg-danger-600 hover:bg-danger-700 active:bg-danger-800',
       'text-white',
       'focus-visible:ring-danger-500 focus-visible:ring-offset-dark-900',
-      'shadow-sm hover:shadow-md',
+      'shadow-none',
       'border border-transparent'
     ].join(' '),
     
@@ -79,7 +78,7 @@ function Button({
       'bg-success-600 hover:bg-success-700 active:bg-success-800',
       'text-white',
       'focus-visible:ring-success-500 focus-visible:ring-offset-dark-900',
-      'shadow-sm hover:shadow-md',
+      'shadow-none',
       'border border-transparent'
     ].join(' '),
     
@@ -87,16 +86,17 @@ function Button({
       'bg-warning-600 hover:bg-warning-700 active:bg-warning-800',
       'text-white',
       'focus-visible:ring-warning-500 focus-visible:ring-offset-dark-900',
-      'shadow-sm hover:shadow-md',
+      'shadow-none',
       'border border-transparent'
     ].join(' '),
     
     default: [
-      'bg-gray-100 hover:bg-gray-200 active:bg-gray-300',
-      'dark:bg-gray-700 dark:hover:bg-gray-600 dark:active:bg-gray-500',
-      'text-gray-900 dark:text-gray-100',
-      'border border-gray-300 dark:border-gray-600',
-      'focus-visible:ring-gray-500 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900'
+      'bg-transparent hover:bg-secondary-50 active:bg-secondary-100',
+      'dark:hover:bg-dark-800 dark:active:bg-dark-700',
+      'text-secondary-900 dark:text-secondary-100',
+      'border border-ms-line dark:border-secondary-700',
+      'shadow-none',
+      'focus-visible:ring-ms-olive focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900'
     ].join(' ')
   }
 

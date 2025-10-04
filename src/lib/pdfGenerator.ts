@@ -413,47 +413,43 @@ export const generateDynamicReportPDF = async (
         console.log(`📝 섹션 ${index + 1} 처리 중: ${section.title}`)
         currentY = await addSectionTitle(doc, `${index + 1}. ${section.title}`, currentY)
         
-        // 섹션 내용을 문단별로 처리
-        const paragraphs = section.content.split('\n').filter(p => p.trim() !== '')
-        
-        for (const paragraph of paragraphs) {
-          try {
-            // 페이지 공간 재확인
-            if (currentY > 260) {
-              doc.addPage()
-              currentY = 30
+        // 섹션 내용을 마크다운으로 렌더링
+        try {
+          currentY = await parseAndRenderMarkdown(doc, section.content, 20, currentY, 170)
+          currentY += 10 // 섹션 간 여백
+        } catch (sectionError) {
+          console.warn(`섹션 마크다운 렌더링 실패, 기본 처리 사용:`, sectionError.message)
+          
+          // 기본 문단 처리로 fallback
+          const paragraphs = section.content.split('\n').filter(p => p.trim())
+          for (const paragraph of paragraphs) {
+            if (!paragraph.trim()) {
+              currentY += 5
+              continue
             }
-            
-            // 볼드 텍스트 처리
-            if (paragraph.includes('**')) {
-              const cleanText = paragraph.replace(/\*\*(.*?)\*\*/g, '$1')
-              currentY = await addTextBlock(doc, cleanText, 20, currentY, 170)
-            } 
-            // 리스트 아이템 처리
-            else if (paragraph.trim().startsWith('-') || paragraph.trim().startsWith('•')) {
-              const cleanText = paragraph.replace(/^[-•]\s*/, '')
-              
-              // 불릿 포인트 추가
-              try {
-                doc.setFillColor(59, 130, 246)
-                doc.circle(25, currentY + 5, 1, 'F')
-              } catch (bulletError) {
-                console.warn('불릿 포인트 생성 실패:', bulletError.message)
+
+            try {
+              // 페이지 공간 확인
+              if (currentY > 260) {
+                doc.addPage()
+                currentY = 30
               }
-              
-              currentY = await addTextBlock(doc, `• ${cleanText}`, 30, currentY, 165)
-              currentY += 3
-            }
-            // 일반 문단 처리
-            else {
+
               currentY = await addTextBlock(doc, paragraph, 20, currentY, 170)
               currentY += 8
+            } catch (paragraphError) {
+              console.warn(`문단 처리 실패, 기본 텍스트 사용:`, paragraphError.message)
+              // 기본 텍스트 렌더링으로 fallback
+              const lines = doc.splitTextToSize(paragraph.substring(0, 200), 170)
+              for (const line of lines) {
+                if (currentY > 270) {
+                  doc.addPage()
+                  currentY = 30
+                }
+                doc.text(line, 20, currentY)
+                currentY += 6
+              }
             }
-          } catch (paragraphError) {
-            console.warn(`문단 처리 실패, 기본 텍스트 사용:`, paragraphError.message)
-            // 기본 텍스트 렌더링으로 fallback
-            doc.text(paragraph.substring(0, 100), 20, currentY)
-            currentY += 15
           }
         }
         
@@ -894,4 +890,268 @@ export const addChartToPDF = async (
   } catch (error) {
     console.error('차트를 PDF에 추가하는 중 오류 발생:', error)
   }
+}
+
+
+
+// 개선된 마크다운 파싱 및 렌더링 함수
+const parseAndRenderMarkdown = async (doc: jsPDF, content: string, x: number, y: number, maxWidth: number): Promise<number> => {
+  const lines = content.split('\n')
+  let currentY = y
+  
+  for (const line of lines) {
+    const trimmedLine = line.trim()
+    
+    // 페이지 공간 확인
+    if (currentY > 260) {
+      doc.addPage()
+      currentY = 30
+    }
+    
+    if (!trimmedLine) {
+      currentY += 6 // 빈 줄 간격
+      continue
+    }
+    
+    // ### 헤딩 (3단계)
+    if (trimmedLine.startsWith('### ')) {
+      const title = trimmedLine.replace('### ', '').trim()
+      currentY += 12 // 헤딩 전 여백
+      try {
+        currentY = await addKoreanTextAsImage(doc, title, x, currentY, {
+          fontSize: 16,
+          fontWeight: 'bold',
+          color: '#1f2937',
+          maxWidth: maxWidth
+        })
+      } catch (error) {
+        console.warn('⚠️ ### 헤딩 렌더링 실패, 기본 텍스트 사용:', error)
+        currentY = addBasicText(doc, title, x, currentY, { fontSize: 16, fontWeight: 'bold' })
+      }
+      currentY += 8 // 헤딩 후 여백
+      continue
+    }
+    
+    // #### 헤딩 (4단계)
+    if (trimmedLine.startsWith('#### ')) {
+      const title = trimmedLine.replace('#### ', '').trim()
+      currentY += 10 // 헤딩 전 여백
+      try {
+        currentY = await addKoreanTextAsImage(doc, title, x + 5, currentY, {
+          fontSize: 14,
+          fontWeight: 'bold',
+          color: '#374151',
+          maxWidth: maxWidth - 5
+        })
+      } catch (error) {
+        console.warn('⚠️ #### 헤딩 렌더링 실패, 기본 텍스트 사용:', error)
+        currentY = addBasicText(doc, title, x + 5, currentY, { fontSize: 14, fontWeight: 'bold' })
+      }
+      currentY += 6 // 헤딩 후 여백
+      continue
+    }
+    
+    // ##### 헤딩 (5단계)
+    if (trimmedLine.startsWith('##### ')) {
+      const title = trimmedLine.replace('##### ', '').trim()
+      currentY += 8 // 헤딩 전 여백
+      try {
+        currentY = await addKoreanTextAsImage(doc, title, x + 10, currentY, {
+          fontSize: 12,
+          fontWeight: 'bold',
+          color: '#4b5563',
+          maxWidth: maxWidth - 10
+        })
+      } catch (error) {
+        console.warn('⚠️ ##### 헤딩 렌더링 실패, 기본 텍스트 사용:', error)
+        currentY = addBasicText(doc, title, x + 10, currentY, { fontSize: 12, fontWeight: 'bold' })
+      }
+      currentY += 5 // 헤딩 후 여백
+      continue
+    }
+    
+    // 불릿 포인트 리스트 (-, *, •)
+    if (trimmedLine.match(/^[-*•]\s+/)) {
+      const content = trimmedLine.replace(/^[-*•]\s+/, '').trim()
+      const indentLevel = (line.match(/^(\s*)/)?.[1]?.length || 0) / 2
+      const leftMargin = x + 15 + (indentLevel * 10)
+      const bulletX = x + 5 + (indentLevel * 10)
+      
+      // 불릿 포인트 그리기
+      try {
+        doc.setFillColor(59, 130, 246)
+        doc.circle(bulletX, currentY + 3, 1.2, 'F')
+      } catch (bulletError) {
+        console.warn('불릿 포인트 생성 실패:', bulletError.message)
+      }
+      
+      // 볼드 텍스트 처리
+      if (content.includes('**')) {
+        const textParts = processBoldText(content)
+        currentY = await renderTextWithBold(doc, textParts, leftMargin, currentY, maxWidth - (leftMargin - x))
+      } else {
+        try {
+          currentY = await addKoreanTextAsImage(doc, content, leftMargin, currentY, {
+            fontSize: 11,
+            color: '#374151',
+            maxWidth: maxWidth - (leftMargin - x)
+          })
+        } catch (error) {
+          console.warn('⚠️ 불릿 텍스트 렌더링 실패, 기본 텍스트 사용:', error)
+          currentY = addBasicText(doc, content, leftMargin, currentY, { fontSize: 11 })
+        }
+      }
+      currentY += 4
+      continue
+    }
+    
+    // 번호 리스트 (1., 2., etc.)
+    if (trimmedLine.match(/^\d+\.\s+/)) {
+      const content = trimmedLine.replace(/^\d+\.\s+/, '').trim()
+      const number = trimmedLine.match(/^(\d+)\./)?.[1] || '1'
+      const indentLevel = (line.match(/^(\s*)/)?.[1]?.length || 0) / 2
+      const leftMargin = x + 20 + (indentLevel * 10)
+      const numberX = x + 5 + (indentLevel * 10)
+      
+      // 번호 그리기
+      try {
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(11)
+        doc.setTextColor('#374151')
+        doc.text(`${number}.`, numberX, currentY + 3)
+        doc.setFont('helvetica', 'normal')
+      } catch (numberError) {
+        console.warn('번호 생성 실패:', numberError.message)
+      }
+      
+      // 볼드 텍스트 처리
+      if (content.includes('**')) {
+        const textParts = processBoldText(content)
+        currentY = await renderTextWithBold(doc, textParts, leftMargin, currentY, maxWidth - (leftMargin - x))
+      } else {
+        try {
+          currentY = await addKoreanTextAsImage(doc, content, leftMargin, currentY, {
+            fontSize: 11,
+            color: '#374151',
+            maxWidth: maxWidth - (leftMargin - x)
+          })
+        } catch (error) {
+          console.warn('⚠️ 번호 텍스트 렌더링 실패, 기본 텍스트 사용:', error)
+          currentY = addBasicText(doc, content, leftMargin, currentY, { fontSize: 11 })
+        }
+      }
+      currentY += 4
+      continue
+    }
+    
+    // 일반 텍스트 (볼드 처리 포함)
+    if (trimmedLine.includes('**')) {
+      const textParts = processBoldText(trimmedLine)
+      currentY = await renderTextWithBold(doc, textParts, x, currentY, maxWidth)
+    } else {
+      try {
+        currentY = await addKoreanTextAsImage(doc, trimmedLine, x, currentY, {
+          fontSize: 11,
+          color: '#374151',
+          maxWidth: maxWidth
+        })
+      } catch (error) {
+        console.warn('⚠️ 일반 텍스트 렌더링 실패, 기본 텍스트 사용:', error)
+        currentY = addBasicText(doc, trimmedLine, x, currentY, { fontSize: 11 })
+      }
+    }
+    currentY += 6
+  }
+  
+  return currentY
+}
+
+// 굵은 텍스트 처리 함수
+const processBoldText = (text: string): Array<{text: string, bold: boolean}> => {
+  const parts: Array<{text: string, bold: boolean}> = []
+  const boldRegex = /\*\*(.*?)\*\*/g
+  let lastIndex = 0
+  let match
+  
+  while ((match = boldRegex.exec(text)) !== null) {
+    // 굵은 텍스트 이전의 일반 텍스트
+    if (match.index > lastIndex) {
+      parts.push({
+        text: text.substring(lastIndex, match.index),
+        bold: false
+      })
+    }
+    
+    // 굵은 텍스트
+    parts.push({
+      text: match[1],
+      bold: true
+    })
+    
+    lastIndex = match.index + match[0].length
+  }
+  
+  // 마지막 일반 텍스트
+  if (lastIndex < text.length) {
+    parts.push({
+      text: text.substring(lastIndex),
+      bold: false
+    })
+  }
+  
+  return parts
+}
+
+// 굵은 텍스트가 포함된 텍스트 렌더링 함수
+const renderTextWithBold = async (
+  doc: jsPDF, 
+  textParts: Array<{text: string, bold: boolean}>, 
+  x: number, 
+  y: number, 
+  maxWidth: number
+): Promise<number> => {
+  let currentX = x
+  let currentY = y
+  const lineHeight = 16
+  
+  for (const part of textParts) {
+    if (!part.text.trim()) continue
+    
+    try {
+      // 텍스트 너비 측정 (근사치)
+      const textWidth = part.text.length * (part.bold ? 8 : 7)
+      
+      // 줄바꿈 체크
+      if (currentX + textWidth > x + maxWidth && currentX > x) {
+        currentX = x
+        currentY += lineHeight
+      }
+      
+      // 텍스트 렌더링
+      const nextY = await addKoreanTextAsImage(doc, part.text, currentX, currentY, {
+        fontSize: 12,
+        fontWeight: part.bold ? 'bold' : 'normal',
+        color: part.bold ? '#1f2937' : '#374151',
+        maxWidth: Math.min(textWidth + 20, maxWidth)
+      })
+      
+      currentX += textWidth + 5 // 텍스트 간격
+      
+      // Y 위치 업데이트 (가장 높은 Y 값 사용)
+      if (nextY > currentY) {
+        currentY = nextY
+      }
+      
+    } catch (error) {
+      console.warn('⚠️ 텍스트 파트 렌더링 실패:', error)
+      // 기본 텍스트로 fallback
+      currentY = addBasicText(doc, part.text, currentX, currentY, {
+        fontSize: 12,
+        fontWeight: part.bold ? 'bold' : 'normal'
+      })
+      currentX += part.text.length * 7
+    }
+  }
+  
+  return currentY + 8
 }

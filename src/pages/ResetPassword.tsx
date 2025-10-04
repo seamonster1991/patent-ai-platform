@@ -109,11 +109,11 @@ const ResetPassword: React.FC = () => {
 
   if (isCheckingToken) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-transparent flex items-center justify-center p-4">
         <div className="max-w-md w-full">
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-8">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ms-olive mx-auto mb-4"></div>
               <h1 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
                 링크 확인 중...
               </h1>
@@ -129,7 +129,7 @@ const ResetPassword: React.FC = () => {
 
   if (!isValidToken) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-transparent flex items-center justify-center p-4">
         <div className="max-w-md w-full">
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-8">
             <div className="text-center">
@@ -144,7 +144,7 @@ const ResetPassword: React.FC = () => {
               </p>
               <button
                 onClick={() => navigate('/forgot-password')}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200"
+                className="w-full bg-ms-olive hover:bg-ms-olive/90 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200"
               >
                 새 재설정 링크 요청
               </button>
@@ -157,7 +157,7 @@ const ResetPassword: React.FC = () => {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-transparent flex items-center justify-center p-4">
         <div className="max-w-md w-full">
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-8">
             <div className="text-center">
@@ -172,7 +172,7 @@ const ResetPassword: React.FC = () => {
               </p>
               <button
                 onClick={() => navigate('/login')}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200"
+                className="w-full bg-ms-olive hover:bg-ms-olive/90 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200"
               >
                 로그인 페이지로 이동
               </button>
@@ -184,13 +184,13 @@ const ResetPassword: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-transparent flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full mx-auto mb-4">
-              <Lock className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+            <div className="flex items-center justify-center w-16 h-16 bg-ms-olive/10 dark:bg-ms-olive/20 rounded-full mx-auto mb-4">
+              <Lock className="w-8 h-8 text-ms-olive" />
             </div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
               새 비밀번호 설정
@@ -216,7 +216,7 @@ const ResetPassword: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="block w-full pl-10 pr-12 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="block w-full pl-10 pr-12 py-3 border border-ms-line dark:border-dark-700 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-ms-olive focus:border-ms-olive"
                   placeholder="새 비밀번호를 입력하세요"
                 />
                 <button
@@ -246,7 +246,7 @@ const ResetPassword: React.FC = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  className="block w-full pl-10 pr-12 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="block w-full pl-10 pr-12 py-3 border border-ms-line dark:border-dark-700 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-ms-olive focus:border-ms-olive"
                   placeholder="비밀번호를 다시 입력하세요"
                 />
                 <button
@@ -269,7 +269,7 @@ const ResetPassword: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading || !password || !confirmPassword}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 disabled:cursor-not-allowed flex items-center justify-center"
+              className="w-full bg-ms-olive hover:bg-ms-olive/90 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {isLoading ? (
                 <>
@@ -286,7 +286,7 @@ const ResetPassword: React.FC = () => {
           <div className="mt-6 text-center">
             <button
               onClick={() => navigate('/login')}
-              className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors duration-200"
+              className="inline-flex items-center text-ms-olive hover:text-ms-olive font-bold transition-colors duration-200"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               로그인 페이지로 돌아가기

@@ -147,8 +147,9 @@ export async function searchPatents(searchParams: any): Promise<ApiResponse> {
  */
 export async function getUserStats(userId: string): Promise<ApiResponse> {
   console.log('📊 [API] 사용자 통계 요청:', userId);
-  
-  return apiGet(`/api/users/stats/${userId}`, {
+  // 서버리스 함수 경로 특성상 동적 세그먼트가 params로 전달되지 않을 수 있으므로
+  // 쿼리스트링으로 userId를 전달하도록 변경
+  return apiGet(`/api/users/stats?userId=${encodeURIComponent(userId)}`, {
     timeout: 20000,
     retries: 2,
     retryDelay: 1500,

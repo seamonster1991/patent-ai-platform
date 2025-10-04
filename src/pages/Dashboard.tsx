@@ -183,15 +183,15 @@ export default function Dashboard() {
         // 차트 데이터 설정 (실제 DB 데이터 활용)
         const weeklyData = (apiData.weekly_activities || []).map((item: any, index: number) => ({
           day: item.day || `Day ${index}`,
-          dayIndex: index,
-          count: (item.searches || 0) + (item.reports || 0),
-          searchCount: item.searches || 0,
-          aiAnalysisCount: item.reports || 0
+          dayIndex: typeof item.dayIndex === 'number' ? item.dayIndex : index,
+          count: item.count ?? ((item.searchCount || 0) + (item.aiAnalysisCount || 0)),
+          searchCount: item.searchCount ?? item.searches ?? 0,
+          aiAnalysisCount: item.aiAnalysisCount ?? item.reports ?? 0
         }))
 
         const hourlyData = (apiData.hourly_activities || []).map((item: any) => ({
-          hour: parseInt(item.hour) || 0,
-          count: item.searches || 0
+          hour: typeof item.hour === 'number' ? item.hour : parseInt(item.hour) || 0,
+          count: item.count ?? item.searchCount ?? 0
         }))
 
         setChartData({
@@ -393,7 +393,7 @@ export default function Dashboard() {
           <p className="text-gray-600 mb-4">{error}</p>
           <Button 
             onClick={() => window.location.reload()} 
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-[var(--ms-olive-600)] hover:bg-[var(--ms-olive-700)] text-white"
           >
             다시 시도
           </Button>
@@ -414,7 +414,7 @@ export default function Dashboard() {
         </div>
         <div className="mt-4 sm:mt-0">
           <Link to="/search">
-            <Button className="bg-blue-600 hover:bg-blue-700 flex items-center space-x-2">
+            <Button className="bg-[var(--ms-olive-600)] hover:bg-[var(--ms-olive-700)] text-white flex items-center space-x-2">
               <Search className="h-4 w-4" />
               <span>새 검색</span>
             </Button>
@@ -427,7 +427,7 @@ export default function Dashboard() {
         {stats.map((stat, index) => {
           const Icon = stat.icon
           return (
-            <Card key={index} className="hover:shadow-lg transition-shadow">
+            <Card key={index} className="hover:bg-ms-olive/5 transition-colors">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">
                   {stat.title}
@@ -548,7 +548,7 @@ export default function Dashboard() {
                 <Search className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500">아직 검색 내역이 없습니다.</p>
                 <Link to="/search">
-                  <Button className="mt-4 bg-blue-600 hover:bg-blue-700">
+                  <Button className="mt-4 bg-[var(--ms-olive-600)] hover:bg-[var(--ms-olive-700)] text-white">
                     첫 검색 시작하기
                   </Button>
                 </Link>

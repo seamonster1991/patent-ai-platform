@@ -6,9 +6,28 @@ export default {
   theme: {
     container: {
       center: true,
+      padding: {
+        DEFAULT: '1rem',
+        sm: '2rem',
+        lg: '3rem',
+        xl: '4rem',
+      },
     },
     extend: {
+      fontFamily: {
+        // Web-safe system stack only (no external webfonts)
+        sans: ['system-ui', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', 'sans-serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
+      },
       colors: {
+        // Minimal Strategist palette
+        ms: {
+          bg: '#FFFFFF', // Pure White background
+          text: '#111827', // Dark Charcoal text
+          accent: '#34463D', // Warm Dark Olive accent
+          olive: '#34463D', // Warm Dark Olive token (used widely across components)
+          line: '#E5E7EB', // Thin separators
+        },
         // WCAG 2.1 AA 표준에 맞는 색상 팔레트
         primary: {
           50: '#eff6ff',
@@ -114,9 +133,9 @@ export default {
         '2xl': '1rem',
       },
       boxShadow: {
-        'focus': '0 0 0 3px rgba(59, 130, 246, 0.5)',
-        'focus-danger': '0 0 0 3px rgba(239, 68, 68, 0.5)',
-        'focus-success': '0 0 0 3px rgba(34, 197, 94, 0.5)',
+        'focus': '0 0 0 2px rgba(17, 24, 39, 0.12)',
+        'focus-danger': '0 0 0 2px rgba(239, 68, 68, 0.25)',
+        'focus-success': '0 0 0 2px rgba(34, 197, 94, 0.25)',
       },
       animation: {
         'fade-in': 'fadeIn 0.2s ease-in-out',

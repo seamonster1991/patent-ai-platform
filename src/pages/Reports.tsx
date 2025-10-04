@@ -155,7 +155,7 @@ export default function Reports() {
           <p className="text-gray-600 dark:text-gray-400 mb-4">리포트를 보려면 로그인이 필요합니다.</p>
           <Button 
             onClick={() => navigate('/login')}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="bg-ms-olive hover:bg-ms-olive/90 text-white"
           >
             로그인하기
           </Button>
@@ -178,10 +178,10 @@ export default function Reports() {
         </div>
 
         {/* 필터 및 검색 */}
-        <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 mb-6">
+        <Card className="border-ms-line dark:border-secondary-700 bg-white dark:bg-dark-800 mb-6">
           <CardHeader>
             <CardTitle className="text-gray-900 dark:text-white flex items-center gap-2">
-              <Filter className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <Filter className="h-5 w-5 text-ms-olive dark:text-ms-olive" />
               필터 및 검색
             </CardTitle>
           </CardHeader>
@@ -195,7 +195,7 @@ export default function Reports() {
                 <select
                   value={filters.days}
                   onChange={(e) => handleFilterChange('days', parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-ms-line dark:border-dark-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-ms-olive focus:border-ms-olive"
                 >
                   <option value={7}>최근 7일</option>
                   <option value={30}>최근 30일</option>
@@ -212,7 +212,7 @@ export default function Reports() {
                 <select
                   value={filters.sortBy}
                   onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-ms-line dark:border-dark-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-ms-olive focus:border-ms-olive"
                 >
                   <option value="created_at">생성일</option>
                   <option value="title">제목</option>
@@ -227,7 +227,7 @@ export default function Reports() {
                 <select
                   value={filters.sortOrder}
                   onChange={(e) => handleFilterChange('sortOrder', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-ms-line dark:border-dark-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-ms-olive focus:border-ms-olive"
                 >
                   <option value="desc">내림차순</option>
                   <option value="asc">오름차순</option>
@@ -246,7 +246,7 @@ export default function Reports() {
                     placeholder="리포트 제목 검색..."
                     value={filters.search}
                     onChange={(e) => handleFilterChange('search', e.target.value)}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full pl-10 pr-3 py-2 border border-ms-line dark:border-dark-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-ms-olive focus:border-ms-olive"
                   />
                 </div>
               </div>
@@ -255,7 +255,7 @@ export default function Reports() {
         </Card>
 
         {/* 리포트 목록 */}
-        <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <Card className="border-ms-line dark:border-secondary-700 bg-white dark:bg-dark-800">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-gray-900 dark:text-white flex items-center gap-2">
@@ -270,7 +270,7 @@ export default function Reports() {
           <CardContent>
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
+                <Loader2 className="h-8 w-8 animate-spin text-ms-olive dark:text-ms-olive" />
                 <span className="ml-2 text-gray-600 dark:text-gray-300">리포트를 불러오는 중...</span>
               </div>
             ) : error ? (
@@ -279,7 +279,7 @@ export default function Reports() {
                 <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
                 <Button 
                   onClick={() => loadReports(currentPage)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-ms-olive hover:bg-ms-olive/90 text-white"
                 >
                   다시 시도
                 </Button>
@@ -293,7 +293,7 @@ export default function Reports() {
             ) : (
               <>
                 {/* 테이블 헤더 */}
-                <div className="hidden md:grid md:grid-cols-12 gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg mb-4 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <div className="hidden md:grid md:grid-cols-12 gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg mb-4 text-sm font-medium text-gray-700 dark:text-gray-300 border-b-2 border-ms-line dark:border-secondary-700">
                   <div 
                     className="col-span-5 flex items-center gap-2 cursor-pointer hover:text-gray-900 dark:hover:text-white"
                     onClick={() => handleSortChange('title')}
@@ -379,7 +379,7 @@ export default function Reports() {
 
                 {/* 페이지네이션 */}
                 {pagination.totalPages > 1 && (
-                  <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between mt-6 pt-6 border-t-2 border-ms-line dark:border-secondary-700">
                     <div className="text-sm text-gray-600 dark:text-gray-400">
                       {((pagination.currentPage - 1) * pagination.limit) + 1}-{Math.min(pagination.currentPage * pagination.limit, pagination.totalCount)} / {pagination.totalCount}개
                     </div>
@@ -407,7 +407,7 @@ export default function Reports() {
                             onClick={() => handlePageChange(pageNum)}
                             className={cn(
                               "border-gray-300 dark:border-gray-600",
-                              pageNum === pagination.currentPage && "bg-blue-600 text-white border-blue-600"
+                              pageNum === pagination.currentPage && "bg-ms-olive text-white border-ms-olive"
                             )}
                           >
                             {pageNum}

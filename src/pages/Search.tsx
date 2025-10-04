@@ -260,7 +260,7 @@ export default function Search() {
                         <div>
                           <label className="block text-sm font-medium text-slate-300 mb-2">초록</label>
                           <textarea
-                            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-slate-800 border border-ms-line dark:border-dark-700 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-ms-olive focus:border-ms-olive"
                             placeholder="초록 내용을 입력하세요"
                             rows={3}
                             value={filters.astrtCont || ''}
@@ -270,7 +270,7 @@ export default function Search() {
                         <div>
                           <label className="block text-sm font-medium text-slate-300 mb-2">청구범위</label>
                           <textarea
-                            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-slate-800 border border-ms-line dark:border-dark-700 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-ms-olive focus:border-ms-olive"
                             placeholder="청구범위 내용을 입력하세요"
                             rows={3}
                             value={filters.claimScope || ''}
@@ -407,7 +407,7 @@ export default function Search() {
                               type="checkbox"
                               checked={filters.patent || false}
                               onChange={(e) => handleFilterChange('patent', e.target.checked)}
-                              className="mr-2 rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500"
+                              className="mr-2 rounded border-ms-line bg-slate-800 text-ms-olive focus:ring-ms-olive"
                             />
                             <span className="text-sm text-slate-300">특허</span>
                           </label>
@@ -416,7 +416,7 @@ export default function Search() {
                               type="checkbox"
                               checked={filters.utility || false}
                               onChange={(e) => handleFilterChange('utility', e.target.checked)}
-                              className="mr-2 rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500"
+                              className="mr-2 rounded border-ms-line bg-slate-800 text-ms-olive focus:ring-ms-olive"
                             />
                             <span className="text-sm text-slate-300">실용신안</span>
                           </label>
@@ -429,7 +429,7 @@ export default function Search() {
                         <select
                           value={filters.lastvalue || ''}
                           onChange={(e) => handleFilterChange('lastvalue', e.target.value)}
-                          className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 bg-slate-800 border border-ms-line rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-ms-olive"
                         >
                           {statusOptions.map(option => (
                             <option key={option.value} value={option.value}>
@@ -445,7 +445,7 @@ export default function Search() {
                         <select
                           value={filters.sortSpec || 'AD'}
                           onChange={(e) => handleFilterChange('sortSpec', e.target.value)}
-                          className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 bg-slate-800 border border-ms-line rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-ms-olive"
                         >
                           {sortOptions.map(option => (
                             <option key={option.value} value={option.value}>
@@ -462,7 +462,7 @@ export default function Search() {
                             type="checkbox"
                             checked={filters.descSort || false}
                             onChange={(e) => handleFilterChange('descSort', e.target.checked)}
-                            className="mr-2 rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500"
+              className="mr-2 rounded border-ms-line dark:border-dark-700 bg-slate-800 text-ms-olive focus:ring-ms-olive"
                           />
                           <span className="text-sm text-slate-300">내림차순</span>
                         </label>
@@ -579,10 +579,10 @@ export default function Search() {
                 return (
                   <div 
                     key={patent.indexNo || index}
-                    className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow"
+                    className="bg-white border border-gray-200 rounded-lg p-6 ms-card-minimal transition-colors hover:bg-gray-50"
                   >
                     <div className="mb-3">
-                      <span className="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+                      <span className="inline-block ms-olive-pill text-xs font-semibold px-2.5 py-0.5 rounded">
                         {patent.applicationNumber}
                       </span>
                     </div>
@@ -590,7 +590,7 @@ export default function Search() {
                     <h3 className="text-lg font-semibold mb-3">
                       <a 
                         href={`/patent/${patent.applicationNumber}`}
-                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                        className="ms-olive-text hover:underline"
                       >
                         {patent.inventionTitle}
                       </a>
@@ -616,7 +616,7 @@ export default function Search() {
                       
                       <a 
                         href={`/patent/${patent.applicationNumber}`}
-                        className="inline-block bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                        className="inline-block text-sm font-semibold rounded-md px-4 py-2 bg-[var(--ms-olive-600)] hover:bg-[var(--ms-olive-700)] text-white border-ms-line transition-colors"
                       >
                         상세보기
                       </a>

@@ -158,7 +158,7 @@ export default function Login() {
       <Layout>
         <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ms-olive mx-auto"></div>
             <p className="mt-4 text-slate-400">인증 상태 확인 중...</p>
           </div>
         </div>
@@ -173,7 +173,7 @@ export default function Login() {
           {/* Logo and Title */}
           <div className="text-center">
             <div className="flex justify-center">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+        <div className="w-12 h-12 bg-ms-olive rounded-lg flex items-center justify-center">
                 <Search className="w-7 h-7 text-white" />
               </div>
             </div>
@@ -231,13 +231,13 @@ export default function Login() {
                   <label className="flex items-center">
                     <input
                       type="checkbox"
-                      className="w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500 focus:ring-2"
+                    className="w-4 h-4 text-ms-olive bg-slate-700 border-slate-600 rounded focus:ring-ms-olive focus:ring-2"
                     />
                     <span className="ml-2 text-sm text-slate-300">로그인 상태 유지</span>
                   </label>
                   <Link
                     to="/forgot-password"
-                    className="text-sm text-blue-400 hover:text-blue-300"
+                    className="text-sm text-ms-olive font-bold hover:text-ms-olive"
                   >
                     비밀번호 찾기
                   </Link>
@@ -258,7 +258,7 @@ export default function Login() {
                   계정이 없으신가요?{' '}
                   <Link
                     to="/register"
-                    className="font-medium text-blue-400 hover:text-blue-300"
+                    className="font-bold text-ms-olive hover:text-ms-olive"
                   >
                     회원가입
                   </Link>
@@ -322,7 +322,7 @@ export default function Login() {
                     setLoading(false);
                   }
                 }}
-                className="mt-3 w-full bg-blue-600 hover:bg-blue-700"
+                className="mt-3 w-full bg-ms-olive hover:bg-ms-olive/90"
                 size="sm"
                 disabled={loading}
               >

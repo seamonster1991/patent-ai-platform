@@ -122,40 +122,64 @@ module.exports = async function handler(req, res) {
     const prompt = generateReportPrompt(patentInfo, reportType);
     console.log('✅ 프롬프트 생성 완료 - 길이:', prompt.length);
 
-    // AI 분석 실행 (타임아웃 60초로 증가)
+    // AI 분석 실행 (재시도 로직 포함)
     console.log('🧠 AI 분석 시작...');
-    const timeoutMs = 60000; // 60초로 증가
+    const maxRetries = 3;
+    const baseTimeoutMs = 120000; // 기본 120초로 증가
     
     let analysisText;
-    try {
-      const analysisPromise = model.generateContent(prompt);
+    let lastError;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      const currentTimeoutMs = baseTimeoutMs + (attempt - 1) * 30000; // 시도마다 30초씩 증가
+      console.log(`⏰ [시도 ${attempt}/${maxRetries}] 타임아웃 설정: ${currentTimeoutMs/1000}초`);
       
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => {
-          console.error('⏰ AI 분석 타임아웃 발생');
-          reject(new Error('AI 분석 시간 초과 (60초)'));
-        }, timeoutMs);
-      });
+      try {
+        const analysisPromise = model.generateContent(prompt);
+        
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => {
+            console.error(`⏰ [시도 ${attempt}/${maxRetries}] AI 분석 타임아웃 발생`);
+            reject(new Error(`AI 분석 시간 초과 (${currentTimeoutMs/1000}초)`));
+          }, currentTimeoutMs);
+        });
 
-      console.log('📡 Gemini API 호출 중...');
-      const result = await Promise.race([analysisPromise, timeoutPromise]);
-      console.log('📡 Gemini API 응답 받음');
-      
-      const response = await result.response;
-      console.log('📄 응답 텍스트 추출 중...');
-      analysisText = response.text();
-      console.log('✅ 응답 텍스트 추출 완료');
-    } catch (apiError) {
-      console.error('❌ Gemini API 호출 오류:', {
-        message: apiError.message,
-        status: apiError.status,
-        statusText: apiError.statusText,
-        code: apiError.code,
-        details: apiError.details
-      });
-      
-      // API 오류를 다시 throw하여 외부 catch에서 처리
-      throw apiError;
+        console.log(`📡 [시도 ${attempt}/${maxRetries}] Gemini API 호출 중...`);
+        const result = await Promise.race([analysisPromise, timeoutPromise]);
+        console.log(`📡 [시도 ${attempt}/${maxRetries}] Gemini API 응답 받음`);
+        
+        const response = await result.response;
+        console.log(`📄 [시도 ${attempt}/${maxRetries}] 응답 텍스트 추출 중...`);
+        analysisText = response.text();
+        
+        // 응답 검증
+        if (!analysisText || analysisText.trim().length < 100) {
+          throw new Error('응답이 너무 짧거나 비어있음');
+        }
+        
+        console.log(`✅ [시도 ${attempt}/${maxRetries}] 응답 텍스트 추출 완료 (${analysisText.length}자)`);
+        break; // 성공 시 루프 종료
+        
+      } catch (apiError) {
+        lastError = apiError;
+        console.error(`❌ [시도 ${attempt}/${maxRetries}] Gemini API 호출 오류:`, {
+          message: apiError.message,
+          status: apiError.status,
+          statusText: apiError.statusText,
+          code: apiError.code,
+          details: apiError.details
+        });
+        
+        if (attempt === maxRetries) {
+          console.error('❌ 모든 재시도 실패, 최종 오류 발생');
+          throw lastError;
+        }
+        
+        // 재시도 전 대기 (지수 백오프)
+        const waitTime = Math.min(5000 * Math.pow(2, attempt - 1), 30000);
+        console.log(`⏳ [시도 ${attempt}/${maxRetries}] ${waitTime/1000}초 후 재시도...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      }
     }
 
     const processingTime = Date.now() - startTime;
@@ -403,71 +427,86 @@ function extractPatentInfo(patentData) {
 // 리포트 타입별 프롬프트 생성
 function generateReportPrompt(patentInfo, reportType) {
   const baseInfo = `
-특허 정보:
-- 출원번호: ${patentInfo.applicationNumber}
-- 발명의 명칭: ${patentInfo.inventionTitle}
-- 출원일: ${patentInfo.applicationDate}
-- 등록상태: ${patentInfo.registerStatus}
-- IPC 분류: ${patentInfo.ipcCodes}
-- 출원인: ${patentInfo.applicants}
-- 발명자: ${patentInfo.inventors}
+특허 정보 요약
+### 기본 정보
+#### 출원번호
+- **${patentInfo.applicationNumber}**
+#### 발명의 명칭
+- **${patentInfo.inventionTitle}**
+#### 출원일 및 등록상태
+- **${patentInfo.applicationDate}**, **${patentInfo.registerStatus}**
+#### IPC/출원인/발명자
+- **${patentInfo.ipcCodes}** / **${patentInfo.applicants}** / **${patentInfo.inventors}**
 
-초록:
-${patentInfo.abstract}
+### 초록(요약)
+#### 핵심 기술 설명
+- ${patentInfo.abstract}
 
-청구항:
-${patentInfo.claims}
+### 대표 청구항(요약)
+#### 권리 범위 요약
+- ${patentInfo.claims}
 `;
 
-  const prompts = {
-    market: `
-${baseInfo}
+  const roleConstraints = `
+# Gemini LLM 특허 분석 보고서 생성 프롬프트 (통제 강화 버전)
 
-위 특허에 대한 상세한 시장 분석 리포트를 작성해주세요. 다음 구조로 작성해주세요:
+## 1. 역할 및 제약 조건 (Role & Constraints)
 
-## 기술의 핵심 가치
-이 특허 기술의 핵심적인 가치와 혁신성을 분석해주세요.
+당신은 **맥킨지/BCG급** 최고 수준의 경영 전략 컨설팅 펌의 **수석 파트너**입니다. 당신의 분석은 **최고 경영진(C-level)**의 투자 결정을 위한 최종 보고서입니다.
 
-## 핵심 목표 시장
-이 기술이 적용될 수 있는 주요 시장과 타겟 고객층을 분석해주세요.
+1. **톤 앤 매너:** 권위적이고, 극도로 객관적이며, 모든 내용은 데이터 기반으로 작성합니다. 감정적 표현, 추상적 수식어 사용을 엄격히 금지합니다.
+2. **헤딩 구조 강제:** 반드시 마크다운 **###**(레벨 3)과 **####**(레벨 4)만 사용합니다. 각 ### 섹션 아래에는 #### 항목을 **최소 3개 이상** 배치합니다.
+3. **내용 길이 강제:** 각 **#### 헤딩 바로 아래** 설명은 다음 중 하나를 준수해야 합니다.
+   - 최대 **2개의 짧고 독립적인 문장**
+   - 또는 **최대 3개의 불릿 포인트**
+4. **디자인 강조:** 핵심 용어, 수치, 결론은 **굵게** 처리합니다.
+5. **배경 제거:** 트레이딩/개인적 배경 정보는 완전히 배제합니다.
+`;
 
-## 경쟁 기술 우위
-기존 기술 대비 이 특허의 경쟁 우위와 차별화 요소를 분석해주세요.
+  const part1TechMarket = `
+## 3. [Part 1] 기술/시장 심층 구조 분석
 
-## 시장 성장 동력 및 위험
-시장 성장을 이끌 수 있는 요인들과 잠재적 위험 요소들을 분석해주세요.
+### 3.1. 기술 혁신 및 근본적 경쟁 우위
+#### 3.1.1. 해결된 핵심 기술 난제
+- 발명이 **최초로 제거한 병목 현상**과 **모방 난이도**를 단답형으로 평가
+#### 3.1.2. 기존 기술 대비 정량적 성능 지표
+- **CoGS 절감률(%)**, **효율 향상(%)**, **통합 용이성**을 수치화하여 제시
+#### 3.1.3. 특허 권리 범위 및 방어력 진단
+- **원천성 수준(매우 높음/높음/중간/낮음)** 및 **회피 설계 난이도**
 
-## 기술 성숙도 및 시장 매력도 요약
-기술의 성숙도와 시장의 매력도를 종합적으로 평가해주세요.
+### 3.2. 목표 시장 및 기술 확산 전략
+#### 3.2.1. 시장 규모 및 성장 잠재력
+- **TAM(5년, 금액 단위)**, **확산 속도(기하급수적/선형/더딤)**, **장애 요인 Top3**
+#### 3.2.2. 경쟁 환경 및 대체 기술 분석
+- **대체 기술의 한계**, **격차 유지 예상 기간**, **3년 내 대형사 진입 가능성**
+`;
 
-각 섹션은 구체적이고 실용적인 내용으로 작성하되, 전문적이면서도 이해하기 쉽게 작성해주세요.
-`,
+  const part2BizStrategy = `
+## 4. [Part 2] 비즈니스 전략 초점 인사이트
 
-    business: `
-${baseInfo}
+### 4.1. 신사업 기회 및 수익 모델 혁신
+#### 4.1.1. 구체적인 신사업 제안
+- **프리미엄 제품 포트폴리오**, **구독 기반 서비스 모델**
+#### 4.1.2. 최적의 수익 창출 경로
+- **권고 수익 모델(B2B/B2G/B2C)**, **기술 로열티율 범위(% 최소~최대)**
+#### 4.1.3. 전략적 기술 가치 추정
+- **M&A 프리미엄**과 **NPV(5년) 기여도**
 
-위 특허에 대한 상세한 비즈니스 전략 인사이트 리포트를 작성해주세요. 다음 구조로 작성해주세요:
+### 4.2. 리스크 관리 및 IP 전략
+#### 4.2.1. 최우선 R&D 후속 투자 방향
+- **상용화 공정 단순화**, **응용 분야 특허 포트폴리오 확장**
+#### 4.2.2. 전략적 파트너십/제휴 대상
+- **보완/접근성 확보 중 택1 근거**, **파트너십 형태(라이선스/조인트벤처/전략투자)**
+#### 4.2.3. 최악의 시나리오 대비 리스크 관리
+- **특허 무효화 반격 전략**, **경쟁사의 우회/대체 반격 시나리오**
+`;
 
-## 새로운 비즈니스 기회
-이 특허 기술을 활용한 새로운 비즈니스 모델과 기회를 분석해주세요.
-
-## 경쟁사 대응 전략
-경쟁사들의 예상 대응과 이에 대한 전략적 대응 방안을 제시해주세요.
-
-## R&D 및 M&A/파트너십 전략
-기술 개발 방향과 전략적 제휴 또는 인수합병 기회를 분석해주세요.
-
-## 제안 수익 모델
-이 기술을 기반으로 한 구체적인 수익 창출 모델을 제시해주세요.
-
-## 실행 가능성 평가 및 액션 플랜
-비즈니스 실행의 현실성과 단계별 실행 계획을 제시해주세요.
-
-각 섹션은 실행 가능한 전략과 구체적인 액션 아이템을 포함하여 작성해주세요.
-`
-  };
-
-  return prompts[reportType];
+  // 리포트 타입에 따라 강조 섹션을 달리하되 동일한 엄격한 구조/톤을 유지
+  if (reportType === 'market') {
+    return `${roleConstraints}\n${baseInfo}\n${part1TechMarket}\n${part2BizStrategy}\n### 출력 지시\n#### 형식 준수\n- 위 구조를 그대로 따르고, 모든 **####** 아래는 규칙을 준수하여 간결하게 작성`;
+  }
+  // business
+  return `${roleConstraints}\n${baseInfo}\n${part2BizStrategy}\n${part1TechMarket}\n### 출력 지시\n#### 형식 준수\n- 위 구조를 그대로 따르고, 모든 **####** 아래는 규칙을 준수하여 간결하게 작성`;
 }
 
 // AI 응답을 구조화된 형태로 파싱 - 강화된 검증 및 파싱
@@ -478,15 +517,29 @@ function parseReportResult(analysisText, reportType) {
     hasText: !!analysisText
   });
 
-  // 입력 검증
+  // 입력 검증 강화
   if (!analysisText || typeof analysisText !== 'string') {
     console.error('❌ 유효하지 않은 분석 텍스트');
-    throw new Error('Invalid analysis text provided');
+    return createFallbackResult(analysisText, reportType, 'Invalid analysis text');
   }
 
-  if (analysisText.trim().length === 0) {
+  const trimmedText = analysisText.trim();
+  if (trimmedText.length === 0) {
     console.error('❌ 빈 분석 텍스트');
-    throw new Error('Empty analysis text provided');
+    return createFallbackResult(analysisText, reportType, 'Empty analysis text');
+  }
+
+  if (trimmedText.length < 50) {
+    console.warn('⚠️ 분석 텍스트가 너무 짧음 (50자 미만)');
+    return createFallbackResult(analysisText, reportType, 'Text too short');
+  }
+
+  // 텍스트 품질 검증
+  const hasKorean = /[가-힣]/.test(trimmedText);
+  const hasStructure = /[#*●■▶]/.test(trimmedText) || /\d+\./.test(trimmedText);
+  
+  if (!hasKorean && !hasStructure) {
+    console.warn('⚠️ 텍스트에 한국어나 구조적 요소가 부족함');
   }
 
   const sections = [];
@@ -500,6 +553,7 @@ function parseReportResult(analysisText, reportType) {
 
   // 다양한 섹션 제목 패턴 정의
   const sectionPatterns = [
+    /^###\s+(.+)$/,                   // ### 제목 (강화된 프롬프트 구조)
     /^##\s+(.+)$/,                    // ## 제목
     /^\*\*(.+)\*\*$/,                 // **제목**
     /^\d+\.\s+(.+)$/,                 // 1. 제목
@@ -619,4 +673,66 @@ function parseReportResult(analysisText, reportType) {
   });
 
   return result;
+}
+
+// 폴백 결과 생성 함수
+function createFallbackResult(originalText, reportType, reason) {
+  console.log(`🔄 폴백 결과 생성: ${reason}`);
+  
+  const fallbackTitle = reportType === 'market' ? '시장 분석 결과' : '비즈니스 인사이트';
+  const fallbackContent = originalText && typeof originalText === 'string' && originalText.trim().length > 0 
+    ? originalText.trim() 
+    : '분석 결과를 생성하는 중 문제가 발생했습니다. 다시 시도해 주세요.';
+
+  // 간단한 섹션 분할 시도
+  const sections = [];
+  
+  if (fallbackContent.length > 100) {
+    // 문단별로 분할 시도
+    const paragraphs = fallbackContent.split(/\n\s*\n/).filter(p => p.trim().length > 20);
+    
+    if (paragraphs.length > 1) {
+      paragraphs.forEach((paragraph, index) => {
+        sections.push({
+          title: `${fallbackTitle} ${index + 1}`,
+          content: paragraph.trim(),
+          wordCount: paragraph.trim().split(/\s+/).length
+        });
+      });
+    } else {
+      // 길이로 분할
+      const chunkSize = Math.max(200, Math.floor(fallbackContent.length / 3));
+      let start = 0;
+      let chunkIndex = 1;
+      
+      while (start < fallbackContent.length) {
+        const chunk = fallbackContent.substring(start, start + chunkSize);
+        sections.push({
+          title: `${fallbackTitle} ${chunkIndex}`,
+          content: chunk.trim(),
+          wordCount: chunk.trim().split(/\s+/).length
+        });
+        start += chunkSize;
+        chunkIndex++;
+      }
+    }
+  } else {
+    // 단일 섹션으로 처리
+    sections.push({
+      title: fallbackTitle,
+      content: fallbackContent,
+      wordCount: fallbackContent.split(/\s+/).length
+    });
+  }
+
+  return {
+    reportType: reportType,
+    sections: sections,
+    summary: fallbackContent.substring(0, 200) + (fallbackContent.length > 200 ? '...' : ''),
+    totalSections: sections.length,
+    totalWords: sections.reduce((sum, s) => sum + s.wordCount, 0),
+    parsedAt: new Date().toISOString(),
+    isFallback: true,
+    fallbackReason: reason
+  };
 }

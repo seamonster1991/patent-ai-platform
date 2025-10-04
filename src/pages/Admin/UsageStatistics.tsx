@@ -243,7 +243,7 @@ const UsageStatistics: React.FC = () => {
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
-            className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-4 py-2 border border-ms-line dark:border-dark-700 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-ms-olive focus:border-ms-olive"
           >
             <option value="7d">최근 7일</option>
             <option value="30d">최근 30일</option>
@@ -465,7 +465,7 @@ const UsageStatistics: React.FC = () => {
       </div>
 
       {/* Detailed Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm ms-line-frame">
         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
             플랜별 상세 통계

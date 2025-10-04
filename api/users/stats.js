@@ -38,13 +38,8 @@ module.exports = async function handler(req, res) {
     
     console.log('추출된 userId:', userId);
     
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing required parameter',
-        message: 'userId is required'
-      });
-    }
+    // userId가 없는 경우에도 전체(집계) 통계를 제공하도록 변경
+    // (게스트/집계 모드 지원)
 
     // UUID 형식 검증 (완화된 버전 - 임시 사용자 허용)
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -61,8 +56,8 @@ module.exports = async function handler(req, res) {
 
     console.log('사용자 ID:', userId, '기간:', period + '일');
 
-    // 임시로 실제 데이터가 있는 사용자 ID 사용
-    const actualUserId = '276975db-635b-4c77-87a0-548f91b14231';
+    // 실제 사용자 ID 사용 (guest_user나 임시 사용자도 포함)
+    const actualUserId = userId;
     console.log('실제 사용할 사용자 ID:', actualUserId);
 
     // 기간 계산 (일 단위)
@@ -71,20 +66,32 @@ module.exports = async function handler(req, res) {
     startDate.setDate(startDate.getDate() - periodDays);
 
     // 1. 전체 활동 통계
-    const { data: activities, error: activitiesError } = await supabase
+    // guest_user나 임시 사용자의 경우 전체 데이터 조회, 그 외에는 특정 사용자 데이터 조회
+    let activitiesQuery = supabase
       .from('user_activities')
       .select('activity_type, created_at, activity_data')
-      .eq('user_id', actualUserId)
       .gte('created_at', startDate.toISOString())
       .order('created_at', { ascending: false });
+
+    // 실제 UUID 사용자가 아닌 경우 전체 데이터 조회 (guest, temp 사용자 등)
+    if (isValidUuid && actualUserId !== 'anonymous') {
+      activitiesQuery = activitiesQuery.eq('user_id', actualUserId);
+    }
+
+    const { data: activities, error: activitiesError } = await activitiesQuery;
 
     if (activitiesError) {
       console.error('활동 데이터 조회 오류:', activitiesError);
       throw activitiesError;
     }
 
+    console.log('조회된 활동 수:', activities?.length || 0);
+
+    // 활동 데이터가 없는 경우 빈 배열로 초기화
+    const safeActivities = activities || [];
+
     // 2. 활동 타입별 집계
-    const activityBreakdown = activities.reduce((acc, activity) => {
+    const activityBreakdown = safeActivities.reduce((acc, activity) => {
       const type = activity.activity_type;
       acc[type] = (acc[type] || 0) + 1;
       return acc;
@@ -97,7 +104,7 @@ module.exports = async function handler(req, res) {
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
       
-      const dayActivities = activities.filter(activity => 
+      const dayActivities = safeActivities.filter(activity => 
         activity.created_at.startsWith(dateStr)
       );
       
@@ -119,7 +126,7 @@ module.exports = async function handler(req, res) {
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
       
-      const dayActivities = activities.filter(activity => 
+      const dayActivities = safeActivities.filter(activity => 
         activity.created_at.startsWith(dateStr)
       );
       
@@ -133,36 +140,60 @@ module.exports = async function handler(req, res) {
     // 3-2. 시간대별 활동 통계 (24시간)
     const hourlyStats = Array.from({ length: 24 }, (_, hour) => ({
       hour,
-      count: 0
-    }));
-
-    activities.forEach(activity => {
-      const hour = new Date(activity.created_at).getHours();
-      hourlyStats[hour].count++;
-    });
-
-    // 3-3. 요일별 활동 통계 (월요일=1, 일요일=0)
-    const weeklyStats = Array.from({ length: 7 }, (_, day) => ({
-      day: ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'][day],
-      dayIndex: day,
       count: 0,
       searchCount: 0,
       aiAnalysisCount: 0
     }));
 
-    activities.forEach(activity => {
-      const dayOfWeek = new Date(activity.created_at).getDay();
-      weeklyStats[dayOfWeek].count++;
-      
+    safeActivities.forEach(activity => {
+      const hour = new Date(activity.created_at).getHours();
+      hourlyStats[hour].count++;
       if (activity.activity_type === 'search') {
-        weeklyStats[dayOfWeek].searchCount++;
+        hourlyStats[hour].searchCount++;
       } else if (activity.activity_type === 'ai_analysis') {
-        weeklyStats[dayOfWeek].aiAnalysisCount++;
+        hourlyStats[hour].aiAnalysisCount++;
       }
     });
 
+    // 3-3. 요일별 활동 통계 - Mon(월) ~ Sun(일) 순서로 정렬
+    // Date.getDay() 기준: 0=일,1=월,2=화,3=수,4=목,5=금,6=토
+    const weekOrder = [1, 2, 3, 4, 5, 6, 0]; // 월~일 순서
+    const weekNames = {
+      0: '일요일',
+      1: '월요일',
+      2: '화요일',
+      3: '수요일',
+      4: '목요일',
+      5: '금요일',
+      6: '토요일'
+    };
+
+    const weeklyBuckets = Array.from({ length: 7 }, () => ({
+      count: 0,
+      searchCount: 0,
+      aiAnalysisCount: 0
+    }));
+
+    safeActivities.forEach(activity => {
+      const dow = new Date(activity.created_at).getDay();
+      weeklyBuckets[dow].count++;
+      if (activity.activity_type === 'search') {
+        weeklyBuckets[dow].searchCount++;
+      } else if (activity.activity_type === 'ai_analysis') {
+        weeklyBuckets[dow].aiAnalysisCount++;
+      }
+    });
+
+    const weeklyStats = weekOrder.map((dow, idx) => ({
+      day: weekNames[dow],
+      dayIndex: dow, // 주말 색상 표시를 위해 JS 요일 인덱스를 유지 (0=일,6=토)
+      count: weeklyBuckets[dow].count,
+      searchCount: weeklyBuckets[dow].searchCount,
+      aiAnalysisCount: weeklyBuckets[dow].aiAnalysisCount
+    }));
+
     // 4. 검색 키워드 통계 및 평균 검색 결과 계산
-    const searchActivities = activities.filter(activity => 
+    const searchActivities = safeActivities.filter(activity => 
       activity.activity_type === 'search' && activity.activity_data?.keyword
     );
     
@@ -211,7 +242,7 @@ module.exports = async function handler(req, res) {
       .sort((a, b) => b.count - a.count);
 
     // 5. AI 분석 통계
-    const aiAnalysisActivities = activities.filter(activity => 
+    const aiAnalysisActivities = safeActivities.filter(activity => 
       activity.activity_type === 'ai_analysis'
     );
 
@@ -222,7 +253,7 @@ module.exports = async function handler(req, res) {
     }, {});
 
     // 6. 문서 다운로드 통계
-    const downloadActivities = activities.filter(activity => 
+    const downloadActivities = safeActivities.filter(activity => 
       activity.activity_type === 'document_download'
     );
 
@@ -242,13 +273,22 @@ module.exports = async function handler(req, res) {
     }));
     console.log('최근 검색 기록:', recentSearches.length);
 
-    // 8. 최근 리포트 목록 (실제 DB에서 조회) - user_id가 null인 보고서들 조회
-    const { data: reports, error: reportsError } = await supabase
+    // 8. 최근 리포트 목록 (실제 DB에서 조회)
+    let reportsQuery = supabase
       .from('ai_analysis_reports')
       .select('id, invention_title, application_number, created_at')
-      .is('user_id', null)  // user_id가 null인 보고서들 조회
       .order('created_at', { ascending: false })
       .limit(10);
+
+    // 실제 UUID 사용자가 아닌 경우 전체 데이터 조회 (guest, temp 사용자 등)
+    if (isValidUuid && actualUserId !== 'anonymous') {
+      reportsQuery = reportsQuery.eq('user_id', actualUserId);
+    } else {
+      // guest_user나 임시 사용자의 경우 user_id가 null인 보고서들 조회
+      reportsQuery = reportsQuery.is('user_id', null);
+    }
+
+    const { data: reports, error: reportsError } = await reportsQuery;
 
     if (reportsError) {
       console.error('리포트 데이터 조회 오류:', reportsError);
@@ -265,7 +305,7 @@ module.exports = async function handler(req, res) {
     console.log('최근 보고서:', recentReports.length);
 
     // 9. 최근 활동 내역 (최대 30개 - 각 타입별로 10개씩 필터링하기 위해 여유분 확보)
-    const recentActivities = activities.slice(0, 30).map(activity => ({
+    const recentActivities = safeActivities.slice(0, 30).map(activity => ({
       type: activity.activity_type,
       data: activity.activity_data,
       timestamp: activity.created_at,
@@ -278,7 +318,7 @@ module.exports = async function handler(req, res) {
       data: {
         period: `${periodDays}일`,
         summary: {
-          total_activities: activities.length,
+          total_activities: safeActivities.length,
           search_count: activityBreakdown.search || 0,
           patent_view_count: activityBreakdown.patent_view || 0,
           ai_analysis_count: activityBreakdown.ai_analysis || 0,

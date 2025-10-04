@@ -2,10 +2,23 @@ const axios = require('axios');
 const { parseStringPromise } = require('xml2js');
 const { createClient } = require('@supabase/supabase-js');
 
-// Supabase 클라이언트 초기화
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
+// Supabase 클라이언트 초기화 (서버 환경 변수 우선 사용, 프론트 빌드 변수는 폴백)
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+let supabase = null;
+try {
+  if (supabaseUrl && supabaseServiceKey) {
+    supabase = createClient(supabaseUrl, supabaseServiceKey);
+  } else {
+    console.warn('[search.js] Supabase 환경변수가 누락되어 활동 로그를 건너뜁니다.', {
+      hasUrl: !!supabaseUrl,
+      hasServiceKey: !!supabaseServiceKey,
+    });
+  }
+} catch (e) {
+  console.warn('[search.js] Supabase 클라이언트 초기화 실패, 활동 로그를 건너뜁니다:', e?.message || e);
+  supabase = null;
+}
 
 module.exports = async function handler(req, res) {
   // CORS 헤더 설정
@@ -45,7 +58,11 @@ module.exports = async function handler(req, res) {
 
     console.log('KIPRIS API Key found:', kiprisApiKey ? 'Yes' : 'No');
     
-    const searchParams = req.body;
+    const searchParams = req.body || {};
+    
+    // 서버리스 환경(Vercel 등) 고려한 타임아웃 설정
+    const isVercel = !!process.env.VERCEL;
+    const TIMEOUT_MS = Number(process.env.KIPRIS_TIMEOUT_MS) || (isVercel ? 8000 : 30000);
     
     // KIPRIS API URL (문서에 따른 올바른 엔드포인트)
     const kiprisApiUrl = 'http://plus.kipris.or.kr/kipo-api/kipi/patUtiModInfoSearchSevice/getAdvancedSearch';
@@ -54,13 +71,33 @@ module.exports = async function handler(req, res) {
     const params = new URLSearchParams();
     
     // 기본 검색 필드 매핑 (다양한 필드명 지원)
-    const searchWord = searchParams.word || searchParams.keyword || searchParams.query;
+    const rawSearchWord = searchParams.word || searchParams.keyword || searchParams.query;
+    const searchWord = rawSearchWord ? String(rawSearchWord).trim().replace(/\s+/g, ' ') : '';
     console.log('🔍 [DEBUG] searchWord:', searchWord);
     console.log('🔍 [DEBUG] searchParams:', searchParams);
+    
+    // 검색어 유효성 검사 및 길이 제한
     if (searchWord) {
+      if (searchWord.length > 100) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid parameter',
+          message: '검색어가 너무 깁니다. 100자 이하로 입력해주세요.'
+        });
+      }
       // 자유검색으로 처리
       params.append('word', searchWord);
       console.log('🔍 [DEBUG] word 파라미터 추가됨:', searchWord);
+    }
+    
+    // 최소 하나의 검색 조건이 있어야 함
+    const hasAnyFilter = !!(searchWord || searchParams.inventionTitle || searchParams.astrtCont || searchParams.claimScope || searchParams.ipcNumber || searchParams.applicationNumber || searchParams.applicant || searchParams.inventors);
+    if (!hasAnyFilter) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required parameter',
+        message: '검색어 또는 검색 필터가 최소 1개 이상 필요합니다.'
+      });
     }
     
     // 발명의명칭 검색
@@ -113,7 +150,10 @@ module.exports = async function handler(req, res) {
     
     // 페이지네이션
     params.append('pageNo', (searchParams.pageNo || 1).toString());
-    params.append('numOfRows', Math.min(searchParams.numOfRows || 30, 500).toString()); // 최대 500개
+    // 서버 안정성을 위해 한 페이지 최대 100개로 제한 (환경변수로 조정 가능)
+    const MAX_ROWS = Number(process.env.KIPRIS_MAX_ROWS) || 100;
+    const requestedRows = Number(searchParams.numOfRows || 30);
+    params.append('numOfRows', Math.min(requestedRows, MAX_ROWS).toString());
     
     // 정렬 기준 (기본: 출원일자 내림차순)
     params.append('sortSpec', searchParams.sortSpec || 'AD');
@@ -127,7 +167,7 @@ module.exports = async function handler(req, res) {
     
     // KIPRIS API 호출
     const response = await axios.get(fullUrl, {
-      timeout: 30000,
+      timeout: TIMEOUT_MS,
       headers: {
         'Accept': 'application/xml',
         'User-Agent': 'Patent-AI-Application'
@@ -142,12 +182,22 @@ module.exports = async function handler(req, res) {
     
     // XML을 JSON으로 변환
     console.log('🔄 XML을 JSON으로 변환 중...');
-    const jsonData = await parseStringPromise(xmlData, {
-      explicitArray: false,
-      ignoreAttrs: true,
-      trim: true,
-      mergeAttrs: true
-    });
+    let jsonData;
+    try {
+      jsonData = await parseStringPromise(xmlData, {
+        explicitArray: false,
+        ignoreAttrs: true,
+        trim: true,
+        mergeAttrs: true
+      });
+    } catch (parseErr) {
+      console.error('❌ XML 파싱 오류:', parseErr?.message || parseErr);
+      return res.status(502).json({
+        success: false,
+        error: 'PARSE_ERROR',
+        message: 'KIPRIS 응답을 처리하는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
+      });
+    }
     
     console.log('🔍 [DEBUG] 전체 JSON 데이터:', JSON.stringify(jsonData, null, 2));
     console.log('📄 JSON 변환 완료');
@@ -347,19 +397,39 @@ module.exports = async function handler(req, res) {
     // 에러 타입에 따른 메시지 처리
     let errorMessage = 'KIPRIS API 호출 중 오류가 발생했습니다.';
     let errorCode = 'UNKNOWN_ERROR';
+    let statusCode = 500;
     
     if (error.code === 'ECONNABORTED') {
       errorMessage = 'KIPRIS API 응답 시간이 초과되었습니다.';
       errorCode = 'TIMEOUT_ERROR';
+      statusCode = 408;
     } else if (error.response) {
-      errorMessage = `KIPRIS API 오류: ${error.response.status} ${error.response.statusText}`;
-      errorCode = 'API_RESPONSE_ERROR';
+      // KIPRIS에서 반환된 상태 코드를 존중하여 매핑
+      const s = error.response.status;
+      if (s >= 500) {
+        errorMessage = 'KIPRIS 서비스 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+        statusCode = 503;
+        errorCode = 'KIPRIS_SERVER_ERROR';
+      } else if (s === 404) {
+        errorMessage = '검색 결과가 없거나 요청한 리소스를 찾을 수 없습니다.';
+        statusCode = 404;
+        errorCode = 'NOT_FOUND';
+      } else if (s === 400) {
+        errorMessage = '요청 파라미터가 유효하지 않습니다.';
+        statusCode = 400;
+        errorCode = 'BAD_REQUEST';
+      } else {
+        errorMessage = `KIPRIS API 오류: ${s} ${error.response.statusText}`;
+        statusCode = s;
+        errorCode = 'API_RESPONSE_ERROR';
+      }
     } else if (error.request) {
       errorMessage = 'KIPRIS API 서버에 연결할 수 없습니다.';
       errorCode = 'CONNECTION_ERROR';
+      statusCode = 503;
     }
 
-    return res.status(500).json({
+    return res.status(statusCode).json({
       success: false,
       message: errorMessage,
       error: error.message,

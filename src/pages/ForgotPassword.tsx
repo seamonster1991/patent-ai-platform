@@ -40,7 +40,7 @@ const ForgotPassword: React.FC = () => {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-transparent flex items-center justify-center p-4">
         <div className="max-w-md w-full">
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-8">
             <div className="text-center">
@@ -57,7 +57,7 @@ const ForgotPassword: React.FC = () => {
               <div className="space-y-3">
                 <Link
                   to="/login"
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+                  className="w-full bg-ms-olive hover:bg-ms-olive/90 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
                 >
                   로그인 페이지로 돌아가기
                 </Link>
@@ -66,7 +66,7 @@ const ForgotPassword: React.FC = () => {
                     setIsSuccess(false);
                     setEmail('');
                   }}
-                  className="w-full text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium py-2 transition-colors duration-200"
+                  className="w-full text-ms-olive hover:text-ms-olive/80 font-medium py-2 transition-colors duration-200"
                 >
                   다른 이메일로 재시도
                 </button>
@@ -79,13 +79,13 @@ const ForgotPassword: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-transparent flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full mx-auto mb-4">
-              <Mail className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+            <div className="flex items-center justify-center w-16 h-16 bg-ms-olive/10 dark:bg-ms-olive/20 rounded-full mx-auto mb-4">
+              <Mail className="w-8 h-8 text-ms-olive" />
             </div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
               비밀번호 찾기
@@ -111,7 +111,7 @@ const ForgotPassword: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="block w-full pl-10 pr-3 py-3 border border-ms-line dark:border-dark-700 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-ms-olive focus:border-ms-olive"
                   placeholder="your@email.com"
                 />
               </div>
@@ -127,7 +127,7 @@ const ForgotPassword: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading || !email}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 disabled:cursor-not-allowed flex items-center justify-center"
+              className="w-full bg-ms-olive hover:bg-ms-olive/90 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {isLoading ? (
                 <>
@@ -144,7 +144,7 @@ const ForgotPassword: React.FC = () => {
           <div className="mt-6 text-center">
             <Link
               to="/login"
-              className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors duration-200"
+              className="inline-flex items-center text-ms-olive hover:text-ms-olive/80 font-medium transition-colors duration-200"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               로그인 페이지로 돌아가기

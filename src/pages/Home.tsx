@@ -83,27 +83,20 @@ export default function Home() {
     }
   ]
 
-  const stats = [
-    { label: '등록된 특허', value: '1,000,000+' },
-    { label: '분석 리포트', value: '50,000+' },
-    { label: '활성 사용자', value: '10,000+' },
-    { label: '검색 정확도', value: '98.5%' }
-  ]
 
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-secondary-900 via-secondary-800 to-dark-900 dark:from-dark-900 dark:via-dark-800 dark:to-secondary-900">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary-600/20 to-accent-600/20"></div>
+      <section className="relative overflow-hidden bg-transparent">
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold text-ms-text dark:text-white mb-6">
               AI 기반 특허 분석의
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-accent-400">
+              <span className="block text-ms-olive">
                 새로운 기준
               </span>
             </h1>
-            <p className="text-xl text-secondary-200 dark:text-secondary-300 mb-8 max-w-3xl mx-auto">
+            <p className="text-xl text-secondary-700 dark:text-secondary-300 mb-8 max-w-3xl mx-auto">
               KIPRIS와 연동된 고도화된 AI 시스템으로 특허 검색부터 사업화 분석까지, 
               지식재산권 관리의 모든 것을 한 번에 해결하세요.
             </p>
@@ -138,8 +131,8 @@ export default function Home() {
             {/* Popular Search Terms */}
             <div className="mb-8">
               <div className="text-center mb-4">
-                <h3 className="text-lg font-semibold text-white mb-2">인기 검색어</h3>
-                <p className="text-secondary-300 dark:text-secondary-400 text-sm">
+                <h3 className="text-lg font-semibold text-ms-text dark:text-white mb-2">인기 검색어</h3>
+                <p className="text-secondary-700 dark:text-secondary-400 text-sm">
                   많이 검색되는 키워드로 빠르게 시작해보세요
                 </p>
               </div>
@@ -149,9 +142,9 @@ export default function Home() {
                   Array.from({ length: 5 }).map((_, index) => (
                     <div
                       key={index}
-                      className="px-4 py-2 bg-secondary-700/30 rounded-full animate-pulse"
+                      className="px-4 py-2 bg-neutral-200 rounded-full animate-pulse"
                     >
-                      <div className="w-16 h-4 bg-secondary-600/50 rounded"></div>
+                      <div className="w-16 h-4 bg-neutral-300 rounded"></div>
                     </div>
                   ))
                 ) : (
@@ -162,10 +155,10 @@ export default function Home() {
                       setSearchKeyword(keyword)
                       navigate(`/search?q=${encodeURIComponent(keyword)}`)
                     }}
-                    className="px-4 py-2 bg-secondary-700/50 dark:bg-secondary-600/50 hover:bg-primary-600/80 dark:hover:bg-primary-500/80 backdrop-blur-sm border border-secondary-600/30 dark:border-secondary-500/30 hover:border-primary-500/50 rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-900 transform hover:scale-105"
+                    className="px-4 py-2 bg-white/80 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 backdrop-blur-sm border-ms-line rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ms-olive focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-neutral-900 transform hover:scale-105"
                     aria-label={`${keyword} 검색하기`}
                   >
-                    <span className="text-white font-medium text-sm">
+                    <span className="text-ms-text dark:text-white font-medium text-sm">
                       {keyword}
                     </span>
                   </button>
@@ -177,45 +170,62 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 bg-secondary-900 dark:bg-dark-900">
+      {/* Marketing Hook Section (replaces Stats) */}
+      <section className="py-16 bg-white dark:bg-neutral-900/30 border-t border-ms-line">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="text-3xl md:text-4xl font-bold text-white mb-2">
-                  {stat.value}
-                </div>
-                <div className="text-secondary-300 dark:text-secondary-400">{stat.label}</div>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-ms-text dark:text-white mb-4">한 번의 검색으로 전략까지</h2>
+            <p className="text-xl text-secondary-700 dark:text-secondary-300 max-w-3xl mx-auto">AI가 키워드부터 보고서까지 연결해 실무에 바로 쓰는 인사이트를 제공합니다.</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="ms-line-frame rounded-md bg-white dark:bg-neutral-800 p-6">
+              <div className="w-12 h-12 mb-4 rounded-lg bg-neutral-100 dark:bg-neutral-700 flex items-center justify-center text-ms-olive">
+                <Search className="w-6 h-6" />
               </div>
-            ))}
+              <h3 className="text-lg font-semibold text-ms-text dark:text-white mb-2">정확한 검색</h3>
+              <p className="text-secondary-700 dark:text-secondary-300">유사 특허와 최신 출원 동향까지 한 화면에서 확인.</p>
+            </div>
+            <div className="ms-line-frame rounded-md bg-white dark:bg-neutral-800 p-6">
+              <div className="w-12 h-12 mb-4 rounded-lg bg-neutral-100 dark:bg-neutral-700 flex items-center justify-center text-ms-olive">
+                <FileText className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-semibold text-ms-text dark:text-white mb-2">실무형 리포트</h3>
+              <p className="text-secondary-700 dark:text-secondary-300">PDF/표로 정리된 결과를 바로 공유하고 의사결정에 활용.</p>
+            </div>
+            <div className="ms-line-frame rounded-md bg-white dark:bg-neutral-800 p-6">
+              <div className="w-12 h-12 mb-4 rounded-lg bg-neutral-100 dark:bg-neutral-700 flex items-center justify-center text-ms-olive">
+                <BarChart3 className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-semibold text-ms-text dark:text-white mb-2">인사이트 자동 생성</h3>
+              <p className="text-secondary-700 dark:text-secondary-300">시장성, 사업화 가능성 등 핵심 포인트를 AI가 요약.</p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-secondary-950 dark:bg-dark-950">
+      <section className="py-20 bg-white dark:bg-neutral-900/30 border-t border-ms-line">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-ms-text dark:text-white mb-4">
               왜 P-AI를 선택해야 할까요?
             </h2>
-            <p className="text-xl text-secondary-200 dark:text-secondary-300 max-w-3xl mx-auto">
+            <p className="text-xl text-secondary-700 dark:text-secondary-300 max-w-3xl mx-auto">
               최첨단 AI 기술과 KIPRIS 연동으로 제공하는 차별화된 특허 분석 서비스
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
-              <Card key={index} variant="elevated" className="text-center h-full bg-secondary-800 dark:bg-dark-800 border-secondary-700 dark:border-secondary-600 hover:bg-secondary-700 dark:hover:bg-dark-700 transition-colors">
+              <Card key={index} variant="elevated" className="text-center h-full bg-white dark:bg-neutral-800 border-ms-line hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors">
                 <CardHeader>
-                  <div className={`w-12 h-12 mx-auto mb-4 rounded-lg bg-secondary-700 dark:bg-secondary-600 flex items-center justify-center ${feature.color}`}>
+                  <div className={`w-12 h-12 mx-auto mb-4 rounded-lg bg-neutral-100 dark:bg-neutral-700 flex items-center justify-center ${feature.color}`}>
                     <feature.icon className="w-6 h-6" />
                   </div>
-                  <CardTitle className="text-lg text-white">{feature.title}</CardTitle>
+                  <CardTitle className="text-lg text-ms-text dark:text-white">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-secondary-300 dark:text-secondary-400">{feature.description}</p>
+                  <p className="text-secondary-700 dark:text-secondary-300">{feature.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -224,33 +234,24 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-primary-600 to-accent-600">
+      <section className="py-20 bg-white border-t border-ms-line">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-ms-text mb-4">
             지금 시작하세요
           </h2>
-          <p className="text-xl text-primary-100 mb-8">
+          <p className="text-xl text-secondary-600 mb-8">
             무료로 시작하여 AI 기반 특허 분석의 강력함을 경험해보세요
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               size="lg" 
-              variant="secondary"
+              variant="outline"
               onClick={() => navigate('/register')}
-              className="bg-white text-primary-600 hover:bg-secondary-100 focus-visible:ring-white focus-visible:ring-offset-primary-600"
+              className="sm:px-8"
               aria-label="무료 회원가입하기"
             >
               무료로 시작하기
               <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
-              onClick={() => navigate('/search')}
-              className="border-white text-white hover:bg-white hover:text-primary-600 focus-visible:ring-white focus-visible:ring-offset-primary-600"
-              aria-label="데모 체험해보기"
-            >
-              데모 체험하기
             </Button>
           </div>
         </div>

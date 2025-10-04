@@ -148,9 +148,10 @@ html {
 body {
   margin: 0;
   padding: 0;
-  background-color: rgb(var(--color-background));
-  color: rgb(var(--color-foreground));
+  background-color: rgb(var(--ms-bg));
+  color: rgb(var(--ms-text));
   transition: background-color 0.2s ease, color 0.2s ease;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
 }
 
 /* 접근성 개선 */
@@ -330,6 +331,29 @@ body {
   .print-mt-0 { margin-top: 0 !important; }
   .print-mb-4 { margin-bottom: 16pt !important; }
   .print-p-4 { padding: 16pt !important; }
+}
+
+/* Minimal Strategist: base typography, separators, and single-column container */
+@layer base {
+  h1 { font-weight: 800; letter-spacing: -0.01em; margin: 2.5rem 0 1rem; font-size: clamp(1.75rem, 3.2vw, 2.25rem); }
+  h2 { font-weight: 700; letter-spacing: -0.01em; margin: 2rem 0 0.75rem; font-size: clamp(1.5rem, 2.6vw, 2rem); }
+  h3 { font-weight: 700; margin: 1.75rem 0 0.5rem; font-size: clamp(1.25rem, 2.2vw, 1.5rem); }
+  h4 { font-weight: 600; margin: 1.5rem 0 0.5rem; font-size: 1.125rem; }
+  p  { line-height: 1.75; margin: 0.5rem 0; }
+  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 0.95em; }
+  hr { border: none; border-top: 1px solid rgb(var(--ms-line)); margin: 2rem 0; }
+  blockquote { 
+    margin: 1rem 0; padding: 1rem 1.25rem; 
+    border-left: 2px solid rgb(var(--ms-accent));
+    background-color: rgba(var(--ms-line), 0.25);
+    color: rgb(var(--ms-text));
+  }
+}
+
+.report-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
 }
 
 /* 브라우저별 호환성 */
@@ -538,3 +562,151 @@ body {
     font-size: 1.5rem;
   }
 }
+
+/* Minimal Strategist — Dark Olive Accent */
+:root {
+  /* Dark Olive brand accents (warmer tone) */
+  --ms-olive: #34463D;      /* brand */
+  --ms-olive-600: #3C4F46;  /* hover */
+  --ms-olive-700: #2D3D35;  /* pressed */
+}
+
+/* Global link styling with Dark Olive accent */
+a {
+  color: var(--ms-olive);
+  text-underline-offset: 3px;
+}
+a:hover {
+  color: var(--ms-olive-600);
+  text-decoration-thickness: 2px;
+}
+
+/* Selection and focus accents */
+::selection {
+  background-color: rgba(47, 59, 40, 0.15);
+  color: #111827;
+}
+::-moz-selection {
+  background-color: rgba(47, 59, 40, 0.15);
+  color: #111827;
+}
+:focus-visible {
+  outline: 2px solid rgba(47, 59, 40, 0.45);
+  outline-offset: 3px;
+}
+
+/* Minimal Strategist — utility classes for Dark Olive accent */
+.ms-olive-text { color: var(--ms-olive); }
+.ms-olive-icon { color: var(--ms-olive-600); }
+.ms-olive-border { border-color: var(--ms-olive); }
+.ms-olive-hover { transition: background-color 160ms ease; }
+.ms-olive-hover:hover { background-color: rgba(47, 59, 40, 0.06); }
+.ms-olive-pill { background-color: rgba(47, 59, 40, 0.12); color: var(--ms-olive-700); }
+.ms-card-minimal { box-shadow: none; }
+.ms-card-minimal:hover { background-color: rgba(16, 18, 20, 0.02); }
+
+/* ===== Form Controls: Consistent Olive Focus/Hover and 1px Border ===== */
+@layer base {
+  /* Textual inputs */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="number"],
+  input[type="url"],
+  input[type="tel"],
+  select,
+  textarea {
+    @apply border border-ms-line dark:border-dark-700 rounded-md transition-colors;
+    @apply focus:outline-none focus:ring-2 focus:ring-ms-olive focus:border-ms-olive;
+    @apply focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-dark-900;
+    @apply hover:border-ms-olive/40;
+  }
+
+  /* Avoid interfering with checkboxes/radios visuals, but set accent/focus color */
+  input[type="checkbox"],
+  input[type="radio"] {
+    @apply accent-ms-olive focus:ring-ms-olive;
+  }
+}
+
+/* Bold, sophisticated wallpaper and surfaces */
+:root {
+  /* Brass accent to complement olive */
+  --ms-brass: #B08F4F;
+  --ms-brass-400: #B89A5C;
+  --ms-brass-600: #9B7A36;
+
+  /* Minimalist global tones (RGB) */
+  --ms-bg: 255 255 255;      /* Pure white for report bodies */
+  --ms-text: 20 24 22;       /* Deep neutral text */
+  --ms-line: 32 40 38;       /* Thin neutral divider */
+}
+
+.dark {
+  /* Minimalist global tones for dark mode (RGB) */
+  --ms-bg: 10 12 11;         /* Deep neutral */
+  --ms-text: 235 239 237;    /* Soft light text */
+  --ms-line: 46 56 52;       /* Neutral line for dark */
+}
+
+/* Global wallpaper: flat, non-gradient background for consistency */
+.ms-wallpaper {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: rgb(var(--ms-bg));
+}
+
+.dark .ms-wallpaper {
+  background-color: rgb(var(--ms-bg));
+}
+
+/* Content container for comfortable reading width */
+.ms-container {
+  position: relative;
+  z-index: 1;
+  max-width: 1080px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(1rem, 3vw, 1.75rem);
+  padding-right: clamp(1rem, 3vw, 1.75rem);
+}
+
+/* Glass surface card utility */
+.ms-surface {
+  position: relative;
+  z-index: 1;
+  background: rgba(28, 33, 31, 0.40);
+  border: 1px solid var(--ms-line);
+  backdrop-filter: saturate(115%) blur(8px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.28);
+}
+
+.dark .ms-surface {
+  background: rgba(20, 24, 22, 0.42);
+}
+
+.light .ms-surface, :root:not(.dark) .ms-surface {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+/* Stronger hover/active states for interactive elements */
+.hover\:ms-bump:hover { transform: translateY(-1px); transition: transform 150ms ease; }
+.active\:ms-press:active { transform: translateY(0); filter: brightness(0.96); }
+
+/* === Minimal Strategist — Line frames and white text weight === */
+/* Refined perimeter lines for search boxes and tables */
+.border-ms-line {
+  border-color: rgb(var(--ms-line));
+  border-width: 1.5px; /* slightly thicker for refined look */
+}
+
+.ms-line-frame {
+  border: 1.5px solid rgb(var(--ms-line));
+}
+
+/* Make white text visually stronger for better readability */
+.text-white { font-weight: 600; }
+.dark .dark\:text-white { font-weight: 600; }

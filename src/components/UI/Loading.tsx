@@ -16,7 +16,7 @@ export default function Loading({ size = 'md', text, className }: LoadingProps) 
 
   return (
     <div className={cn('flex items-center justify-center space-x-2', className)}>
-      <Loader2 className={cn('animate-spin text-blue-500', sizeClasses[size])} />
+      <Loader2 className={cn('animate-spin text-ms-olive', sizeClasses[size])} />
       {text && (
         <span className="text-slate-300 text-sm">{text}</span>
       )}
@@ -37,6 +37,6 @@ export function LoadingPage({ text = '로딩 중...' }: { text?: string }) {
 
 export function LoadingSpinner({ className }: { className?: string }) {
   return (
-    <Loader2 className={cn('animate-spin text-blue-500 w-5 h-5', className)} />
+    <Loader2 className={cn('animate-spin text-ms-olive w-5 h-5', className)} />
   )
 }

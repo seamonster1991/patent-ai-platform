@@ -6,18 +6,8 @@ import {
   Brain,
   RefreshCw,
   FileText,
-  TrendingUp,
-  Target,
-  Shield,
-  BarChart3,
-  Users,
-  Zap,
   Award,
   Star,
-  DollarSign,
-  Globe,
-  Cpu,
-  Building2
 } from 'lucide-react'
 import Button from '../UI/Button'
 import Card, { CardContent, CardHeader, CardTitle } from '../UI/Card'
@@ -45,48 +35,17 @@ interface ReportSection {
 
 interface ReportData {
   reportType: string
+  reportName: string
   sections: ReportSection[]
-  summary: string
   generatedAt: string
 }
 
-// 섹션별 아이콘 매핑
-const getSectionIcon = (title: string, index: number) => {
-  const titleLower = title.toLowerCase()
-  
-  if (titleLower.includes('기술') || titleLower.includes('분야') || titleLower.includes('technology')) {
-    return <Cpu className="w-5 h-5" />
-  }
-  if (titleLower.includes('핵심') || titleLower.includes('요약') || titleLower.includes('core')) {
-    return <Zap className="w-5 h-5" />
-  }
-  if (titleLower.includes('특허') || titleLower.includes('patent') || titleLower.includes('평가')) {
-    return <Shield className="w-5 h-5" />
-  }
-  if (titleLower.includes('시장') || titleLower.includes('market') || titleLower.includes('상업')) {
-    return <TrendingUp className="w-5 h-5" />
-  }
-  if (titleLower.includes('경쟁') || titleLower.includes('비교') || titleLower.includes('competitive')) {
-    return <Target className="w-5 h-5" />
-  }
-  if (titleLower.includes('비즈니스') || titleLower.includes('business') || titleLower.includes('가치')) {
-    return <DollarSign className="w-5 h-5" />
-  }
-  if (titleLower.includes('산업') || titleLower.includes('industry') || titleLower.includes('응용')) {
-    return <Building2 className="w-5 h-5" />
-  }
-  
-  // 기본 아이콘들
-  const defaultIcons = [<BarChart3 className="w-5 h-5" />, <Users className="w-5 h-5" />, <Globe className="w-5 h-5" />, <Award className="w-5 h-5" />]
-  return defaultIcons[index % defaultIcons.length]
-}
-
-// 평가 점수 추출 및 시각화
+// 평가 점수 추출 및 시각화 (기존 유지)
 const extractRating = (content: string) => {
   const ratingPatterns = [
-    /높음|high/i,
-    /보통|medium|중간/i,
-    /낮음|low/i
+    /매우 높음|high|강함|우수|excellent|확고|확실/i,
+    /중간|medium|평균|일반/i,
+    /낮음|low|약함|부족|부정적/i
   ]
   
   for (let i = 0; i < ratingPatterns.length; i++) {
@@ -97,8 +56,9 @@ const extractRating = (content: string) => {
   return null
 }
 
-// 별점 컴포넌트
+// 별점 컴포넌트 (미니멀 디자인 색상 조정)
 const StarRating = ({ rating }: { rating: number }) => {
+  const accentColor = 'var(--accent-color-minimal)'; // 가정된 CSS 변수
   return (
     <div className="flex items-center gap-1">
       {[1, 2, 3, 4, 5].map((star) => (
@@ -106,184 +66,95 @@ const StarRating = ({ rating }: { rating: number }) => {
           key={star}
           className={`w-4 h-4 ${
             star <= rating 
-              ? 'text-amber-400 fill-amber-400' 
-              : 'text-gray-300 dark:text-gray-600'
+              ? 'text-ms-accent fill-ms-accent' // 미니멀 강조색
+              : 'text-gray-300'
           }`}
         />
       ))}
-      <span className="ml-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-        {rating}/5
-      </span>
     </div>
   )
 }
 
-// 마크다운 테이블을 HTML 테이블로 변환하는 함수
+// 마크다운 테이블을 HTML 테이블로 변환하는 함수 (기존 유지)
 const parseMarkdownTable = (content: string): string => {
-  // 테이블 패턴 감지
   const tablePattern = /\|(.+)\|/g
   const lines = content.split('\n')
   const tableLines = lines.filter(line => line.includes('|') && line.trim() !== '')
   
   if (tableLines.length < 2) return content
   
-  let html = '<div class="overflow-x-auto my-6"><table class="min-w-full border-collapse border border-amber-200 dark:border-amber-700 rounded-lg overflow-hidden shadow-sm">'
+  let html = '<div class="overflow-x-auto my-6"><table class="min-w-full border-collapse border border-gray-200 rounded overflow-hidden">'
   
   tableLines.forEach((line, index) => {
     const cells = line.split('|').filter(cell => cell.trim() !== '').map(cell => cell.trim())
     
     if (index === 0) {
-      // 헤더 행
-      html += '<thead class="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30"><tr>'
+      html += '<thead class="bg-gray-100"><tr>'
       cells.forEach(cell => {
-        html += `<th class="border border-amber-200 dark:border-amber-700 px-6 py-4 text-left font-bold text-amber-900 dark:text-amber-100">${cell}</th>`
+        html += `<th class="border border-gray-200 px-4 py-3 text-left font-bold text-gray-800">${cell}</th>`
       })
       html += '</tr></thead><tbody>'
     } else if (index === 1 && line.includes('---')) {
-      // 구분선은 건너뛰기
       return
     } else {
-      // 데이터 행
-      html += '<tr class="hover:bg-amber-25 dark:hover:bg-amber-900/10 transition-colors">'
+      html += '<tr class="hover:bg-gray-50 transition-colors">'
       cells.forEach(cell => {
-        html += `<td class="border border-amber-200 dark:border-amber-700 px-6 py-4 text-gray-700 dark:text-gray-300">${cell}</td>`
+        html += `<td class="border border-gray-200 px-4 py-3 text-gray-700">${cell}</td>`
       })
       html += '</tr>'
     }
   })
   
   html += '</tbody></table></div>'
-  
-  // 테이블이 아닌 나머지 텍스트도 포함
   const nonTableContent = lines.filter(line => !line.includes('|') || line.trim() === '').join('\n')
   
   return nonTableContent + html
 }
 
-// 복잡한 JSON 구조를 파싱하는 함수
+// JSON 파싱은 백엔드에서 처리되므로 프론트엔드에서는 단순화
 const parseComplexContent = (data: any): ReportSection[] => {
-  console.log('🔍 파싱할 데이터:', data)
-  
-  if (!data) return []
-  
-  // 문자열로 된 JSON 데이터인 경우 파싱
-  if (typeof data === 'string') {
-    try {
-      data = JSON.parse(data)
-    } catch (e) {
-      console.log('JSON 파싱 실패, 문자열로 처리')
-      return [{ title: '분석 결과', content: data }]
-    }
+  if (!data || !data.sections || !Array.isArray(data.sections)) {
+    return [{ title: '분석 결과 (RAW/파싱 실패)', content: JSON.stringify(data, null, 2) }]
   }
   
-  // sections 배열이 있는 경우
-  if (data.sections && Array.isArray(data.sections)) {
-    return data.sections.map((section: any) => ({
-      title: section.title || section.name || '제목 없음',
-      content: typeof section.content === 'string' ? section.content : JSON.stringify(section.content, null, 2)
-    }))
-  }
-  
-  // 객체의 각 키를 섹션으로 변환
-  if (typeof data === 'object' && data !== null) {
-    return Object.entries(data).map(([key, value]) => ({
-      title: key,
-      content: typeof value === 'string' ? value : JSON.stringify(value, null, 2)
-    }))
-  }
-  
-  // 기본 처리
-  return [{ title: '분석 결과', content: String(data) }]
+  return data.sections.map((section: any) => ({
+    title: String(section.title || '제목 없음').replace(/[#\d\.\-\s]+/g, '').trim(),
+    content: String(section.content || '내용 없음')
+  })).filter(s => s.content !== '내용 없음')
 }
 
-// 콘텐츠 렌더링 함수
+// 콘텐츠 렌더링 함수 (미니멀/고급스러움 강조)
 const renderContent = (content: string) => {
-  // 이모지 제거 함수
-  const removeEmojis = (text: string) => {
-    return text.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
-  }
-  
-  // 불필요한 마크다운 기호 정리
-  const cleanMarkdown = (text: string) => {
-    return text
-      .replace(/#{1,6}\s*/g, '') // 헤더 기호 제거
-      .replace(/\*{1,2}([^*]+)\*{1,2}/g, '$1') // 볼드/이탤릭 기호만 제거하고 내용 유지
-      .replace(/`([^`]+)`/g, '$1') // 코드 블록 기호 제거
-      .trim()
-  }
-  
-  // 마크다운 테이블 처리
+  const removeEmojis = (text: string) => text.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
+  const cleanMarkdown = (text: string) => text.replace(/#{1,6}\s*/g, '').replace(/`([^`]+)`/g, '$1').trim()
+  const removePlaceholders = (text: string) => text.replace(/\[.*?\]/gi, '').trim()
+
   let processedContent = parseMarkdownTable(content)
   
-  // HTML 테이블이 포함된 경우 직접 렌더링
   if (processedContent.includes('<table')) {
     return <div dangerouslySetInnerHTML={{ __html: processedContent }} />
   }
   
-  // 이모지 제거 및 텍스트 정리
   processedContent = removeEmojis(processedContent)
+  processedContent = removePlaceholders(processedContent)
   
-  // 일반 텍스트 처리 - 빈 줄과 의미없는 내용 필터링
   const paragraphs = processedContent.split('\n')
-    .map(p => p.trim())
-    .filter(p => {
-      // 빈 줄 제거
-      if (!p) return false
-      // 의미없는 번호나 기호만 있는 줄 제거
-      if (/^[\d\.\-\*\s]+$/.test(p)) return false
-      // 너무 짧은 의미없는 텍스트 제거
-      if (p.length < 3) return false
-      return true
-    })
-  
-  // 중복 제거
-  const uniqueParagraphs = paragraphs.filter((paragraph, index) => {
-    const cleanedParagraph = cleanMarkdown(paragraph).toLowerCase()
-    return paragraphs.findIndex(p => cleanMarkdown(p).toLowerCase() === cleanedParagraph) === index
-  })
-  
+    .map(p => cleanMarkdown(p))
+    .filter(p => p.length > 5 && !/^\s*[-•*]\s*/.test(p))
+
   return (
-    <div className="space-y-2">
-      {uniqueParagraphs.map((paragraph, pIndex) => {
-        const cleanedParagraph = cleanMarkdown(paragraph)
-        
-        // 볼드 텍스트 처리 (제목용)
-        const processedParagraph = cleanedParagraph.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-amber-700 dark:text-amber-300">$1</strong>')
-        
-        // 리스트 아이템 처리
-        if (paragraph.trim().startsWith('-') || paragraph.trim().startsWith('•') || paragraph.trim().startsWith('*')) {
-          const listContent = processedParagraph.replace(/^[-•\*]\s*/, '')
-          if (!listContent.trim()) return null
-          
-          return (
-            <div key={pIndex} className="flex items-start gap-3 mb-2 p-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-lg border-l-4 border-amber-400">
-              <div className="w-1.5 h-1.5 bg-gradient-to-r from-amber-500 to-orange-600 rounded-full mt-2 flex-shrink-0"></div>
-              <span 
-                className="text-sm leading-relaxed text-gray-700 dark:text-gray-300 flex-1"
-                dangerouslySetInnerHTML={{ __html: listContent }}
-              />
-            </div>
-          )
+    <div className="space-y-3">
+      {paragraphs.map((paragraph, pIndex) => {
+        if (paragraph.trim() === '---') {
+          return <div key={pIndex} className="my-5 border-t border-gray-300 dark:border-gray-700" />
         }
         
-        // 제목 스타일 처리 (숫자로 시작하거나 콜론이 포함된 경우)
-        if (/^\d+\./.test(paragraph.trim()) || paragraph.includes(':')) {
-          return (
-            <h4 
-              key={pIndex} 
-              className="text-base font-bold text-amber-800 dark:text-amber-200 mb-2 pb-1 border-b border-amber-200 dark:border-amber-700"
-              dangerouslySetInnerHTML={{ __html: processedParagraph }}
-            />
-          )
-        }
-        
-        // 빈 내용 체크
-        if (!processedParagraph.trim()) return null
+        const processedParagraph = paragraph.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-ms-text/90">$1</strong>')
         
         return (
           <p 
             key={pIndex} 
-            className="mb-2 text-sm leading-relaxed text-gray-700 dark:text-gray-300"
+            className="text-sm leading-relaxed text-gray-700 font-medium"
             dangerouslySetInnerHTML={{ __html: processedParagraph }}
           />
         )
@@ -292,61 +163,52 @@ const renderContent = (content: string) => {
   )
 }
 
-// 이모티콘 제거 함수
-const removeEmojisFromTitle = (title: string) => {
-  return title.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim()
-}
-
-// 단순한 섹션 컴포넌트 (항상 펼쳐진 상태)
+// 섹션 컴포넌트
 const SimpleSection = ({ section, index }: {
   section: ReportSection
   index: number
 }) => {
   const rating = extractRating(section.content)
-  const cleanTitle = removeEmojisFromTitle(section.title)
+  let cleanTitle = section.title.replace(/\*{1,3}/g, '').replace(/[#\d\.\-\s]+/g, '').trim()
+
+  const isTopSection = section.title.startsWith('***')
   
-  // 빈 내용이거나 의미없는 제목인 경우 렌더링하지 않음
-  if (!section.content.trim() || 
-      !cleanTitle || 
-      cleanTitle.length < 2 ||
-      cleanTitle.match(/^[\d\.\-\s]*$/) || // 숫자, 점, 대시, 공백만 있는 경우
-      cleanTitle.toLowerCase().includes('undefined') ||
-      cleanTitle.toLowerCase().includes('null') ||
-      section.content.trim().length < 10) { // 내용이 너무 짧은 경우
-    return null
-  }
-  
+  if (!section.content.trim() && !isTopSection) return null 
+  if (cleanTitle.length < 5) return null
+
   return (
-    <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-amber-50/30 dark:from-gray-800 dark:to-amber-900/10">
-      <CardHeader className="pb-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-b border-amber-100 dark:border-amber-800">
-        <CardTitle className="text-lg font-bold text-gray-900 dark:text-white">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg">
-              {getSectionIcon(cleanTitle, index)}
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-2 py-1 rounded-full">
-                  {index + 1}
+    <div className="space-y-4">
+      <Card className="border-none shadow-none bg-transparent pt-0">
+        <CardHeader className={`pb-0 bg-transparent ${isTopSection ? 'pt-6' : 'pt-0'}`}>
+          <CardTitle className={`font-bold text-ms-text`}>
+            {/* Top Section (H3 역할) */}
+            {isTopSection && (
+              <h3 className="text-xl font-extrabold text-ms-text mb-2 pb-1 border-b border-ms-line/70">
+                {cleanTitle}
+              </h3>
+            )}
+            
+            {/* Sub Section (H4 역할) */}
+            {!isTopSection && (
+              <div className="flex items-center gap-2 mb-2">
+                <span className={`text-base font-bold text-ms-olive`}>
+                  {cleanTitle}
                 </span>
-                <span className="text-base font-bold">{cleanTitle}</span>
+                {rating && <StarRating rating={rating} />}
               </div>
-              {rating && (
-                <div className="mt-1">
-                  <StarRating rating={rating} />
-                </div>
-              )}
-            </div>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      
-      <CardContent className="pt-6">
-        {renderContent(section.content)}
-      </CardContent>
-    </Card>
+            )}
+          </CardTitle>
+        </CardHeader>
+        
+        <CardContent className="pt-2 pl-4 border-l-2 border-ms-accent/50 ml-1">
+          {!isTopSection && renderContent(section.content)}
+        </CardContent>
+      </Card>
+    </div>
   )
 }
+
+// ... (export default BusinessInsightsReport 유지)
 
 export default function BusinessInsightsReport({ 
   patent, 
@@ -378,35 +240,18 @@ export default function BusinessInsightsReport({
 
   useEffect(() => {
     if (analysis) {
-      console.log('🔍 받은 analysis 데이터:', analysis)
-      
-      // analysis 데이터를 파싱하여 reportData로 변환
       const sections = parseComplexContent(analysis)
       
       const newReportData: ReportData = {
         reportType: 'business_insights',
+        reportName: '비즈니스 인사이트 리포트',
         sections: sections,
-        summary: typeof analysis === 'object' && analysis.analysis?.summary ? analysis.analysis.summary : '비즈니스 인사이트 분석이 완료되었습니다.',
         generatedAt: new Date().toISOString()
       }
       
-      console.log('🔍 변환된 리포트 데이터:', newReportData)
       setReportData(newReportData)
     }
   }, [analysis])
-
-  const getValue = (obj: any, keys: string[], defaultValue: string = '') => {
-    for (const key of keys) {
-      if (obj && obj[key]) {
-        const value = obj[key]
-        if (typeof value === 'object') {
-          return JSON.stringify(value, null, 2)
-        }
-        return String(value)
-      }
-    }
-    return defaultValue
-  }
 
   const generateReport = async () => {
     if (!patent || !user) {
@@ -416,21 +261,13 @@ export default function BusinessInsightsReport({
 
     setLoading(true)
     setError('')
-    console.log('🚀 비즈니스 인사이트 리포트 생성 시작')
 
     try {
       const response = await fetch('/api/ai-analysis', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          patentData: patent,
-          analysisType: 'business_insights'
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ patentData: patent, analysisType: 'business_insights' }),
       })
-
-      console.log('📡 API 응답 상태:', response.status)
 
       if (!response.ok) {
         let errorMessage = '리포트 생성에 실패했습니다.'
@@ -438,16 +275,10 @@ export default function BusinessInsightsReport({
         
         try {
           const errorData = await response.json()
-          console.log('❌ API 오류 응답:', errorData)
-          
-          // 서버에서 제공하는 구체적인 오류 메시지 사용
-          if (errorData.message) {
-            errorMessage = errorData.message
-          }
-          
-          // 오류 코드별 상세 처리
+          if (errorData.message) errorMessage = errorData.message
           if (errorData.error) {
-            switch (errorData.error) {
+            // ... (기존 에러 처리 switch-case 유지)
+             switch (errorData.error) {
               case 'TIMEOUT_ERROR':
                 errorMessage = 'AI 분석 요청이 시간 초과되었습니다. 특허 데이터가 복잡하거나 서버가 바쁠 수 있습니다.'
                 errorDetails = '잠시 후 다시 시도하거나, 더 간단한 특허로 테스트해보세요.'
@@ -475,10 +306,8 @@ export default function BusinessInsightsReport({
             }
           }
         } catch (parseError) {
-          console.error('❌ 오류 응답 파싱 실패:', parseError)
-          
-          // HTTP 상태 코드별 기본 메시지
-          switch (response.status) {
+          // ... (기존 오류 응답 파싱 실패 처리 유지)
+           switch (response.status) {
             case 400:
               errorMessage = '잘못된 요청입니다. 특허 번호를 확인해주세요.'
               break
@@ -507,44 +336,29 @@ export default function BusinessInsightsReport({
       }
 
       const data = await response.json()
-      console.log('📊 받은 데이터:', data)
-
+      
       if (data.success && data.data && data.data.analysis) {
         const analysis = data.data.analysis
-        console.log('🔍 분석 데이터:', analysis)
         
-        // 복잡한 JSON 구조 파싱
         const sections = parseComplexContent(analysis)
         
         const reportData: ReportData = {
           reportType: 'business_insights',
+          reportName: analysis.reportName || '비즈니스 인사이트 리포트',
           sections: sections,
-          summary: getValue(analysis, ['summary', '요약', 'conclusion'], '비즈니스 인사이트 분석이 완료되었습니다.'),
           generatedAt: new Date().toISOString()
         };
         
-        console.log('🔍 최종 리포트 데이터:', reportData);
         setReportData(reportData);
-        // 항상 펼쳐진 단순 섹션으로 표시하므로 확장 상태 관리 제거
         toast.success('비즈니스 인사이트 리포트가 생성되었습니다.');
       } else {
-        console.error('❌ 응답 데이터 형식 오류:', data);
         throw new Error(data.message || '리포트 데이터를 받지 못했습니다.');
       }
 
     } catch (error) {
-      console.error('❌ 리포트 생성 실패:', {
-        message: error.message,
-        name: error.name,
-        type: error.type,
-        status: error.status,
-        stack: error.stack,
-        timestamp: new Date().toISOString()
-      });
-      
+      // ... (기존 에러 메시지 처리 및 finally 블록 유지)
       let displayError = error.message || '알 수 없는 오류가 발생했습니다.'
       
-      // 네트워크 오류 처리
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         displayError = '네트워크 연결에 문제가 있습니다.\n\n해결 방법:\n• 인터넷 연결을 확인해주세요\n• 방화벽 설정을 확인해주세요\n• VPN 연결을 확인해주세요'
       } else if (error.message.includes('Failed to fetch')) {
@@ -555,30 +369,23 @@ export default function BusinessInsightsReport({
       
       setError(displayError);
       
-      // 토스트 메시지는 간단하게 표시
       const toastMessage = displayError.split('\n')[0] || '리포트 생성에 실패했습니다.'
       toast.error(toastMessage);
     } finally {
       setLoading(false);
-      console.log('🏁 리포트 생성 프로세스 완료');
     }
   }
 
-  const handleRetry = () => {
-    setReportData(null)
-    generateReport()
+  const handleRetry = async () => {
+    if (onGenerate) {
+      await onGenerate()
+    } else {
+      await generateReport()
+    }
   }
 
-  const handlePDFGeneration = async () => {
-    if (!reportData || !patent) return
-
-    try {
-      await generateDynamicReportPDF(patent, reportData)
-      toast.success('PDF가 성공적으로 다운로드되었습니다.')
-    } catch (error) {
-      console.error('PDF 생성 오류:', error)
-      toast.error('PDF 생성에 실패했습니다.')
-    }
+  const handlePDFGeneration = () => {
+    onGeneratePDF()
   }
 
   if (loading || propLoading) {
@@ -586,8 +393,8 @@ export default function BusinessInsightsReport({
       <ReportLoadingState
         title="비즈니스 인사이트 리포트"
         description="AI가 특허 기술의 비즈니스 가치와 전략적 인사이트를 분석합니다"
-        iconColor="bg-amber-100 dark:bg-amber-900"
-        Icon={({ className }) => <Lightbulb className={`${className} text-amber-600 dark:text-amber-400`} />}
+        iconColor="bg-amber-100"
+        Icon={({ className }) => <Lightbulb className={`${className} text-amber-600`} />}
       />
     )
   }
@@ -605,40 +412,38 @@ export default function BusinessInsightsReport({
     return (
       <div className="space-y-8">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="p-4 bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900 dark:to-orange-900 rounded-2xl shadow-lg">
-              <Lightbulb className="w-8 h-8 text-amber-600 dark:text-amber-400" />
-            </div>
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                비즈니스 인사이트 리포트
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 text-lg">
-                AI가 특허 기술의 비즈니스 가치와 전략적 인사이트를 분석합니다
-              </p>
-            </div>
+          <div>
+            <h2 className="text-3xl font-bold text-ms-text">
+              비즈니스 인사이트 리포트
+            </h2>
+            <p className="text-gray-600 text-sm">
+              AI가 특허 기술의 비즈니스 가치와 전략적 인사이트를 분석합니다
+            </p>
           </div>
+          <Button 
+            onClick={generateReport}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-ms-line text-ms-text hover:bg-white/60 bg-white"
+          >
+            <Brain className="w-4 h-4" />
+            리포트 생성하기
+          </Button>
         </div>
 
-        <Card className="border-2 border-dashed border-amber-300 dark:border-amber-600 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-900/20 dark:via-orange-900/20 dark:to-yellow-900/20 shadow-xl">
-          <CardContent className="flex flex-col items-center justify-center py-20">
-            <div className="relative mb-8">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 opacity-20 animate-pulse"></div>
-              <div className="absolute inset-2 rounded-full bg-gradient-to-r from-amber-300 to-orange-400 opacity-30 animate-pulse animation-delay-150"></div>
-              <FileText className="relative w-20 h-20 text-amber-600 dark:text-amber-400" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+        <Card className="border border-ms-line shadow-sm bg-white/70">
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <FileText className="w-12 h-12 text-ms-text mb-6" />
+            <h3 className="text-xl font-semibold text-ms-text mb-2">
               전문적인 비즈니스 분석을 시작하세요
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 text-center max-w-lg mb-8 leading-relaxed">
+            <p className="text-gray-600 text-center max-w-2xl mb-8 leading-relaxed">
               AI가 이 특허의 비즈니스 가치, 시장성, 경쟁력을 종합적으로 분석하여 
               전략적 인사이트가 담긴 전문 리포트를 생성합니다.
             </p>
             <Button 
-              onClick={generateReport} 
-              className="flex items-center gap-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+              onClick={generateReport}
+              className="inline-flex items-center gap-2 px-5 py-2.5 border border-ms-line text-ms-text hover:bg-white/60 bg-white"
             >
-              <Brain className="w-5 h-5" />
+              <Brain className="w-4 h-4" />
               리포트 생성하기
             </Button>
           </CardContent>
@@ -648,28 +453,18 @@ export default function BusinessInsightsReport({
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="p-4 bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900 dark:to-orange-900 rounded-2xl shadow-lg">
-            <Lightbulb className="w-8 h-8 text-amber-600 dark:text-amber-400" />
-          </div>
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-              비즈니스 인사이트 리포트
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 text-lg">
-              AI가 분석한 특허 기술의 비즈니스 가치와 전략적 인사이트
-            </p>
-          </div>
+    <div className="report-container space-y-10">
+      {/* Minimal Header */}
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <h2 className="text-3xl font-bold text-ms-text">{reportData.reportName}</h2>
+          <p className="text-sm text-gray-600">AI가 분석한 특허 기술의 비즈니스 가치와 전략적 인사이트</p>
         </div>
-        
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Button 
             variant="outline" 
             onClick={handleRetry}
-            className="flex items-center gap-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 border-amber-200 dark:border-amber-700"
+            className="inline-flex items-center gap-2 px-3 py-2 border border-ms-line text-ms-text hover:bg-white/60 bg-white"
           >
             <RefreshCw className="w-4 h-4" />
             새로 생성
@@ -677,7 +472,7 @@ export default function BusinessInsightsReport({
           <Button 
             onClick={handlePDFGeneration}
             disabled={pdfGenerating}
-            className="flex items-center gap-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-lg hover:shadow-xl transition-all duration-300"
+            className="inline-flex items-center gap-2 px-3 py-2 bg-ms-olive hover:bg-ms-olive/90 text-white"
           >
             {pdfGenerating ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -690,7 +485,7 @@ export default function BusinessInsightsReport({
       </div>
 
       {/* Report Content */}
-      <div className="space-y-6">
+      <div className="space-y-8">
         {reportData.sections.map((section, index) => (
           <SimpleSection
             key={index}
@@ -701,18 +496,18 @@ export default function BusinessInsightsReport({
       </div>
 
       {/* Footer */}
-      <Card className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-200 dark:border-amber-700 shadow-lg">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-            <div className="flex items-center gap-3">
-              <Brain className="w-5 h-5 text-amber-600" />
-              <span className="font-semibold text-amber-700 dark:text-amber-300">AI 생성 리포트</span>
+      <Card className="border border-ms-line bg-white/70">
+        <CardContent className="pt-5">
+          <div className="flex items-center justify-between text-sm text-gray-600">
+            <div className="flex items-center gap-2">
+              <Brain className="w-4 h-4 text-ms-text" />
+              <span className="font-medium text-ms-text">AI 생성 리포트</span>
               <div className="flex items-center gap-1">
-                <Award className="w-4 h-4 text-amber-500" />
+                <Award className="w-3 h-3 text-ms-text" />
                 <span className="text-xs">전문 분석</span>
               </div>
             </div>
-            <span className="text-xs bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded-full">
+            <span className="text-xs px-2 py-1 rounded border border-ms-line bg-white/60">
                생성일시: {formatGeneratedDate(reportData.generatedAt)}
              </span>
           </div>

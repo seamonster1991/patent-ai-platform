@@ -495,7 +495,7 @@ const BillingManagement: React.FC = () => {
                 <select
                   value={filterPlan}
                   onChange={(e) => setFilterPlan(e.target.value)}
-                  className="bg-gray-700 border border-gray-600 rounded-lg text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="bg-gray-700 border border-ms-line dark:border-dark-700 rounded-md text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ms-olive focus:border-ms-olive"
                 >
                   <option value="all">모든 플랜</option>
                   <option value="basic">베이직</option>
@@ -506,7 +506,7 @@ const BillingManagement: React.FC = () => {
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="bg-gray-700 border border-gray-600 rounded-lg text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="bg-gray-700 border border-ms-line dark:border-dark-700 rounded-md text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ms-olive focus:border-ms-olive"
                 >
                   <option value="all">모든 상태</option>
                   <option value="active">활성</option>

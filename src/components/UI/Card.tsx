@@ -30,40 +30,39 @@ export function Card({
   const variantClasses = {
     default: [
       'bg-white dark:bg-dark-800',
-      'border border-secondary-200 dark:border-secondary-700',
-      'shadow-sm'
+      'border border-ms-line dark:border-secondary-700',
+      'shadow-none'
     ].join(' '),
     
     elevated: [
       'bg-white dark:bg-dark-800',
-      'border border-secondary-200 dark:border-secondary-700',
-      'shadow-lg'
+      'border border-ms-line dark:border-secondary-700',
+      'shadow-md'
     ].join(' '),
     
     outlined: [
       'bg-transparent',
-      'border-2 border-secondary-300 dark:border-secondary-600'
+      'border-2 border-ms-line dark:border-secondary-600'
     ].join(' '),
     
     filled: [
       'bg-secondary-50 dark:bg-secondary-900',
-      'border border-secondary-200 dark:border-secondary-700'
+      'border border-ms-line dark:border-secondary-700'
     ].join(' ')
   }
 
   const interactiveClasses = interactive || hover ? [
-    'transition-all duration-200',
-    'hover:shadow-md dark:hover:shadow-lg',
-    'hover:scale-[1.02]',
+    'transition-colors duration-200',
+    'hover:border-ms-olive',
     'cursor-pointer',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ms-olive focus-visible:ring-offset-2',
     'focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900'
   ].join(' ') : ''
 
   return (
     <div
       className={cn(
-        'rounded-lg',
+        'rounded-md',
         variantClasses[variant],
         paddingClasses[padding],
         interactiveClasses,
@@ -155,7 +154,7 @@ export function CardFooter({
 }) {
   return (
     <div className={cn(
-      'mt-4 pt-4 border-t border-secondary-200 dark:border-secondary-700',
+      'mt-4 pt-4 border-t border-ms-line dark:border-secondary-700',
       className
     )}>
       {children}

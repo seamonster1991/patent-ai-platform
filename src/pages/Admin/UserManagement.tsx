@@ -285,7 +285,7 @@ const UserManagement: React.FC = () => {
                 placeholder="사용자 검색..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="pl-10 pr-4 py-2 border border-ms-line dark:border-dark-700 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-ms-olive focus:border-ms-olive"
               />
             </div>
 
@@ -293,7 +293,7 @@ const UserManagement: React.FC = () => {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 border border-ms-line dark:border-dark-700 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-ms-olive focus:border-ms-olive"
             >
               <option value="all">모든 상태</option>
               <option value="active">활성</option>
@@ -305,7 +305,7 @@ const UserManagement: React.FC = () => {
             <select
               value={filterPlan}
               onChange={(e) => setFilterPlan(e.target.value)}
-              className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 border border-ms-line dark:border-dark-700 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-ms-olive focus:border-ms-olive"
             >
               <option value="all">모든 플랜</option>
               <option value="free">무료</option>
@@ -339,7 +339,7 @@ const UserManagement: React.FC = () => {
       </div>
 
       {/* Users Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm ms-line-frame overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
             <thead className="bg-slate-50 dark:bg-slate-900">
@@ -354,7 +354,7 @@ const UserManagement: React.FC = () => {
                         setSelectedUsers([]);
                       }
                     }}
-                    className="rounded border-slate-300 dark:border-slate-600"
+                    className="rounded border-ms-line dark:border-slate-600"
                   />
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">

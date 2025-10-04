@@ -27,27 +27,27 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const helperTextId = useId()
 
     const baseClasses = cn(
-      'block w-full rounded-lg border transition-colors duration-200',
-      'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+      'block w-full rounded-md border transition-colors duration-200',
+      'focus:outline-none focus:ring-2 focus:ring-ms-olive focus:border-ms-olive',
       'disabled:opacity-50 disabled:cursor-not-allowed',
       fullWidth ? 'w-full' : ''
     )
 
     const variantClasses = {
       default: cn(
-        'border-slate-300 dark:border-slate-600',
+        'border-ms-line dark:border-dark-700',
         'bg-white dark:bg-slate-800',
         'text-slate-900 dark:text-white',
         'placeholder:text-slate-400 dark:placeholder:text-slate-500'
       ),
       filled: cn(
-        'border-transparent',
+        'border-ms-line dark:border-dark-700',
         'bg-slate-100 dark:bg-slate-700',
         'text-slate-900 dark:text-white',
         'placeholder:text-slate-400 dark:placeholder:text-slate-500'
       ),
       outline: cn(
-        'border-2 border-slate-300 dark:border-slate-600',
+        'border border-ms-line dark:border-dark-700',
         'bg-transparent',
         'text-slate-900 dark:text-white',
         'placeholder:text-slate-400 dark:placeholder:text-slate-500'
