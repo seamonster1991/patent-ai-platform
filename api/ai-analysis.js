@@ -208,15 +208,19 @@ module.exports = async function handler(req, res) {
     console.log('🔄 파싱 시작 - AI 응답 길이:', analysisText?.length || 0);
     console.log('🔄 파싱 시작 - 분석 타입:', analysisType);
     
-    let structuredAnalysis;
-    try {
-      structuredAnalysis = parseAnalysisResult(analysisText, analysisType);
-    } catch (parseError) {
-      console.error('❌ 파싱 중 오류 발생:', parseError);
-      console.error('❌ 파싱 오류 스택:', parseError.stack);
-      console.error('❌ AI 응답 샘플 (처음 500자):', analysisText?.substring(0, 500));
-      throw new Error(`AI 응답 파싱 실패: ${parseError.message}`);
-    }
+    // 임시: 파싱 우회하고 원시 응답 반환 (디버깅용)
+    console.log('🔧 임시 디버깅 모드: 파싱 우회');
+    const structuredAnalysis = {
+      reportName: analysisType === 'market' ? '시장 분석 리포트' : '비즈니스 인사이트 리포트',
+      sections: [
+        {
+          title: 'AI 분석 결과 (원시 데이터)',
+          content: analysisText
+        }
+      ],
+      rawAnalysis: analysisText,
+      debug: true
+    };
     
     console.log('✅ 파싱 완료 - 생성된 섹션 수:', structuredAnalysis?.sections?.length || 0);
     console.log('📊 파싱 결과 미리보기:', {
