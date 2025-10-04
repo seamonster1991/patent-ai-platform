@@ -612,7 +612,7 @@ export default function MarketAnalysisReport({
             </div>
             <div className="text-sm text-amber-800">
               <p className="font-medium mb-1">AI 생성 리포트 안내</p>
-              <p>AI can make mistakes. This report is for idea generation purposes only; please use it as a reference.</p>
+              <p>AI는 실수할 수 있습니다. 이 리포트는 아이디어 생성 목적으로만 사용되며, 참고용으로 활용해주세요.</p>
             </div>
           </div>
         </CardContent>

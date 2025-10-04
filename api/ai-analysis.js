@@ -1,4 +1,5 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { createClient } = require('@supabase/supabase-js');
 
 // 간단한 메모리 캐시 (서버리스 환경에서는 제한적이지만 동일 요청 내에서는 유효)// 캐시 관리
 const analysisCache = new Map();
@@ -6,6 +7,18 @@ const CACHE_TTL = 5 * 60 * 1000; // 5분 캐시
 
 // 캐시 클리어 (맥킨지 언급 제거를 위해)
 analysisCache.clear();
+
+// Supabase 클라이언트 초기화
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+let supabase = null;
+
+if (supabaseUrl && supabaseServiceKey) {
+  supabase = createClient(supabaseUrl, supabaseServiceKey);
+  console.log('✅ Supabase 클라이언트 초기화 완료');
+} else {
+  console.warn('⚠️ Supabase 환경변수가 설정되지 않음 - DB 저장 기능 비활성화');
+}
 
 // 캐시 초기화 (디버깅용) - 제거됨
 module.exports = async function handler(req, res) {
@@ -355,6 +368,19 @@ module.exports = async function handler(req, res) {
     }
     
     console.log('🔧 Step 7: 응답 반환 준비 완료');
+    
+    // DB에 리포트 저장 (비동기로 실행하여 응답 속도에 영향 없도록)
+    const userId = req.headers['x-user-id'] || req.body.userId || 'anonymous';
+    saveReportToDatabase(patentInfo, analysisType, structuredAnalysis, userId)
+      .then(savedReport => {
+        if (savedReport) {
+          console.log('✅ 리포트 DB 저장 완료:', savedReport.id);
+        }
+      })
+      .catch(error => {
+        console.error('❌ 리포트 DB 저장 실패:', error);
+      });
+    
     return res.status(200).json(aiResponse);
     
   } catch (error) {
@@ -1212,4 +1238,52 @@ function removeMcKinseyReferences(text) {
   console.log('🧹 맥킨지 언급 제거 후:', cleaned.substring(0, 200));
   
   return cleaned;
+}
+
+// 리포트를 DB에 저장하는 함수
+async function saveReportToDatabase(patentInfo, analysisType, structuredAnalysis, userId) {
+  if (!supabase) {
+    console.warn('⚠️ Supabase 클라이언트가 초기화되지 않음 - DB 저장 건너뜀');
+    return null;
+  }
+
+  try {
+    const reportData = {
+      application_number: patentInfo.applicationNumber,
+      invention_title: patentInfo.inventionTitle,
+      user_id: userId,
+      generated_at: new Date().toISOString()
+    };
+
+    // 분석 타입에 따라 필드 설정
+    if (analysisType === 'market_analysis') {
+      const sections = structuredAnalysis.sections || [];
+      reportData.market_penetration = sections.find(s => s.title?.includes('시장 침투') || s.title?.includes('Market Penetration'))?.content || '';
+      reportData.competitive_landscape = sections.find(s => s.title?.includes('경쟁 환경') || s.title?.includes('Competitive'))?.content || '';
+      reportData.market_growth_drivers = sections.find(s => s.title?.includes('성장 동력') || s.title?.includes('Growth'))?.content || '';
+      reportData.risk_factors = sections.find(s => s.title?.includes('위험 요소') || s.title?.includes('Risk'))?.content || '';
+    } else if (analysisType === 'business_insights') {
+      const sections = structuredAnalysis.sections || [];
+      reportData.revenue_model = sections.find(s => s.title?.includes('수익 모델') || s.title?.includes('Revenue'))?.content || '';
+      reportData.royalty_margin = sections.find(s => s.title?.includes('로열티') || s.title?.includes('Royalty'))?.content || '';
+      reportData.new_business_opportunities = sections.find(s => s.title?.includes('비즈니스 기회') || s.title?.includes('Business Opportunities'))?.content || '';
+      reportData.competitor_response_strategy = sections.find(s => s.title?.includes('경쟁사 대응') || s.title?.includes('Competitor Response'))?.content || '';
+    }
+
+    const { data, error } = await supabase
+      .from('ai_analysis_reports')
+      .insert([reportData])
+      .select();
+
+    if (error) {
+      console.error('❌ DB 저장 실패:', error);
+      return null;
+    }
+
+    console.log('✅ 리포트 DB 저장 성공:', data[0]?.id);
+    return data[0];
+  } catch (error) {
+    console.error('❌ DB 저장 중 오류:', error);
+    return null;
+  }
 }
