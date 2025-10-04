@@ -16,26 +16,61 @@ interface DynamicReportData {
   generatedAt: string
 }
 
-// A4 용지 기준 상수 정의 (210mm x 297mm)
+// A4 용지 기준 상수 정의 (210mm x 297mm) - 개선된 레이아웃
 const A4_CONFIG = {
   width: 210, // mm
   height: 297, // mm
   margin: {
-    top: 25, // mm
-    bottom: 25, // mm
+    top: 20, // mm (개선: 20mm로 통일)
+    bottom: 20, // mm (개선: 20mm로 통일)
     left: 20, // mm
     right: 20, // mm
   },
   header: {
-    height: 20, // mm
+    height: 15, // mm (개선: 헤더 높이 축소)
   },
   footer: {
-    height: 15, // mm
+    height: 10, // mm (개선: 푸터 높이 축소)
   },
   content: {
     width: 170, // 210 - 20 - 20 = 170mm
-    height: 237, // 297 - 25 - 25 - 10 = 237mm (헤더/푸터 고려)
+    height: 242, // 297 - 20 - 20 - 15 = 242mm (헤더/푸터 고려)
+    maxTextHeight: 240, // 텍스트 영역 최대 높이
+    lineHeight: 6, // 기본 줄 간격 (mm)
+    sectionSpacing: 8, // 섹션 간 간격 (mm)
   }
+}
+
+// 파일명 생성 함수
+const generateFileName = (patent: KiprisPatentDetailItem, reportType: string): string => {
+  // 특허 제목을 20자 이내로 단축 (특수문자 제거)
+  const shortTitle = patent.biblioSummaryInfo?.inventionTitle
+    ?.replace(/[^\w가-힣]/g, '')
+    ?.substring(0, 20) || '특허분석'
+  
+  // 리포트 타입 한글명
+  const reportTypeName = reportType === 'market_analysis' ? '시장분석' : '비즈니스인사이트'
+  
+  // 특허번호 (하이픈 제거)
+  const patentNumber = (patent.applicationNumber || patent.registrationNumber || 'unknown')
+    .replace(/-/g, '')
+  
+  // 날짜 (YYYYMMDD 형식)
+  const date = new Date().toISOString().split('T')[0].replace(/-/g, '')
+  
+  return `${shortTitle}_${reportTypeName}_${patentNumber}_${date}.pdf`
+}
+
+// 페이지 분할 체크 함수
+const checkPageBreak = (doc: jsPDF, currentY: number, requiredHeight: number): number => {
+  const pageHeight = A4_CONFIG.height - A4_CONFIG.margin.bottom
+  
+  if (currentY + requiredHeight > pageHeight) {
+    doc.addPage()
+    return A4_CONFIG.margin.top + A4_CONFIG.header.height
+  }
+  
+  return currentY
 }
 
 // 한글 폰트 지원을 위한 설정 (A4 최적화)
@@ -625,8 +660,8 @@ export const generateA4ReportPDF = async (
       addReportFooter(doc, i, totalPages)
     }
     
-    // PDF 저장
-    const fileName = `${reportType}_${patent.applicationNumber || 'report'}_${new Date().toISOString().split('T')[0]}.pdf`
+    // PDF 저장 (개선된 파일명 사용)
+    const fileName = generateFileName(patent, reportData.reportType || 'market_analysis')
     doc.save(fileName)
     
     console.log('✅ A4 최적화 PDF 생성 완료!')
@@ -846,9 +881,7 @@ export const generateDynamicReportPDF = async (
     }
 
     // PDF 다운로드
-    const reportTypeKorean = reportData.reportType === 'market_analysis' ? '시장분석' : '비즈니스인사이트'
-    const dateString = typeof window !== 'undefined' ? new Date().toISOString().split('T')[0] : 'unknown'
-    const fileName = `${reportTypeKorean}리포트_${patent.biblioSummaryInfo?.applicationNumber || 'unknown'}_${dateString}.pdf`
+    const fileName = generateFileName(patent, reportData.reportType)
     
     console.log('💾 PDF 파일 저장 시도:', fileName)
     
@@ -992,9 +1025,7 @@ export const generateSimplePDF = async (
     }
     
     // PDF 저장
-    const reportTypeKorean = reportData.reportType === 'market_analysis' ? '시장분석' : '비즈니스인사이트'
-    const dateString = typeof window !== 'undefined' ? new Date().toISOString().split('T')[0] : 'unknown'
-    const fileName = `${reportTypeKorean}리포트_간단버전_${patent.biblioSummaryInfo?.applicationNumber || 'unknown'}_${dateString}.pdf`
+    const fileName = generateFileName(patent, reportData.reportType)
     
     doc.save(fileName)
     console.log('✅ 간단한 PDF 다운로드 완료')
@@ -1145,8 +1176,7 @@ export const generateMarketAnalysisPDFLegacy = async (
   }
 
   // PDF 다운로드
-  const dateString = typeof window !== 'undefined' ? new Date().toISOString().split('T')[0] : 'unknown'
-  const fileName = `시장분석리포트_${patent.biblioSummaryInfo?.applicationNumber || 'unknown'}_${dateString}.pdf`
+  const fileName = generateFileName(patent, 'market_analysis')
   doc.save(fileName)
 }
 
@@ -1290,7 +1320,7 @@ export const generateBusinessInsightPDFLegacy = async (
   }
 
   // PDF 다운로드
-  const fileName = `시장분석리포트_${patent.biblioSummaryInfo?.applicationNumber || 'unknown'}_${new Date().toISOString().split('T')[0]}.pdf`
+  const fileName = generateFileName(patent, 'business_insight')
   doc.save(fileName)
 }
 

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { 
   Lightbulb, 
-  Download,
   Loader2,
   Brain,
   RefreshCw,
@@ -12,7 +11,6 @@ import {
 import Button from '../UI/Button'
 import Card, { CardContent, CardHeader, CardTitle } from '../UI/Card'
 import { KiprisPatentDetailItem, AIAnalysisReport } from '../../types/kipris'
-import { generateDynamicReportPDF } from '../../lib/pdfGenerator'
 import { toast } from 'sonner'
 import ReportLoadingState from './ReportLoadingState'
 import ReportErrorState from './ReportErrorState'
@@ -24,8 +22,6 @@ interface BusinessInsightsReportProps {
   loading?: boolean
   error?: string
   onGenerate?: () => Promise<void>
-  onGeneratePDF: () => void
-  pdfGenerating: boolean
 }
 
 interface ReportSection {
@@ -111,16 +107,118 @@ const parseMarkdownTable = (content: string): string => {
   return nonTableContent + html
 }
 
-// JSON 파싱은 백엔드에서 처리되므로 프론트엔드에서는 단순화
+// rawAnalysis 텍스트를 구조화된 섹션으로 파싱하는 함수
+const parseRawAnalysis = (rawText: string): ReportSection[] => {
+    if (!rawText || typeof rawText !== 'string') {
+      return [{ title: '분석 결과 없음', content: '분석 데이터가 없습니다.' }]
+    }
+
+    const sections: ReportSection[] = []
+    
+    // 마크다운 헤딩으로 섹션 분리 (###, ##, #)
+    const sectionRegex = /^(#{1,3})\s+(.+)$/gm
+    const matches = [...rawText.matchAll(sectionRegex)]
+    
+    if (matches.length === 0) {
+      // 헤딩이 없는 경우 숫자 기반 섹션으로 분리
+      const lines = rawText.split('\n')
+      let currentSection = null
+      let currentContent = []
+      
+      for (const line of lines) {
+        const numberMatch = line.match(/^(\d+(?:\.\d+)*\.?\s+)(.+)$/)
+        
+        if (numberMatch) {
+          // 이전 섹션 저장
+          if (currentSection) {
+            sections.push({
+              title: currentSection,
+              content: currentContent.join('\n').trim()
+            })
+          }
+          
+          // 새 섹션 시작
+          currentSection = numberMatch[2].trim()
+          currentContent = []
+        } else if (currentSection && line.trim()) {
+          // 현재 섹션에 내용 추가
+          currentContent.push(line)
+        }
+      }
+      
+      // 마지막 섹션 저장
+      if (currentSection) {
+        sections.push({
+          title: currentSection,
+          content: currentContent.join('\n').trim()
+        })
+      }
+      
+      if (sections.length === 0) {
+        // 단순 텍스트인 경우 단락으로 분리
+        const paragraphs = rawText.split('\n\n').filter(p => p.trim())
+        paragraphs.forEach((paragraph, index) => {
+          const lines = paragraph.trim().split('\n')
+          const title = lines[0].length > 50 ? `분석 내용 ${index + 1}` : lines[0]
+          const content = lines.length > 1 ? lines.slice(1).join('\n') : paragraph
+          
+          sections.push({
+            title: title.replace(/^[#\d\.\-\s]+/, '').trim(),
+            content: content.trim()
+          })
+        })
+      }
+    } else {
+      // 마크다운 헤딩 기반 파싱
+      for (let i = 0; i < matches.length; i++) {
+        const currentMatch = matches[i]
+        const nextMatch = matches[i + 1]
+        
+        const title = currentMatch[2].trim()
+        const startIndex = currentMatch.index! + currentMatch[0].length
+        const endIndex = nextMatch ? nextMatch.index! : rawText.length
+        const content = rawText.slice(startIndex, endIndex).trim()
+        
+        sections.push({
+          title: title.replace(/^[#\d\.\-\s]+/, '').trim(),
+          content: content
+        })
+      }
+    }
+    
+    return sections.length > 0 ? sections : [
+      { title: '분석 결과', content: rawText.trim() }
+    ]
+  }
+
+// 개선된 parseComplexContent 함수
 const parseComplexContent = (data: any): ReportSection[] => {
-  if (!data || !data.sections || !Array.isArray(data.sections)) {
-    return [{ title: '분석 결과 (RAW/파싱 실패)', content: JSON.stringify(data, null, 2) }]
+  // 1. 구조화된 데이터가 있는 경우
+  if (data && data.sections && Array.isArray(data.sections)) {
+    return data.sections.map((section: any) => ({
+      title: String(section.title || '제목 없음').replace(/[#\d\.\-\s]+/g, '').trim(),
+      content: String(section.content || '내용 없음')
+    })).filter(s => s.content !== '내용 없음')
   }
   
-  return data.sections.map((section: any) => ({
-    title: String(section.title || '제목 없음').replace(/[#\d\.\-\s]+/g, '').trim(),
-    content: String(section.content || '내용 없음')
-  })).filter(s => s.content !== '내용 없음')
+  // 2. rawAnalysis가 있는 경우
+  if (data && data.rawAnalysis && typeof data.rawAnalysis === 'string') {
+    return parseRawAnalysis(data.rawAnalysis)
+  }
+  
+  // 3. 문자열 데이터인 경우
+  if (typeof data === 'string') {
+    return parseRawAnalysis(data)
+  }
+  
+  // 4. 기타 객체 형태인 경우
+  if (data && typeof data === 'object') {
+    const textContent = JSON.stringify(data, null, 2)
+    return parseRawAnalysis(textContent)
+  }
+  
+  // 5. 모든 파싱 실패 시
+  return [{ title: '분석 결과 없음', content: '분석 데이터를 불러올 수 없습니다.' }]
 }
 
 // 콘텐츠 렌더링 함수 (미니멀/고급스러움 강조)
@@ -215,9 +313,7 @@ export default function BusinessInsightsReport({
   analysis,
   loading: propLoading = false,
   error: propError = '',
-  onGenerate,
-  onGeneratePDF,
-  pdfGenerating
+  onGenerate
 }: BusinessInsightsReportProps) {
   const [reportData, setReportData] = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(false)
@@ -384,9 +480,7 @@ export default function BusinessInsightsReport({
     }
   }
 
-  const handlePDFGeneration = () => {
-    onGeneratePDF()
-  }
+
 
   if (loading || propLoading) {
     return (
@@ -460,28 +554,14 @@ export default function BusinessInsightsReport({
           <h2 className="text-3xl font-bold text-ms-text">{reportData.reportName}</h2>
           <p className="text-sm text-gray-600">AI가 분석한 특허 기술의 비즈니스 가치와 전략적 인사이트</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            onClick={handleRetry}
-            className="inline-flex items-center gap-2 px-3 py-2 border border-ms-line text-ms-text hover:bg-white/60 bg-white"
-          >
-            <RefreshCw className="w-4 h-4" />
-            새로 생성
-          </Button>
-          <Button 
-            onClick={handlePDFGeneration}
-            disabled={pdfGenerating}
-            className="inline-flex items-center gap-2 px-3 py-2 bg-ms-olive hover:bg-ms-olive/90 text-white"
-          >
-            {pdfGenerating ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Download className="w-4 h-4" />
-            )}
-            PDF 다운로드
-          </Button>
-        </div>
+        <Button 
+          variant="outline" 
+          onClick={handleRetry}
+          className="inline-flex items-center gap-2 px-3 py-2 border border-ms-line text-ms-text hover:bg-white/60 bg-white"
+        >
+          <RefreshCw className="w-4 h-4" />
+          새로 생성
+        </Button>
       </div>
 
       {/* Report Content */}

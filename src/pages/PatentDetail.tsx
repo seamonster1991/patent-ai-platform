@@ -45,7 +45,6 @@ import { useAuthStore } from '../store/authStore'
 import { ActivityTracker } from '../lib/activityTracker'
 import MarketAnalysisReport from '../components/Reports/MarketAnalysisReport'
 import BusinessInsightsReport from '../components/Reports/BusinessInsightsReport'
-import { generateDynamicReportPDF } from '../lib/pdfGenerator'
 
 
 export default function PatentDetail() {
@@ -69,7 +68,7 @@ export default function PatentDetail() {
   const [documentAvailability, setDocumentAvailability] = useState<Record<DocumentType, boolean>>({} as Record<DocumentType, boolean>)
   const [documentLoading, setDocumentLoading] = useState<Record<DocumentType, boolean>>({} as Record<DocumentType, boolean>)
   const [availabilityLoading, setAvailabilityLoading] = useState(false)
-  const [pdfGenerating, setPdfGenerating] = useState<{ market: boolean; business: boolean }>({ market: false, business: false })
+
 
   useEffect(() => {
     console.log('🔍 [PatentDetail] useEffect 실행됨, applicationNumber:', applicationNumber);
@@ -84,8 +83,7 @@ export default function PatentDetail() {
       setDocumentAvailability({} as Record<DocumentType, boolean>)
       setDocumentLoading({} as Record<DocumentType, boolean>)
       setAvailabilityLoading(false)
-      // PDF 생성 상태 초기화
-      setPdfGenerating({ market: false, business: false })
+
       // 탭을 기본값으로 리셋
       setActiveTab('summary')
       // 렌더링된 탭 목록 초기화
@@ -186,9 +184,9 @@ export default function PatentDetail() {
         analysisType: 'comprehensive'
       }
       console.log('📤 AI 분석 요청 데이터:', requestBody)
-      // AbortController를 사용해 요청 타임아웃 적용 - Vercel Hobby 플랜 10초 제한 고려
+      // AbortController를 사용해 요청 타임아웃 적용 - Vercel 환경 고려
       const controller = new AbortController()
-      const timeoutMs = 15_000 // 15초 (Vercel 10초 제한 + 여유시간)
+      const timeoutMs = 30_000 // 30초 (복잡한 특허 분석을 위한 충분한 시간)
       const timeoutId = setTimeout(() => {
         console.warn(`⏱️ AI 분석 요청이 ${timeoutMs/1000}초를 초과하여 중단됩니다`)
         controller.abort()
@@ -254,7 +252,7 @@ export default function PatentDetail() {
       // 요청 타임아웃/중단 처리
       if (err?.name === 'AbortError') {
         console.error('⏱️ AI 분석 요청 시간 초과로 중단됨')
-        setAiError('AI 분석 요청이 시간 초과(15초)로 중단되었습니다. Vercel 무료 플랜의 제한으로 인해 복잡한 특허 분석에 시간이 오래 걸릴 수 있습니다. 잠시 후 다시 시도해주세요.')
+        setAiError('AI 분석 요청이 시간 초과(30초)로 중단되었습니다. 복잡한 특허 데이터 분석에는 시간이 오래 걸릴 수 있습니다. 네트워크 상태를 확인하고 잠시 후 다시 시도해주세요.')
         toast.error('AI 분석 요청이 시간 초과되었습니다. 잠시 후 다시 시도해주세요.')
       } else {
         console.error('❌ AI 분석 전체 오류:', err)
@@ -268,177 +266,7 @@ export default function PatentDetail() {
     }
   }
 
-  const generateMarketAnalysisReport = async () => {
-    if (!patent) {
-      toast.error('특허 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.')
-      return
-    }
 
-    try {
-      setPdfGenerating(prev => ({ ...prev, market: true }))
-
-      const { user } = useAuthStore.getState()
-      const controller = new AbortController()
-      const timeoutMs = 300_000 // 5분 타임아웃 (Vercel 함수 제한 고려)
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
-
-      const response = await fetch('/api/generate-report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          patentData: patent,
-          reportType: 'market',
-          userId: user?.id || undefined
-        }),
-        signal: controller.signal
-      })
-
-      clearTimeout(timeoutId)
-
-      if (!response.ok) {
-        const errText = await response.text()
-        let msg = `HTTP ${response.status}: ${response.statusText}`
-        try {
-          const errJson = JSON.parse(errText)
-          msg = errJson.message || errJson.error || msg
-        } catch {}
-        throw new Error(msg)
-      }
-
-      const data = await response.json()
-      if (!data?.success || !data?.data?.content) {
-        throw new Error(data?.message || '서버에서 시장 분석 결과를 받지 못했습니다.')
-      }
-
-      const structured = data.data.content
-
-      // UI 표시를 위해 aiAnalysis 형태로 동기화 (섹션 렌더링 호환)
-      setAiAnalysis(prev => ({
-        analysisType: 'market',
-        patentNumber: patent.biblioSummaryInfo?.applicationNumber || '',
-        patentTitle: patent.biblioSummaryInfo?.inventionTitle || '',
-        analysisDate: new Date().toISOString(),
-        rawAnalysis: Array.isArray(structured.sections)
-          ? structured.sections.map((s: any) => `### ${s.title}\n${s.content}`).join('\n\n')
-          : '',
-        analysis: {
-          summary: structured.summary || '요약 없음',
-          sections: (structured.sections || []).map((s: any) => ({
-            title: s.title,
-            content: s.content
-          })),
-          analysisType: 'market',
-          confidence: 0.85,
-          keyInsights: []
-        }
-      }))
-
-      // 클라이언트 측 PDF 생성
-      await generateDynamicReportPDF(patent, {
-        reportType: 'market-analysis',
-        sections: (structured.sections || []).map((s: any) => ({ title: s.title, content: s.content })),
-        summary: structured.summary || '요약 없음',
-        generatedAt: data.data.generatedAt || new Date().toISOString()
-      })
-
-      toast.success('시장 분석 PDF가 생성되었습니다.')
-    } catch (err: any) {
-      if (err?.name === 'AbortError') {
-        toast.error('시장 분석 생성이 시간 초과(5분)로 중단되었습니다. 특허 데이터가 복잡하거나 서버가 바쁠 수 있습니다.')
-      } else {
-        console.error('시장 분석 리포트 생성 오류:', err)
-        toast.error(`시장 분석 리포트 생성 실패: ${err.message}`)
-      }
-    } finally {
-      setPdfGenerating(prev => ({ ...prev, market: false }))
-    }
-  }
-
-  const generateBusinessInsightReport = async () => {
-    if (!patent) {
-      toast.error('특허 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.')
-      return
-    }
-
-    try {
-      setPdfGenerating(prev => ({ ...prev, business: true }))
-
-      const { user } = useAuthStore.getState()
-      const controller = new AbortController()
-      const timeoutMs = 300_000 // 5분 타임아웃 (Vercel 함수 제한 고려)
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
-
-      const response = await fetch('/api/generate-report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          patentData: patent,
-          reportType: 'business',
-          userId: user?.id || undefined
-        }),
-        signal: controller.signal
-      })
-
-      clearTimeout(timeoutId)
-
-      if (!response.ok) {
-        const errText = await response.text()
-        let msg = `HTTP ${response.status}: ${response.statusText}`
-        try {
-          const errJson = JSON.parse(errText)
-          msg = errJson.message || errJson.error || msg
-        } catch {}
-        throw new Error(msg)
-      }
-
-      const data = await response.json()
-      if (!data?.success || !data?.data?.content) {
-        throw new Error(data?.message || '서버에서 비즈니스 인사이트 결과를 받지 못했습니다.')
-      }
-
-      const structured = data.data.content
-
-      // UI 표시를 위해 aiAnalysis 형태로 동기화 (섹션 렌더링 호환)
-      setAiAnalysis(prev => ({
-        analysisType: 'business',
-        patentNumber: patent.biblioSummaryInfo?.applicationNumber || '',
-        patentTitle: patent.biblioSummaryInfo?.inventionTitle || '',
-        analysisDate: new Date().toISOString(),
-        rawAnalysis: Array.isArray(structured.sections)
-          ? structured.sections.map((s: any) => `### ${s.title}\n${s.content}`).join('\n\n')
-          : '',
-        analysis: {
-          summary: structured.summary || '요약 없음',
-          sections: (structured.sections || []).map((s: any) => ({
-            title: s.title,
-            content: s.content
-          })),
-          analysisType: 'business',
-          confidence: 0.85,
-          keyInsights: []
-        }
-      }))
-
-      // 클라이언트 측 PDF 생성
-      await generateDynamicReportPDF(patent, {
-        reportType: 'business-insights',
-        sections: (structured.sections || []).map((s: any) => ({ title: s.title, content: s.content })),
-        summary: structured.summary || '요약 없음',
-        generatedAt: data.data.generatedAt || new Date().toISOString()
-      })
-
-      toast.success('비즈니스 인사이트 PDF가 생성되었습니다.')
-    } catch (err: any) {
-      if (err?.name === 'AbortError') {
-        toast.error('비즈니스 인사이트 생성이 시간 초과(5분)로 중단되었습니다. 특허 데이터가 복잡하거나 서버가 바쁠 수 있습니다.')
-      } else {
-        console.error('비즈니스 인사이트 리포트 생성 오류:', err)
-        toast.error(`비즈니스 인사이트 리포트 생성 실패: ${err.message}`)
-      }
-    } finally {
-      setPdfGenerating(prev => ({ ...prev, business: false }))
-    }
-  }
 
   const checkDocumentAvailability = async () => {
     if (!applicationNumber) return
@@ -765,8 +593,6 @@ export default function PatentDetail() {
                 loading={aiLoading}
                 error={aiError}
                 onGenerate={generateAIAnalysis}
-                onGeneratePDF={generateMarketAnalysisReport}
-                pdfGenerating={pdfGenerating.market}
               />
             </div>
           )}
@@ -779,8 +605,6 @@ export default function PatentDetail() {
                 loading={aiLoading}
                 error={aiError}
                 onGenerate={generateAIAnalysis}
-                onGeneratePDF={generateBusinessInsightReport}
-                pdfGenerating={pdfGenerating.business}
               />
             </div>
           )}

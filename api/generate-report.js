@@ -1,69 +1,24 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { createClient } = require('@supabase/supabase-js');
 
-// Supabase 클라이언트 초기화 (강화된 안전한 초기화)
+// Supabase 클라이언트 초기화 (검색 API 패턴 적용)
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 let supabase = null;
 
-// Supabase 연결 상태 추적
-let supabaseConnectionStatus = 'disconnected';
-
-async function initializeSupabase() {
-  try {
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.warn('⚠️ Supabase 환경변수 누락:', {
-        hasUrl: !!supabaseUrl,
-        hasServiceKey: !!supabaseServiceKey,
-        urlLength: supabaseUrl?.length,
-        keyLength: supabaseServiceKey?.length
-      });
-      supabaseConnectionStatus = 'missing_credentials';
-      return null;
-    }
-
-    console.log('🔄 Supabase 클라이언트 초기화 시도...');
-    supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      },
-      db: {
-        schema: 'public'
-      },
-      global: {
-        headers: {
-          'x-application-name': 'patent-ai-platform'
-        }
-      }
+try {
+  if (supabaseUrl && supabaseServiceKey) {
+    supabase = createClient(supabaseUrl, supabaseServiceKey);
+  } else {
+    console.warn('[generate-report.js] Supabase 환경변수가 누락되어 활동 로그를 건너뜁니다.', {
+      hasUrl: !!supabaseUrl,
+      hasServiceKey: !!supabaseServiceKey,
     });
-
-    // 연결 테스트
-    const { data, error } = await supabase.from('users').select('count').limit(1);
-    if (error) {
-      console.error('❌ Supabase 연결 테스트 실패:', error.message);
-      supabaseConnectionStatus = 'connection_failed';
-      return null;
-    }
-
-    console.log('✅ Supabase 클라이언트 초기화 및 연결 테스트 성공');
-    supabaseConnectionStatus = 'connected';
-    return supabase;
-
-  } catch (error) {
-    console.error('❌ Supabase 클라이언트 초기화 실패:', {
-      message: error.message,
-      code: error.code,
-      details: error.details
-    });
-    supabaseConnectionStatus = 'initialization_failed';
-    supabase = null;
-    return null;
   }
+} catch (e) {
+  console.warn('[generate-report.js] Supabase 클라이언트 초기화 실패, 활동 로그를 건너뜁니다:', e?.message || e);
+  supabase = null;
 }
-
-// 초기화 실행
-initializeSupabase();
 
 module.exports = async function handler(req, res) {
   // CORS 헤더 설정
@@ -85,55 +40,32 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  const startTime = Date.now();
-  console.log('🚀 리포트 생성 API 호출됨 - 시작 시간:', new Date().toISOString());
-
   try {
-    // Supabase 연결 상태 확인 및 재연결 시도
-    if (supabaseConnectionStatus !== 'connected') {
-      console.log('🔄 Supabase 재연결 시도 중... 현재 상태:', supabaseConnectionStatus);
-      await initializeSupabase();
-      
-      if (supabaseConnectionStatus !== 'connected') {
-        console.warn('⚠️ Supabase 연결 실패, 로깅 없이 계속 진행');
-      }
-    }
+    console.log('=== 리포트 생성 API 요청 시작 ===');
+    console.log('Request body:', req.body);
 
-    // Gemini API 키 확인 - 더 엄격한 검증
+    // 환경변수에서 Gemini API 키 가져오기
     const apiKey = process.env.GEMINI_API_KEY;
-    console.log('🔑 API 키 확인 중...');
     
     if (!apiKey) {
-      console.error('❌ GEMINI_API_KEY 환경 변수가 설정되지 않음');
+      console.error('Gemini API key not found in environment variables');
       return res.status(500).json({
         success: false,
         error: 'API configuration error',
         message: 'Gemini API key is not configured'
       });
     }
+
+    console.log('Gemini API Key found:', apiKey ? 'Yes' : 'No');
+
+    // 서버리스 환경(Vercel 등) 고려한 타임아웃 설정 - 비즈니스 리포트는 더 긴 시간 필요
+    const isVercel = !!process.env.VERCEL;
+    const TIMEOUT_MS = reportType === 'business' ? 60000 : (isVercel ? 25000 : 60000);
     
-    if (apiKey === 'your-gemini-api-key-here' || apiKey.length < 20) {
-      console.error('❌ 유효하지 않은 Gemini API 키:', apiKey.substring(0, 10) + '...');
-      return res.status(500).json({
-        success: false,
-        error: 'API configuration error',
-        message: 'Invalid Gemini API key format'
-      });
-    }
-
-    console.log('✅ API 키 검증 완료');
-
-    // 요청 데이터 검증 - 더 상세한 검증
+    // 요청 데이터 검증
     const { patentData, reportType, userId } = req.body;
-    console.log('📋 요청 데이터 검증 중...', {
-      hasPatentData: !!patentData,
-      reportType,
-      userId,
-      patentDataKeys: patentData ? Object.keys(patentData) : []
-    });
     
     if (!patentData || typeof patentData !== 'object') {
-      console.error('❌ 특허 데이터가 없거나 유효하지 않음');
       return res.status(400).json({
         success: false,
         error: 'Missing required data',
@@ -142,7 +74,6 @@ module.exports = async function handler(req, res) {
     }
 
     if (!reportType || !['market', 'business'].includes(reportType)) {
-      console.error('❌ 유효하지 않은 리포트 타입:', reportType);
       return res.status(400).json({
         success: false,
         error: 'Invalid report type',
@@ -150,28 +81,25 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    console.log('✅ 요청 데이터 검증 완료 - 리포트 타입:', reportType);
+    console.log('Report type:', reportType, 'Timeout:', TIMEOUT_MS + 'ms');
     
-    // Gemini AI 초기화
-    console.log('🤖 Gemini AI 초기화 중...');
+    // Gemini AI 초기화 - 맥킨지 스타일 상세 분석을 위한 최적화
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-1.5-flash",
       generationConfig: {
-        temperature: 0.7,
+        temperature: 0.8, // 창의적 인사이트를 위해 증가
         topK: 40,
         topP: 0.95,
-        maxOutputTokens: 8192,
+        maxOutputTokens: 4096, // 상세한 분석을 위해 Vercel에서도 4096으로 증가
       }
     });
 
-    // 특허 정보 추출 - 강화된 에러 처리
-    console.log('📊 특허 정보 추출 중...');
+    // 특허 정보 추출
     const patentInfo = extractPatentInfo(patentData);
     
     // 추출된 정보 검증
     if (!patentInfo.inventionTitle && !patentInfo.abstract) {
-      console.error('❌ 필수 특허 정보가 부족함:', patentInfo);
       return res.status(400).json({
         success: false,
         error: 'Insufficient patent data',
@@ -179,164 +107,76 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    console.log('✅ 특허 정보 추출 완료:', {
-      title: patentInfo.inventionTitle?.substring(0, 50) + '...',
-      applicationNumber: patentInfo.applicationNumber,
-      hasAbstract: !!patentInfo.abstract,
-      hasClaims: !!patentInfo.claims
-    });
-
     // 리포트 타입별 프롬프트 생성
-    console.log('📝 프롬프트 생성 중...');
     const prompt = generateReportPrompt(patentInfo, reportType);
-    console.log('✅ 프롬프트 생성 완료 - 길이:', prompt.length);
 
-    // AI 분석 실행 (최적화된 재시도 로직)
-    console.log('🧠 AI 분석 시작...');
-    const maxRetries = 3;
-    const baseTimeoutMs = 240000; // 기본 240초로 증가 (Vercel 300초 제한 고려)
+    // AI 분석 실행 (검색 API 패턴 적용) - 비즈니스 리포트는 더 많은 재시도
+    console.log('AI analysis starting...');
+    const maxRetries = reportType === 'business' ? 3 : (isVercel ? 2 : 3);
     
     let analysisText;
     let lastError;
     
-    // Gemini API 연결 테스트
-    try {
-      console.log('🔍 Gemini API 연결 테스트 중...');
-      const testModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
-      await testModel.generateContent("test");
-      console.log('✅ Gemini API 연결 확인됨');
-    } catch (testError) {
-      console.error('❌ Gemini API 연결 실패:', testError.message);
-      return res.status(500).json({
-        success: false,
-        error: 'API connection failed',
-        message: 'Gemini API에 연결할 수 없습니다. API 키를 확인해주세요.',
-        details: testError.message
-      });
-    }
-    
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      const currentTimeoutMs = Math.min(baseTimeoutMs + (attempt - 1) * 30000, 280000); // 최대 280초
-      console.log(`⏰ [시도 ${attempt}/${maxRetries}] 타임아웃 설정: ${currentTimeoutMs/1000}초`);
-      
       try {
-        // 진행 상황 로깅을 위한 인터벌
-        const progressInterval = setInterval(() => {
-          const elapsed = (Date.now() - startTime) / 1000;
-          console.log(`⏳ AI 분석 진행 중... (경과 시간: ${elapsed.toFixed(1)}초, 시도: ${attempt}/${maxRetries})`);
-        }, 15000); // 15초마다 진행 상황 로그
+        console.log(`Attempt ${attempt}/${maxRetries} - Calling Gemini API...`);
         
-        try {
-          console.log(`📡 [시도 ${attempt}/${maxRetries}] Gemini API 호출 중... (프롬프트 길이: ${prompt.length}자)`);
-          
-          const analysisPromise = model.generateContent({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.7,
-              topK: 40,
-              topP: 0.95,
-              maxOutputTokens: 8192,
-            },
-            safetySettings: [
-              {
-                category: 'HARM_CATEGORY_HARASSMENT',
-                threshold: 'BLOCK_NONE',
-              },
-              {
-                category: 'HARM_CATEGORY_HATE_SPEECH',
-                threshold: 'BLOCK_NONE',
-              },
-              {
-                category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-                threshold: 'BLOCK_NONE',
-              },
-              {
-                category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-                threshold: 'BLOCK_NONE',
-              },
-            ],
-          });
-          
-          const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => {
-              console.error(`⏰ [시도 ${attempt}/${maxRetries}] AI 분석 타임아웃 발생`);
-              reject(new Error(`AI 분석 시간 초과 (${currentTimeoutMs/1000}초)`));
-            }, currentTimeoutMs);
-          });
+        const analysisPromise = model.generateContent({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }]
+        });
+        
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => {
+            reject(new Error(`AI analysis timeout (${TIMEOUT_MS/1000}s)`));
+          }, TIMEOUT_MS);
+        });
 
-          const result = await Promise.race([analysisPromise, timeoutPromise]);
-          clearInterval(progressInterval);
-          
-          console.log(`📡 [시도 ${attempt}/${maxRetries}] Gemini API 응답 받음`);
-          
-          const response = await result.response;
-          console.log(`📄 [시도 ${attempt}/${maxRetries}] 응답 텍스트 추출 중...`);
-          analysisText = response.text();
-          
-          // 응답 검증 강화
-          if (!analysisText || analysisText.trim().length < 100) {
-            throw new Error(`응답이 너무 짧거나 비어있음 (길이: ${analysisText?.length || 0})`);
-          }
-          
-          // 응답 품질 검증
-          if (!analysisText.includes('###') && !analysisText.includes('##')) {
-            console.warn(`⚠️ [시도 ${attempt}/${maxRetries}] 응답 형식이 예상과 다름, 재시도 고려`);
-            if (attempt < maxRetries) {
-              throw new Error('응답 형식이 예상과 다름');
-            }
-          }
-          
-          console.log(`✅ [시도 ${attempt}/${maxRetries}] 응답 텍스트 추출 완료 (${analysisText.length}자)`);
-          break; // 성공 시 루프 종료
-          
-        } catch (innerError) {
-          clearInterval(progressInterval);
-          throw innerError;
+        const result = await Promise.race([analysisPromise, timeoutPromise]);
+        const response = await result.response;
+        analysisText = response.text();
+        
+        // 응답 검증 - 비즈니스 리포트는 더 엄격한 검증
+        const minLength = reportType === 'business' ? 500 : 50;
+        if (!analysisText || analysisText.trim().length < minLength) {
+          throw new Error(`Response too short (length: ${analysisText?.length || 0}, required: ${minLength})`);
         }
+        
+        console.log(`Analysis response validation passed: ${analysisText.length} chars (min: ${minLength})`);
+        
+        console.log(`Analysis completed (${analysisText.length} chars)`);
+        break; // 성공 시 루프 종료
         
       } catch (apiError) {
         lastError = apiError;
-        console.error(`❌ [시도 ${attempt}/${maxRetries}] Gemini API 호출 오류:`, {
+        console.error(`Attempt ${attempt}/${maxRetries} failed:`, {
           message: apiError.message,
           status: apiError.status,
-          statusText: apiError.statusText,
-          code: apiError.code,
-          details: apiError.details,
-          stack: apiError.stack?.substring(0, 500)
+          reportType: reportType,
+          timeout: TIMEOUT_MS,
+          stack: apiError.stack?.split('\n')[0]
         });
         
-        // 특정 오류에 대한 즉시 실패 처리
-        if (apiError.message?.includes('API_KEY_INVALID') || 
-            apiError.message?.includes('PERMISSION_DENIED') ||
-            apiError.status === 401 || apiError.status === 403) {
-          console.error('❌ 인증 오류 발생, 재시도 중단');
+        // 인증 오류 시 즉시 실패
+        if (apiError.status === 401 || apiError.status === 403) {
+          console.error('Authentication error - aborting retries');
           throw apiError;
         }
         
         if (attempt === maxRetries) {
-          console.error('❌ 모든 재시도 실패, 최종 오류 발생');
+          console.error('Max retries reached - throwing last error');
           throw lastError;
         }
         
-        // 재시도 전 대기 (지수 백오프)
-        const waitTime = Math.min(3000 * Math.pow(2, attempt - 1), 20000);
-        console.log(`⏳ [시도 ${attempt}/${maxRetries}] ${waitTime/1000}초 후 재시도...`);
-        await new Promise(resolve => setTimeout(resolve, waitTime));
+        // 재시도 전 대기 (2초 간격)
+        console.log(`Waiting 2 seconds before retry ${attempt + 1}/${maxRetries}...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
       }
     }
 
-    const processingTime = Date.now() - startTime;
-    console.log('✅ AI 분석 완료:', {
-      responseLength: analysisText.length,
-      processingTime: `${processingTime}ms`
-    });
-
-    // 결과 구조화 - 강화된 파싱
-    console.log('🔄 결과 구조화 중...');
+    // 결과 구조화
     const structuredResult = parseReportResult(analysisText, reportType);
     
     if (!structuredResult || !structuredResult.sections || structuredResult.sections.length === 0) {
-      console.error('❌ 구조화된 결과가 비어있음');
       return res.status(500).json({
         success: false,
         error: 'Report parsing error',
@@ -344,15 +184,11 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    console.log('✅ 결과 구조화 완료 - 섹션 수:', structuredResult.sections.length);
-
-    // 활동 추적 - 보고서 생성 기록
+    // 활동 추적 (검색 API 패턴 적용)
     if (userId && supabase) {
       try {
-        console.log('📊 보고서 생성 활동 추적 중...');
-        
         // AI 분석 활동 추적
-        const { error: activityError } = await supabase
+        await supabase
           .from('user_activities')
           .insert({
             user_id: userId,
@@ -365,14 +201,8 @@ module.exports = async function handler(req, res) {
             }
           });
 
-        if (activityError) {
-          console.error('❌ AI 분석 활동 추적 오류:', activityError);
-        } else {
-          console.log('✅ AI 분석 활동 추적 완료');
-        }
-
-        // 보고서 데이터베이스에 저장
-        const { data: reportRecord, error: reportError } = await supabase
+        // 보고서 저장
+        const { data: reportRecord } = await supabase
           .from('ai_analysis_reports')
           .insert({
             user_id: userId,
@@ -386,46 +216,30 @@ module.exports = async function handler(req, res) {
           .select()
           .single();
 
-        if (reportError) {
-          console.error('❌ 보고서 저장 오류:', reportError);
-        } else {
-          console.log('✅ 보고서 저장 완료:', reportRecord.id);
-          // 보고서 생성 활동 로깅
-          try {
-            const { error: genLogErr } = await supabase
-              .from('user_activities')
-              .insert({
-                user_id: userId,
-                activity_type: 'report_generate',
-                activity_data: {
-                  report_id: reportRecord.id,
-                  report_type: reportType,
-                  application_number: patentInfo.applicationNumber,
-                  title: patentInfo.inventionTitle,
-                  timestamp: new Date().toISOString()
-                }
-              });
-            if (genLogErr) {
-              console.error('❌ 보고서 생성 활동 로깅 실패:', genLogErr);
-            } else {
-              console.log('✅ 보고서 생성 활동 로깅 완료');
-            }
-          } catch (genActErr) {
-            console.error('❌ 보고서 생성 활동 로깅 중 예외:', genActErr);
-          }
+        if (reportRecord) {
+          await supabase
+            .from('user_activities')
+            .insert({
+              user_id: userId,
+              activity_type: 'report_generate',
+              activity_data: {
+                report_id: reportRecord.id,
+                report_type: reportType,
+                application_number: patentInfo.applicationNumber,
+                title: patentInfo.inventionTitle,
+                timestamp: new Date().toISOString()
+              }
+            });
         }
 
       } catch (trackingError) {
-        console.error('❌ 활동 추적 오류:', trackingError);
+        console.warn('Activity tracking failed:', trackingError.message);
         // 활동 추적 실패는 리포트 생성에 영향을 주지 않음
       }
-    } else if (userId && !supabase) {
-      console.warn('⚠️ Supabase 연결이 없어 활동 추적을 건너뜁니다.');
     }
 
-    // 성공 응답
-    const totalTime = Date.now() - startTime;
-    console.log('🎉 리포트 생성 성공 - 총 처리 시간:', `${totalTime}ms`);
+    // 성공 응답 (검색 API 패턴 적용)
+    console.log('Report generation completed successfully');
     
     res.status(200).json({
       success: true,
@@ -433,7 +247,6 @@ module.exports = async function handler(req, res) {
         reportType,
         content: structuredResult,
         generatedAt: new Date().toISOString(),
-        processingTime: totalTime,
         patentInfo: {
           applicationNumber: patentInfo.applicationNumber,
           title: patentInfo.inventionTitle
@@ -442,47 +255,37 @@ module.exports = async function handler(req, res) {
     });
 
   } catch (error) {
-    const totalTime = Date.now() - startTime;
-    console.error('❌ 리포트 생성 오류:', {
-      error: error.message,
-      stack: error.stack,
-      processingTime: `${totalTime}ms`
-    });
+    console.error('Report generation error:', error.message);
     
-    // 에러 타입별 상세 처리
+    // 에러 타입별 처리 (검색 API 패턴)
     let statusCode = 500;
     let errorMessage = '리포트 생성 중 오류가 발생했습니다.';
-    let errorType = 'general';
     
-    if (error.message.includes('시간 초과') || error.message.includes('timeout')) {
+    if (error.message.includes('timeout')) {
       statusCode = 408;
-      errorMessage = 'AI 분석 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.';
-      errorType = 'timeout';
-    } else if (error.message.includes('API key') || error.message.includes('authentication')) {
+      const isVercel = !!process.env.VERCEL;
+      if (isVercel) {
+        errorMessage = `리포트 생성이 시간 초과되었습니다 (25초 제한).
+
+해결 방법:
+• 페이지를 새로고침 후 재시도해주세요
+• 잠시 후 다시 시도해주세요 (서버 부하가 줄어들 수 있습니다)
+• 네트워크 상태를 확인해주세요
+• 문제가 지속되면 관리자에게 문의해주세요
+
+기술적 정보: 서버리스 환경에서 복잡한 특허 분석에 시간이 오래 걸릴 수 있습니다.`;
+      } else {
+        errorMessage = 'AI 분석 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.';
+      }
+    } else if (error.status === 401 || error.status === 403) {
       statusCode = 401;
       errorMessage = 'AI 서비스 인증 오류입니다.';
-      errorType = 'api';
-    } else if (error.message.includes('quota') || error.message.includes('limit') || error.message.includes('rate')) {
-      statusCode = 429;
-      errorMessage = 'AI 서비스 사용량 한도에 도달했습니다.';
-      errorType = 'quota';
-    } else if (error.message.includes('network') || error.message.includes('fetch') || error.message.includes('ECONNREFUSED')) {
-      statusCode = 503;
-      errorMessage = '네트워크 연결 오류입니다. 인터넷 연결을 확인해주세요.';
-      errorType = 'network';
-    } else if (error.message.includes('Invalid') || error.message.includes('parsing')) {
-      statusCode = 400;
-      errorMessage = '요청 데이터가 유효하지 않습니다.';
-      errorType = 'validation';
     }
 
     res.status(statusCode).json({
       success: false,
-      error: error.name || 'ReportGenerationError',
-      errorType,
+      error: 'Report generation failed',
       message: errorMessage,
-      processingTime: totalTime,
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
       timestamp: new Date().toISOString()
     });
   }
@@ -593,19 +396,29 @@ function generateReportPrompt(patentInfo, reportType) {
 `;
 
   const roleConstraints = `
-# Gemini LLM 특허 분석 보고서 생성 프롬프트 (통제 강화 버전)
+# 맥킨지 & 컴퍼니 스타일 비즈니스 인사이트 리포트
 
-## 1. 역할 및 제약 조건 (Role & Constraints)
+## 역할 정의 및 분석 프레임워크
 
-당신은 **맥킨지/BCG급** 최고 수준의 경영 전략 컨설팅 펌의 **수석 파트너**입니다. 당신의 분석은 **최고 경영진(C-level)**의 투자 결정을 위한 최종 보고서입니다.
+당신은 **맥킨지 & 컴퍼니의 수석 파트너**로서 Fortune 500 기업의 CEO와 이사회를 위한 전략적 의사결정 보고서를 작성합니다. 본 분석은 **수십억 원 규모의 투자 결정**을 좌우하는 최종 보고서입니다.
 
-1. **톤 앤 매너:** 권위적이고, 극도로 객관적이며, 모든 내용은 데이터 기반으로 작성합니다. 감정적 표현, 추상적 수식어 사용을 엄격히 금지합니다.
-2. **헤딩 구조 강제:** 반드시 마크다운 **###**(레벨 3)과 **####**(레벨 4)만 사용합니다. 각 ### 섹션 아래에는 #### 항목을 **최소 3개 이상** 배치합니다.
-3. **내용 길이 강제:** 각 **#### 헤딩 바로 아래** 설명은 다음 중 하나를 준수해야 합니다.
-   - 최대 **2개의 짧고 독립적인 문장**
-   - 또는 **최대 3개의 불릿 포인트**
-4. **디자인 강조:** 핵심 용어, 수치, 결론은 **굵게** 처리합니다.
-5. **배경 제거:** 트레이딩/개인적 배경 정보는 완전히 배제합니다.
+### 분석 원칙 및 품질 기준
+1. **데이터 기반 객관성:** 모든 주장은 정량적 근거와 시장 데이터로 뒷받침되어야 합니다.
+2. **전략적 깊이:** 단순한 현상 분석을 넘어 근본 원인과 장기적 임팩트를 분석합니다.
+3. **실행 가능성:** 모든 권고사항은 구체적 실행 계획과 예상 성과를 포함해야 합니다.
+4. **리스크 균형:** 기회와 위험을 균형있게 평가하여 현실적 시나리오를 제시합니다.
+
+### 필수 출력 요구사항
+- **각 섹션 최소 200-300자:** 표면적 분석이 아닌 심층적 인사이트 제공
+- **구체적 수치 포함:** 시장 규모, 성장률, 수익 전망 등 정량적 데이터 필수
+- **비교 분석:** 경쟁사, 대체 기술, 유사 사례와의 체계적 비교
+- **시나리오 모델링:** 보수적/기본/낙관적 시나리오별 분석
+- **액션 아이템:** 6개월/1년/3년 단위의 구체적 실행 계획
+
+### 보고서 구조 및 형식
+- **마크다운 헤딩:** ### (주요 섹션), #### (세부 항목) 사용
+- **핵심 내용 강조:** 중요한 수치, 결론, 권고사항은 **굵게** 표시
+- **논리적 흐름:** 현황 분석 → 기회 평가 → 전략 수립 → 실행 계획 순서
 `;
 
   const part1TechMarket = `
@@ -627,23 +440,47 @@ function generateReportPrompt(patentInfo, reportType) {
 `;
 
   const part2BizStrategy = `
-## 4. [Part 2] 비즈니스 전략 초점 인사이트
+## 4. [Part 2] 맥킨지 스타일 비즈니스 전략 인사이트
 
-### 4.1. 신사업 기회 및 수익 모델 혁신
-#### 4.1.1. 구체적인 신사업 제안
-- **프리미엄 제품 포트폴리오**, **구독 기반 서비스 모델**
-#### 4.1.2. 최적의 수익 창출 경로
-- **권고 수익 모델(B2B/B2G/B2C)**, **기술 로열티율 범위(% 최소~최대)**
-#### 4.1.3. 전략적 기술 가치 추정
-- **M&A 프리미엄**과 **NPV(5년) 기여도**
+### 4.1. 전략적 기술 가치 평가 및 시장 포지셔닝
+#### 4.1.1. 핵심 기술 차별화 요소 및 경쟁 우위
+본 특허 기술이 기존 솔루션 대비 달성하는 구체적 성능 개선 지표를 정량적으로 분석하고, 기술적 진입장벽의 높이와 모방 난이도를 평가합니다. 특허 포트폴리오의 방어력과 원천성 수준을 진단하여 지속 가능한 경쟁 우위를 확보할 수 있는지 판단합니다.
 
-### 4.2. 리스크 관리 및 IP 전략
-#### 4.2.1. 최우선 R&D 후속 투자 방향
-- **상용화 공정 단순화**, **응용 분야 특허 포트폴리오 확장**
-#### 4.2.2. 전략적 파트너십/제휴 대상
-- **보완/접근성 확보 중 택1 근거**, **파트너십 형태(라이선스/조인트벤처/전략투자)**
-#### 4.2.3. 최악의 시나리오 대비 리스크 관리
-- **특허 무효화 반격 전략**, **경쟁사의 우회/대체 반격 시나리오**
+#### 4.1.2. 시장 기회 규모 및 성장 잠재력 분석
+TAM(Total Addressable Market) 규모를 5년 전망으로 추정하고, 주요 타겟 시장별 침투 전략을 수립합니다. 시장 성장률, 고객 세그먼트별 니즈, 경쟁사 대비 포지셔닝을 종합 분석하여 최적의 시장 진입 전략을 제시합니다.
+
+#### 4.1.3. 경쟁 환경 및 차별화 전략
+주요 경쟁사들의 기술 수준과 시장 점유율을 분석하고, 본 특허 기술의 차별화 포인트를 명확히 정의합니다. 대체 기술의 한계점과 기술 격차 유지 가능 기간을 평가하여 경쟁 우위 지속성을 진단합니다.
+
+### 4.2. 비즈니스 모델 혁신 및 수익 창출 전략
+#### 4.2.1. 수익 모델 다각화 및 최적화 방안
+직접 사업화와 라이선싱 전략을 비교 분석하여 최적의 수익 모델을 제안합니다. B2B, B2G, B2C 각 채널별 수익성과 확장성을 평가하고, 단계별 수익 창출 로드맵(3-5년)을 구체적으로 설계합니다. 예상 수익 규모와 마진 구조를 시나리오별로 모델링합니다.
+
+#### 4.2.2. 전략적 파트너십 및 생태계 구축
+핵심 파트너 후보군을 식별하고 각각의 제휴 형태(라이선싱, 조인트벤처, 전략적 투자)별 장단점을 분석합니다. Win-Win 가치 창출 구조를 설계하고, 파트너십을 통한 시장 확장 및 기술 고도화 전략을 수립합니다.
+
+#### 4.2.3. 신사업 기회 발굴 및 포트폴리오 확장
+본 특허 기술을 활용한 고부가가치 제품 및 서비스 포트폴리오를 제안합니다. 시장 메가트렌드와 기술적 차별화 요소를 기반으로 프리미엄 제품군과 구독 기반 서비스 모델을 설계하여 지속 가능한 성장 동력을 확보합니다.
+
+### 4.3. 실행 전략 및 리스크 관리 프레임워크
+#### 4.3.1. 우선순위 액션 플랜 및 실행 로드맵
+6개월, 1년, 3년 단위의 구체적 실행 계획을 수립하고, 각 단계별 필요 투자 규모와 자원 배분 전략을 제시합니다. 핵심 성과 지표(KPI)를 설정하여 진행 상황을 모니터링하고 성과를 측정할 수 있는 체계를 구축합니다.
+
+#### 4.3.2. 리스크 요인 분석 및 대응 전략
+기술적, 시장적, 경쟁적 리스크를 체계적으로 분석하고, 각 리스크별 구체적 대응 방안을 수립합니다. 특허 무효화 위험, 경쟁사의 우회 설계, 시장 변화 등 주요 위협 요소에 대한 선제적 대응 전략과 최악 시나리오 대비 플랜 B를 제시합니다.
+
+#### 4.3.3. R&D 투자 방향 및 IP 포트폴리오 강화
+상용화 공정 최적화와 응용 분야 확장을 위한 후속 R&D 투자 우선순위를 제시합니다. 특허 포트폴리오 강화 전략과 IP 방어 체계 구축 방안을 수립하여 기술적 경쟁 우위를 지속적으로 확대해 나갈 수 있는 전략을 제안합니다.
+
+### 4.4. 투자 가치 평가 및 재무적 임팩트 분석
+#### 4.4.1. 기술 가치 평가 및 벤치마킹
+DCF(현금흐름할인) 모델을 기반으로 본 특허 기술의 경제적 가치를 정량적으로 추정합니다. 유사 기술의 시장 거래 사례와 로열티 계약을 벤치마킹하여 적정 기술 가치 범위를 산정하고, 라이선싱 수익 전망을 제시합니다.
+
+#### 4.4.2. 투자 수익률 분석 및 재무 모델링
+예상 ROI와 투자 회수 기간을 시나리오별로 분석하고, 보수적/기본/낙관적 시나리오에 따른 재무 모델을 구축합니다. 투자 대비 기대 수익 구조를 명확히 하여 투자 의사결정을 지원하는 정량적 근거를 제공합니다.
+
+#### 4.4.3. M&A 가치 및 전략적 옵션 평가
+본 특허 기술이 M&A 시장에서 갖는 프리미엄 가치를 평가하고, 전략적 인수 후보군을 식별합니다. 기술 매각, 라이선싱, 조인트벤처 등 다양한 전략적 옵션의 장단점을 비교 분석하여 최적의 Exit 전략을 제안합니다.
 `;
 
   // 리포트 타입에 따라 강조 섹션을 달리하되 동일한 엄격한 구조/톤을 유지

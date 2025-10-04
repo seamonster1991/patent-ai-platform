@@ -309,14 +309,15 @@ module.exports = async function handler(req, res) {
     if (error.message.includes('타임아웃') || error.message.includes('timeout')) {
       const isVercel = !!process.env.VERCEL;
       if (isVercel) {
-        errorMessage = `AI 분석이 시간 초과되었습니다 (Vercel 함수 제한: 5분). 
+        errorMessage = `AI 분석이 시간 초과되었습니다 (25초 제한). 
         
 해결 방법:
 • 잠시 후 다시 시도해주세요 (서버 부하가 줄어들 수 있습니다)
-• 특허 데이터가 매우 복잡한 경우 분석에 더 오랜 시간이 필요할 수 있습니다
+• 복잡한 특허 데이터의 경우 분석에 더 오랜 시간이 필요할 수 있습니다
+• 네트워크 상태를 확인해주세요
 • 문제가 지속되면 관리자에게 문의해주세요
 
-기술적 정보: Vercel 함수 실행 시간이 5분(300초)로 제한됩니다.`;
+기술적 정보: 서버리스 환경에서 AI 분석 시간이 25초로 제한됩니다.`;
       } else {
         errorMessage = 'AI 분석 요청이 시간 초과되었습니다. 특허 데이터가 복잡하거나 서버가 바쁠 수 있습니다. 잠시 후 다시 시도해주세요.';
       }
@@ -373,10 +374,10 @@ function getTimeoutMs(attempt) {
   console.log(`🔧 getTimeoutMs 호출: attempt=${attempt}, isVercel=${isVercel}`);
   
   if (isVercel) {
-    // Vercel 무료 플랜 제한: 10초로 더 안전한 마진 확보 (10초 - 2초 여유)
-    const base = 8000; // 8초로 증가
+    // Vercel 환경 최적화: 25초로 증가하여 복잡한 특허 분석 지원
+    const base = 25000; // 25초로 증가
     const step = 0; // 재시도 시에도 동일한 타임아웃 유지
-    const result = Math.min(base + (attempt - 1) * step, 8000); // 최대 8초
+    const result = Math.min(base + (attempt - 1) * step, 25000); // 최대 25초
     console.log(`🔧 Vercel 환경 타임아웃: ${result}ms (${result/1000}초)`);
     return result;
   } else {
