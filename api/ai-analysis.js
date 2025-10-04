@@ -8,16 +8,18 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  // OPTIONS 요청 처리
+  
+  // 버전 정보 추가 (디버깅용)
+  console.log('🚀 AI Analysis API v2.1 - 2025-10-04 14:43 KST');
+  console.log('🔧 Environment:', process.env.VERCEL ? 'Vercel' : 'Local');
+  
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
-
-  // POST 요청만 허용
+  
   if (req.method !== 'POST') {
-    return res.status(405).json({ 
-      success: false, 
+    return res.status(405).json({
+      success: false,
       error: 'Method not allowed',
       message: 'Only POST method is allowed'
     });
