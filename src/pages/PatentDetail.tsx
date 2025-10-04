@@ -186,9 +186,9 @@ export default function PatentDetail() {
         analysisType: 'comprehensive'
       }
       console.log('📤 AI 분석 요청 데이터:', requestBody)
-      // AbortController를 사용해 요청 타임아웃(5분) 적용 - Vercel 함수 제한 고려
+      // AbortController를 사용해 요청 타임아웃 적용 - Vercel Hobby 플랜 10초 제한 고려
       const controller = new AbortController()
-      const timeoutMs = 300_000 // 5분 (300초)
+      const timeoutMs = 15_000 // 15초 (Vercel 10초 제한 + 여유시간)
       const timeoutId = setTimeout(() => {
         console.warn(`⏱️ AI 분석 요청이 ${timeoutMs/1000}초를 초과하여 중단됩니다`)
         controller.abort()
@@ -254,8 +254,8 @@ export default function PatentDetail() {
       // 요청 타임아웃/중단 처리
       if (err?.name === 'AbortError') {
         console.error('⏱️ AI 분석 요청 시간 초과로 중단됨')
-        setAiError('AI 분석 요청이 시간 초과(5분)로 중단되었습니다. 특허 데이터가 복잡하거나 서버가 바쁠 수 있습니다. 잠시 후 다시 시도해주세요.')
-        toast.error('AI 분석 요청이 시간 초과(5분)로 중단되었습니다. 잠시 후 다시 시도해주세요.')
+        setAiError('AI 분석 요청이 시간 초과(15초)로 중단되었습니다. Vercel 무료 플랜의 제한으로 인해 복잡한 특허 분석에 시간이 오래 걸릴 수 있습니다. 잠시 후 다시 시도해주세요.')
+        toast.error('AI 분석 요청이 시간 초과되었습니다. 잠시 후 다시 시도해주세요.')
       } else {
         console.error('❌ AI 분석 전체 오류:', err)
         const errorMessage = err.message || 'AI 분석 생성 중 오류가 발생했습니다.'

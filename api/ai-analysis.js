@@ -83,8 +83,8 @@ module.exports = async function handler(req, res) {
     
     // Vercel 무료 플랜 최적화: 텍스트 길이 대폭 축소
     const isVercel = !!process.env.VERCEL;
-    const ABSTRACT_MAX_LEN = isVercel ? 800 : (Number(process.env.ABSTRACT_MAX_LEN) || 1500);
-    const CLAIMS_MAX_LEN = isVercel ? 1000 : (Number(process.env.CLAIMS_MAX_LEN) || 2000);
+    const ABSTRACT_MAX_LEN = isVercel ? 500 : (Number(process.env.ABSTRACT_MAX_LEN) || 1500);
+    const CLAIMS_MAX_LEN = isVercel ? 600 : (Number(process.env.CLAIMS_MAX_LEN) || 2000);
     patentInfo.abstract = truncateText(patentInfo.abstract, ABSTRACT_MAX_LEN);
     patentInfo.claims = truncateText(patentInfo.claims, CLAIMS_MAX_LEN);
     
@@ -130,10 +130,10 @@ module.exports = async function handler(req, res) {
              const result = await model.generateContent({
               contents: [{ role: "user", parts: [{ text: prompt }] }],
               generationConfig: {
-                  temperature: isVercel ? 0.3 : 0.7,  // Vercel에서는 더 결정적인 응답
-                  topK: isVercel ? 20 : 40,           // 더 적은 토큰 고려
-                  topP: isVercel ? 0.8 : 0.95,        // 더 집중된 응답
-                  maxOutputTokens: isVercel ? 2048 : 8192,  // Vercel에서는 더 짧은 응답
+                  temperature: isVercel ? 0.2 : 0.7,  // Vercel에서는 더 결정적인 응답
+                  topK: isVercel ? 10 : 40,           // 더 적은 토큰 고려
+                  topP: isVercel ? 0.7 : 0.95,        // 더 집중된 응답
+                  maxOutputTokens: isVercel ? 1024 : 8192,  // Vercel에서는 더 짧은 응답 (1024로 단축)
               },
              });
              
@@ -349,10 +349,10 @@ function getTimeoutMs(attempt) {
   console.log(`🔧 getTimeoutMs 호출: attempt=${attempt}, isVercel=${isVercel}`);
   
   if (isVercel) {
-    // Vercel 무료 플랜 제한: 10초로 안전 마진 확보 (10초 - 2초 여유)
-    const base = 8000; // 8초
+    // Vercel 무료 플랜 제한: 10초로 더 안전한 마진 확보 (10초 - 4초 여유)
+    const base = 6000; // 6초로 단축
     const step = 0; // 재시도 시에도 동일한 타임아웃 유지
-    const result = Math.min(base + (attempt - 1) * step, 8000); // 최대 8초
+    const result = Math.min(base + (attempt - 1) * step, 6000); // 최대 6초
     console.log(`🔧 Vercel 환경 타임아웃: ${result}ms (${result/1000}초)`);
     return result;
   } else {
