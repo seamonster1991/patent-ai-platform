@@ -29,17 +29,11 @@
       ]
     },
     "types": [
-      "node",
-      "express"
-    ],
-    "typeRoots": [
-      "./node_modules/@types",
-      "./api/types"
+      "node"
     ]
   },
   "include": [
-    "src",
-    "api"
+    "src"
   ],
   "exclude": [
     "supabase/functions/**/*",
