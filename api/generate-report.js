@@ -464,7 +464,7 @@ function generateReportPrompt(patentInfo, reportType) {
 `;
 
   const part2BizStrategy = `
-## 4. [Part 2] 맥킨지 스타일 비즈니스 전략 인사이트
+## 4. [Part 2] 전문 비즈니스 전략 인사이트
 
 ### 4.1. 전략적 기술 가치 평가 및 시장 포지셔닝
 #### 4.1.1. 핵심 기술 차별화 요소 및 경쟁 우위

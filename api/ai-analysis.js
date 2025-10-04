@@ -1177,10 +1177,14 @@ function removeMcKinseyReferences(text) {
   console.log('🧹 맥킨지 언급 제거 전:', text.substring(0, 200));
   
   let cleaned = text
-    // 사용자가 요청한 특정 헤더 부분 완전 제거
+    // 사용자가 요청한 특정 헤더 부분 완전 제거 (더 강력한 패턴)
+    .replace(/맥킨지\s*&?\s*컴퍼니\s*시장분석리포트[^]*?뉴로퓨전주식회사특허\([^)]*\)[^]*?일자:\s*\d{4}년\s*\d{1,2}월\s*\d{1,2}일/gi, '')
+    .replace(/맥킨지\s*&?\s*컴퍼니\s*시장분석리포트[^]*?특허\([^)]*\)[^]*?일자:[^]*?\d{4}년[^]*?\d{1,2}월[^]*?\d{1,2}일/gi, '')
+    .replace(/맥킨지&컴퍼니시장분석리포트[^]*?뉴로퓨전주식회사특허\([^)]*\)/gi, '')
     .replace(/맥킨지&컴퍼니스타일비즈니스인사이트리포트[^]*?일자:\s*\d{4}년\s*\d{1,2}월\s*\d{1,2}일/gi, '')
     .replace(/맥킨지\s*&?\s*컴퍼니\s*스타일\s*비즈니스\s*인사이트\s*리포트[^]*?일자:[^]*?\d{4}년[^]*?\d{1,2}월[^]*?\d{1,2}일/gi, '')
     // 수신/발신 정보 제거
+    .replace(/수신:\s*Fortune\s*500\s*기업\s*CEO\s*및\s*이사회[^\n]*/gi, '')
     .replace(/수신:\s*Fortune\s*500\s*CEO\s*및\s*이사회[^\n]*/gi, '')
     .replace(/발신:\s*맥킨지\s*&\s*컴퍼니\s*수석\s*파트너[^\n]*/gi, '')
     .replace(/일자:\s*\d{4}년\s*\d{1,2}월\s*\d{1,2}일[^\n]*/gi, '')
@@ -1201,6 +1205,8 @@ function removeMcKinseyReferences(text) {
     // 맥킨지 스타일 언급도 제거
     .replace(/맥킨지\s*스타일/gi, '전문 컨설팅 스타일')
     .replace(/McKinsey\s*style/gi, 'Professional consulting style')
+    // 빈 줄 정리
+    .replace(/\n\s*\n\s*\n/g, '\n\n')
     .trim();
   
   console.log('🧹 맥킨지 언급 제거 후:', cleaned.substring(0, 200));

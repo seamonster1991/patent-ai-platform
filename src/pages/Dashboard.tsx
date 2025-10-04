@@ -592,7 +592,7 @@ export default function Dashboard() {
                 <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500">아직 작성한 보고서가 없습니다.</p>
               </div>
-            )
+            )}
           </CardContent>
         </Card>
       </div>

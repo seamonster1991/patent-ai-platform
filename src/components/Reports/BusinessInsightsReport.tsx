@@ -452,10 +452,10 @@ export default function BusinessInsightsReport({
     setError('')
 
     try {
-      const response = await fetch('/api/ai-analysis', {
+      const response = await fetch('/api/generate-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ patentData: patent, analysisType: 'business_insights' }),
+        body: JSON.stringify({ patentData: patent, reportType: 'business' }),
       })
 
       if (!response.ok) {
@@ -526,15 +526,11 @@ export default function BusinessInsightsReport({
 
       const data = await response.json()
       
-      if (data.success && data.data && data.data.analysis) {
-        const analysis = data.data.analysis
-        
-        const sections = parseComplexContent(analysis)
-        
+      if (data.success && data.data && data.data.sections) {
         const reportData: ReportData = {
           reportType: 'business_insights',
-          reportName: analysis.reportName || '비즈니스 인사이트 리포트',
-          sections: sections,
+          reportName: '비즈니스 인사이트 리포트',
+          sections: data.data.sections,
           generatedAt: typeof window !== 'undefined' ? new Date().toISOString() : ''
         };
         

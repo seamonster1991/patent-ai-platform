@@ -396,10 +396,10 @@ export default function MarketAnalysisReport({
     setError('')
 
     try {
-      const response = await fetch('/api/ai-analysis', {
+      const response = await fetch('/api/generate-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ patentData: patent, analysisType: 'market_analysis' }),
+        body: JSON.stringify({ patentData: patent, reportType: 'market' }),
       })
 
       if (!response.ok) {
@@ -470,16 +470,11 @@ export default function MarketAnalysisReport({
 
       const data = await response.json()
       
-      // AIAnalysisReport 구조에 reportName과 sections가 바로 포함되도록 가정
-      if (data.success && data.data && data.data.analysis) {
-        const analysis = data.data.analysis
-        
-        const sections = parseComplexContent(analysis)
-        
+      if (data.success && data.data && data.data.sections) {
         const reportData: ReportData = {
           reportType: 'market_analysis',
-          reportName: analysis.reportName || '시장 분석 리포트',
-          sections: sections,
+          reportName: '시장 분석 리포트',
+          sections: data.data.sections,
           generatedAt: new Date().toISOString()
         };
         
