@@ -257,14 +257,14 @@ module.exports = async function handler(req, res) {
     if (error.message.includes('타임아웃') || error.message.includes('timeout')) {
       const isVercel = !!process.env.VERCEL;
       if (isVercel) {
-        errorMessage = `AI 분석이 시간 초과되었습니다 (Vercel 무료 플랜 제한: 10초). 
+        errorMessage = `AI 분석이 시간 초과되었습니다 (Vercel 함수 제한: 5분). 
         
 해결 방법:
 • 잠시 후 다시 시도해주세요 (서버 부하가 줄어들 수 있습니다)
 • 특허 데이터가 매우 복잡한 경우 분석에 더 오랜 시간이 필요할 수 있습니다
 • 문제가 지속되면 관리자에게 문의해주세요
 
-기술적 정보: Vercel 무료 플랜에서는 함수 실행 시간이 10초로 제한됩니다.`;
+기술적 정보: Vercel 함수 실행 시간이 5분(300초)로 제한됩니다.`;
       } else {
         errorMessage = 'AI 분석 요청이 시간 초과되었습니다. 특허 데이터가 복잡하거나 서버가 바쁠 수 있습니다. 잠시 후 다시 시도해주세요.';
       }
@@ -319,13 +319,13 @@ module.exports = async function handler(req, res) {
 function getTimeoutMs(attempt) {
   const isVercel = !!process.env.VERCEL;
   if (isVercel) {
-    // Vercel 무료 플랜 최적화: 8초 제한으로 안전 마진 확보
-    const base = 8000; // 8초
-    const step = 1000; // 1초씩 증가
-    return Math.min(base + (attempt - 1) * step, 9000); // 최대 9초
+    // Vercel 함수 제한: 280초로 안전 마진 확보 (300초 - 20초 여유)
+    const base = 280000; // 280초
+    const step = 0; // 재시도 시에도 동일한 타임아웃 유지
+    return Math.min(base + (attempt - 1) * step, 280000); // 최대 280초
   } else {
     // 로컬 환경에서는 기존 설정 유지
-    const base = Number(process.env.ANALYSIS_TIMEOUT_MS) || 60000;
+    const base = Number(process.env.ANALYSIS_TIMEOUT_MS) || 300000;
     const step = Number(process.env.ANALYSIS_TIMEOUT_STEP_MS) || 30000;
     return base + (attempt - 1) * step;
   }

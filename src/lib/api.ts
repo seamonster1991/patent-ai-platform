@@ -176,7 +176,7 @@ export async function requestAiAnalysis(patentData: any, analysisType: string): 
   console.log('🤖 [API] AI 분석 요청:', { analysisType });
   
   return apiPost('/api/ai-analysis', { patentData, analysisType }, {
-    timeout: 60000, // AI 분석은 시간이 오래 걸림
+    timeout: 300000, // AI 분석은 시간이 오래 걸림 (5분)
     retries: 1,
     retryDelay: 3000,
   });
