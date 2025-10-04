@@ -187,23 +187,54 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     const { user } = get()
     
-    // 사용자 활동 추적 - 로그아웃
-    if (user) {
-      try {
-        const activityTracker = ActivityTracker.getInstance()
-        activityTracker.setUserId(user.id)
-        await activityTracker.trackLogout({
-          email: user.email,
-          sessionDuration: Date.now() - (user.created_at ? new Date(user.created_at).getTime() : Date.now())
+    try {
+      // 사용자 활동 추적 - 로그아웃 (비동기로 처리하여 로그아웃 속도에 영향 없음)
+      if (user) {
+        // ActivityTracker를 백그라운드에서 실행하여 로그아웃 속도에 영향을 주지 않음
+        Promise.resolve().then(async () => {
+          try {
+            const activityTracker = ActivityTracker.getInstance()
+            activityTracker.setUserId(user.id)
+            await activityTracker.trackLogout({
+              email: user.email,
+              sessionDuration: Date.now() - (user.created_at ? new Date(user.created_at).getTime() : Date.now())
+            })
+          } catch (error) {
+            console.error('로그아웃 활동 추적 오류:', error)
+            // 활동 추적 실패는 로그아웃 기능에 영향을 주지 않음
+          }
         })
-      } catch (error) {
-        console.error('로그아웃 활동 추적 오류:', error)
-        // 활동 추적 실패는 로그아웃 기능에 영향을 주지 않음
       }
+
+      // Supabase 로그아웃 실행
+      await supabase.auth.signOut()
+      
+      // localStorage 정리
+      try {
+        localStorage.removeItem('supabase.auth.token')
+        localStorage.removeItem('sb-' + supabase.supabaseKey + '-auth-token')
+        // 기타 앱 관련 localStorage 항목들 정리
+        const keysToRemove = []
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i)
+          if (key && (key.startsWith('sb-') || key.includes('auth') || key.includes('user'))) {
+            keysToRemove.push(key)
+          }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key))
+      } catch (error) {
+        console.error('localStorage 정리 오류:', error)
+      }
+      
+      // 상태 초기화
+      set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true })
+      
+    } catch (error) {
+      console.error('로그아웃 오류:', error)
+      // 오류가 발생해도 상태는 초기화
+      set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true })
+      throw error
     }
-    
-    await supabase.auth.signOut()
-    set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true })
   },
 
   initialize: async () => {
@@ -223,7 +254,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       
       try {
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Supabase connection timeout')), 20000) // 20초로 증가
+          setTimeout(() => reject(new Error('Supabase connection timeout')), 5000) // 5초로 단축
         );
         
         const sessionPromise = supabase.auth.getSession();

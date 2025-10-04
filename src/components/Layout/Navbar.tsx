@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Search, User, LogOut, Menu, X, Moon, Sun } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useAuthStore } from '../../store/authStore'
 import { useThemeStore } from '../../store/themeStore'
 import { cn } from '../../lib/utils'
@@ -13,43 +13,23 @@ export default function Navbar() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  // AuthStore가 초기화되지 않았으면 로딩 상태 표시
-  if (!initialized) {
-    return (
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/70 dark:bg-slate-900/60 backdrop-blur border-b border-ms-line transition-colors">
-        <div className="ms-container">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Link to="/" className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-md border border-ms-line bg-white/70 flex items-center justify-center">
-                  <Search className="w-5 h-5 text-ms-olive" />
-                </div>
-                <span className="text-xl font-bold text-ms-text">P-AI</span>
-              </Link>
-            </div>
-            <div className="animate-pulse">
-              <div className="h-4 w-20 bg-gray-300 dark:bg-gray-600 rounded"></div>
-            </div>
-          </div>
-        </div>
-      </nav>
-    )
-  }
-
-  const navigation = [
+  // 네비게이션 메뉴 메모이제이션
+  const navigation = useMemo(() => [
     { name: '홈', href: '/', icon: Search },
     { name: '검색', href: '/search', icon: Search },
     { name: '대시보드', href: '/dashboard', icon: User },
-  ]
+  ], [])
 
-  const isActive = (path: string) => {
+  // 활성 경로 확인 함수 메모이제이션
+  const isActive = useCallback((path: string) => {
     if (path === '/') {
       return location.pathname === '/'
     }
     return location.pathname.startsWith(path)
-  }
+  }, [location.pathname])
 
-  const handleSignOut = async () => {
+  // 로그아웃 핸들러 메모이제이션
+  const handleSignOut = useCallback(async () => {
     try {
       await signOut()
       setIsMenuOpen(false)
@@ -59,16 +39,38 @@ export default function Navbar() {
       console.error('로그아웃 오류:', error)
       toast.error('로그아웃 중 오류가 발생했습니다.')
     }
-  }
+  }, [signOut, navigate])
 
-  const handleProtectedNavigation = (href: string, name: string) => {
+  // 보호된 네비게이션 핸들러 메모이제이션
+  const handleProtectedNavigation = useCallback((href: string, name: string) => {
     if (!user) {
       toast.error(`${name} 페이지는 로그인이 필요합니다.`)
       navigate('/login')
       return
     }
     navigate(href)
+  }, [user, navigate])
+
+  // AuthStore가 초기화되지 않았으면 간단한 로딩 상태 표시
+  if (!initialized) {
+    return (
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-ms-line">
+        <div className="ms-container">
+          <div className="flex justify-between items-center h-16">
+            <Link to="/" className="flex items-center space-x-2">
+              <div className="w-8 h-8 rounded-md border border-ms-line bg-white/70 flex items-center justify-center">
+                <Search className="w-5 h-5 text-ms-olive" />
+              </div>
+              <span className="text-xl font-semibold text-ms-text">P-AI</span>
+            </Link>
+            <div className="w-6 h-6 border-2 border-ms-olive border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        </div>
+      </nav>
+    )
   }
+
+
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/70 dark:bg-slate-900/60 backdrop-blur border-b border-ms-line">
