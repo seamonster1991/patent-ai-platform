@@ -1240,65 +1240,167 @@ function removeMcKinseyReferences(text) {
   return cleaned;
 }
 
-// 리포트를 DB에 저장하는 함수
-async function saveReportToDatabase(patentInfo, analysisType, structuredAnalysis, userId) {
-  console.log('💾 [DB저장] 시작 - 분석타입:', analysisType, '사용자ID:', userId);
+// 리포트를 DB에 저장하는 함수 (개선된 버전)
+async function saveReportToDatabase(patentInfo, analysisType, structuredAnalysis, userId, retryCount = 0) {
+  const maxRetries = 3;
+  const retryDelay = 1000; // 1초
+  
+  console.log(`💾 [DB저장] 시작 (시도 ${retryCount + 1}/${maxRetries + 1}) - 분석타입:`, analysisType, '사용자ID:', userId);
   
   if (!supabase) {
-    console.warn('⚠️ Supabase 클라이언트가 초기화되지 않음 - DB 저장 건너뜀');
-    return null;
+    console.error('❌ [DB저장] Supabase 클라이언트가 초기화되지 않음');
+    throw new Error('Database client not initialized');
   }
 
   try {
+    // 기본 리포트 데이터 구성
     const reportData = {
-      application_number: patentInfo.applicationNumber,
-      invention_title: patentInfo.inventionTitle,
-      user_id: userId === 'anonymous' ? null : userId, // anonymous는 null로 저장
+      application_number: patentInfo.applicationNumber || 'UNKNOWN',
+      invention_title: patentInfo.inventionTitle || 'Untitled Patent',
+      user_id: userId === 'anonymous' || !userId ? null : userId,
       created_at: new Date().toISOString()
     };
 
-    console.log('💾 [DB저장] 기본 데이터:', {
+    console.log('💾 [DB저장] 기본 데이터 구성 완료:', {
       application_number: reportData.application_number,
-      invention_title: reportData.invention_title,
+      invention_title: reportData.invention_title?.substring(0, 50) + '...',
       user_id: reportData.user_id,
-      analysis_type: analysisType
+      analysis_type: analysisType,
+      sections_count: structuredAnalysis?.sections?.length || 0
     });
 
-    // 분석 타입에 따라 필드 설정
+    // 분석 타입에 따른 필드 매핑 개선
     if (analysisType === 'market_analysis') {
-      const sections = structuredAnalysis.sections || [];
-      reportData.market_penetration = sections.find(s => s.title?.includes('시장 침투') || s.title?.includes('Market Penetration'))?.content || '';
-      reportData.competitive_landscape = sections.find(s => s.title?.includes('경쟁 환경') || s.title?.includes('Competitive'))?.content || '';
-      reportData.market_growth_drivers = sections.find(s => s.title?.includes('성장 동력') || s.title?.includes('Growth'))?.content || '';
-      reportData.risk_factors = sections.find(s => s.title?.includes('위험 요소') || s.title?.includes('Risk'))?.content || '';
-      console.log('💾 [DB저장] 시장분석 필드 설정 완료');
+      const sections = structuredAnalysis?.sections || [];
+      
+      // 더 정확한 섹션 매칭을 위한 키워드 배열
+      const marketPenetrationKeywords = ['시장 침투', 'Market Penetration', '시장 진입', '침투 전략'];
+      const competitiveKeywords = ['경쟁 환경', 'Competitive', '경쟁사', '경쟁 분석', '경쟁 구도'];
+      const growthKeywords = ['성장 동력', 'Growth', '성장 요인', '시장 성장', '성장 전략'];
+      const riskKeywords = ['위험 요소', 'Risk', '리스크', '위험 분석', '위험 요인'];
+      
+      reportData.market_penetration = findSectionByKeywords(sections, marketPenetrationKeywords) || '';
+      reportData.competitive_landscape = findSectionByKeywords(sections, competitiveKeywords) || '';
+      reportData.market_growth_drivers = findSectionByKeywords(sections, growthKeywords) || '';
+      reportData.risk_factors = findSectionByKeywords(sections, riskKeywords) || '';
+      
+      console.log('💾 [DB저장] 시장분석 필드 매핑 완료:', {
+        market_penetration: reportData.market_penetration?.length || 0,
+        competitive_landscape: reportData.competitive_landscape?.length || 0,
+        market_growth_drivers: reportData.market_growth_drivers?.length || 0,
+        risk_factors: reportData.risk_factors?.length || 0
+      });
+      
     } else if (analysisType === 'business_insights') {
-      const sections = structuredAnalysis.sections || [];
-      reportData.revenue_model = sections.find(s => s.title?.includes('수익 모델') || s.title?.includes('Revenue'))?.content || '';
-      reportData.royalty_margin = sections.find(s => s.title?.includes('로열티') || s.title?.includes('Royalty'))?.content || '';
-      reportData.new_business_opportunities = sections.find(s => s.title?.includes('비즈니스 기회') || s.title?.includes('Business Opportunities'))?.content || '';
-      reportData.competitor_response_strategy = sections.find(s => s.title?.includes('경쟁사 대응') || s.title?.includes('Competitor Response'))?.content || '';
-      console.log('💾 [DB저장] 비즈니스 인사이트 필드 설정 완료');
+      const sections = structuredAnalysis?.sections || [];
+      
+      // 더 정확한 섹션 매칭을 위한 키워드 배열
+      const revenueKeywords = ['수익 모델', 'Revenue', '매출 모델', '수익 구조', '비즈니스 모델'];
+      const royaltyKeywords = ['로열티', 'Royalty', '라이선스', '특허 수익', '지적재산 수익'];
+      const opportunityKeywords = ['비즈니스 기회', 'Business Opportunities', '사업 기회', '새로운 기회'];
+      const competitorResponseKeywords = ['경쟁사 대응', 'Competitor Response', '경쟁 대응', '대응 전략'];
+      
+      reportData.revenue_model = findSectionByKeywords(sections, revenueKeywords) || '';
+      reportData.royalty_margin = findSectionByKeywords(sections, royaltyKeywords) || '';
+      reportData.new_business_opportunities = findSectionByKeywords(sections, opportunityKeywords) || '';
+      reportData.competitor_response_strategy = findSectionByKeywords(sections, competitorResponseKeywords) || '';
+      
+      console.log('💾 [DB저장] 비즈니스 인사이트 필드 매핑 완료:', {
+        revenue_model: reportData.revenue_model?.length || 0,
+        royalty_margin: reportData.royalty_margin?.length || 0,
+        new_business_opportunities: reportData.new_business_opportunities?.length || 0,
+        competitor_response_strategy: reportData.competitor_response_strategy?.length || 0
+      });
+    }
+
+    // 데이터 유효성 검증
+    if (!reportData.application_number || !reportData.invention_title) {
+      throw new Error('Required fields missing: application_number or invention_title');
     }
 
     console.log('💾 [DB저장] Supabase 삽입 시작...');
+    const startTime = Date.now();
+    
     const { data, error } = await supabase
       .from('ai_analysis_reports')
       .insert([reportData])
       .select();
 
+    const endTime = Date.now();
+    const duration = endTime - startTime;
+
     if (error) {
-      console.error('❌ [DB저장] 실패:', error);
-      console.error('❌ [DB저장] 실패 데이터:', reportData);
-      return null;
+      console.error('❌ [DB저장] Supabase 에러:', {
+        error: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        duration: `${duration}ms`,
+        retryCount: retryCount + 1
+      });
+      
+      // 재시도 가능한 에러인지 확인
+      const retryableErrors = ['PGRST301', 'PGRST302', '23505', '40001', '40P01'];
+      const isRetryable = retryableErrors.some(code => error.code?.includes(code)) || 
+                         error.message?.includes('timeout') || 
+                         error.message?.includes('connection');
+      
+      if (isRetryable && retryCount < maxRetries) {
+        console.log(`🔄 [DB저장] 재시도 가능한 에러 - ${retryDelay}ms 후 재시도...`);
+        await new Promise(resolve => setTimeout(resolve, retryDelay * (retryCount + 1)));
+        return saveReportToDatabase(patentInfo, analysisType, structuredAnalysis, userId, retryCount + 1);
+      }
+      
+      throw new Error(`Database save failed: ${error.message}`);
     }
 
-    console.log('✅ [DB저장] 성공! ID:', data[0]?.id);
-    console.log('✅ [DB저장] 저장된 데이터:', data[0]);
+    console.log('✅ [DB저장] 성공!', {
+      id: data[0]?.id,
+      application_number: data[0]?.application_number,
+      user_id: data[0]?.user_id,
+      duration: `${duration}ms`,
+      retryCount: retryCount + 1,
+      timestamp: new Date().toISOString()
+    });
+    
     return data[0];
+    
   } catch (error) {
-    console.error('❌ [DB저장] 예외 발생:', error);
-    console.error('❌ [DB저장] 스택 트레이스:', error.stack);
+    console.error('❌ [DB저장] 예외 발생:', {
+      error: error.message,
+      stack: error.stack,
+      retryCount: retryCount + 1,
+      analysisType,
+      userId,
+      timestamp: new Date().toISOString()
+    });
+    
+    // 재시도 로직
+    if (retryCount < maxRetries && !error.message?.includes('Required fields missing')) {
+      console.log(`🔄 [DB저장] 예외 재시도 - ${retryDelay}ms 후 재시도...`);
+      await new Promise(resolve => setTimeout(resolve, retryDelay * (retryCount + 1)));
+      return saveReportToDatabase(patentInfo, analysisType, structuredAnalysis, userId, retryCount + 1);
+    }
+    
+    // 최대 재시도 횟수 초과 또는 재시도 불가능한 에러
+    console.error('❌ [DB저장] 최종 실패 - 재시도 횟수 초과 또는 치명적 에러');
     return null;
   }
+}
+
+// 키워드 배열을 사용하여 섹션을 찾는 헬퍼 함수
+function findSectionByKeywords(sections, keywords) {
+  if (!sections || !Array.isArray(sections)) return '';
+  
+  for (const keyword of keywords) {
+    const section = sections.find(s => 
+      s.title?.includes(keyword) || 
+      s.content?.includes(keyword)
+    );
+    if (section) {
+      return section.content || '';
+    }
+  }
+  
+  return '';
 }
