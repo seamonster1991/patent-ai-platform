@@ -69,13 +69,13 @@ module.exports = async function handler(req, res) {
 
     console.log('Gemini API Key found:', apiKey ? 'Yes' : 'No');
 
+    // 요청 데이터 검증 - reportType을 먼저 추출
+    const { patentData, reportType, userId } = req.body;
+    
     // 서버리스 환경(Vercel 등) 고려한 타임아웃 설정 - 비즈니스 리포트는 더 긴 시간 필요
     const isVercel = !!process.env.VERCEL;
     // 리포트 타입별 차별화된 타임아웃: 비즈니스 리포트는 더 복잡한 분석이 필요
     const TIMEOUT_MS = reportType === 'business' ? 90000 : 60000; // 비즈니스: 90초, 시장분석: 60초
-    
-    // 요청 데이터 검증
-    const { patentData, reportType, userId } = req.body;
     
     if (!patentData || typeof patentData !== 'object') {
       return res.status(400).json({
