@@ -209,11 +209,11 @@ module.exports = async function handler(req, res) {
     }
     
     // 분석 결과 파싱 및 구조화 (JSON 파싱 및 평탄화)
-    console.log('🔄 파싱 시작 - AI 응답 길이:', analysisText?.length || 0);
-    console.log('🔄 파싱 시작 - 분석 타입:', analysisType);
+    console.log('🔄 Step 5: 파싱 시작 - AI 응답 길이:', analysisText?.length || 0);
+    console.log('🔄 Step 5: 파싱 시작 - 분석 타입:', analysisType);
     
     // 임시: 파싱 우회하고 원시 응답 반환 (디버깅용)
-    console.log('🔧 임시 디버깅 모드: 파싱 우회');
+    console.log('🔧 Step 6: 임시 디버깅 모드: 파싱 우회');
     const structuredAnalysis = {
       reportName: analysisType === 'market' ? '시장 분석 리포트' : '비즈니스 인사이트 리포트',
       sections: [
@@ -260,6 +260,7 @@ module.exports = async function handler(req, res) {
       console.log('🗑️ 오래된 캐시 항목 삭제:', oldestKey);
     }
     
+    console.log('🔧 Step 7: 응답 반환 준비 완료');
     return res.status(200).json(aiResponse);
     
   } catch (error) {
