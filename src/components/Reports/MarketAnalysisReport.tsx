@@ -396,10 +396,10 @@ export default function MarketAnalysisReport({
     setError('')
 
     try {
-      const response = await fetch('/api/generate-report', {
+      const response = await fetch('/api/ai-analysis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ patentData: patent, reportType: 'market' }),
+        body: JSON.stringify({ patentData: patent, analysisType: 'market_analysis' }),
       })
 
       if (!response.ok) {
@@ -470,11 +470,11 @@ export default function MarketAnalysisReport({
 
       const data = await response.json()
       
-      if (data.success && data.data && data.data.sections) {
+      if (data.success && data.data && data.data.analysis) {
         const reportData: ReportData = {
           reportType: 'market_analysis',
           reportName: '시장 분석 리포트',
-          sections: data.data.sections,
+          sections: parseComplexContent(data.data.analysis),
           generatedAt: new Date().toISOString()
         };
         
