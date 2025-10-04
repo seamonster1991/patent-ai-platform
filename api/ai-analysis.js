@@ -217,18 +217,35 @@ module.exports = async function handler(req, res) {
     console.log('🔄 Step 5: 파싱 시작 - 분석 타입:', analysisType);
     
     // 임시: 파싱 우회하고 원시 응답 반환 (디버깅용)
-    console.log('🔧 Step 6: 임시 디버깅 모드: 파싱 우회');
-    const structuredAnalysis = {
-      reportName: analysisType === 'market' ? '시장 분석 리포트' : '비즈니스 인사이트 리포트',
-      sections: [
-        {
-          title: 'AI 분석 결과 (원시 데이터)',
-          content: analysisText
-        }
-      ],
-      rawAnalysis: analysisText,
-      debug: true
-    };
+    let structuredAnalysis;
+    
+    // Vercel 환경에서는 간단한 응답 구조 사용
+    if (isVercel) {
+      console.log('🔧 Step 6: Vercel 간단 모드');
+      structuredAnalysis = {
+        reportName: analysisType === 'market_analysis' ? '시장 분석 리포트' : '비즈니스 인사이트 리포트',
+        sections: [
+          {
+            title: '분석 결과',
+            content: analysisText
+          }
+        ],
+        rawAnalysis: analysisText
+      };
+    } else {
+      console.log('🔧 Step 6: 임시 디버깅 모드: 파싱 우회');
+      structuredAnalysis = {
+        reportName: analysisType === 'market' ? '시장 분석 리포트' : '비즈니스 인사이트 리포트',
+        sections: [
+          {
+            title: 'AI 분석 결과 (원시 데이터)',
+            content: analysisText
+          }
+        ],
+        rawAnalysis: analysisText,
+        debug: true
+      };
+    }
     
     console.log('✅ 파싱 완료 - 생성된 섹션 수:', structuredAnalysis?.sections?.length || 0);
     console.log('📊 파싱 결과 미리보기:', {
