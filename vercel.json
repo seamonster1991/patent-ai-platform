@@ -10,7 +10,7 @@
       "runtime": "@vercel/node@3.1.5",
       "maxDuration": 300
     },
-    "api/ai-analysis.js": {
+    "api/ai-analysis-v2.js": {
       "runtime": "@vercel/node@3.1.5",
       "maxDuration": 300
     }
