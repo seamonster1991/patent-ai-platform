@@ -19,6 +19,7 @@ interface AuthState {
 
 // onAuthStateChange 리스너 중복 등록 방지를 위한 플래그
 let authListenerInitialized = false;
+let authSubscription: any = null;
 
 // 사용자 세션 처리 헬퍼 함수
 const handleUserSession = async (user: SupabaseUser, set: any) => {
@@ -212,12 +213,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // localStorage 정리
       try {
         localStorage.removeItem('supabase.auth.token')
-        localStorage.removeItem('sb-' + supabase.supabaseKey + '-auth-token')
         // 기타 앱 관련 localStorage 항목들 정리
         const keysToRemove = []
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i)
-          if (key && (key.startsWith('sb-') || key.includes('auth') || key.includes('user'))) {
+          if (key && (key.startsWith('sb-') || key.includes('auth') || key.includes('user') || key.includes('supabase'))) {
             keysToRemove.push(key)
           }
         }
@@ -274,7 +274,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       
       // onAuthStateChange 리스너를 한 번만 등록
       if (!authListenerInitialized) {
-        supabase.auth.onAuthStateChange(async (event, session) => {
+        // 기존 구독이 있다면 해제
+        if (authSubscription) {
+          authSubscription.unsubscribe();
+        }
+        
+        authSubscription = supabase.auth.onAuthStateChange(async (event, session) => {
           console.log('[AuthStore] 인증 상태 변경:', event, session?.user?.email);
           
           // 초기화가 완료된 후에만 상태 변경 처리
@@ -296,9 +301,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             return;
           }
           
+          // 로그인 진행 중인 경우 이벤트 무시 (무한루프 방지)
+          if (event === 'SIGNED_IN' && authGuard.getStatus().isLoginInProgress) {
+            console.log('[AuthStore] 로그인 진행 중 SIGNED_IN 이벤트 무시');
+            return;
+          }
+          
           // SIGNED_OUT 이벤트나 세션이 없는 경우에만 로딩 상태 설정
           if (event === 'SIGNED_OUT' || !session?.user) {
             console.log('[AuthStore] 로그아웃 처리');
+            authGuard.reset(); // AuthGuard 상태 리셋
             set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true });
             return;
           }
@@ -307,6 +319,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           if (event === 'SIGNED_IN' && session?.user) {
             console.log('[AuthStore] 로그인 이벤트 처리 시작');
             try {
+              // 중복 처리 방지를 위한 추가 체크
+              if (currentState.user?.id === session.user.id && currentState.user?.email === session.user.email) {
+                console.log('[AuthStore] 이미 동일한 사용자로 로그인됨, 이벤트 무시');
+                return;
+              }
+              
               await handleUserSession(session.user, set);
               console.log('[AuthStore] 로그인 이벤트 처리 완료');
             } catch (error) {

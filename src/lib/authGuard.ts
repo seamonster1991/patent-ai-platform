@@ -4,9 +4,9 @@ class AuthGuard {
   private isLoginInProgress = false;
   private lastLoginAttempt = 0;
   private loginAttemptCount = 0;
-  private readonly MIN_LOGIN_INTERVAL = 2000; // 2초
-  private readonly MAX_LOGIN_ATTEMPTS = 3;
-  private readonly RESET_INTERVAL = 10000; // 10초
+  private readonly MIN_LOGIN_INTERVAL = 1000; // 1초로 단축
+  private readonly MAX_LOGIN_ATTEMPTS = 5; // 시도 횟수 증가
+  private readonly RESET_INTERVAL = 30000; // 30초로 증가
 
   static getInstance(): AuthGuard {
     if (!AuthGuard.instance) {
