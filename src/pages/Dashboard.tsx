@@ -111,7 +111,7 @@ export default function Dashboard() {
         
         console.log('📊 [Dashboard] 사용할 사용자 ID:', userId)
 
-        // 개선된 API 유틸리티 사용
+        // 개선된 API 유티리티 사용
         const { getUserStats } = await import('../lib/api')
         const data = await getUserStats(userId)
         
@@ -564,12 +564,12 @@ export default function Dashboard() {
               <FileText className="h-5 w-5" />
               <span>최근 보고서</span>
             </CardTitle>
-            <CardDescription>최근 작성한 보고서 10개 (재다운로드 가능)</CardDescription>
+            <CardDescription>최근 작성한 보고서 20개</CardDescription>
           </CardHeader>
           <CardContent>
             {userStats.recentReports && userStats.recentReports.length > 0 ? (
               <div className="space-y-3">
-                {userStats.recentReports.slice(0, 10).map((report, index) => (
+                {userStats.recentReports.slice(0, 20).map((report, index) => (
                   <div key={report.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">
@@ -583,22 +583,6 @@ export default function Dashboard() {
                       <div className="text-xs text-gray-400">
                         {new Date(report.createdAt).toLocaleDateString('ko-KR')}
                       </div>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => {
-                          if (report.downloadUrl) {
-                            window.open(report.downloadUrl, '_blank')
-                          } else {
-                            // PDF 재생성 로직 (필요시 구현)
-                            console.log('PDF 재생성:', report.id)
-                          }
-                        }}
-                        className="text-xs px-2 py-1"
-                      >
-                        <Download className="h-3 w-3 mr-1" />
-                        다운로드
-                      </Button>
                     </div>
                   </div>
                 ))}
@@ -607,13 +591,8 @@ export default function Dashboard() {
               <div className="text-center py-8">
                 <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500">아직 작성한 보고서가 없습니다.</p>
-                <Link to="/reports">
-                  <Button className="mt-4 bg-green-600 hover:bg-green-700">
-                    첫 보고서 작성하기
-                  </Button>
-                </Link>
               </div>
-            )}
+            )
           </CardContent>
         </Card>
       </div>

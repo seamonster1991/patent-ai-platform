@@ -303,7 +303,7 @@ module.exports = async function handler(req, res) {
       .from('ai_analysis_reports')
       .select('id, invention_title, application_number, created_at')
       .order('created_at', { ascending: false })
-      .limit(10);
+      .limit(20);
 
     // 실제 UUID 사용자가 아닌 경우 전체 데이터 조회 (guest, temp 사용자 등)
     if (isValidUuid && actualUserId !== 'anonymous') {
