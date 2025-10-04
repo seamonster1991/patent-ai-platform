@@ -430,14 +430,15 @@ function generateAnalysisPrompt(patentInfo, analysisType) {
   const isVercel = !!process.env.VERCEL;
   
   if (isVercel) {
-    // Vercel 환경에서는 극도로 간단한 프롬프트 사용 (토큰 최소화)
-    return `특허: ${patentInfo.inventionTitle}
+    // Vercel 환경에서는 간단하지만 구조화된 프롬프트 사용
+    return `특허 분석:
+제목: ${patentInfo.inventionTitle}
 초록: ${patentInfo.abstract}
 청구항: ${patentInfo.claims}
 
 ${analysisType === 'market_analysis' ? 
-  '시장성과 기술혁신성을 3줄로 분석하세요.' : 
-  '사업기회와 수익모델을 3줄로 분석하세요.'
+  '## 시장 분석\n### 기술 혁신성\n### 시장 규모\n### 경쟁 우위\n\n각 항목을 1-2줄로 간단히 분석하세요.' : 
+  '## 비즈니스 인사이트\n### 사업 기회\n### 수익 모델\n### 주요 리스크\n\n각 항목을 1-2줄로 간단히 분석하세요.'
 }`;
   }
 
