@@ -1,5 +1,5 @@
 // 환경 변수 테스트 API
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   try {
     // CORS 헤더 설정
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -37,4 +37,4 @@ module.exports = async function handler(req, res) {
       timestamp: new Date().toISOString()
     });
   }
-};
+}
