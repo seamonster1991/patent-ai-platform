@@ -1242,6 +1242,8 @@ function removeMcKinseyReferences(text) {
 
 // 리포트를 DB에 저장하는 함수
 async function saveReportToDatabase(patentInfo, analysisType, structuredAnalysis, userId) {
+  console.log('💾 [DB저장] 시작 - 분석타입:', analysisType, '사용자ID:', userId);
+  
   if (!supabase) {
     console.warn('⚠️ Supabase 클라이언트가 초기화되지 않음 - DB 저장 건너뜀');
     return null;
@@ -1251,9 +1253,16 @@ async function saveReportToDatabase(patentInfo, analysisType, structuredAnalysis
     const reportData = {
       application_number: patentInfo.applicationNumber,
       invention_title: patentInfo.inventionTitle,
-      user_id: userId,
-      generated_at: new Date().toISOString()
+      user_id: userId === 'anonymous' ? null : userId, // anonymous는 null로 저장
+      created_at: new Date().toISOString()
     };
+
+    console.log('💾 [DB저장] 기본 데이터:', {
+      application_number: reportData.application_number,
+      invention_title: reportData.invention_title,
+      user_id: reportData.user_id,
+      analysis_type: analysisType
+    });
 
     // 분석 타입에 따라 필드 설정
     if (analysisType === 'market_analysis') {
@@ -1262,28 +1271,34 @@ async function saveReportToDatabase(patentInfo, analysisType, structuredAnalysis
       reportData.competitive_landscape = sections.find(s => s.title?.includes('경쟁 환경') || s.title?.includes('Competitive'))?.content || '';
       reportData.market_growth_drivers = sections.find(s => s.title?.includes('성장 동력') || s.title?.includes('Growth'))?.content || '';
       reportData.risk_factors = sections.find(s => s.title?.includes('위험 요소') || s.title?.includes('Risk'))?.content || '';
+      console.log('💾 [DB저장] 시장분석 필드 설정 완료');
     } else if (analysisType === 'business_insights') {
       const sections = structuredAnalysis.sections || [];
       reportData.revenue_model = sections.find(s => s.title?.includes('수익 모델') || s.title?.includes('Revenue'))?.content || '';
       reportData.royalty_margin = sections.find(s => s.title?.includes('로열티') || s.title?.includes('Royalty'))?.content || '';
       reportData.new_business_opportunities = sections.find(s => s.title?.includes('비즈니스 기회') || s.title?.includes('Business Opportunities'))?.content || '';
       reportData.competitor_response_strategy = sections.find(s => s.title?.includes('경쟁사 대응') || s.title?.includes('Competitor Response'))?.content || '';
+      console.log('💾 [DB저장] 비즈니스 인사이트 필드 설정 완료');
     }
 
+    console.log('💾 [DB저장] Supabase 삽입 시작...');
     const { data, error } = await supabase
       .from('ai_analysis_reports')
       .insert([reportData])
       .select();
 
     if (error) {
-      console.error('❌ DB 저장 실패:', error);
+      console.error('❌ [DB저장] 실패:', error);
+      console.error('❌ [DB저장] 실패 데이터:', reportData);
       return null;
     }
 
-    console.log('✅ 리포트 DB 저장 성공:', data[0]?.id);
+    console.log('✅ [DB저장] 성공! ID:', data[0]?.id);
+    console.log('✅ [DB저장] 저장된 데이터:', data[0]);
     return data[0];
   } catch (error) {
-    console.error('❌ DB 저장 중 오류:', error);
+    console.error('❌ [DB저장] 예외 발생:', error);
+    console.error('❌ [DB저장] 스택 트레이스:', error.stack);
     return null;
   }
 }

@@ -490,7 +490,7 @@ export default function PatentDetail() {
         {/* Tabs */}
         <div className="mb-6">
           <div className="border-b border-gray-200 dark:border-gray-700">
-            <nav className="-mb-px flex flex-wrap gap-x-8 gap-y-2">
+            <nav className="-mb-px flex flex-wrap gap-x-4 gap-y-3 justify-start items-center overflow-hidden">
               {tabs.map((tab) => {
                 const Icon = tab.icon
                 return (
@@ -501,13 +501,13 @@ export default function PatentDetail() {
                       setActiveTab(tab.id)
                       setRenderedTabs(prev => new Set([...prev, tab.id]))
                     }}
-                    className={`flex items-center gap-2 py-2 px-1 border-b-2 font-bold text-sm whitespace-nowrap ${
+                    className={`flex items-center gap-2 py-2 px-3 border-b-2 font-bold text-sm whitespace-nowrap transition-all duration-200 ${
                       activeTab === tab.id
                         ? 'border-ms-olive text-ms-olive'
                         : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                     } ${
                       (tab.id === 'market-analysis' || tab.id === 'business-insights')
-                        ? 'border-2 border-red-500 rounded-md'
+                        ? 'border-2 border-red-500 rounded-md px-4 py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30'
                         : ''
                     }`}
                   >
