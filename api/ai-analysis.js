@@ -1,9 +1,8 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// 간단한 메모리 캐시 (서버리스 환경에서는 제한적이지만 동일 요청 내에서는 유효)
+// 간단한 메모리 캐시 (서버리스 환경에서는 제한적이지만 동일 요청 내에서는 유효)// 캐시 관리
 const analysisCache = new Map();
-const CACHE_TTL = 5 * 60 * 1000; // 5분
-
+const CACHE_TTL = 5 * 60 * 1000; // 5분 캐시
 module.exports = async function handler(req, res) {
   // CORS 헤더 설정
   res.setHeader('Access-Control-Allow-Origin', '*');
