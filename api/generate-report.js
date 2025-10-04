@@ -1,22 +1,33 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { createClient } = require('@supabase/supabase-js');
 
-// Supabase 클라이언트 초기화 (검색 API 패턴 적용)
+// Supabase 클라이언트 초기화 (강화된 환경변수 처리)
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 let supabase = null;
 
+// 환경변수 디버깅 로그
+console.log('🔧 [generate-report.js] 환경변수 상태:', {
+  hasUrl: !!supabaseUrl,
+  hasServiceKey: !!supabaseServiceKey,
+  urlLength: supabaseUrl?.length || 0,
+  keyLength: supabaseServiceKey?.length || 0,
+  isVercel: !!process.env.VERCEL,
+  nodeEnv: process.env.NODE_ENV
+});
+
 try {
   if (supabaseUrl && supabaseServiceKey) {
     supabase = createClient(supabaseUrl, supabaseServiceKey);
+    console.log('✅ [generate-report.js] Supabase 클라이언트 초기화 성공');
   } else {
-    console.warn('[generate-report.js] Supabase 환경변수가 누락되어 활동 로그를 건너뜁니다.', {
+    console.warn('⚠️ [generate-report.js] Supabase 환경변수 누락:', {
       hasUrl: !!supabaseUrl,
       hasServiceKey: !!supabaseServiceKey,
     });
   }
 } catch (e) {
-  console.warn('[generate-report.js] Supabase 클라이언트 초기화 실패, 활동 로그를 건너뜁니다:', e?.message || e);
+  console.error('❌ [generate-report.js] Supabase 클라이언트 초기화 실패:', e?.message || e);
   supabase = null;
 }
 
@@ -137,8 +148,16 @@ module.exports = async function handler(req, res) {
         analysisText = response.text();
         
         // 응답 검증 - 비즈니스 리포트는 더 엄격한 검증
-        const minLength = reportType === 'business' ? 500 : 50;
+        const minLength = reportType === 'business' ? 200 : 20;
         if (!analysisText || analysisText.trim().length < minLength) {
+          console.error('📊 응답 검증 실패 상세 정보:', {
+            hasText: !!analysisText,
+            length: analysisText?.length || 0,
+            trimmedLength: analysisText?.trim().length || 0,
+            required: minLength,
+            reportType: reportType,
+            attempt: attempt
+          });
           throw new Error(`Response too short (length: ${analysisText?.length || 0}, required: ${minLength})`);
         }
         

@@ -15,10 +15,18 @@ module.exports = async function handler(req, res) {
   res.setHeader('Expires', '0');
   
   // 버전 정보 추가 (디버깅용) - 강제 캐시 무효화
-  const version = '2.2-CACHE-BUST-' + Date.now();
+  const version = '2.3-ENHANCED-' + Date.now();
   console.log('🚀 AI Analysis API v' + version);
   console.log('🔧 Environment:', process.env.VERCEL ? 'Vercel' : 'Local');
   console.log('🕒 Timestamp:', new Date().toISOString());
+  
+  // 환경변수 상태 확인
+  console.log('🔧 환경변수 상태:', {
+    hasGeminiKey: !!process.env.GEMINI_API_KEY,
+    geminiKeyLength: process.env.GEMINI_API_KEY?.length || 0,
+    isVercel: !!process.env.VERCEL,
+    nodeEnv: process.env.NODE_ENV
+  });
   
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -130,10 +138,10 @@ module.exports = async function handler(req, res) {
              const result = await model.generateContent({
               contents: [{ role: "user", parts: [{ text: prompt }] }],
               generationConfig: {
-                  temperature: isVercel ? 0.2 : 0.7,  // Vercel에서는 더 결정적인 응답
-                  topK: isVercel ? 10 : 40,           // 더 적은 토큰 고려
-                  topP: isVercel ? 0.7 : 0.95,        // 더 집중된 응답
-                  maxOutputTokens: isVercel ? 512 : 8192,   // Vercel에서는 더 짧은 응답 (512로 단축)
+                  temperature: isVercel ? 0.3 : 0.7,  // Vercel에서는 더 결정적인 응답
+                  topK: isVercel ? 20 : 40,           // 더 적은 토큰 고려
+                  topP: isVercel ? 0.8 : 0.95,        // 더 집중된 응답
+                  maxOutputTokens: isVercel ? 4096 : 8192,   // Vercel에서도 충분한 응답 길이 확보
               },
              });
              
@@ -146,8 +154,15 @@ module.exports = async function handler(req, res) {
              console.log(`✅ [시도 ${attempt}/${maxRetries}] Gemini API 응답 완료 (${endTime - startTime}ms)`);
              console.log(`📊 응답 길이: ${text?.length || 0}자`);
              
-             if (!text || text.trim().length < 50) {
+             if (!text || text.trim().length < 20) {
                 console.error('❌ AI 응답이 너무 짧거나 비어있습니다:', text?.substring(0, 100));
+                console.error('📊 응답 상세 정보:', {
+                  hasText: !!text,
+                  length: text?.length || 0,
+                  trimmedLength: text?.trim().length || 0,
+                  isVercel: isVercel,
+                  attempt: attempt
+                });
                 throw new Error('AI 응답이 너무 짧거나 비어있습니다.');
              }
              
@@ -374,10 +389,10 @@ function getTimeoutMs(attempt) {
   console.log(`🔧 getTimeoutMs 호출: attempt=${attempt}, isVercel=${isVercel}`);
   
   if (isVercel) {
-    // Vercel 환경 최적화: 25초로 증가하여 복잡한 특허 분석 지원
-    const base = 25000; // 25초로 증가
+    // Vercel 환경 최적화: 50초로 증가하여 복잡한 특허 분석 지원
+    const base = 50000; // 50초로 증가
     const step = 0; // 재시도 시에도 동일한 타임아웃 유지
-    const result = Math.min(base + (attempt - 1) * step, 25000); // 최대 25초
+    const result = Math.min(base + (attempt - 1) * step, 50000); // 최대 50초
     console.log(`🔧 Vercel 환경 타임아웃: ${result}ms (${result/1000}초)`);
     return result;
   } else {
