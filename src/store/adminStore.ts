@@ -1,795 +1,490 @@
-import { create } from 'zustand';
-import { supabase } from '../lib/supabase';
-import { AdminStats, SystemHealth, RecentActivity, UserManagementData, ReportManagementData, SystemMetrics } from '../types/admin';
+import { create } from 'zustand'
+import { supabase } from '@/lib/supabase'
+
+// 시스템 메트릭 인터페이스
+export interface SystemMetrics {
+  llmCost: number
+  llmUsage: number
+  cachingHitRate: number
+  estimatedSavings: number
+  apiLatency: number
+  errorRate: number
+  systemHealth: 'healthy' | 'warning' | 'critical'
+}
+
+// 사용자 통계 인터페이스
+export interface UserStats {
+  totalUsers: number
+  activeUsers: number
+  newSignups: number
+  premiumUsers: number
+  freeUsers: number
+}
+
+// 수익 메트릭 인터페이스
+export interface RevenueMetrics {
+  mrr: number
+  churnRate: number
+  arr: number
+  totalRevenue: number
+  avgRevenuePerUser: number
+}
+
+// 검색 키워드 인터페이스
+export interface SearchKeyword {
+  keyword: string
+  count: number
+  growthRate: number
+}
+
+// 기술 분포 인터페이스
+export interface TechDistribution {
+  category: string
+  count: number
+  percentage: number
+}
+
+// 인기 특허 인터페이스
+export interface TopPatent {
+  applicationNumber: string
+  title: string
+  applicant: string
+  analysisCount: number
+}
+
+// 관리자 사용자 인터페이스
+export interface AdminUser {
+  id: string
+  email: string
+  name: string
+  subscriptionPlan: 'free' | 'premium'
+  lastLogin: string
+  totalReports: number
+  status: 'active' | 'inactive'
+}
+
+// 결제 위험 인터페이스
+export interface PaymentRisk {
+  userId: string
+  email: string
+  riskType: 'payment_failed' | 'card_expiring' | 'subscription_cancelled'
+  description: string
+  severity: 'low' | 'medium' | 'high'
+}
 
 interface AdminStore {
   // 상태
-  stats: AdminStats | null;
-  systemHealth: SystemHealth | null;
-  recentActivities: RecentActivity[];
-  userManagement: UserManagementData | null;
-  userManagementData: UserManagementData | null;
-  reportManagement: ReportManagementData | null;
-  reportManagementData: ReportManagementData | null;
-  systemMetrics: SystemMetrics | null;
+  systemMetrics: SystemMetrics | null
+  userStats: UserStats | null
+  revenueMetrics: RevenueMetrics | null
+  searchKeywords: SearchKeyword[]
+  techDistribution: TechDistribution[]
+  topPatents: TopPatent[]
+  adminUsers: AdminUser[]
+  paymentRisks: PaymentRisk[]
   
   // 로딩 상태
-  loading: {
-    stats: boolean;
-    systemHealth: boolean;
-    activities: boolean;
-    users: boolean;
-    reports: boolean;
-    metrics: boolean;
-  };
-  
-  // 에러 상태
-  error: string | null;
+  isLoading: boolean
   
   // 액션
-  fetchStats: () => Promise<void>;
-  fetchSystemHealth: () => Promise<void>;
-  fetchRecentActivities: () => Promise<void>;
-  fetchUserManagement: () => Promise<void>;
-  fetchUserManagementData: () => Promise<void>;
-  fetchReportManagement: () => Promise<void>;
-  fetchReportManagementData: () => Promise<void>;
-  fetchSystemMetrics: () => Promise<void>;
-  
-  // 사용자 관리 액션
-  updateUserStatus: (userId: string, isActive: boolean) => Promise<void>;
-  toggleUserStatus: (userId: string, isActive: boolean) => Promise<void>;
-  deleteUser: (userId: string) => Promise<void>;
-  
-  // 리포트 관리 액션
-  deleteReport: (reportId: string) => Promise<void>;
-  
-  // 유틸리티
-  clearError: () => void;
-  refreshAll: () => Promise<void>;
+  fetchSystemMetrics: () => Promise<void>
+  fetchUserStats: () => Promise<void>
+  fetchRevenueMetrics: () => Promise<void>
+  fetchSearchKeywords: () => Promise<void>
+  fetchTechDistribution: () => Promise<void>
+  fetchTopPatents: () => Promise<void>
+  fetchAdminUsers: () => Promise<void>
+  fetchPaymentRisks: () => Promise<void>
+  updateUserStatus: (userId: string, status: 'active' | 'inactive') => Promise<void>
+  updateUserSubscription: (userId: string, plan: 'free' | 'premium') => Promise<void>
 }
 
 export const useAdminStore = create<AdminStore>((set, get) => ({
   // 초기 상태
-  stats: null,
-  systemHealth: null,
-  recentActivities: [],
-  userManagement: null,
-  userManagementData: null,
-  reportManagement: null,
-  reportManagementData: null,
   systemMetrics: null,
-  
-  loading: {
-    stats: false,
-    systemHealth: false,
-    activities: false,
-    users: false,
-    reports: false,
-    metrics: false,
-  },
-  
-  error: null,
-  
-  // 통계 데이터 가져오기
-  fetchStats: async () => {
-    set(state => ({ loading: { ...state.loading, stats: true }, error: null }));
-    
+  userStats: null,
+  revenueMetrics: null,
+  searchKeywords: [],
+  techDistribution: [],
+  topPatents: [],
+  adminUsers: [],
+  paymentRisks: [],
+  isLoading: false,
+
+  // 시스템 메트릭 가져오기
+  fetchSystemMetrics: async () => {
+    set({ isLoading: true })
     try {
-      // 사용자 수 조회 (users 테이블)
-      const { count: totalUsers } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true });
-      
-      // 활성 사용자 수 (최근 30일 내 활동이 있는 사용자)
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      const { data: activeUserIds } = await supabase
-        .from('user_activities')
-        .select('user_id')
-        .gte('created_at', thirtyDaysAgo.toISOString())
-        .not('user_id', 'is', null);
-      
-      const uniqueActiveUsers = new Set(activeUserIds?.map(activity => activity.user_id) || []);
-      const activeUsers = uniqueActiveUsers.size;
-      
-      // 리포트 수 조회 (ai_analysis_reports 테이블)
-      const { count: totalReports } = await supabase
-        .from('ai_analysis_reports')
-        .select('*', { count: 'exact', head: true });
-      
-      // 검색 수 조회 (search_history 테이블)
-      const { count: totalSearches } = await supabase
-        .from('search_history')
-        .select('*', { count: 'exact', head: true });
-      
-      // 오늘 신규 가입자
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      const { count: newUsersToday } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', today.toISOString());
-      
-      // 오늘 검색 수
-      const { count: searchesToday } = await supabase
-        .from('search_history')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', today.toISOString());
-      
-      // 오늘 리포트 수
-      const { count: reportsToday } = await supabase
-        .from('ai_analysis_reports')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', today.toISOString());
-      
-      const stats: AdminStats = {
-        totalUsers: totalUsers || 0,
-        activeUsers: activeUsers || 0,
-        totalReports: totalReports || 0,
-        totalSearches: totalSearches || 0,
-        newUsersToday: newUsersToday || 0,
-        searchesToday: searchesToday || 0,
-        reportsToday: reportsToday || 0,
-      };
-      
-      set(state => ({ 
-        stats, 
-        loading: { ...state.loading, stats: false } 
-      }));
-    } catch (error) {
-      console.error('통계 데이터 가져오기 실패:', error);
-      set(state => ({ 
-        error: '통계 데이터를 가져오는데 실패했습니다.',
-        loading: { ...state.loading, stats: false }
-      }));
-    }
-  },
-  
-  // 시스템 상태 가져오기
-  fetchSystemHealth: async () => {
-    set(state => ({ loading: { ...state.loading, systemHealth: true }, error: null }));
-    
-    try {
-      // 데이터베이스 상태 확인
-      const dbStart = Date.now();
-      const { error: dbError } = await supabase.from('users').select('id').limit(1);
-      const dbResponseTime = Date.now() - dbStart;
-      
-      // 실제 시스템 메트릭스 조회
-      const { data: systemMetricsData } = await supabase
+      // LLM 분석 로그에서 비용 및 사용량 계산
+      const { data: llmLogs } = await supabase
+        .from('llm_analysis_logs')
+        .select('total_tokens, cost_estimate, processing_time_ms, created_at')
+        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+
+      // 시스템 메트릭에서 캐싱 및 성능 데이터
+      const { data: systemData } = await supabase
         .from('system_metrics')
         .select('*')
-        .order('recorded_at', { ascending: false })
-        .limit(10);
+        .gte('recorded_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+
+      const totalCost = llmLogs?.reduce((sum, log) => sum + (Number(log.cost_estimate) || 0), 0) || 0
+      const totalTokens = llmLogs?.reduce((sum, log) => sum + (log.total_tokens || 0), 0) || 0
+      const avgLatency = llmLogs?.reduce((sum, log) => sum + (log.processing_time_ms || 0), 0) / (llmLogs?.length || 1) || 0
+
+      // 캐싱 히트율 계산 (시스템 메트릭에서)
+      const cachingMetric = systemData?.find(m => m.metric_name === 'cache_hit_rate')
+      const cachingHitRate = cachingMetric ? Number(cachingMetric.value) : 75.0
+
+      const systemMetrics: SystemMetrics = {
+        llmCost: totalCost,
+        llmUsage: totalTokens,
+        cachingHitRate,
+        estimatedSavings: totalCost * (cachingHitRate / 100),
+        apiLatency: avgLatency,
+        errorRate: 0.8, // 기본값
+        systemHealth: totalCost > 2000 ? 'warning' : 'healthy'
+      }
       
-      // 최근 활동 기반 실시간 통계
-      const { count: activeConnections } = await supabase
-        .from('user_activities')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString()); // 최근 5분
-      
-      const { count: requestsLastMinute } = await supabase
-        .from('user_activities')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', new Date(Date.now() - 60 * 1000).toISOString()); // 최근 1분
-      
-      // 에러율 계산 (실제 에러 로그가 있다면 사용)
-      const errorRate = Math.random() * 2; // 임시로 낮은 에러율 사용
-      
-      // 시스템 상태 구성
-      const systemHealth: SystemHealth = {
-        status: dbError ? 'critical' : dbResponseTime > 1000 ? 'warning' : 'healthy',
-        overallStatus: dbError ? 'error' : dbResponseTime > 1000 ? 'warning' : 'healthy',
-        uptime: Date.now() - (Math.random() * 86400000 * 7), // 임시 업타임
-        activeUsers: activeConnections || 0,
-        requestsPerMinute: requestsLastMinute || 0,
-        services: [
-          { 
-            name: 'API Server', 
-            status: 'healthy', 
-            responseTime: Math.floor(Math.random() * 100) + 50 
-          },
-          { 
-            name: 'Database', 
-            status: dbError ? 'error' : dbResponseTime > 1000 ? 'warning' : 'healthy', 
-            responseTime: dbResponseTime 
-          },
-          { 
-            name: 'File Storage', 
-            status: 'healthy', 
-            responseTime: Math.floor(Math.random() * 50) + 30 
-          }
-        ],
-        serverMetrics: {
-          cpuUsage: systemMetricsData?.find(m => m.metric_name === 'cpu_usage')?.value || Math.floor(Math.random() * 30) + 20,
-          memoryUsage: systemMetricsData?.find(m => m.metric_name === 'memory_usage')?.value || Math.floor(Math.random() * 40) + 30,
-          diskUsage: systemMetricsData?.find(m => m.metric_name === 'disk_usage')?.value || Math.floor(Math.random() * 50) + 20,
-          networkIn: systemMetricsData?.find(m => m.metric_name === 'network_in')?.value || Math.floor(Math.random() * 1000) + 500,
-          networkOut: systemMetricsData?.find(m => m.metric_name === 'network_out')?.value || Math.floor(Math.random() * 2000) + 1000
-        },
-        databaseMetrics: {
-          connections: Math.floor(Math.random() * 50) + 10,
-          queries: Math.floor(Math.random() * 1000) + 1000,
-          avgResponseTime: dbResponseTime,
-          size: Math.floor(Math.random() * 1000) + 500,
-          cacheHitRatio: Math.random() * 0.3 + 0.7
-        },
-        recentAlerts: [],
-        performanceTrends: {
-          cpu: Array.from({length: 5}, () => Math.floor(Math.random() * 30) + 20),
-          memory: Array.from({length: 5}, () => Math.floor(Math.random() * 40) + 30),
-          responseTime: Array.from({length: 5}, () => Math.floor(Math.random() * 100) + 100)
-        },
-        database: {
-          status: dbError ? 'offline' : dbResponseTime > 1000 ? 'slow' : 'online',
-          responseTime: dbResponseTime,
-          connections: Math.floor(Math.random() * 50) + 10,
-        },
-        server: {
-          status: 'online',
-          cpuUsage: systemMetricsData?.find(m => m.metric_name === 'cpu_usage')?.value || Math.floor(Math.random() * 30) + 20,
-          memoryUsage: systemMetricsData?.find(m => m.metric_name === 'memory_usage')?.value || Math.floor(Math.random() * 40) + 30,
-          uptime: Date.now() - (Math.random() * 86400000 * 7),
-        },
-        storage: {
-          status: 'normal',
-          usedSpace: 2.5,
-          totalSpace: 10,
-        },
-      };
-      
-      set(state => ({ 
-        systemHealth, 
-        loading: { ...state.loading, systemHealth: false } 
-      }));
+      set({ systemMetrics })
     } catch (error) {
-      console.error('시스템 상태 가져오기 실패:', error);
-      set(state => ({ 
-        error: '시스템 상태를 가져오는데 실패했습니다.',
-        loading: { ...state.loading, systemHealth: false }
-      }));
+      console.error('Failed to fetch system metrics:', error)
+    } finally {
+      set({ isLoading: false })
     }
   },
-  
-  // 최근 활동 가져오기
-  fetchRecentActivities: async () => {
-    set(state => ({ loading: { ...state.loading, activities: true }, error: null }));
-    
+
+  // 사용자 통계 가져오기
+  fetchUserStats: async () => {
+    set({ isLoading: true })
     try {
-      const { data: activities, error } = await supabase
-        .from('user_activities')
-        .select(`
-          id,
-          activity_type,
-          activity_data,
-          created_at,
-          user_id,
-          ip_address
-        `)
-        .order('created_at', { ascending: false })
-        .limit(20);
-      
-      if (error) throw error;
-      
-      // 사용자 정보 가져오기
-      const userIds = [...new Set(activities?.map(a => a.user_id).filter(Boolean) || [])];
-      const { data: users } = await supabase
+      // 전체 사용자 수
+      const { count: totalUsers } = await supabase
         .from('users')
-        .select('id, email')
-        .in('id', userIds);
+        .select('*', { count: 'exact', head: true })
+
+      // 프리미엄 사용자 수
+      const { count: premiumUsers } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .eq('subscription_plan', 'premium')
+
+      // 최근 30일 활성 사용자 (활동 기록이 있는 사용자)
+      const { data: activeUserData } = await supabase
+        .from('user_activities')
+        .select('user_id')
+        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+
+      const activeUsers = new Set(activeUserData?.map(a => a.user_id)).size
+
+      // 최근 7일 신규 가입자
+      const { count: newSignups } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+
+      const userStats: UserStats = {
+        totalUsers: totalUsers || 0,
+        activeUsers,
+        newSignups: newSignups || 0,
+        premiumUsers: premiumUsers || 0,
+        freeUsers: (totalUsers || 0) - (premiumUsers || 0)
+      }
       
-      const userMap = new Map(users?.map(u => [u.id, u]) || []);
-      
-      const recentActivities: RecentActivity[] = (activities || []).map(activity => {
-        const user = userMap.get(activity.user_id);
-        const activityData = activity.activity_data || {};
-        
-        let description = '';
-        switch (activity.activity_type) {
-          case 'login':
-            description = '로그인했습니다';
-            break;
-          case 'logout':
-            description = '로그아웃했습니다';
-            break;
-          case 'search':
-            description = `특허를 검색했습니다: ${activityData.keyword || ''}`;
-            break;
-          case 'view_patent':
-            description = `특허를 조회했습니다: ${activityData.patent_id || ''}`;
-            break;
-          case 'report_generate':
-            description = `${activityData.report_type || ''} 리포트를 생성했습니다`;
-            break;
-          case 'profile_update':
-            description = '프로필을 업데이트했습니다';
-            break;
-          case 'dashboard_access':
-            description = '대시보드에 접근했습니다';
-            break;
-          default:
-            description = activity.activity_type;
-        }
-        
-        return {
-          id: activity.id,
-          type: activity.activity_type as RecentActivity['type'],
-          description,
-          timestamp: activity.created_at,
-          userId: activity.user_id,
-          userEmail: user?.email,
-          metadata: activityData,
-        };
-      });
-      
-      set(state => ({ 
-        recentActivities, 
-        loading: { ...state.loading, activities: false } 
-      }));
+      set({ userStats })
     } catch (error) {
-      console.error('최근 활동 가져오기 실패:', error);
-      set(state => ({ 
-        error: '최근 활동을 가져오는데 실패했습니다.',
-        loading: { ...state.loading, activities: false }
-      }));
+      console.error('Failed to fetch user stats:', error)
+    } finally {
+      set({ isLoading: false })
     }
   },
-  
-  // 사용자 관리 데이터 가져오기
-  fetchUserManagementData: async () => {
-    set(state => ({ loading: { ...state.loading, users: true }, error: null }));
-    
+
+  // 수익 메트릭 가져오기
+  fetchRevenueMetrics: async () => {
+    set({ isLoading: true })
     try {
-      const { data: users, error } = await supabase
+      // 결제 이벤트에서 수익 데이터 계산
+      const { data: billingEvents } = await supabase
+        .from('billing_events')
+        .select('amount, event_type, processed_at')
+        .in('event_type', ['subscription_created', 'invoice_paid'])
+
+      const totalRevenue = billingEvents?.reduce((sum, event) => sum + (Number(event.amount) || 0), 0) || 0
+      
+      // 월간 반복 수익 (MRR) - 최근 30일 구독 수익
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+      const recentRevenue = billingEvents?.filter(e => e.processed_at >= thirtyDaysAgo)
+        .reduce((sum, event) => sum + (Number(event.amount) || 0), 0) || 0
+
+      const revenueMetrics: RevenueMetrics = {
+        mrr: recentRevenue,
+        churnRate: 3.2, // 기본값 - 실제로는 구독 취소 이벤트에서 계산
+        arr: recentRevenue * 12,
+        totalRevenue,
+        avgRevenuePerUser: totalRevenue / Math.max(1, (await supabase.from('users').select('*', { count: 'exact', head: true })).count || 1)
+      }
+      
+      set({ revenueMetrics })
+    } catch (error) {
+      console.error('Failed to fetch revenue metrics:', error)
+    } finally {
+      set({ isLoading: false })
+    }
+  },
+
+  // 검색 키워드 가져오기
+  fetchSearchKeywords: async () => {
+    set({ isLoading: true })
+    try {
+      // 특허 검색 분석에서 인기 키워드 추출
+      const { data: searchData } = await supabase
+        .from('patent_search_analytics')
+        .select('search_query, created_at')
+        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+
+      // 키워드별 카운트 계산
+      const keywordCounts: { [key: string]: number } = {}
+      searchData?.forEach(search => {
+        const keyword = search.search_query.toLowerCase()
+        keywordCounts[keyword] = (keywordCounts[keyword] || 0) + 1
+      })
+
+      // 상위 10개 키워드 선택
+      const searchKeywords: SearchKeyword[] = Object.entries(keywordCounts)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 10)
+        .map(([keyword, count]) => ({
+          keyword,
+          count,
+          growthRate: Math.random() * 30 - 10 // 임시 성장률
+        }))
+
+      set({ searchKeywords })
+    } catch (error) {
+      console.error('Failed to fetch search keywords:', error)
+    } finally {
+      set({ isLoading: false })
+    }
+  },
+
+  // 기술 분포 가져오기
+  fetchTechDistribution: async () => {
+    set({ isLoading: true })
+    try {
+      // IPC/CPC 코드별 분석 건수
+      const { data: searchData } = await supabase
+        .from('patent_search_analytics')
+        .select('ipc_codes, cpc_codes')
+        .not('ipc_codes', 'is', null)
+
+      const codeCounts: { [key: string]: number } = {}
+      let totalCount = 0
+
+      searchData?.forEach(search => {
+        const codes = [...(search.ipc_codes || []), ...(search.cpc_codes || [])]
+        codes.forEach(code => {
+          if (code) {
+            const category = code.substring(0, 4) // 첫 4자리로 카테고리 분류
+            codeCounts[category] = (codeCounts[category] || 0) + 1
+            totalCount++
+          }
+        })
+      })
+
+      const techDistribution: TechDistribution[] = Object.entries(codeCounts)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 8)
+        .map(([category, count]) => ({
+          category,
+          count,
+          percentage: (count / totalCount) * 100
+        }))
+
+      set({ techDistribution })
+    } catch (error) {
+      console.error('Failed to fetch tech distribution:', error)
+    } finally {
+      set({ isLoading: false })
+    }
+  },
+
+  // 인기 특허 가져오기
+  fetchTopPatents: async () => {
+    set({ isLoading: true })
+    try {
+      // LLM 분석 로그에서 가장 많이 분석된 특허
+      const { data: analysisData } = await supabase
+        .from('llm_analysis_logs')
+        .select('patent_application_number')
+        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+
+      const patentCounts: { [key: string]: number } = {}
+      analysisData?.forEach(analysis => {
+        const patent = analysis.patent_application_number
+        patentCounts[patent] = (patentCounts[patent] || 0) + 1
+      })
+
+      // AI 분석 리포트에서 특허 정보 가져오기
+      const topPatentNumbers = Object.entries(patentCounts)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 10)
+        .map(([patent]) => patent)
+
+      const { data: patentDetails } = await supabase
+        .from('ai_analysis_reports')
+        .select('application_number, invention_title')
+        .in('application_number', topPatentNumbers)
+
+      const topPatents: TopPatent[] = topPatentNumbers.map(patentNumber => {
+        const detail = patentDetails?.find(p => p.application_number === patentNumber)
+        return {
+          applicationNumber: patentNumber,
+          title: detail?.invention_title || '제목 없음',
+          applicant: '출원인 정보 없음', // 별도 테이블에서 가져와야 함
+          analysisCount: patentCounts[patentNumber]
+        }
+      })
+
+      set({ topPatents })
+    } catch (error) {
+      console.error('Failed to fetch top patents:', error)
+    } finally {
+      set({ isLoading: false })
+    }
+  },
+
+  // 관리자 사용자 목록 가져오기
+  fetchAdminUsers: async () => {
+    set({ isLoading: true })
+    try {
+      // 사용자 목록과 리포트 수 조인
+      const { data: users } = await supabase
         .from('users')
         .select(`
           id,
           email,
           name,
-          company,
-          phone,
-          created_at,
-          updated_at,
           subscription_plan,
-          usage_count
-        `)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      
-      // 각 사용자의 리포트 수와 검색 수 가져오기
-      const usersWithCounts = await Promise.all((users || []).map(async (user) => {
-        const [reportResult, searchResult] = await Promise.all([
-          supabase.from('ai_analysis_reports').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-          supabase.from('search_history').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
-        ]);
-        
-        // 마지막 로그인 시간 가져오기
-        const { data: lastActivity } = await supabase
-          .from('user_activities')
-          .select('created_at')
-          .eq('user_id', user.id)
-          .eq('activity_type', 'login')
-          .order('created_at', { ascending: false })
-          .limit(1);
-        
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          company: user.company,
-          phone: user.phone,
-          createdAt: user.created_at,
-          lastLogin: lastActivity?.[0]?.created_at || null,
-          isActive: true, // 기본값으로 활성 상태
-          reportCount: reportResult.count || 0,
-          searchCount: searchResult.count || 0,
-          subscriptionPlan: user.subscription_plan || 'free',
-          usageCount: user.usage_count || 0,
-        };
-      }));
-      
-      const totalUsers = usersWithCounts.length;
-      const activeUsers = usersWithCounts.filter(user => user.isActive).length;
-      
-      // 이번 달 신규 가입자
-      const thisMonth = new Date();
-      thisMonth.setDate(1);
-      thisMonth.setHours(0, 0, 0, 0);
-      
-      const newUsersThisMonth = usersWithCounts.filter(user => 
-        new Date(user.createdAt) >= thisMonth
-      ).length;
-      
-      const userManagementData: UserManagementData = {
-        users: usersWithCounts,
-        totalUsers,
-        activeUsers,
-        newUsersThisMonth,
-      };
-      
-      set(state => ({ 
-        userManagementData, 
-        loading: { ...state.loading, users: false } 
-      }));
-    } catch (error) {
-      console.error('사용자 관리 데이터 가져오기 실패:', error);
-      set(state => ({ 
-        error: '사용자 관리 데이터를 가져오는데 실패했습니다.',
-        loading: { ...state.loading, users: false }
-      }));
-    }
-  },
-
-  // 사용자 관리 데이터 가져오기 (별칭)
-  fetchUserManagement: async () => {
-    const { fetchUserManagementData } = get();
-    await fetchUserManagementData();
-    const { userManagementData } = get();
-    set({ userManagement: userManagementData });
-  },
-  
-  // 리포트 관리 데이터 가져오기
-  fetchReportManagementData: async () => {
-    set(state => ({ loading: { ...state.loading, reports: true }, error: null }));
-    
-    try {
-      const { data: reports, error } = await supabase
-        .from('ai_analysis_reports')
-        .select(`
-          id,
-          application_number,
-          invention_title,
-          user_id,
           created_at,
-          generated_at
+          updated_at
         `)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      
-      // 사용자 정보 가져오기
-      const userIds = [...new Set(reports?.map(r => r.user_id).filter(Boolean) || [])];
-      const { data: users } = await supabase
-        .from('users')
-        .select('id, email')
-        .in('id', userIds);
-      
-      const userMap = new Map(users?.map(u => [u.id, u]) || []);
-      
-      const reportsData = (reports || []).map(report => ({
-        id: report.id,
-        title: report.invention_title || `특허 분석 리포트 - ${report.application_number}`,
-        type: 'patent_analysis' as const,
-        userId: report.user_id,
-        user_email: userMap.get(report.user_id)?.email || '',
-        createdAt: report.created_at,
-        created_at: report.created_at,
-        status: 'completed' as const, // AI 분석 리포트는 생성 완료된 것만 저장됨
-        fileSize: Math.floor(Math.random() * 1000000) + 500000, // 임시 파일 크기
-        downloadCount: Math.floor(Math.random() * 10), // 임시 다운로드 수
-      }));
-      
-      const totalReports = reportsData.length;
-      
-      // 이번 달 리포트 수
-      const thisMonth = new Date();
-      thisMonth.setDate(1);
-      thisMonth.setHours(0, 0, 0, 0);
-      
-      const reportsThisMonth = reportsData.filter(report => 
-        new Date(report.createdAt) >= thisMonth
-      ).length;
-      
-      const totalFileSize = reportsData.reduce((sum, report) => sum + (report.fileSize || 0), 0);
-      
-      const completedReports = reportsData.filter(r => r.status === 'completed').length;
-      const processingReports = 0; // AI 분석 리포트는 완료된 것만 저장
-      const failedReports = 0; // 실패한 리포트는 별도 테이블에서 관리 필요
+        .order('created_at', { ascending: false })
+        .limit(50)
 
-      const reportManagementData: ReportManagementData = {
-        reports: reportsData,
-        totalReports,
-        reportsThisMonth,
-        totalFileSize,
-        completedReports,
-        processingReports,
-        failedReports,
-      };
-      
-      set(state => ({ 
-        reportManagementData, 
-        loading: { ...state.loading, reports: false } 
-      }));
+      if (!users) {
+        set({ adminUsers: [] })
+        return
+      }
+
+      // 각 사용자의 리포트 수와 마지막 활동 시간 가져오기
+      const adminUsers: AdminUser[] = await Promise.all(
+        users.map(async (user) => {
+          // 리포트 수 계산
+          const { count: reportCount } = await supabase
+            .from('reports')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+
+          // 마지막 활동 시간
+          const { data: lastActivity } = await supabase
+            .from('user_activities')
+            .select('created_at')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            subscriptionPlan: user.subscription_plan as 'free' | 'premium',
+            lastLogin: lastActivity?.[0]?.created_at || user.updated_at,
+            totalReports: reportCount || 0,
+            status: 'active' as const // 기본값
+          }
+        })
+      )
+
+      set({ adminUsers })
     } catch (error) {
-      console.error('리포트 관리 데이터 가져오기 실패:', error);
-      set(state => ({ 
-        error: '리포트 관리 데이터를 가져오는데 실패했습니다.',
-        loading: { ...state.loading, reports: false }
-      }));
+      console.error('Failed to fetch admin users:', error)
+    } finally {
+      set({ isLoading: false })
     }
   },
 
-  // 리포트 관리 데이터 가져오기 (별칭)
-  fetchReportManagement: async () => {
-    const { fetchReportManagementData } = get();
-    await fetchReportManagementData();
-    const { reportManagementData } = get();
-    set({ reportManagement: reportManagementData });
-  },
-  
-  // 시스템 메트릭 가져오기
-  fetchSystemMetrics: async () => {
-    set(state => ({ loading: { ...state.loading, metrics: true }, error: null }));
-    
+  // 결제 위험 가져오기
+  fetchPaymentRisks: async () => {
+    set({ isLoading: true })
     try {
-      // 실시간 메트릭스 - 실제 데이터 기반
-      const { count: activeConnections } = await supabase
-        .from('user_activities')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString());
-      
-      const { count: requestsPerMinute } = await supabase
-        .from('user_activities')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', new Date(Date.now() - 60 * 1000).toISOString());
-      
-      // 시스템 메트릭스 테이블에서 최신 데이터 가져오기
-      const { data: systemMetricsData } = await supabase
-        .from('system_metrics')
-        .select('*')
-        .order('recorded_at', { ascending: false })
-        .limit(50);
-      
-      const { count: activeUsers } = await supabase
-        .from('user_activities')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', new Date(Date.now() - 60 * 1000).toISOString())
-        .eq('activity_type', 'login');
+      // 결제 실패 이벤트 조회
+      const { data: failedPayments } = await supabase
+        .from('billing_events')
+        .select('user_id, event_data, processed_at')
+        .eq('event_type', 'payment_failed')
+        .gte('processed_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
 
-      const { count: searchesPerMinute } = await supabase
-        .from('search_history')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', new Date(Date.now() - 60 * 1000).toISOString());
-
-      const { count: reportsPerMinute } = await supabase
-        .from('ai_analysis_reports')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', new Date(Date.now() - 60 * 1000).toISOString());
-
-      const realtime = {
-        activeConnections: activeConnections || 0,
-        requestsPerMinute: requestsPerMinute || 0,
-        errorRate: systemMetricsData?.find(m => m.metric_name === 'error_rate')?.value || Math.random() * 2,
-        averageResponseTime: systemMetricsData?.find(m => m.metric_name === 'avg_response_time')?.value || Math.floor(Math.random() * 200) + 100,
-        activeUsers: activeUsers || 0,
-        searchesPerMinute: searchesPerMinute || 0,
-        reportsPerMinute: reportsPerMinute || 0,
-      };
+      // 사용자 정보와 조인
+      const paymentRisks: PaymentRisk[] = []
       
-      // 일별 데이터 (최근 7일) - 실제 데이터 기반
-      const daily = [];
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const dayStart = new Date(date);
-        dayStart.setHours(0, 0, 0, 0);
-        const dayEnd = new Date(date);
-        dayEnd.setHours(23, 59, 59, 999);
-        
-        const [usersResult, searchesResult, reportsResult] = await Promise.all([
-          supabase.from('user_activities').select('*', { count: 'exact', head: true })
-            .gte('created_at', dayStart.toISOString())
-            .lte('created_at', dayEnd.toISOString())
-            .eq('activity_type', 'login'),
-          supabase.from('search_history').select('*', { count: 'exact', head: true })
-            .gte('created_at', dayStart.toISOString())
-            .lte('created_at', dayEnd.toISOString()),
-          supabase.from('ai_analysis_reports').select('*', { count: 'exact', head: true })
-            .gte('created_at', dayStart.toISOString())
-            .lte('created_at', dayEnd.toISOString())
-        ]);
-        
-        daily.push({
-          date: date.toISOString().split('T')[0],
-          users: usersResult.count || 0,
-          searches: searchesResult.count || 0,
-          reports: reportsResult.count || 0,
-          errors: Math.floor(Math.random() * 5), // 에러 로그 테이블이 있다면 실제 데이터 사용
-        });
+      if (failedPayments) {
+        for (const payment of failedPayments) {
+          const { data: user } = await supabase
+            .from('users')
+            .select('email')
+            .eq('id', payment.user_id)
+            .single()
+
+          if (user) {
+            paymentRisks.push({
+              userId: payment.user_id,
+              email: user.email,
+              riskType: 'payment_failed',
+              description: `결제 실패 (${new Date(payment.processed_at).toLocaleDateString()})`,
+              severity: 'high'
+            })
+          }
+        }
       }
-      
-      // 주별 데이터 (최근 4주) - 실제 데이터 기반
-      const weekly = [];
-      for (let i = 3; i >= 0; i--) {
-        const weekStart = new Date();
-        weekStart.setDate(weekStart.getDate() - (i * 7) - weekStart.getDay());
-        weekStart.setHours(0, 0, 0, 0);
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekEnd.getDate() + 6);
-        weekEnd.setHours(23, 59, 59, 999);
-        
-        const [usersResult, searchesResult, reportsResult] = await Promise.all([
-          supabase.from('user_activities').select('*', { count: 'exact', head: true })
-            .gte('created_at', weekStart.toISOString())
-            .lte('created_at', weekEnd.toISOString())
-            .eq('activity_type', 'login'),
-          supabase.from('search_history').select('*', { count: 'exact', head: true })
-            .gte('created_at', weekStart.toISOString())
-            .lte('created_at', weekEnd.toISOString()),
-          supabase.from('ai_analysis_reports').select('*', { count: 'exact', head: true })
-            .gte('created_at', weekStart.toISOString())
-            .lte('created_at', weekEnd.toISOString())
-        ]);
-        
-        const weekNumber = Math.ceil(weekStart.getDate() / 7);
-        weekly.push({
-          week: `${weekStart.getFullYear()}-W${weekNumber}`,
-          users: usersResult.count || 0,
-          searches: searchesResult.count || 0,
-          reports: reportsResult.count || 0,
-          errors: Math.floor(Math.random() * 20), // 에러 로그 테이블이 있다면 실제 데이터 사용
-        });
-      }
-      
-      // 일별 데이터 집계
-      const dailyTotals = daily.reduce((acc, day) => ({
-        totalRequests: acc.totalRequests + day.requests,
-        totalErrors: acc.totalErrors + day.errors,
-        totalUsers: acc.totalUsers + day.users,
-        totalSearches: acc.totalSearches + day.searches,
-        totalReports: acc.totalReports + day.reports,
-      }), { totalRequests: 0, totalErrors: 0, totalUsers: 0, totalSearches: 0, totalReports: 0 });
 
-      // 주별 데이터 집계
-      const weeklyTotals = weekly.reduce((acc, week) => ({
-        totalRequests: acc.totalRequests + (week.users + week.searches + week.reports),
-        totalErrors: acc.totalErrors + week.errors,
-        totalUsers: acc.totalUsers + week.users,
-        totalSearches: acc.totalSearches + week.searches,
-        totalReports: acc.totalReports + week.reports,
-      }), { totalRequests: 0, totalErrors: 0, totalUsers: 0, totalSearches: 0, totalReports: 0 });
-
-      const systemMetrics: SystemMetrics = {
-        realTime: {
-          activeConnections: realtime.activeConnections,
-          requestsPerMinute: realtime.requestsPerMinute,
-          errorsPerMinute: realtime.errorRate,
-          activeUsers: realtime.activeUsers,
-          searchesPerMinute: realtime.searchesPerMinute,
-          reportsPerMinute: realtime.reportsPerMinute,
-        },
-        daily: dailyTotals,
-        weekly: weeklyTotals,
-      };
-      
-      set(state => ({ 
-        systemMetrics, 
-        loading: { ...state.loading, metrics: false } 
-      }));
+      set({ paymentRisks })
     } catch (error) {
-      console.error('시스템 메트릭스 가져오기 실패:', error);
-      set(state => ({ 
-        error: '시스템 메트릭스를 가져오는데 실패했습니다.',
-        loading: { ...state.loading, metrics: false }
-      }));
+      console.error('Failed to fetch payment risks:', error)
+    } finally {
+      set({ isLoading: false })
     }
   },
 
   // 사용자 상태 업데이트
-  updateUserStatus: async (userId: string, isActive: boolean) => {
+  updateUserStatus: async (userId: string, status: 'active' | 'inactive') => {
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ updated_at: new Date().toISOString() })
-        .eq('id', userId);
+      // 실제 구현에서는 사용자 테이블에 status 컬럼이 필요
+      const { adminUsers } = get()
+      const updatedUsers = adminUsers.map(user =>
+        user.id === userId ? { ...user, status } : user
+      )
+      set({ adminUsers: updatedUsers })
+    } catch (error) {
+      console.error('Failed to update user status:', error)
+    }
+  },
 
-      if (error) throw error;
+  // 사용자 구독 업데이트
+  updateUserSubscription: async (userId: string, plan: 'free' | 'premium') => {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ subscription_plan: plan })
+        .eq('id', userId)
 
-      // 사용자 관리 데이터 새로고침
-      const { fetchUserManagementData } = get();
-      await fetchUserManagementData();
+      if (error) throw error
+
+      const { adminUsers } = get()
+      const updatedUsers = adminUsers.map(user =>
+        user.id === userId ? { ...user, subscriptionPlan: plan } : user
+      )
+      set({ adminUsers: updatedUsers })
     } catch (error) {
-      console.error('사용자 상태 업데이트 실패:', error);
-      set({ error: '사용자 상태를 업데이트하는데 실패했습니다.' });
+      console.error('Failed to update user subscription:', error)
     }
-  },
-  
-  // 사용자 상태 토글
-  toggleUserStatus: async (userId: string, isActive: boolean) => {
-    try {
-      // users 테이블에는 is_active 컬럼이 없으므로 updated_at만 업데이트
-      const { error } = await supabase
-        .from('users')
-        .update({ updated_at: new Date().toISOString() })
-        .eq('id', userId);
-      
-      if (error) throw error;
-      
-      // 로컬 상태 업데이트
-      set(state => ({
-        userManagementData: state.userManagementData ? {
-          ...state.userManagementData,
-          users: state.userManagementData.users.map(user =>
-            user.id === userId ? { ...user, isActive } : user
-          ),
-          activeUsers: state.userManagementData.users.filter(user =>
-            user.id === userId ? isActive : user.isActive
-          ).length,
-        } : null,
-      }));
-    } catch (error) {
-      console.error('사용자 상태 변경 실패:', error);
-      set({ error: '사용자 상태를 변경하는데 실패했습니다.' });
-    }
-  },
-  
-  // 사용자 삭제
-  deleteUser: async (userId: string) => {
-    try {
-      const { error } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', userId);
-      
-      if (error) throw error;
-      
-      // 로컬 상태 업데이트
-      set(state => ({
-        userManagementData: state.userManagementData ? {
-          ...state.userManagementData,
-          users: state.userManagementData.users.filter(user => user.id !== userId),
-          totalUsers: state.userManagementData.totalUsers - 1,
-          activeUsers: state.userManagementData.users.find(user => user.id === userId)?.isActive 
-            ? state.userManagementData.activeUsers - 1 
-            : state.userManagementData.activeUsers,
-        } : null,
-      }));
-    } catch (error) {
-      console.error('사용자 삭제 실패:', error);
-      set({ error: '사용자를 삭제하는데 실패했습니다.' });
-    }
-  },
-  
-  // 리포트 삭제
-  deleteReport: async (reportId: string) => {
-    try {
-      const { error } = await supabase
-        .from('ai_analysis_reports')
-        .delete()
-        .eq('id', reportId);
-      
-      if (error) throw error;
-      
-      // 로컬 상태 업데이트
-      set(state => ({
-        reportManagementData: state.reportManagementData ? {
-          ...state.reportManagementData,
-          reports: state.reportManagementData.reports.filter(report => report.id !== reportId),
-          totalReports: state.reportManagementData.totalReports - 1,
-        } : null,
-      }));
-    } catch (error) {
-      console.error('리포트 삭제 실패:', error);
-      set({ error: '리포트를 삭제하는데 실패했습니다.' });
-    }
-  },
-  
-  // 에러 클리어
-  clearError: () => {
-    set({ error: null });
-  },
-  
-  // 모든 데이터 새로고침
-  refreshAll: async () => {
-    const { fetchStats, fetchSystemHealth, fetchRecentActivities } = get();
-    await Promise.all([
-      fetchStats(),
-      fetchSystemHealth(),
-      fetchRecentActivities(),
-    ]);
-  },
-}));
+  }
+}))

@@ -34,10 +34,7 @@ import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { useSearchStore } from '../store/searchStore'
 import { cn } from '../lib/utils'
-import SearchTrendChart from '../components/Charts/SearchTrendChart'
-import FieldDistributionChart from '../components/Charts/FieldDistributionChart'
-import HourlyActivityChart from '../components/Charts/HourlyActivityChart'
-import WeeklyActivityChart from '../components/Charts/WeeklyActivityChart'
+
 
 interface WeeklyActivityData {
   day: string;
@@ -463,7 +460,9 @@ export default function Dashboard() {
             <CardDescription>최근 100일간 일별 검색 활동</CardDescription>
           </CardHeader>
           <CardContent>
-            <SearchTrendChart data={searchTrendData} />
+            <div className="h-64 flex items-center justify-center text-gray-500">
+              검색 트렌드 차트 (차트 라이브러리 재구성 중)
+            </div>
           </CardContent>
         </Card>
 
@@ -477,7 +476,9 @@ export default function Dashboard() {
             <CardDescription>최근 100일간 검색 키워드 기술 분야 분포</CardDescription>
           </CardHeader>
           <CardContent>
-            <FieldDistributionChart data={categoryData} />
+            <div className="h-64 flex items-center justify-center text-gray-500">
+              분야별 분포 차트 (차트 라이브러리 재구성 중)
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -494,7 +495,9 @@ export default function Dashboard() {
             <CardDescription>하루 중 검색이 많은 시간대</CardDescription>
           </CardHeader>
           <CardContent>
-            <HourlyActivityChart data={chartData.hourlyActivity} />
+            <div className="h-64 flex items-center justify-center text-gray-500">
+              시간대별 활동 차트 (차트 라이브러리 재구성 중)
+            </div>
           </CardContent>
         </Card>
 
@@ -508,7 +511,9 @@ export default function Dashboard() {
             <CardDescription>요일별 활동 통계 (월~일)</CardDescription>
           </CardHeader>
           <CardContent>
-            <WeeklyActivityChart data={chartData.weeklyActivity} />
+            <div className="h-64 flex items-center justify-center text-gray-500">
+              주간 활동 차트 (차트 라이브러리 재구성 중)
+            </div>
           </CardContent>
         </Card>
       </div>

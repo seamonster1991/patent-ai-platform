@@ -11,16 +11,16 @@ import Dashboard from "@/pages/Dashboard";
 import Profile from "@/pages/Profile";
 import AuthCallback from "@/pages/AuthCallback";
 import ProtectedRoute from "@/components/Auth/ProtectedRoute";
-import AdminRoute from "@/components/Auth/AdminRoute";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import TestReportGeneration from "@/components/TestReportGeneration";
 import Reports from "@/pages/Reports";
 import TestLogin from "@/pages/TestLogin";
-import AdminDashboard from "@/pages/Admin/AdminDashboard";
-import UserManagement from "@/pages/Admin/UserManagement";
-import ReportManagement from "@/pages/Admin/ReportManagement";
-import SystemStatus from "@/pages/Admin/SystemStatus";
+import AdminLayout from "@/components/Layout/AdminLayout";
+import AdminHome from "@/pages/Admin/AdminHome";
+import AdminStatistics from "@/pages/Admin/AdminStatistics";
+import AdminUsers from "@/pages/Admin/AdminUsers";
+import AdminBilling from "@/pages/Admin/AdminBilling";
 import { useAuthStore } from "@/store/authStore";
 import { useThemeStore } from "@/store/themeStore";
 
@@ -44,28 +44,18 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        {/* Admin Routes - Without Layout wrapper */}
-        <Route path="/admin" element={
-          <AdminRoute>
-            <AdminDashboard />
-          </AdminRoute>
+        {/* Admin Routes - With AdminLayout wrapper */}
+        <Route path="/admin/*" element={
+          <AdminLayout>
+            <Routes>
+              <Route path="/" element={<AdminHome />} />
+              <Route path="/statistics" element={<AdminStatistics />} />
+              <Route path="/users" element={<AdminUsers />} />
+              <Route path="/billing" element={<AdminBilling />} />
+            </Routes>
+          </AdminLayout>
         } />
-        <Route path="/admin/users" element={
-          <AdminRoute>
-            <UserManagement />
-          </AdminRoute>
-        } />
-        <Route path="/admin/reports" element={
-          <AdminRoute>
-            <ReportManagement />
-          </AdminRoute>
-        } />
-        <Route path="/admin/system" element={
-          <AdminRoute>
-            <SystemStatus />
-          </AdminRoute>
-        } />
-
+        
         {/* Regular Routes - With Layout wrapper */}
         <Route path="/*" element={
           <Layout>
