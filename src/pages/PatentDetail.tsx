@@ -138,6 +138,91 @@ export default function PatentDetail() {
     }
   }
 
+  // 특허 데이터가 로드되면 페이지 제목 설정
+  useEffect(() => {
+    console.log('🔍 [PatentDetail] 페이지 제목 설정 useEffect 실행됨', { patent: !!patent, applicationNumber });
+    
+    if (patent) {
+      const biblioInfo = patent.biblioSummaryInfoArray?.biblioSummaryInfo
+      const patentTitle = biblioInfo?.inventionTitle
+      
+      console.log('📋 [PatentDetail] 특허 데이터 확인:', { 
+        patentTitle, 
+        biblioInfo: !!biblioInfo,
+        applicationNumber: biblioInfo?.applicationNumber 
+      });
+      
+      if (patentTitle && patentTitle.trim()) {
+        // fallback 제목 형식인지 확인 (예: "1020190142649에 대한 특허 정보" 또는 "특허번호 1020190142649")
+        const isFallbackTitle = patentTitle.includes('에 대한 특허 정보') || patentTitle.startsWith('특허번호 ');
+        
+        let newTitle;
+        if (isFallbackTitle) {
+          // fallback 제목인 경우, 특허번호만 사용
+          console.log('⚠️ [PatentDetail] Fallback 제목 감지, 특허번호 기반 제목 사용');
+          newTitle = `특허번호 ${applicationNumber} - 특허 정보`;
+        } else {
+          // 실제 특허 제목인 경우 "에 대한 특허 정보" 형식으로 표시
+          newTitle = `${patentTitle}에 대한 특허 정보`;
+        }
+        
+        console.log('✅ [PatentDetail] 페이지 제목 설정:', newTitle);
+        document.title = newTitle;
+        
+        // 강제로 제목 업데이트 확인
+        setTimeout(() => {
+          console.log('🔄 [PatentDetail] 제목 설정 후 확인:', document.title);
+        }, 100);
+      } else {
+        // 특허 제목이 없는 경우 기본값
+        console.log('⚠️ [PatentDetail] 특허 제목이 없음, 기본값 사용');
+        document.title = '특허 정보';
+      }
+    } else if (applicationNumber) {
+      // 특허 데이터 로딩 중일 때
+      console.log('⏳ [PatentDetail] 특허 데이터 로딩 중, 임시 제목 설정');
+      document.title = `Patent Information for ${applicationNumber}`;
+    }
+    
+    // 컴포넌트 언마운트 시 기본 제목으로 복원
+    return () => {
+      console.log('🔚 [PatentDetail] 컴포넌트 언마운트, 기본 제목으로 복원');
+      document.title = 'IP Insight AI';
+    }
+  }, [patent, applicationNumber])
+
+  // 추가적인 제목 강제 업데이트 (특허 제목이 변경될 때)
+  useEffect(() => {
+    if (patent?.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle) {
+      const patentTitle = patent.biblioSummaryInfoArray.biblioSummaryInfo.inventionTitle;
+      
+      // fallback 제목 형식인지 확인
+      const isFallbackTitle = patentTitle.includes('에 대한 특허 정보') || patentTitle.startsWith('특허번호 ');
+      
+      let newTitle;
+      if (isFallbackTitle) {
+        // fallback 제목인 경우, 특허번호만 사용
+        newTitle = `특허번호 ${applicationNumber} - 특허 정보`;
+      } else {
+        // 실제 특허 제목인 경우 "에 대한 특허 정보" 형식으로 표시
+        newTitle = `${patentTitle}에 대한 특허 정보`;
+      }
+      
+      console.log('🔄 [PatentDetail] 강제 제목 업데이트:', newTitle);
+      
+      // 즉시 업데이트
+      document.title = newTitle;
+      
+      // 추가 확인을 위한 지연 업데이트
+      const timeoutId = setTimeout(() => {
+        document.title = newTitle;
+        console.log('✅ [PatentDetail] 지연 제목 업데이트 완료:', document.title);
+      }, 500);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [patent?.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle, applicationNumber]);
+
   const handleShare = async () => {
     try {
       await navigator.share({
@@ -469,19 +554,43 @@ export default function PatentDetail() {
           <CardHeader className="pb-6">
             <div className="flex items-start justify-between">
               <div className="flex-1">
+                {/* 특허번호 - 가장 눈에 띄게 표시 */}
+                <div className="mb-4 p-3 bg-ms-soft/50 rounded-lg border border-ms-line-soft">
+                  <div className="flex items-center gap-3">
+                    <Hash className="w-5 h-5 text-ms-burgundy" />
+                    <div>
+                      <span className="text-sm font-medium text-ms-text-muted">특허번호</span>
+                      <p className="text-xl font-bold text-ms-burgundy tracking-wide">
+                        {biblioInfo?.applicationNumber || '번호 없음'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* 특허 제목 */}
                 <CardTitle className="text-2xl font-semibold text-ms-text mb-3 leading-tight">
-                  {biblioInfo?.inventionTitle || '제목 없음'}
+                  {(() => {
+                    const inventionTitle = biblioInfo?.inventionTitle;
+                    if (!inventionTitle) return '제목 없음';
+                    
+                    // fallback 제목 형식인지 확인
+                    if (inventionTitle.includes('에 대한 특허 정보') || inventionTitle.startsWith('특허번호 ')) {
+                      // fallback 제목인 경우, 실제 특허 제목을 찾거나 기본 메시지 표시
+                      return '특허 제목 정보를 불러오는 중입니다...';
+                    }
+                    
+                    // 실제 특허 제목인 경우 "에 대한 특허 정보" 형식으로 표시
+                    return `${inventionTitle}에 대한 특허 정보`;
+                  })()}
                 </CardTitle>
-                {biblioInfo?.inventionTitleEng && (
+                {biblioInfo?.inventionTitleEng && !biblioInfo.inventionTitleEng.includes('Patent Information for') && !biblioInfo.inventionTitleEng.includes('Patent No.') && (
                   <p className="text-lg text-ms-text-muted mb-4 font-light">
                     {biblioInfo.inventionTitleEng}
                   </p>
                 )}
+                
+                {/* 기타 정보 */}
                 <div className="flex flex-wrap gap-4 text-sm text-ms-text-muted">
-                  <div className="flex items-center gap-2">
-                    <Hash className="w-4 h-4 text-ms-text-light" />
-                    <span className="font-medium">출원번호:</span> {biblioInfo?.applicationNumber}
-                  </div>
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-ms-text-light" />
                     <span className="font-medium">출원일:</span> {biblioInfo?.applicationDate}

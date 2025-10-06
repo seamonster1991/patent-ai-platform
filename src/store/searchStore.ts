@@ -232,6 +232,9 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     set({ loading: true, error: null, currentPage: page })
 
     try {
+      // 현재 사용자 정보 가져오기
+      const { user } = useAuthStore.getState()
+      
       // KIPRIS API 파라미터 준비
       const searchParams = {
         ...filters,
@@ -239,6 +242,8 @@ export const useSearchStore = create<SearchState>((set, get) => ({
         word: filters.word || filters.keyword,
         pageNo: page,
         numOfRows: filters.numOfRows || 30,
+        // 사용자 ID 추가
+        userId: user?.id,
       }
 
       console.log('🔍 [SearchStore] API 호출 시작:', { searchParams });
@@ -291,7 +296,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       // 검색 성공 시 상태 자동 저장
       get().saveSearchState()
       
-      // 검색 기록을 데이터베이스에 저장
+      // 검색 기록을 데이터베이스에 저장 (기술 분야 정보는 별도로 처리됨)
       get().saveSearchToHistory(filters.word || filters.keyword || '', totalCount)
 
       // 사용자 활동 추적 - 검색 실행
@@ -468,7 +473,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     }
   },
 
-  saveSearchToHistory: async (keyword: string, resultsCount: number) => {
+  saveSearchToHistory: async (keyword: string, resultsCount: number, technologyField?: string, fieldConfidence?: number) => {
     try {
       const { user } = useAuthStore.getState()
       if (!user || !keyword.trim()) return
@@ -484,7 +489,9 @@ export const useSearchStore = create<SearchState>((set, get) => ({
           user_id: user.id,
           keyword: keyword.trim(),
           filters: filters,
-          results_count: resultsCount
+          results_count: resultsCount,
+          technology_field: technologyField,
+          field_confidence: fieldConfidence
         }),
       })
       
