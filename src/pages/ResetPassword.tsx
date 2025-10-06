@@ -113,7 +113,7 @@ const ResetPassword: React.FC = () => {
         <div className="max-w-md w-full">
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-8">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ms-olive mx-auto mb-4"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ms-burgundy mx-auto mb-4"></div>
               <h1 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
                 링크 확인 중...
               </h1>
@@ -190,7 +190,7 @@ const ResetPassword: React.FC = () => {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center w-16 h-16 bg-ms-olive/10 dark:bg-ms-olive/20 rounded-full mx-auto mb-4">
-              <Lock className="w-8 h-8 text-ms-olive" />
+               <Lock className="w-8 h-8 text-ms-olive" />
             </div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
               새 비밀번호 설정
@@ -246,7 +246,7 @@ const ResetPassword: React.FC = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  className="block w-full pl-10 pr-12 py-3 border border-ms-line dark:border-dark-700 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-ms-olive focus:border-ms-olive"
+                  className="block w-full pl-10 pr-12 py-3 border border-ms-line dark:border-dark-700 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-ms-burgundy focus:border-ms-burgundy"
                   placeholder="비밀번호를 다시 입력하세요"
                 />
                 <button
@@ -286,7 +286,7 @@ const ResetPassword: React.FC = () => {
           <div className="mt-6 text-center">
             <button
               onClick={() => navigate('/login')}
-              className="inline-flex items-center text-ms-olive hover:text-ms-olive font-bold transition-colors duration-200"
+              className="inline-flex items-center text-ms-burgundy hover:text-ms-burgundy font-bold transition-colors duration-200"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               로그인 페이지로 돌아가기

@@ -23,15 +23,12 @@ import {
 } from 'lucide-react';
 
 const AdminUsers: React.FC = () => {
-  const { 
+  const {
     userStats,
-    userList,
-    userActivity,
-    loading, 
-    error, 
+    adminUsers,
+    isLoading,
+    fetchAdminUsers,
     fetchUserStats,
-    fetchUserList,
-    fetchUserActivity,
     updateUserStatus,
     updateUserSubscription
   } = useAdminStore();
@@ -42,41 +39,21 @@ const AdminUsers: React.FC = () => {
 
   useEffect(() => {
     fetchUserStats();
-    fetchUserList();
-    fetchUserActivity();
-  }, [fetchUserStats, fetchUserList, fetchUserActivity]);
+    fetchAdminUsers();
+  }, []);
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
-            ))}
-          </div>
-          <div className="h-64 bg-gray-200 rounded-lg"></div>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-ms-text">데이터를 불러오는 중...</div>
       </div>
-    );
+    )
   }
 
-  if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <div className="flex items-center">
-          <AlertTriangle className="h-5 w-5 text-red-500 mr-2" />
-          <span className="text-red-700">{error}</span>
-        </div>
-      </div>
-    );
-  }
-
-  const filteredUsers = userList.filter(user => {
+  const filteredUsers = adminUsers.filter(user => {
     const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
-    const matchesSubscription = subscriptionFilter === 'all' || user.subscription === subscriptionFilter;
+    const matchesSubscription = subscriptionFilter === 'all' || user.subscriptionPlan === subscriptionFilter;
     return matchesSearch && matchesStatus && matchesSubscription;
   });
 
@@ -104,7 +81,7 @@ const AdminUsers: React.FC = () => {
   };
 
   const handleSubscriptionChange = async (userId: string, newSubscription: string) => {
-    await updateUserSubscription(userId, newSubscription);
+    await updateUserSubscription(userId, newSubscription as 'free' | 'premium');
   };
 
   return (
@@ -151,13 +128,13 @@ const AdminUsers: React.FC = () => {
           <Flex alignItems="start">
             <div>
               <Text className="text-gray-600">신규 가입자</Text>
-              <Metric className="text-ms-text">{userStats?.newUsers.toLocaleString()}</Metric>
+              <Metric className="text-ms-text">{userStats?.newSignups.toLocaleString()}</Metric>
             </div>
             <UserPlus className="h-8 w-8 text-ms-olive" />
           </Flex>
           <div className="mt-4">
             <Badge color="emerald" size="xs">
-              +{userStats?.userGrowth.toFixed(1)}%
+              +{((userStats?.newSignups || 0) / Math.max(userStats?.totalUsers || 1, 1) * 100).toFixed(1)}%
             </Badge>
             <Text className="text-xs text-gray-500 ml-2">
               최근 30일
@@ -172,16 +149,9 @@ const AdminUsers: React.FC = () => {
           <Text className="text-lg font-semibold text-ms-text">사용자 활동 추이</Text>
           <Text className="text-gray-600">일별 활성 사용자 및 신규 가입자 수</Text>
         </div>
-        <LineChart
-          className="h-64"
-          data={userActivity}
-          index="date"
-          categories={["activeUsers", "newUsers"]}
-          colors={["emerald", "blue"]}
-          valueFormatter={(value) => `${value}명`}
-          yAxisWidth={60}
-          showAnimation={true}
-        />
+        <div className="h-64 flex items-center justify-center text-gray-500">
+          활동 추이 데이터를 준비 중입니다...
+        </div>
       </Card>
 
       {/* 사용자 목록 */}
@@ -241,7 +211,7 @@ const AdminUsers: React.FC = () => {
                       </div>
                     </td>
                     <td className="py-3 px-4">
-                      {getSubscriptionBadge(user.subscription)}
+                      {getSubscriptionBadge(user.subscriptionPlan)}
                     </td>
                     <td className="py-3 px-4">
                       {getStatusBadge(user.status)}
@@ -250,12 +220,12 @@ const AdminUsers: React.FC = () => {
                       {new Date(user.lastLogin).toLocaleDateString('ko-KR')}
                     </td>
                     <td className="py-3 px-4 text-sm text-ms-text font-medium">
-                      {user.reportCount}
+                      {user.totalReports}
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center space-x-2">
                         <Select
-                          value={user.subscription}
+                          value={user.subscriptionPlan}
                           onValueChange={(value) => handleSubscriptionChange(user.id, value)}
                         >
                           <SelectItem value="free">Free</SelectItem>

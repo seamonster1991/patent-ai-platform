@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { User, Mail, Building, Calendar, Shield, Bell, Download, Trash2, Save } from 'lucide-react'
-import Layout from '../components/Layout/Layout'
 import Button from '../components/UI/Button'
 import Input from '../components/UI/Input'
 import Card, { CardContent, CardHeader, CardTitle } from '../components/UI/Card'
@@ -35,19 +34,122 @@ export default function Profile() {
     }
   }, [profile])
 
+  // 전화번호 포맷터: 숫자만 남기고 3-4-4 형식으로 변환 (예: 01012345678 -> 010-1234-5678)
+  const formatPhone = (raw: string) => {
+    const digits = (raw || '').replace(/\D/g, '')
+    if (!digits) return ''
+    // 11자리 이상만 포맷, 초과 자릿수는 잘라냄
+    const d = digits.slice(0, 11)
+    if (d.length <= 3) return d
+    if (d.length <= 7) return `${d.slice(0,3)}-${d.slice(3)}`
+    return `${d.slice(0,3)}-${d.slice(3,7)}-${d.slice(7)}`
+  }
+
+  // 입력 유효성 검사
+  const validateForm = () => {
+    const errors: string[] = []
+    
+    // 이름 검증
+    if (!formData.name.trim()) {
+      errors.push('이름은 필수 입력 항목입니다.')
+    } else if (formData.name.trim().length < 2) {
+      errors.push('이름은 최소 2글자 이상이어야 합니다.')
+    } else if (formData.name.trim().length > 50) {
+      errors.push('이름은 50글자를 초과할 수 없습니다.')
+    }
+    
+    // 전화번호 검증 (선택사항이지만 입력된 경우 검증)
+    if (formData.phone.trim()) {
+      const phoneDigits = formData.phone.replace(/\D/g, '')
+      if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+        errors.push('올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)')
+      }
+    }
+    
+    // 회사명 검증 (선택사항이지만 입력된 경우 검증)
+    if (formData.company.trim() && formData.company.trim().length > 100) {
+      errors.push('회사명은 100글자를 초과할 수 없습니다.')
+    }
+    
+    // 소개 검증 (선택사항이지만 입력된 경우 검증)
+    if (formData.bio.trim() && formData.bio.trim().length > 500) {
+      errors.push('소개는 500글자를 초과할 수 없습니다.')
+    }
+    
+    return errors
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // 입력 유효성 검사
+    const validationErrors = validateForm()
+    if (validationErrors.length > 0) {
+      toast.error(validationErrors[0]) // 첫 번째 오류만 표시
+      return
+    }
+    
     setLoading(true)
     
     try {
-      const { error } = await updateProfile(formData)
-      if (error) {
-        toast.error(error)
-      } else {
-        toast.success('프로필이 업데이트되었습니다.')
+      console.log('📝 [Profile] 프로필 업데이트 요청:', formData)
+      const result = await updateProfile(formData)
+      
+      console.log('📝 [Profile] 프로필 업데이트 결과:', result)
+      
+      if (result.error || !result.success) {
+        console.error('📝 [Profile] 프로필 업데이트 오류:', result.error)
+        // 서버 오류 메시지를 사용자 친화적으로 변환
+        let errorMessage = result.error || '프로필 업데이트에 실패했습니다.'
+        
+        if (errorMessage.includes('name')) {
+          errorMessage = '이름 형식이 올바르지 않습니다.'
+        } else if (errorMessage.includes('phone')) {
+          errorMessage = '전화번호 형식이 올바르지 않습니다.'
+        } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+          errorMessage = '네트워크 연결을 확인해주세요.'
+        } else if (errorMessage.includes('timeout')) {
+          errorMessage = '요청 시간이 초과되었습니다. 다시 시도해주세요.'
+        } else if (errorMessage.includes('Database error')) {
+          errorMessage = '데이터베이스 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
+        }
+        
+        toast.error(errorMessage)
+        return
       }
-    } catch (error) {
-      toast.error('프로필 업데이트 중 오류가 발생했습니다.')
+      
+      // 성공 처리
+      if (result.success && result.profile) {
+        console.log('✅ [Profile] 프로필 업데이트 성공:', result.profile)
+        toast.success('프로필이 성공적으로 업데이트되었습니다.')
+        
+        // 폼 데이터를 업데이트된 프로필 데이터로 동기화
+        setFormData({
+          name: result.profile.name || '',
+          company: result.profile.company || '',
+          phone: result.profile.phone || '',
+          bio: result.profile.bio || ''
+        })
+        
+        // 페이지 새로고침 없이 프로필 정보 다시 로드
+        window.location.reload()
+      } else {
+        console.warn('📝 [Profile] 프로필 업데이트 결과가 예상과 다름:', result)
+        toast.error('프로필 업데이트에 실패했습니다. 다시 시도해주세요.')
+      }
+    } catch (error: any) {
+      console.error('📝 [Profile] 프로필 업데이트 예외:', error)
+      let errorMessage = '프로필 업데이트 중 오류가 발생했습니다.'
+      
+      if (error?.message?.includes('fetch') || error?.message?.includes('network')) {
+        errorMessage = '서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.'
+      } else if (error?.message?.includes('timeout')) {
+        errorMessage = '요청 시간이 초과되었습니다. 다시 시도해주세요.'
+      } else if (error?.message) {
+        errorMessage = `오류: ${error.message}`
+      }
+      
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -55,6 +157,11 @@ export default function Profile() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
+    if (name === 'phone') {
+      const formatted = formatPhone(value)
+      setFormData(prev => ({ ...prev, [name]: formatted }))
+      return
+    }
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
@@ -73,8 +180,7 @@ export default function Profile() {
   }
 
   return (
-    <Layout>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">프로필 설정</h1>
@@ -383,6 +489,5 @@ export default function Profile() {
           </div>
         </div>
       </div>
-    </Layout>
   )
 }

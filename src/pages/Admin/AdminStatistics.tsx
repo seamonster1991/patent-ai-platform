@@ -18,47 +18,28 @@ import {
 } from 'lucide-react';
 
 const AdminStatistics: React.FC = () => {
-  const { 
-    topKeywords,
+  const {
+    searchKeywords,
     techDistribution,
     topPatents,
-    loading, 
-    error, 
-    fetchTopKeywords,
+    isLoading,
+    fetchSearchKeywords,
     fetchTechDistribution,
     fetchTopPatents
   } = useAdminStore();
 
   useEffect(() => {
-    fetchTopKeywords();
+    fetchSearchKeywords();
     fetchTechDistribution();
     fetchTopPatents();
-  }, [fetchTopKeywords, fetchTechDistribution, fetchTopPatents]);
+  }, [fetchSearchKeywords, fetchTechDistribution, fetchTopPatents]);
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-64 bg-gray-200 rounded-lg"></div>
-            ))}
-          </div>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-ms-text">데이터를 불러오는 중...</div>
       </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <div className="flex items-center">
-          <AlertTriangle className="h-5 w-5 text-red-500 mr-2" />
-          <span className="text-red-700">{error}</span>
-        </div>
-      </div>
-    );
+    )
   }
 
   const getGrowthBadge = (growth: number) => {
@@ -91,7 +72,7 @@ const AdminStatistics: React.FC = () => {
               <Text className="text-gray-600">검색량 기준 Top 10</Text>
             </div>
             <div className="space-y-3">
-              {topKeywords.slice(0, 10).map((keyword, index) => (
+              {searchKeywords.slice(0, 10).map((keyword, index) => (
                 <div key={keyword.keyword} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center space-x-3">
                     <div className="flex items-center justify-center w-6 h-6 bg-ms-olive text-white text-xs font-bold rounded">
@@ -101,7 +82,7 @@ const AdminStatistics: React.FC = () => {
                   </div>
                   <div className="flex items-center space-x-3">
                     <span className="text-sm text-gray-600">{keyword.count}회</span>
-                    {getGrowthBadge(keyword.growth)}
+                    {getGrowthBadge(keyword.growthRate)}
                   </div>
                 </div>
               ))}
@@ -116,7 +97,7 @@ const AdminStatistics: React.FC = () => {
             </div>
             <BarChart
               className="h-64"
-              data={topKeywords.slice(0, 8)}
+              data={searchKeywords.slice(0, 8)}
               index="keyword"
               categories={["count"]}
               colors={["emerald"]}
@@ -206,14 +187,14 @@ const AdminStatistics: React.FC = () => {
               </thead>
               <tbody>
                 {topPatents.map((patent, index) => (
-                  <tr key={patent.patentNumber} className="border-b border-gray-100 hover:bg-gray-50">
+                  <tr key={patent.applicationNumber} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-center w-6 h-6 bg-ms-olive text-white text-xs font-bold rounded">
                         {index + 1}
                       </div>
                     </td>
                     <td className="py-3 px-4 font-mono text-sm text-ms-text">
-                      {patent.patentNumber}
+                      {patent.applicationNumber}
                     </td>
                     <td className="py-3 px-4 text-sm text-ms-text max-w-xs truncate">
                       {patent.title}

@@ -20,39 +20,20 @@ import {
 } from 'lucide-react';
 
 const AdminHome: React.FC = () => {
-  const { 
-    systemMetrics, 
-    loading, 
-    error, 
-    fetchSystemMetrics 
+  const {
+    systemMetrics,
+    isLoading,
+    fetchSystemMetrics
   } = useAdminStore();
 
   useEffect(() => {
     fetchSystemMetrics();
   }, [fetchSystemMetrics]);
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <div className="flex items-center">
-          <AlertTriangle className="h-5 w-5 text-red-500 mr-2" />
-          <span className="text-red-700">{error}</span>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-500">로딩 중...</div>
       </div>
     );
   }
@@ -102,10 +83,10 @@ const AdminHome: React.FC = () => {
             </Flex>
             <Flex className="mt-4">
               <BadgeDelta 
-                deltaType={getDeltaType(systemMetrics?.costChange || 0)}
+                deltaType="unchanged"
                 size="xs"
               >
-                {systemMetrics?.costChange > 0 ? '+' : ''}{systemMetrics?.costChange}%
+                변화 없음
               </BadgeDelta>
               <Text className="text-xs text-gray-500">전월 대비</Text>
             </Flex>
@@ -122,10 +103,10 @@ const AdminHome: React.FC = () => {
             </Flex>
             <Flex className="mt-4">
               <BadgeDelta 
-                deltaType={getDeltaType(systemMetrics?.usageChange || 0)}
+                deltaType="unchanged"
                 size="xs"
               >
-                {systemMetrics?.usageChange > 0 ? '+' : ''}{systemMetrics?.usageChange}%
+                변화 없음
               </BadgeDelta>
               <Text className="text-xs text-gray-500">전월 대비</Text>
             </Flex>
@@ -136,13 +117,13 @@ const AdminHome: React.FC = () => {
             <Flex alignItems="start">
               <div>
                 <Text className="text-gray-600">캐싱 히트율</Text>
-                <Metric className="text-ms-text">{systemMetrics?.cacheHitRate}%</Metric>
+                <Metric className="text-ms-text">{systemMetrics?.cachingHitRate}%</Metric>
               </div>
               <Database className="h-8 w-8 text-ms-olive" />
             </Flex>
             <div className="mt-4">
               <ProgressBar 
-                value={systemMetrics?.cacheHitRate || 0} 
+                value={systemMetrics?.cachingHitRate || 0} 
                 color="emerald"
                 className="mt-2"
               />

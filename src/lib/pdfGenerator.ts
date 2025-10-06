@@ -44,7 +44,7 @@ const A4_CONFIG = {
 // 파일명 생성 함수
 const generateFileName = (patent: KiprisPatentDetailItem, reportType: string): string => {
   // 특허 제목을 20자 이내로 단축 (특수문자 제거)
-  const shortTitle = patent.biblioSummaryInfo?.inventionTitle
+  const shortTitle = patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle
     ?.replace(/[^\w가-힣]/g, '')
     ?.substring(0, 20) || '특허분석'
   
@@ -513,14 +513,14 @@ const addPDFHeader = async (doc: jsPDF, title: string, patent: KiprisPatentDetai
   })
   
   // 특허 정보를 이미지로 렌더링
-  const patentInfo = `특허명: ${patent.biblioSummaryInfo?.inventionTitle || 'N/A'}`
+  const patentInfo = `특허명: ${patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle || 'N/A'}`
   await addKoreanTextAsImage(doc, patentInfo, 20, 35, {
     fontSize: 12,
     color: '#ffffff',
     maxWidth: pageWidth - 100
   })
   
-  const applicationInfo = `출원번호: ${patent.biblioSummaryInfo?.applicationNumber || 'N/A'}`
+  const applicationInfo = `출원번호: ${patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber || 'N/A'}`
   await addKoreanTextAsImage(doc, applicationInfo, 20, 45, {
     fontSize: 12,
     color: '#ffffff',
@@ -604,7 +604,7 @@ export const generateA4ReportPDF = async (
     // 리포트 헤더 추가
     const reportType = reportData.reportType || '분석 리포트'
     addReportHeader(doc, {
-      title: patent.biblioSummaryInfo?.inventionTitle || '특허 분석',
+      title: patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle || '특허 분석',
       patentNumber: patent.applicationNumber || patent.registrationNumber
     }, reportType)
     
@@ -614,7 +614,7 @@ export const generateA4ReportPDF = async (
     console.log('📝 개요 섹션 생성 중...')
     currentY = await parseAndRenderMarkdownA4(
       doc,
-      `### 개요\n\n본 리포트는 "${patent.biblioSummaryInfo?.inventionTitle || '특허'}"에 대한 ${reportType}을 제공합니다. AI 기반 분석을 통해 생성된 전문적인 인사이트를 담고 있습니다.`,
+      `### 개요\n\n본 리포트는 "${patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle || '특허'}"에 대한 ${reportType}을 제공합니다. AI 기반 분석을 통해 생성된 전문적인 인사이트를 담고 있습니다.`,
       A4_CONFIG.margin.left,
       currentY
     )
@@ -668,7 +668,7 @@ export const generateA4ReportPDF = async (
     
     // 활동 추적
     activityTracker.trackDocumentDownload(
-      patent.applicationNumber || patent.biblioSummaryInfo?.applicationNumber || 'unknown',
+      patent.applicationNumber || patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber || 'unknown',
       'pdf_report'
     )
     
@@ -762,7 +762,7 @@ export const generateDynamicReportPDF = async (
     // 개요 섹션 (오류 처리)
     try {
       currentY = await addSectionTitle(doc, '개요', currentY)
-      const overview = `본 리포트는 "${patent.biblioSummaryInfo?.inventionTitle || '특허'}"에 대한 ${reportTitle.toLowerCase()}을 제공합니다. AI 기반 분석을 통해 생성된 전문적인 인사이트를 담고 있습니다.`
+      const overview = `본 리포트는 "${patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle || '특허'}"에 대한 ${reportTitle.toLowerCase()}을 제공합니다. AI 기반 분석을 통해 생성된 전문적인 인사이트를 담고 있습니다.`
       currentY = await addTextBlock(doc, overview, 20, currentY, 170)
       currentY += 15
       console.log('✅ 개요 섹션 생성 완료')
@@ -873,7 +873,7 @@ export const generateDynamicReportPDF = async (
     // 활동 추적 (실패해도 PDF 다운로드에 영향 없음)
     try {
       await activityTracker.trackDocumentDownload(
-        patent.biblioSummaryInfo?.applicationNumber || 'unknown',
+        patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber || 'unknown',
         `${reportData.reportType}_report_pdf`
       )
     } catch (trackingError) {
@@ -959,13 +959,13 @@ export const generateSimplePDF = async (
     doc.setFontSize(12)
     let currentY = 50
     
-    if (patent.biblioSummaryInfo?.inventionTitle) {
-      doc.text(`특허명: ${patent.biblioSummaryInfo.inventionTitle}`, 20, currentY)
+    if (patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle) {
+      doc.text(`특허명: ${patent.biblioSummaryInfoArray.biblioSummaryInfo.inventionTitle}`, 20, currentY)
       currentY += 10
     }
     
-    if (patent.biblioSummaryInfo?.applicationNumber) {
-      doc.text(`출원번호: ${patent.biblioSummaryInfo.applicationNumber}`, 20, currentY)
+    if (patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber) {
+      doc.text(`출원번호: ${patent.biblioSummaryInfoArray.biblioSummaryInfo.applicationNumber}`, 20, currentY)
       currentY += 10
     }
     
@@ -1112,7 +1112,7 @@ export const generateMarketAnalysisPDFLegacy = async (
   // 1. 개요
   currentY = await addSectionTitle(doc, '1. 개요', currentY)
   currentY = await addTextBlock(doc, 
-    `본 리포트는 "${patent.biblioSummaryInfo?.inventionTitle || '특허'}"에 대한 시장 분석을 제공합니다. ` +
+    `본 리포트는 "${patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle || '특허'}"에 대한 시장 분석을 제공합니다. ` +
     `AI 기반 분석을 통해 시장 기회와 위험 요소를 평가하였습니다.`,
     20, currentY, 170
   )
@@ -1167,7 +1167,7 @@ export const generateMarketAnalysisPDFLegacy = async (
   // 활동 추적 - PDF 다운로드 기록
   try {
     await activityTracker.trackDocumentDownload(
-      patent.biblioSummaryInfo?.applicationNumber || 'unknown',
+      patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber || 'unknown',
       'market_analysis_pdf'
     )
   } catch (error) {
@@ -1256,7 +1256,7 @@ export const generateBusinessInsightPDFLegacy = async (
   // 1. 개요
   currentY = await addSectionTitle(doc, '1. 개요', currentY)
   currentY = await addTextBlock(doc, 
-    `본 리포트는 "${patent.biblioSummaryInfo?.inventionTitle || '특허'}"의 비즈니스 가치와 ` +
+    `본 리포트는 "${patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle || '특허'}"의 비즈니스 가치와 ` +
     `상업화 전략에 대한 인사이트를 제공합니다.`,
     20, currentY, 170
   )
@@ -1311,7 +1311,7 @@ export const generateBusinessInsightPDFLegacy = async (
   // 활동 추적 - PDF 다운로드 기록
   try {
     await activityTracker.trackDocumentDownload(
-      patent.biblioSummaryInfo?.applicationNumber || 'unknown',
+      patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber || 'unknown',
       'business_insight_pdf'
     )
   } catch (error) {

@@ -14,7 +14,7 @@ interface AuthState {
   signUp: (email: string, password: string, metadata: { name: string; company?: string | null; phone?: string | null }) => Promise<{ error?: string }>
   signOut: () => Promise<void>
   initialize: () => Promise<void>
-  updateProfile: (updates: Partial<User>) => Promise<{ error?: string }>
+  updateProfile: (updates: Partial<User>) => Promise<{ error?: string; success?: boolean; profile?: User }>
 }
 
 // onAuthStateChange 리스너 중복 등록 방지를 위한 플래그
@@ -360,28 +360,105 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  updateProfile: async (updates: Partial<User>) => {
+  updateProfile: async (updates: Partial<User> | { name: string; phone: string; company?: string; bio?: string }) => {
     try {
       const { user } = get()
-      if (!user) return { error: 'Not authenticated' }
-
-      const { error } = await supabase
-        .from('users')
-        .update(updates)
-        .eq('id', user.id)
-
-      if (error) {
-        return { error: error.message }
+      if (!user) {
+        console.error('프로필 업데이트 실패: 사용자가 인증되지 않음')
+        return { error: '로그인이 필요합니다.' }
       }
 
-      // Fetch updated profile
-      const { data: profile } = await supabase
+      console.log('📝 [AuthStore] 프로필 업데이트 시작:', user.id);
+
+      // 새로운 API 엔드포인트 사용 여부 확인 (name과 phone이 있으면 새 API 사용)
+      if ('name' in updates && 'phone' in updates) {
+        console.log('📝 [AuthStore] 새 API 엔드포인트 사용');
+        
+        try {
+          // API를 통한 프로필 업데이트
+          const { updateUserProfile } = await import('../lib/api');
+          const response = await updateUserProfile(user.id, updates as { name: string; phone: string; company?: string; bio?: string });
+
+          console.log('📝 [AuthStore] API 응답:', response);
+
+          if (!response.success) {
+            console.error('📝 [AuthStore] API 오류:', response.error);
+            return { 
+              error: response.error || response.message || '프로필 업데이트에 실패했습니다.',
+              success: false 
+            };
+          }
+
+          // 로컬 상태 업데이트
+          const updatedProfile = response.data?.profile;
+          if (updatedProfile) {
+            set((state) => ({
+              profile: {
+                ...state.profile,
+                ...updatedProfile
+              }
+            }));
+            console.log('✅ [AuthStore] 프로필 업데이트 완료:', updatedProfile);
+            
+            // 사용자 활동 추적
+            try {
+              const activityTracker = ActivityTracker.getInstance()
+              activityTracker.setUserId(user.id)
+              await activityTracker.trackProfileUpdate({
+                updatedFields: Object.keys(updates),
+                profileData: {
+                  name: updatedProfile.name,
+                  company: updatedProfile.company,
+                  email: updatedProfile.email
+                }
+              })
+              console.log('프로필 업데이트 활동 추적 완료')
+            } catch (activityError) {
+              console.error('프로필 업데이트 활동 추적 오류:', activityError)
+              // 활동 추적 실패는 프로필 업데이트 기능에 영향을 주지 않음
+            }
+          }
+
+          return { success: true, profile: updatedProfile };
+        } catch (apiError: any) {
+          console.error('📝 [AuthStore] API 호출 오류:', apiError);
+          return { 
+            error: apiError.message || '네트워크 오류가 발생했습니다.',
+            success: false 
+          };
+        }
+      }
+
+      // 기존 로직 (레거시 호환성)
+      console.log('프로필 업데이트 시작:', { userId: user.id, updates })
+
+      // 업데이트할 데이터에 updated_at 추가
+      const updateData = {
+        ...updates,
+        updated_at: new Date().toISOString()
+      }
+
+      // 트랜잭션 방식으로 업데이트 수행
+      const { data: updatedProfile, error: updateError } = await supabase
         .from('users')
-        .select('*')
+        .update(updateData)
         .eq('id', user.id)
+        .select('*')
         .single()
 
-      set({ profile })
+      if (updateError) {
+        console.error('프로필 업데이트 DB 오류:', updateError)
+        return { error: `프로필 업데이트에 실패했습니다: ${updateError.message}` }
+      }
+
+      if (!updatedProfile) {
+        console.error('프로필 업데이트 후 데이터 조회 실패')
+        return { error: '프로필 업데이트 후 데이터를 가져올 수 없습니다.' }
+      }
+
+      // 상태 업데이트
+      set({ profile: updatedProfile })
+      console.log('프로필 업데이트 성공:', updatedProfile)
       
       // 사용자 활동 추적 - 프로필 업데이트
       try {
@@ -390,19 +467,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         await activityTracker.trackProfileUpdate({
           updatedFields: Object.keys(updates),
           profileData: {
-            name: profile?.name,
-            company: profile?.company,
-            email: profile?.email
+            name: updatedProfile.name,
+            company: updatedProfile.company,
+            email: updatedProfile.email
           }
         })
-      } catch (error) {
-        console.error('프로필 업데이트 활동 추적 오류:', error)
+        console.log('프로필 업데이트 활동 추적 완료')
+      } catch (activityError) {
+        console.error('프로필 업데이트 활동 추적 오류:', activityError)
         // 활동 추적 실패는 프로필 업데이트 기능에 영향을 주지 않음
       }
       
-      return {}
-    } catch (error) {
-      return { error: 'An unexpected error occurred' }
+      return { success: true, profile: updatedProfile }
+    } catch (error: any) {
+      console.error('❌ [AuthStore] 프로필 업데이트 실패:', error)
+      return { error: `예상치 못한 오류가 발생했습니다: ${error?.message || '알 수 없는 오류'}` }
     }
   },
 }))

@@ -1,6 +1,9 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { createClient } = require('@supabase/supabase-js');
 
+// 환경변수 로드
+require('dotenv').config();
+
 // 간단한 메모리 캐시 (서버리스 환경에서는 제한적이지만 동일 요청 내에서는 유효)// 캐시 관리
 const analysisCache = new Map();
 const CACHE_TTL = 5 * 60 * 1000; // 5분 캐시
@@ -64,14 +67,6 @@ module.exports = async function handler(req, res) {
     console.log('🔍 Step 1: API 키 확인 시작');
     const geminiApiKey = process.env.GEMINI_API_KEY;
     
-    if (!geminiApiKey || geminiApiKey.includes('JKJKJK') || geminiApiKey.length < 30) {
-      return res.status(500).json({
-        success: false,
-        error: 'API configuration error',
-        message: 'Invalid Gemini API key configuration'
-      });
-    }
-    
     console.log('🔍 Step 2: 요청 데이터 파싱 시작');
     const { patentData, analysisType = 'comprehensive' } = req.body;
     
@@ -80,6 +75,84 @@ module.exports = async function handler(req, res) {
         success: false,
         error: 'Missing required data',
         message: 'patentData is required'
+      });
+    }
+
+    // 특허 정보 추출 (키 누락 시에도 동작)
+    const patentInfo = extractPatentInfo(patentData);
+
+    // 🔧 Gemini API 키가 없거나 무효인 경우: 캐시/스켈레톤 리포트로 graceful fallback
+    if (!geminiApiKey || geminiApiKey.includes('JKJKJK') || geminiApiKey.length < 30) {
+      console.warn('⚠️ Gemini API 키가 유효하지 않음. 캐시된 리포트 또는 스켈레톤 리포트로 대체합니다.');
+
+      // 1) 캐시된 리포트 조회 (Supabase)
+      let cachedReport = null;
+      try {
+        if (supabase && patentInfo.applicationNumber) {
+          const { data: rows, error } = await supabase
+            .from('ai_analysis_reports')
+            .select('*')
+            .eq('application_number', patentInfo.applicationNumber)
+            .order('created_at', { ascending: false })
+            .limit(1);
+          if (error) {
+            console.error('❌ 캐시 리포트 조회 실패:', error.message);
+          }
+          cachedReport = rows && rows.length > 0 ? rows[0] : null;
+        }
+      } catch (e) {
+        console.error('❌ 캐시 리포트 조회 예외:', e);
+      }
+
+      // 2) 캐시 리포트가 있다면 구조화하여 반환
+      if (cachedReport) {
+        console.log('✅ 캐시된 리포트 발견, 구조화하여 반환');
+        const structured = buildStructuredReportFromRow(cachedReport, analysisType);
+        return res.status(200).json({
+          success: true,
+          data: structured,
+          cached: true,
+          message: 'Returned cached AI analysis report due to missing Gemini API key'
+        });
+      }
+
+      // 3) 캐시가 없다면 스켈레톤 리포트 생성 (요약 중심)
+      console.log('ℹ️ 캐시 없음 - 스켈레톤 리포트 생성');
+      const sections = [];
+      if (patentInfo.abstract) {
+        sections.push({
+          title: '특허 요약',
+          content: patentInfo.abstract.slice(0, 800)
+        });
+      }
+      if (patentInfo.claims) {
+        sections.push({
+          title: '주요 청구항(발췌)',
+          content: patentInfo.claims.slice(0, 800)
+        });
+      }
+
+      const skeletonReport = {
+        analysisType: analysisType,
+        patentNumber: patentInfo.applicationNumber || 'UNKNOWN',
+        patentTitle: patentInfo.inventionTitle || 'Untitled Patent',
+        analysisDate: new Date().toISOString(),
+        analysis: {
+          reportType: 'Comprehensive',
+          reportName: 'Skeleton Analysis (No AI key)',
+          sections,
+          generatedAt: new Date().toISOString(),
+          insightsSummary: 'AI 키가 없어 최소 요약 위주의 스켈레톤 리포트를 제공합니다.',
+          keyInsights: []
+        },
+        rawAnalysis: ''
+      };
+
+      return res.status(200).json({
+        success: true,
+        data: skeletonReport,
+        cached: false,
+        message: 'Gemini API key is missing; returned skeleton analysis.'
       });
     }
 
@@ -93,7 +166,8 @@ module.exports = async function handler(req, res) {
     });
 
     console.log('🔍 Step 4: 특허 정보 추출 시작');
-    const patentInfo = extractPatentInfo(patentData);
+    // 위에서 이미 추출되었음 (키 없는 경우에도 사용하기 위해)
+    // const patentInfo = extractPatentInfo(patentData);
     
     // 캐시 키 생성 (특허 번호 + 분석 타입 + 버전)
     const cacheKey = `${patentInfo.applicationNumber}_${analysisType}_v2_no_mckinsey`;
@@ -1403,4 +1477,56 @@ function findSectionByKeywords(sections, keywords) {
   }
   
   return '';
+}
+
+// Supabase에 저장된 ai_analysis_reports 행을 구조화된 응답으로 변환하는 헬퍼
+function buildStructuredReportFromRow(row, analysisType = 'comprehensive') {
+  const sections = [];
+
+  // 시장 분석 섹션 매핑
+  if (row.market_penetration) {
+    sections.push({ title: '시장 침투', content: row.market_penetration });
+  }
+  if (row.competitive_landscape) {
+    sections.push({ title: '경쟁 환경', content: row.competitive_landscape });
+  }
+  if (row.market_growth_drivers) {
+    sections.push({ title: '성장 동력', content: row.market_growth_drivers });
+  }
+  if (row.risk_factors) {
+    sections.push({ title: '위험 요소', content: row.risk_factors });
+  }
+
+  // 비즈니스 인사이트 섹션 매핑
+  if (row.revenue_model) {
+    sections.push({ title: '수익 모델', content: row.revenue_model });
+  }
+  if (row.royalty_margin) {
+    sections.push({ title: '로열티/마진', content: row.royalty_margin });
+  }
+  if (row.new_business_opportunities) {
+    sections.push({ title: '새로운 비즈니스 기회', content: row.new_business_opportunities });
+  }
+  if (row.competitor_response_strategy) {
+    sections.push({ title: '경쟁사 대응 전략', content: row.competitor_response_strategy });
+  }
+
+  // 기본 정보 및 스켈레톤 보강
+  const reportName = sections.length > 0 ? 'Comprehensive Analysis (cached)' : 'Comprehensive Analysis (basic)';
+
+  return {
+    analysisType,
+    patentNumber: row.application_number || 'UNKNOWN',
+    patentTitle: row.invention_title || 'Untitled Patent',
+    analysisDate: row.created_at || new Date().toISOString(),
+    analysis: {
+      reportType: 'Comprehensive',
+      reportName,
+      sections,
+      generatedAt: row.created_at || new Date().toISOString(),
+      insightsSummary: '',
+      keyInsights: []
+    },
+    rawAnalysis: JSON.stringify(row)
+  };
 }

@@ -3,7 +3,7 @@ import { supabase } from './supabase'
 export interface UserActivity {
   id?: string
   user_id: string
-  activity_type: 'search' | 'patent_view' | 'ai_analysis' | 'document_download' | 'login' | 'logout'
+  activity_type: 'search' | 'patent_view' | 'ai_analysis' | 'document_download' | 'login' | 'logout' | 'filter_change' | 'page_navigation' | 'profile_update' | 'report_generate'
   activity_data: Record<string, any>
   created_at?: string
 }
@@ -113,18 +113,39 @@ export class ActivityTracker {
     })
   }
 
-  public async trackReportGenerate(applicationNumber: string, reportType: string, data: Record<string, any>) {
-    await this.trackActivity('document_download', {
-      applicationNumber,
-      reportType,
+
+
+  public async trackProfileUpdate(data: Record<string, any>) {
+    await this.trackActivity('profile_update', {
       timestamp: typeof window !== 'undefined' ? new Date().toISOString() : new Date().toISOString(),
       ...data
     })
   }
 
-  public async trackProfileUpdate(data: Record<string, any>) {
-    await this.trackActivity('login', {
-      action: 'profile_update',
+  // 필터 변경 추적
+  public async trackFilterChange(filters: Record<string, any>, previousFilters?: Record<string, any>) {
+    await this.trackActivity('filter_change', {
+      new_filters: filters,
+      previous_filters: previousFilters,
+      timestamp: typeof window !== 'undefined' ? new Date().toISOString() : new Date().toISOString()
+    })
+  }
+
+  // 페이지 이동 추적
+  public async trackPageNavigation(fromPage: string, toPage: string, additionalData?: Record<string, any>) {
+    await this.trackActivity('page_navigation', {
+      from_page: fromPage,
+      to_page: toPage,
+      timestamp: typeof window !== 'undefined' ? new Date().toISOString() : new Date().toISOString(),
+      ...additionalData
+    })
+  }
+
+  // 리포트 생성 추적 (기존 메서드 개선)
+  public async trackReportGeneration(applicationNumber: string, reportType: string, data: Record<string, any>) {
+    await this.trackActivity('report_generate', {
+      application_number: applicationNumber,
+      report_type: reportType,
       timestamp: typeof window !== 'undefined' ? new Date().toISOString() : new Date().toISOString(),
       ...data
     })
@@ -156,6 +177,10 @@ export class ActivityTracker {
         ai_analysis_count: data.filter(a => a.activity_type === 'ai_analysis').length,
         document_download_count: data.filter(a => a.activity_type === 'document_download').length,
         login_count: data.filter(a => a.activity_type === 'login').length,
+        filter_change_count: data.filter(a => a.activity_type === 'filter_change').length,
+        page_navigation_count: data.filter(a => a.activity_type === 'page_navigation').length,
+        profile_update_count: data.filter(a => a.activity_type === 'profile_update').length,
+        report_generate_count: data.filter(a => a.activity_type === 'report_generate').length,
         recent_activities: data.slice(0, 10) // 최근 10개 활동
       }
 

@@ -30,14 +30,24 @@ app.all('/api/health', healthHandler);
 const userReportsHandler = require('./api/users/reports.js');
 const userSearchHistoryHandler = require('./api/users/search-history.js');
 const userStatsHandler = require('./api/users/stats.js');
+const userProfileHandler = require('./api/users/profile.js');
+const adminStatisticsHandler = require('./api/admin/statistics.js');
 
+app.all('/api/ai-analysis', aiAnalysisHandler);
+app.all('/api/generate-report', generateReportHandler);
+app.all('/api/search', searchHandler);
+app.all('/api/detail', detailHandler);
+app.all('/api/documents', documentsHandler);
+app.all('/api/health', healthHandler);
+
+// User routes
 app.all('/api/users/reports', userReportsHandler);
 app.all('/api/users/search-history', userSearchHistoryHandler);
 app.all('/api/users/stats', userStatsHandler);
+app.all('/api/users/profile', userProfileHandler);
 
 // Admin routes
-const adminUserActivitiesHandler = require('./api/admin/user-activities.js');
-app.all('/api/admin/user-activities', adminUserActivitiesHandler);
+app.all('/api/admin/statistics', adminStatisticsHandler);
 
 // Health check
 app.get('/', (req, res) => {

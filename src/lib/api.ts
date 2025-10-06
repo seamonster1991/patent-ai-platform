@@ -147,9 +147,8 @@ export async function searchPatents(searchParams: any): Promise<ApiResponse> {
  */
 export async function getUserStats(userId: string): Promise<ApiResponse> {
   console.log('📊 [API] 사용자 통계 요청:', userId);
-  // 서버리스 함수 경로 특성상 동적 세그먼트가 params로 전달되지 않을 수 있으므로
-  // 쿼리스트링으로 userId를 전달하도록 변경
-  return apiGet(`/api/users/stats?userId=${encodeURIComponent(userId)}`, {
+  // 로컬 API 서버(포트 3001)로 요청
+  return apiGet(`http://localhost:3001/api/users/stats?userId=${encodeURIComponent(userId)}`, {
     timeout: 20000,
     retries: 2,
     retryDelay: 1500,
@@ -219,4 +218,87 @@ export function formatApiError(error: any): string {
   }
 
   return '알 수 없는 오류가 발생했습니다.';
+}
+
+/**
+ * 사용자 프로필 조회 API 호출
+ */
+export async function getUserProfile(userId: string): Promise<ApiResponse> {
+  console.log('👤 [API] 사용자 프로필 조회 요청:', userId);
+  
+  return apiGet(`/api/users/profile?userId=${encodeURIComponent(userId)}`, {
+    timeout: 15000,
+    retries: 2,
+    retryDelay: 1000,
+  });
+}
+
+/**
+ * 사용자 프로필 업데이트 API 호출
+ */
+export async function updateUserProfile(userId: string, profileData: {
+  name: string;
+  phone: string;
+  company?: string;
+  bio?: string;
+}): Promise<ApiResponse> {
+  console.log('📝 [API] 사용자 프로필 업데이트 요청:', userId);
+  console.log('📝 [API] 프로필 데이터:', profileData);
+  
+  // 전화번호 정규화: 숫자만 남기고 3-4-4 형식으로 변환
+  const normalizePhone = (raw: string) => {
+    const digits = (raw || '').replace(/\D/g, '')
+    const d = digits.slice(0, 11)
+    if (d.length <= 3) return d
+    if (d.length <= 7) return `${d.slice(0,3)}-${d.slice(3)}`
+    return `${d.slice(0,3)}-${d.slice(3,7)}-${d.slice(7)}`
+  }
+
+  const payload = {
+    ...profileData,
+    phone: normalizePhone(profileData.phone)
+  }
+  
+  console.log('📝 [API] 정규화된 페이로드:', payload);
+  
+  // 로컬 API 서버(포트 3001)로 요청
+  return apiRequest(`http://localhost:3001/api/users/profile?userId=${encodeURIComponent(userId)}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+    timeout: 15000,
+    retries: 2,
+    retryDelay: 1000,
+  });
+}
+
+/**
+ * 사용자 등록 API 호출
+ */
+export async function registerUser(userData: {
+  email: string;
+  password: string;
+  name: string;
+  phone: string;
+  company?: string;
+}): Promise<ApiResponse> {
+  console.log('📝 [API] 사용자 등록 요청:', userData.email);
+  
+  return apiPost('/api/auth/register', userData, {
+    timeout: 20000,
+    retries: 1,
+    retryDelay: 2000,
+  });
+}
+
+/**
+ * 비밀번호 재설정 요청 API 호출
+ */
+export async function requestPasswordReset(email: string): Promise<ApiResponse> {
+  console.log('🔐 [API] 비밀번호 재설정 요청:', email);
+  
+  return apiPost('/api/auth/reset-password', { email }, {
+    timeout: 15000,
+    retries: 2,
+    retryDelay: 1500,
+  });
 }

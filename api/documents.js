@@ -2,6 +2,9 @@ const axios = require('axios');
 const { parseStringPromise } = require('xml2js');
 const { createClient } = require('@supabase/supabase-js');
 
+// 환경변수 로드
+require('dotenv').config();
+
 // Supabase 클라이언트 초기화 (안전한 초기화)
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -95,8 +98,8 @@ module.exports = async function handler(req, res) {
       });
     }
     
-    // KIPRIS API URL 구성
-    const kiprisApiUrl = `http://plus.kipris.or.kr/kipo-api/kipi/patUtiModInfoSearchSevice/${endpoint}`;
+    // KIPRIS API URL 구성 - 특허 검색 REST 엔드포인트로 수정
+    const kiprisApiUrl = `http://plus.kipris.or.kr/openapi/rest/patentInfoSearchService/${endpoint}`;
     
     // 검색 파라미터 준비
     const params = new URLSearchParams();

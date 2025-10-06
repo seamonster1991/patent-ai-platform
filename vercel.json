@@ -2,13 +2,35 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "functions": {
-    "api/**/*.js": {
+    "api/users/stats.js": {
       "runtime": "@vercel/node@3.1.5",
-      "maxDuration": 60,
-      "memory": 1024
+      "maxDuration": 30,
+      "memory": 512
+    },
+    "api/users/profile.js": {
+      "runtime": "@vercel/node@3.1.5",
+      "maxDuration": 30,
+      "memory": 512
+    },
+    "api/search.js": {
+      "runtime": "@vercel/node@3.1.5",
+      "maxDuration": 30,
+      "memory": 512
     }
   },
   "rewrites": [
+    {
+      "source": "/api/users/stats",
+      "destination": "/api/users/stats.js"
+    },
+    {
+      "source": "/api/users/profile",
+      "destination": "/api/users/profile.js"
+    },
+    {
+      "source": "/api/search",
+      "destination": "/api/search.js"
+    },
     {
       "source": "/((?!api).*)",
       "destination": "/index.html"

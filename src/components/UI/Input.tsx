@@ -35,22 +35,22 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 
     const variantClasses = {
       default: cn(
-        'border-ms-line dark:border-dark-700',
-        'bg-white dark:bg-slate-800',
-        'text-slate-900 dark:text-white',
-        'placeholder:text-slate-400 dark:placeholder:text-slate-500'
+        'border-ms-line',
+        'bg-white dark:bg-ms-bg',
+        'text-ms-text dark:text-ms-text',
+        'placeholder:text-ms-text-muted'
       ),
       filled: cn(
-        'border-ms-line dark:border-dark-700',
-        'bg-slate-100 dark:bg-slate-700',
-        'text-slate-900 dark:text-white',
-        'placeholder:text-slate-400 dark:placeholder:text-slate-500'
+        'border-ms-line',
+        'bg-ms-surface dark:bg-ms-surface',
+        'text-ms-text dark:text-ms-text',
+        'placeholder:text-ms-text-muted'
       ),
       outline: cn(
-        'border border-ms-line dark:border-dark-700',
+        'border border-ms-line',
         'bg-transparent',
-        'text-slate-900 dark:text-white',
-        'placeholder:text-slate-400 dark:placeholder:text-slate-500'
+        'text-ms-text dark:text-ms-text',
+        'placeholder:text-ms-text-muted'
       )
     }
 
@@ -65,7 +65,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label 
             htmlFor={id || inputId}
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+            className="block text-sm font-medium text-ms-text dark:text-ms-text"
           >
             {label}
             {props.required && (
@@ -103,7 +103,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         {helperText && !error && (
           <p 
             id={helperTextId}
-            className="text-sm text-slate-500 dark:text-slate-400"
+            className="text-sm text-ms-text-muted"
           >
             {helperText}
           </p>

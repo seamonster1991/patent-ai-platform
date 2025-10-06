@@ -57,7 +57,7 @@ const ForgotPassword: React.FC = () => {
               <div className="space-y-3">
                 <Link
                   to="/login"
-                  className="w-full bg-ms-olive hover:bg-ms-olive/90 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+                  className="w-full bg-ms-burgundy hover:bg-ms-burgundy/90 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
                 >
                   로그인 페이지로 돌아가기
                 </Link>
@@ -84,8 +84,8 @@ const ForgotPassword: React.FC = () => {
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center w-16 h-16 bg-ms-olive/10 dark:bg-ms-olive/20 rounded-full mx-auto mb-4">
-              <Mail className="w-8 h-8 text-ms-olive" />
+            <div className="flex items-center justify-center w-16 h-16 bg-ms-burgundy/10 dark:bg-ms-burgundy/20 rounded-full mx-auto mb-4">
+               <Mail className="w-8 h-8 text-ms-burgundy" />
             </div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
               비밀번호 찾기
@@ -127,7 +127,7 @@ const ForgotPassword: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading || !email}
-              className="w-full bg-ms-olive hover:bg-ms-olive/90 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 disabled:cursor-not-allowed flex items-center justify-center"
+              className="w-full bg-ms-burgundy hover:bg-ms-burgundy/90 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {isLoading ? (
                 <>

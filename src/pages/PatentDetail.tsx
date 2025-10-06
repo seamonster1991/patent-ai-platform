@@ -32,7 +32,6 @@ import {
   TrendingUp,
   DollarSign
 } from 'lucide-react'
-import Layout from '../components/Layout/Layout'
 import Button from '../components/UI/Button'
 import Card, { CardContent, CardHeader, CardTitle } from '../components/UI/Card'
 import { LoadingPage } from '../components/UI/Loading'
@@ -121,7 +120,7 @@ export default function PatentDetail() {
             activityTracker.setUserId(user.id)
             await activityTracker.trackPatentView(
               appNumber,
-              data.data.body.item.biblioSummaryInfo?.inventionTitle || '제목 없음'
+              data.data.body.item.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle || '제목 없음'
             )
           }
         } catch (error) {
@@ -142,7 +141,7 @@ export default function PatentDetail() {
   const handleShare = async () => {
     try {
       await navigator.share({
-        title: patent?.biblioSummaryInfo?.inventionTitle || '특허 상세정보',
+        title: patent?.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle || '특허 상세정보',
         url: window.location.href
       })
     } catch (err) {
@@ -175,7 +174,7 @@ export default function PatentDetail() {
     }
     
     try {
-      console.log('🚀 AI 분석 시작:', { applicationNumber, patentTitle: patent.biblioSummaryInfo?.inventionTitle })
+      console.log('🚀 AI 분석 시작:', { applicationNumber, patentTitle: patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle })
       setAiLoading(true)
       setAiError(null)
       
@@ -302,9 +301,16 @@ export default function PatentDetail() {
           const response = await fetch(`/api/documents?applicationNumber=${applicationNumber}&documentType=${docType.type}`)
           const data = await response.json()
           
-          // 성공적으로 응답을 받고 파일 정보가 있으면 사용 가능
-          availability[docType.type] = response.ok && data.success && data.data && data.data.length > 0
+          console.log(`[checkDocumentAvailability] ${docType.type} 응답:`, data)
+          
+          // API 응답 구조에 맞게 수정
+          if (response.ok && data.success && data.data && data.data.files && data.data.files.length > 0) {
+            availability[docType.type] = true
+          } else {
+            availability[docType.type] = false
+          }
         } catch (err) {
+          console.error(`[checkDocumentAvailability] ${docType.type} 오류:`, err)
           // 개별 문서 타입 확인 실패 시 false로 설정
           availability[docType.type] = false
         }
@@ -340,11 +346,15 @@ export default function PatentDetail() {
         throw new Error(data.error || '문서 다운로드에 실패했습니다.')
       }
       
-      if (data.success && data.data && data.data.length > 0) {
-        const document = data.data[0] // 첫 번째 문서 사용
-        if (document.downloadUrl || document.path) {
+      console.log('📄 문서 다운로드 API 응답:', data)
+      
+      // API 응답 구조에 맞게 수정
+      if (data.success && data.data && data.data.files && data.data.files.length > 0) {
+        const document = data.data.files[0] // 첫 번째 파일 사용
+        const downloadUrl = document.downloadUrl || document.path
+        
+        if (downloadUrl) {
           // 새 창에서 파일 다운로드
-          const downloadUrl = document.downloadUrl || document.path
           window.open(downloadUrl, '_blank')
           toast.success(`${DOCUMENT_TYPES.find(dt => dt.type === documentType)?.name} 다운로드가 시작되었습니다.`)
           
@@ -366,6 +376,9 @@ export default function PatentDetail() {
         } else {
           throw new Error('다운로드 링크를 받을 수 없습니다.')
         }
+      } else if (data.success === false) {
+        // KIPRIS API에서 실패한 경우
+        throw new Error(data.header?.resultMsg || '문서를 찾을 수 없습니다.')
       } else {
         throw new Error('다운로드할 문서를 찾을 수 없습니다.')
       }
@@ -385,26 +398,24 @@ export default function PatentDetail() {
 
   if (error || !patent) {
     return (
-      <Layout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+      <div className="container mx-auto px-4 py-8">
+          <div className="ms-card text-center max-w-md mx-auto">
+            <h1 className="text-2xl font-semibold text-ms-text mb-4">
               특허 정보를 찾을 수 없습니다
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-ms-text-muted mb-6">
               {error || '요청하신 특허 정보가 존재하지 않습니다.'}
             </p>
-            <Button onClick={handleBackToSearch}>
+            <Button onClick={handleBackToSearch} className="bg-ms-olive hover:bg-ms-olive/90 text-white">
               <ArrowLeft className="w-4 h-4 mr-2" />
               검색으로 돌아가기
             </Button>
           </div>
         </div>
-      </Layout>
     )
   }
 
-  const biblioInfo = patent.biblioSummaryInfo
+  const biblioInfo = patent.biblioSummaryInfoArray?.biblioSummaryInfo
   const tabs = [
     { id: 'summary', label: '서지정보', icon: FileText },
     { id: 'abstract', label: '초록', icon: BookOpen },
@@ -416,30 +427,37 @@ export default function PatentDetail() {
     { id: 'family', label: '패밀리', icon: Globe },
     { id: 'images', label: '도면', icon: ImageIcon },
     { id: 'documents', label: '문서 다운로드', icon: Download },
-    { id: 'market-analysis', label: '시장 분석', icon: TrendingUp },
-    { id: 'business-insights', label: '비즈니스 인사이트', icon: DollarSign }
+    { id: 'market-analysis', label: 'AI 시장분석', icon: TrendingUp },
+    { id: 'business-insights', label: 'AI 비즈니스 인사이트', icon: DollarSign }
   ]
 
   return (
-    <Layout>
-      <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <Button 
             variant="outline" 
             onClick={handleBackToSearch}
-            className="flex items-center gap-2 ms-olive-text ms-olive-hover"
+            className="flex items-center gap-2 border-ms-line-soft text-ms-text hover:bg-ms-soft hover:border-ms-burgundy transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             검색으로 돌아가기
           </Button>
           
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={handleShare} className="ms-olive-text ms-olive-hover">
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="outline" 
+              onClick={handleShare} 
+              className="border-ms-line-soft text-ms-text-muted hover:bg-ms-soft hover:text-ms-burgundy hover:border-ms-burgundy transition-colors"
+            >
               <Share2 className="w-4 h-4 mr-2" />
               공유
             </Button>
-            <Button variant="outline" onClick={handleBookmark} className="ms-olive-text ms-olive-hover">
+            <Button 
+              variant="outline" 
+              onClick={handleBookmark} 
+              className="border-ms-line-soft text-ms-text-muted hover:bg-ms-soft hover:text-ms-burgundy hover:border-ms-burgundy transition-colors"
+            >
               <Bookmark className="w-4 h-4 mr-2" />
               북마크
             </Button>
@@ -447,38 +465,38 @@ export default function PatentDetail() {
         </div>
 
         {/* Title Section */}
-        <Card className="mb-6">
-          <CardHeader>
+        <Card className="ms-card mb-6">
+          <CardHeader className="pb-6">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <CardTitle className="text-2xl mb-2">
+                <CardTitle className="text-2xl font-semibold text-ms-text mb-3 leading-tight">
                   {biblioInfo?.inventionTitle || '제목 없음'}
                 </CardTitle>
                 {biblioInfo?.inventionTitleEng && (
-                  <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">
+                  <p className="text-lg text-ms-text-muted mb-4 font-light">
                     {biblioInfo.inventionTitleEng}
                   </p>
                 )}
-                <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
-                  <div className="flex items-center gap-1">
-                    <Hash className="w-4 h-4" />
-                    출원번호: {biblioInfo?.applicationNumber}
+                <div className="flex flex-wrap gap-4 text-sm text-ms-text-muted">
+                  <div className="flex items-center gap-2">
+                    <Hash className="w-4 h-4 text-ms-text-light" />
+                    <span className="font-medium">출원번호:</span> {biblioInfo?.applicationNumber}
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    출원일: {biblioInfo?.applicationDate}
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-ms-text-light" />
+                    <span className="font-medium">출원일:</span> {biblioInfo?.applicationDate}
                   </div>
-                  <div className="flex items-center gap-1">
-                    <FileText className="w-4 h-4" />
-                    상태: {biblioInfo?.registerStatus || '미등록'}
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-ms-text-light" />
+                    <span className="font-medium">상태:</span> {biblioInfo?.registerStatus || '미등록'}
                   </div>
                 </div>
               </div>
-              <div className="ml-4">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+              <div className="ml-6">
+                <span className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   biblioInfo?.registerStatus === '등록' 
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                    : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                    ? 'bg-ms-olive/10 text-ms-olive border border-ms-olive/20'
+                    : 'bg-ms-olive/10 text-ms-olive border border-ms-olive/20'
                 }`}>
                   {biblioInfo?.registerStatus || '미등록'}
                 </span>
@@ -488,11 +506,12 @@ export default function PatentDetail() {
         </Card>
 
         {/* Tabs */}
-        <div className="mb-6">
-          <div className="border-b border-gray-200 dark:border-gray-700">
-            <nav className="-mb-px flex flex-wrap gap-x-4 gap-y-3 justify-start items-center overflow-hidden">
+        <div className="mb-8">
+          <div className="border-b border-ms-line-soft">
+            <nav className="-mb-px flex flex-wrap gap-x-2 gap-y-3 justify-start items-center overflow-hidden">
               {tabs.map((tab) => {
                 const Icon = tab.icon
+                const isSpecialTab = tab.id === 'market-analysis' || tab.id === 'business-insights'
                 return (
                   <button
                     key={tab.id}
@@ -501,13 +520,13 @@ export default function PatentDetail() {
                       setActiveTab(tab.id)
                       setRenderedTabs(prev => new Set([...prev, tab.id]))
                     }}
-                    className={`flex items-center gap-2 py-2 px-3 border-b-2 font-bold text-sm whitespace-nowrap transition-all duration-200 ${
+                    className={`flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm whitespace-nowrap transition-all duration-200 ${
                       activeTab === tab.id
-                        ? 'border-ms-olive text-ms-olive'
-                        : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                        ? 'border-ms-burgundy text-ms-burgundy bg-ms-burgundy/5'
+                        : 'border-transparent text-ms-text-muted hover:text-ms-text hover:border-ms-line hover:bg-ms-soft'
                     } ${
-                      (tab.id === 'market-analysis' || tab.id === 'business-insights')
-                        ? 'border-2 border-red-500 rounded-md px-4 py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30'
+                      isSpecialTab
+                        ? 'border-2 border-ms-olive/30 rounded-lg px-4 py-2 bg-ms-olive/5 hover:bg-ms-olive/10 text-ms-olive'
                         : ''
                     }`}
                   >
@@ -614,78 +633,77 @@ export default function PatentDetail() {
           )}
         </div>
       </div>
-    </Layout>
   )
 }
 
 // Tab Components
 function SummaryTab({ patent }: { patent: KiprisPatentDetailItem }) {
-  const biblioInfo = patent.biblioSummaryInfo
+  const biblioInfo = patent.biblioSummaryInfoArray?.biblioSummaryInfo
   
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <Card variant="default">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-secondary-900 dark:text-secondary-100">
-            <FileText className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+      <Card className="ms-card">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-ms-text font-semibold">
+            <FileText className="w-5 h-5 text-ms-burgundy" />
             기본 정보
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">출원번호</label>
-            <p className="text-secondary-900 dark:text-secondary-100 font-medium">{biblioInfo?.applicationNumber || '-'}</p>
+            <label className="text-sm font-medium text-ms-text-muted block mb-1">출원번호</label>
+            <p className="text-ms-text font-medium">{biblioInfo?.applicationNumber || '-'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">출원일</label>
-            <p className="text-secondary-900 dark:text-secondary-100">{biblioInfo?.applicationDate || '-'}</p>
+            <label className="text-sm font-medium text-ms-text-muted block mb-1">출원일</label>
+            <p className="text-ms-text">{biblioInfo?.applicationDate || '-'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">공개번호</label>
-            <p className="text-secondary-900 dark:text-secondary-100">{biblioInfo?.openNumber || '-'}</p>
+            <label className="text-sm font-medium text-ms-text-muted block mb-1">공개번호</label>
+            <p className="text-ms-text">{biblioInfo?.openNumber || '-'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">공개일</label>
-            <p className="text-secondary-900 dark:text-secondary-100">{biblioInfo?.openDate || '-'}</p>
+            <label className="text-sm font-medium text-ms-text-muted block mb-1">공개일</label>
+            <p className="text-ms-text">{biblioInfo?.openDate || '-'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">등록번호</label>
-            <p className="text-secondary-900 dark:text-secondary-100 font-medium">{biblioInfo?.registerNumber || '-'}</p>
+            <label className="text-sm font-medium text-ms-text-muted block mb-1">등록번호</label>
+            <p className="text-ms-text font-medium">{biblioInfo?.registerNumber || '-'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">등록일</label>
-            <p className="text-secondary-900 dark:text-secondary-100">{biblioInfo?.registerDate || '-'}</p>
+            <label className="text-sm font-medium text-ms-text-muted block mb-1">등록일</label>
+            <p className="text-ms-text">{biblioInfo?.registerDate || '-'}</p>
           </div>
         </CardContent>
       </Card>
 
-      <Card variant="default">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-secondary-900 dark:text-secondary-100">
-            <Award className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+      <Card className="ms-card">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-ms-text font-semibold">
+            <Award className="w-5 h-5 text-ms-olive" />
             심사 정보
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">심사관</label>
-            <p className="text-secondary-900 dark:text-secondary-100">{biblioInfo?.examinerName || '-'}</p>
+            <label className="text-sm font-medium text-ms-text-muted block mb-1">심사관</label>
+            <p className="text-ms-text">{biblioInfo?.examinerName || '-'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">최종처분</label>
-            <p className="text-secondary-900 dark:text-secondary-100">{biblioInfo?.finalDisposal || '-'}</p>
+            <label className="text-sm font-medium text-ms-text-muted block mb-1">최종처분</label>
+            <p className="text-ms-text">{biblioInfo?.finalDisposal || '-'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">청구항 수</label>
-            <p className="text-secondary-900 dark:text-secondary-100 font-medium">{biblioInfo?.claimCount || '-'}</p>
+            <label className="text-sm font-medium text-ms-text-muted block mb-1">청구항 수</label>
+            <p className="text-ms-text font-medium">{biblioInfo?.claimCount || '-'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">심사청구일</label>
-            <p className="text-secondary-900 dark:text-secondary-100">{biblioInfo?.originalExaminationRequestDate || '-'}</p>
+            <label className="text-sm font-medium text-ms-text-muted block mb-1">심사청구일</label>
+            <p className="text-ms-text">{biblioInfo?.originalExaminationRequestDate || '-'}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">출원구분</label>
-            <p className="text-secondary-900 dark:text-secondary-100">{biblioInfo?.originalApplicationKind || '-'}</p>
+            <label className="text-sm font-medium text-ms-text-muted block mb-1">출원구분</label>
+            <p className="text-ms-text">{biblioInfo?.originalApplicationKind || '-'}</p>
           </div>
         </CardContent>
       </Card>
@@ -714,16 +732,17 @@ function DocumentsTab({
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
+      <Card className="ms-card">
+        <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Download className="w-5 h-5" />
+            <CardTitle className="flex items-center gap-2 text-ms-text font-semibold">
+              <Download className="w-5 h-5 text-ms-burgundy" />
               문서 다운로드
             </CardTitle>
             <Button 
               onClick={onCheckAvailability}
               disabled={availabilityLoading}
+              className="border-ms-line-soft text-ms-text hover:bg-ms-soft hover:border-ms-burgundy hover:text-ms-burgundy"
               variant="outline"
               size="sm"
             >
@@ -744,8 +763,8 @@ function DocumentsTab({
         <CardContent>
           {!hasAvailabilityData && !availabilityLoading && (
             <div className="text-center py-8">
-              <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
+              <AlertCircle className="w-12 h-12 text-ms-text-muted mx-auto mb-4" />
+              <p className="text-ms-text-muted mb-4">
                 문서 가용성을 확인하려면 위의 버튼을 클릭하세요.
               </p>
             </div>
@@ -760,21 +779,21 @@ function DocumentsTab({
                 return (
                   <div
                     key={docType.type}
-                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="border border-ms-line-soft rounded-lg p-4 hover:bg-ms-soft transition-colors"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <File className="w-5 h-5 text-gray-500" />
+                        <File className="w-5 h-5 text-ms-text-muted" />
                         <div>
-                          <h3 className="font-medium text-sm">{docType.name}</h3>
-                          <p className="text-xs text-gray-500 mt-1">{docType.description}</p>
+                          <h3 className="font-medium text-sm text-ms-text">{docType.name}</h3>
+                          <p className="text-xs text-ms-text-muted mt-1">{docType.description}</p>
                         </div>
                       </div>
                       <div className="flex items-center">
                         {isAvailable ? (
-                          <CheckCircle className="w-5 h-5 text-green-500" />
+                          <CheckCircle className="w-5 h-5 text-ms-olive" />
                         ) : (
-                          <XCircle className="w-5 h-5 text-red-500" />
+                          <XCircle className="w-5 h-5 text-ms-burgundy" />
                         )}
                       </div>
                     </div>
@@ -782,14 +801,18 @@ function DocumentsTab({
                     <div className="flex items-center justify-between">
                       <span className={`text-xs px-2 py-1 rounded-full ${
                         isAvailable 
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                          ? 'bg-ms-olive/10 text-ms-olive border border-ms-olive/20'
+                          : 'bg-ms-olive/10 text-ms-olive border border-ms-olive/20'
                       }`}>
                         {isAvailable ? '다운로드 가능' : '다운로드 불가'}
                       </span>
                       
                       <Button
                         size="sm"
+                        className={isAvailable 
+                          ? "bg-ms-olive hover:bg-ms-olive/90 text-white" 
+                          : "border-ms-line-soft text-ms-text-muted hover:bg-ms-soft"
+                        }
                         variant={isAvailable ? "primary" : "outline"}
                         disabled={!isAvailable || isLoading}
                         onClick={() => onDownload(docType.type)}
@@ -813,14 +836,14 @@ function DocumentsTab({
             </div>
           )}
 
-          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <div className="mt-6 p-4 bg-ms-bg-soft rounded-lg border border-ms-line-soft">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-blue-500 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-ms-burgundy mt-0.5" />
               <div className="text-sm">
-                <p className="font-medium text-blue-900 dark:text-blue-100 mb-1">
+                <p className="font-medium text-ms-text mb-1">
                   문서 다운로드 안내
                 </p>
-                <ul className="text-blue-700 dark:text-blue-300 space-y-1">
+                <ul className="text-ms-text-muted space-y-1">
                   <li>• 문서는 KIPRIS 서버에서 직접 제공됩니다.</li>
                   <li>• 일부 문서는 특허 상태에 따라 제공되지 않을 수 있습니다.</li>
                   <li>• 다운로드 링크는 새 창에서 열립니다.</li>
@@ -836,25 +859,25 @@ function DocumentsTab({
 }
 
 function AbstractTab({ patent }: { patent: KiprisPatentDetailItem }) {
-  const abstractInfo = patent.abstractInfo
+  const abstractInfo = patent.abstractInfoArray?.abstractInfo
   
   return (
-    <Card variant="default">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-secondary-900 dark:text-secondary-100">
-          <BookOpen className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+    <Card className="ms-card">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2 text-ms-text font-semibold">
+          <BookOpen className="w-5 h-5 text-ms-burgundy" />
           초록
         </CardTitle>
       </CardHeader>
       <CardContent>
         {abstractInfo?.astrtCont ? (
-          <div className="prose dark:prose-invert max-w-none">
-            <p className="text-secondary-900 dark:text-secondary-100 leading-relaxed whitespace-pre-wrap">
+          <div className="prose max-w-none">
+            <p className="text-ms-text leading-relaxed whitespace-pre-wrap">
               {abstractInfo.astrtCont}
             </p>
           </div>
         ) : (
-          <p className="text-secondary-500 dark:text-secondary-400">초록 정보가 없습니다.</p>
+          <p className="text-ms-text-muted">초록 정보가 없습니다.</p>
         )}
       </CardContent>
     </Card>
@@ -862,13 +885,13 @@ function AbstractTab({ patent }: { patent: KiprisPatentDetailItem }) {
 }
 
 function ClaimsTab({ patent }: { patent: KiprisPatentDetailItem }) {
-  const claims = patent.claimInfo || []
+  const claims = patent.claimInfoArray?.claimInfo || []
   
   return (
-    <Card variant="default">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-secondary-900 dark:text-secondary-100">
-          <Scale className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+    <Card className="ms-card">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2 text-ms-text font-semibold">
+          <Scale className="w-5 h-5 text-ms-burgundy" />
           청구항 ({claims.length}개)
         </CardTitle>
       </CardHeader>
@@ -876,18 +899,18 @@ function ClaimsTab({ patent }: { patent: KiprisPatentDetailItem }) {
         {claims.length > 0 ? (
           <div className="space-y-6">
             {claims.map((claim, index) => (
-              <div key={index} className="border-l-4 border-primary-500 dark:border-primary-400 pl-4 py-2">
-                <h4 className="font-medium text-secondary-900 dark:text-secondary-100 mb-2">
+              <div key={index} className="border-l-4 border-ms-burgundy pl-4 py-2">
+                <h4 className="font-medium text-ms-text mb-2">
                   청구항 {index + 1}
                 </h4>
-                <p className="text-secondary-700 dark:text-secondary-300 leading-relaxed whitespace-pre-wrap">
+                <p className="text-ms-text leading-relaxed whitespace-pre-wrap">
                   {claim.claim}
                 </p>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-secondary-500 dark:text-secondary-400">청구항 정보가 없습니다.</p>
+          <p className="text-ms-text-muted">청구항 정보가 없습니다.</p>
         )}
       </CardContent>
     </Card>
@@ -895,7 +918,7 @@ function ClaimsTab({ patent }: { patent: KiprisPatentDetailItem }) {
 }
 
 function ApplicantTab({ patent }: { patent: KiprisPatentDetailItem }) {
-  const applicants = patent.applicantInfo || []
+  const applicants = patent.applicantInfoArray?.applicantInfo || []
   
   return (
     <Card>
@@ -940,7 +963,7 @@ function ApplicantTab({ patent }: { patent: KiprisPatentDetailItem }) {
 }
 
 function InventorTab({ patent }: { patent: KiprisPatentDetailItem }) {
-  const inventors = patent.inventorInfo || []
+  const inventors = patent.inventorInfoArray?.inventorInfo || []
   
   return (
     <Card>
@@ -985,7 +1008,7 @@ function InventorTab({ patent }: { patent: KiprisPatentDetailItem }) {
 }
 
 function IpcTab({ patent }: { patent: KiprisPatentDetailItem }) {
-  const ipcInfo = patent.ipcInfo || []
+  const ipcInfo = patent.ipcInfoArray?.ipcInfo || []
   
   return (
     <Card>
@@ -1020,7 +1043,7 @@ function IpcTab({ patent }: { patent: KiprisPatentDetailItem }) {
 }
 
 function LegalTab({ patent }: { patent: KiprisPatentDetailItem }) {
-  const legalStatus = patent.legalStatusInfo || []
+  const legalStatus = patent.legalStatusInfoArray?.legalStatusInfo || []
   
   return (
     <Card>
@@ -1065,7 +1088,9 @@ function LegalTab({ patent }: { patent: KiprisPatentDetailItem }) {
 }
 
 function FamilyTab({ patent }: { patent: KiprisPatentDetailItem }) {
-  const familyInfo = patent.familyInfo || []
+  const familyInfo = patent.familyInfoArray?.familyInfo && 'familyApplicationNumber' in patent.familyInfoArray.familyInfo 
+    ? [patent.familyInfoArray.familyInfo] 
+    : []
   
   return (
     <Card>
@@ -1081,7 +1106,7 @@ function FamilyTab({ patent }: { patent: KiprisPatentDetailItem }) {
             {familyInfo.map((family, index) => (
               <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <p className="text-gray-900 dark:text-white font-mono">
-                  {family.familyApplicationNumber}
+                  {'familyApplicationNumber' in family ? family.familyApplicationNumber : '정보 없음'}
                 </p>
               </div>
             ))}
@@ -1167,7 +1192,7 @@ function ImagesTab({ patent }: { patent: KiprisPatentDetailItem }) {
               <div className="border border-secondary-200 dark:border-secondary-700 rounded-lg overflow-hidden">
                 <img 
                   src={imageInfo.path}
-                  alt={`${patent.biblioSummaryInfo?.inventionTitle || '특허'} 도면`}
+                  alt={`${patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle || '특허'} 도면`}
                   className="w-full h-64 object-contain bg-secondary-50 dark:bg-secondary-800"
                   onError={() => setImageError(true)}
                   onLoad={() => setImageError(false)}
@@ -1234,7 +1259,7 @@ function ImagesTab({ patent }: { patent: KiprisPatentDetailItem }) {
                 variant="outline" 
                 onClick={() => handleDownloadImage(
                   imageInfo.largePath || imageInfo.path, 
-                  `patent_${patent.biblioSummaryInfo?.applicationNumber}_drawing.jpg`
+                  `patent_${patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber}_drawing.jpg`
                 )}
                 disabled={imageLoading || !imageInfo.path}
                 aria-label="도면 다운로드"
@@ -1257,7 +1282,7 @@ function ImagesTab({ patent }: { patent: KiprisPatentDetailItem }) {
                   variant="outline" 
                   onClick={() => handleDownloadImage(
                     imageInfo.largePath, 
-                    `patent_${patent.biblioSummaryInfo?.applicationNumber}_drawing_hd.jpg`
+                    `patent_${patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber}_drawing_hd.jpg`
                   )}
                   disabled={imageLoading}
                   aria-label="고해상도 도면 다운로드"

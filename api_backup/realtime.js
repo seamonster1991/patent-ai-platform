@@ -1,5 +1,8 @@
 const { createClient } = require('@supabase/supabase-js');
 
+// 환경변수 로드
+require('dotenv').config();
+
 // Supabase 클라이언트 초기화 (안전한 초기화)
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

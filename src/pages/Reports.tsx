@@ -16,6 +16,7 @@ import {
   Loader2
 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
+import { ActivityTracker } from '../lib/activityTracker'
 import { cn } from '../lib/utils'
 
 interface Report {
@@ -142,7 +143,22 @@ export default function Reports() {
   }
 
   // 다운로드 핸들러
-  const handleDownload = (report: Report) => {
+  const handleDownload = async (report: Report) => {
+    try {
+      // 사용자 활동 추적 - 보고서 다운로드
+      if (user) {
+        const activityTracker = ActivityTracker.getInstance()
+        activityTracker.setUserId(user.id)
+        await activityTracker.trackDocumentDownload(
+          report.application_number || 'unknown',
+          'ai_analysis_report'
+        )
+      }
+    } catch (error) {
+      console.error('보고서 다운로드 활동 추적 오류:', error)
+      // 활동 추적 실패는 다운로드 기능에 영향을 주지 않음
+    }
+    
     window.open(report.downloadUrl, '_blank')
   }
 

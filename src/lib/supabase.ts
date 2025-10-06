@@ -26,7 +26,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // Get the current origin for redirect URLs
 const getRedirectUrl = () => {
   // 서버 렌더링 시 기본값 사용
-  const fallbackUrl = import.meta.env.DEV ? 'http://localhost:5173' : 'https://p-ai-seongwankim-1691-re-chip.vercel.app'
+  const fallbackUrl = import.meta.env.DEV ? 'http://localhost:5173' : 'https://p-5rpsnr89l-re-chip.vercel.app'
   
   // 클라이언트에서만 window.location 사용
   try {
@@ -48,6 +48,61 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 })
 
 console.warn('✅ [Supabase] 클라이언트 생성 완료')
+
+// Supabase 연결 상태 확인 함수
+export const checkSupabaseConnection = async () => {
+  try {
+    const { data, error } = await supabase.from('users').select('count').limit(1)
+    if (error) {
+      console.error('❌ [Supabase] 연결 테스트 실패:', error)
+      return { connected: false, error: error.message }
+    }
+    console.log('✅ [Supabase] 연결 테스트 성공')
+    return { connected: true, error: null }
+  } catch (err) {
+    console.error('❌ [Supabase] 연결 테스트 예외:', err)
+    return { connected: false, error: err instanceof Error ? err.message : 'Unknown error' }
+  }
+}
+
+// 사용자 데이터 초기화 함수 (새 사용자용)
+export const initializeUserData = async (userId: string, email: string, name: string) => {
+  try {
+    // 사용자가 이미 존재하는지 확인
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', userId)
+      .single()
+
+    if (!existingUser) {
+      // 새 사용자 생성
+      const { error: userError } = await supabase
+        .from('users')
+        .insert({
+          id: userId,
+          email,
+          name,
+          subscription_plan: 'free',
+          usage_count: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+
+      if (userError) {
+        console.error('❌ [Supabase] 사용자 생성 실패:', userError)
+        return { success: false, error: userError.message }
+      }
+
+      console.log('✅ [Supabase] 새 사용자 생성 완료:', userId)
+    }
+
+    return { success: true, error: null }
+  } catch (err) {
+    console.error('❌ [Supabase] 사용자 초기화 예외:', err)
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' }
+  }
+}
 
 // Database types
 export interface User {

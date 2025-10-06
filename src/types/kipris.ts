@@ -113,23 +113,51 @@ export interface RndInfo {
   rndTaskNumber: string;
 }
 
-// 새로운 API 응답 구조에 맞는 타입 정의
+// KIPRIS API 상세정보 응답 타입 (실제 사용) - KIPRIS 명세에 맞게 수정
 export interface KiprisPatentDetailItem {
-  biblioSummaryInfo: BiblioSummaryInfo | null;
-  ipcInfo: IpcInfo[];
-  applicantInfo: ApplicantInfo[];
-  inventorInfo: InventorInfo[];
-  abstractInfo: AbstractInfo | null;
-  claimInfo: ClaimInfo[];
-  agentInfo: AgentInfo[];
-  priorityInfo: PriorityInfo[];
-  familyInfo: FamilyInfo[];
-  internationalInfo: InternationalInfo[];
-  designatedStateInfo: DesignatedStateInfo[];
-  priorArtDocumentsInfo: PriorArtDocumentsInfo[];
-  legalStatusInfo: LegalStatusInfo[];
-  imagePathInfo: ImagePathInfo | null;
-  rndInfo: RndInfo[];
+  biblioSummaryInfoArray: {
+    biblioSummaryInfo: BiblioSummaryInfo;
+  };
+  ipcInfoArray: {
+    ipcInfo: IpcInfo[];
+  };
+  familyInfoArray: {
+    familyInfo: FamilyInfo | {};
+  };
+  abstractInfoArray: {
+    abstractInfo: AbstractInfo;
+  };
+  internationalInfoArray: {
+    internationalInfo: InternationalInfo[];
+  };
+  claimInfoArray: {
+    claimInfo: ClaimInfo[];
+  };
+  applicantInfoArray: {
+    applicantInfo: ApplicantInfo[];
+  };
+  inventorInfoArray: {
+    inventorInfo: InventorInfo[];
+  };
+  agentInfoArray: {
+    agentInfo: AgentInfo[];
+  };
+  priorityInfoArray: {
+    priorityInfo: PriorityInfo[];
+  };
+  designatedStateInfoArray: {
+    designatedStateInfo: DesignatedStateInfo[];
+  };
+  priorArtDocumentsInfoArray: {
+    priorArtDocumentsInfo: PriorArtDocumentsInfo[];
+  };
+  legalStatusInfoArray: {
+    legalStatusInfo: LegalStatusInfo[];
+  };
+  imagePathInfo: ImagePathInfo;
+  rndInfoArray: {
+    rndInfo: RndInfo[];
+  };
   applicationNumber?: string; // 출원번호
   registrationNumber?: string; // 등록번호
 }

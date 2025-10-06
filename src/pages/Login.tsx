@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Eye, EyeOff, Search } from 'lucide-react'
-import Layout from '../components/Layout/Layout'
 import Button from '../components/UI/Button'
 import Input from '../components/UI/Input'
 import Card, { CardContent, CardHeader, CardTitle } from '../components/UI/Card'
+import ProfileUpdateModal from '../components/ProfileUpdateModal'
 import { useAuthStore } from '../store/authStore'
 import { validateEmail } from '../lib/utils'
 import { toast } from 'sonner'
@@ -20,10 +20,47 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [lastRedirectAttempt, setLastRedirectAttempt] = useState<number>(0)
   const [redirectBlocked, setRedirectBlocked] = useState(false)
+  const [showProfileModal, setShowProfileModal] = useState(false)
   
-  const { signIn, isAdmin, user, loading: authLoading, initialized } = useAuthStore()
+  const { signIn, isAdmin, user, profile, loading: authLoading, initialized } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
+
+  const handleSuccessfulLoginRedirect = () => {
+    // 이전 페이지(from)가 있으면 우선 이동, 없으면 관리자 여부에 따라 기본 경로로 이동
+    const fromPath = (location.state as any)?.from?.pathname as string | undefined;
+    let targetPath = '/';
+    
+    if (fromPath) {
+      targetPath = fromPath;
+      console.log('[Login] 이전 페이지로 이동:', fromPath);
+    } else if (formData.email === 'admin@p-ai.com' || isAdmin) {
+      targetPath = '/admin';
+      console.log('[Login] 관리자 계정으로 /admin 이동');
+    } else {
+      console.log('[Login] 일반 사용자 계정으로 / 이동');
+    }
+
+    // 리다이렉트 가드 확인
+    if (redirectGuard.canRedirect(targetPath, 'Login-handleSubmit')) {
+      redirectGuard.recordRedirect(targetPath, 'Login-handleSubmit');
+      navigate(targetPath, { replace: true });
+    } else {
+      console.warn('[Login] 리다이렉트 루프 방지로 인해 리다이렉트 취소:', targetPath);
+      console.error('[Login] RedirectGuard 상태:', redirectGuard.getStatus());
+      toast.error('리다이렉트 오류가 발생했습니다. 페이지를 새로고침해주세요.');
+    }
+  }
+
+  const handleProfileUpdateComplete = () => {
+    setShowProfileModal(false);
+    handleSuccessfulLoginRedirect();
+  }
+
+  const handleProfileUpdateClose = () => {
+    setShowProfileModal(false);
+    handleSuccessfulLoginRedirect();
+  }
 
   // 페이지 로드 시 이미 로그인된 사용자 확인 (한 번만 실행)
   useEffect(() => {
@@ -105,35 +142,25 @@ export default function Login() {
         toast.error(result.error)
         setLoading(false)
       } else {
-        console.log('[Login] 로그인 성공, 즉시 리다이렉트 처리');
+        console.log('[Login] 로그인 성공, 프로필 정보 확인');
         toast.success('로그인되었습니다.')
         
-        // 로그인 성공 시 즉시 리다이렉트 처리
         setLoading(false)
         
-        // 이전 페이지(from)가 있으면 우선 이동, 없으면 관리자 여부에 따라 기본 경로로 이동
-        const fromPath = (location.state as any)?.from?.pathname as string | undefined;
-        let targetPath = '/';
-        
-        if (fromPath) {
-          targetPath = fromPath;
-          console.log('[Login] 이전 페이지로 이동:', fromPath);
-        } else if (formData.email === 'admin@p-ai.com' || isAdmin) {
-          targetPath = '/admin';
-          console.log('[Login] 관리자 계정으로 /admin 이동');
-        } else {
-          console.log('[Login] 일반 사용자 계정으로 / 이동');
-        }
-
-        // 리다이렉트 가드 확인
-        if (redirectGuard.canRedirect(targetPath, 'Login-handleSubmit')) {
-          redirectGuard.recordRedirect(targetPath, 'Login-handleSubmit');
-          navigate(targetPath, { replace: true });
-        } else {
-          console.warn('[Login] 리다이렉트 루프 방지로 인해 리다이렉트 취소:', targetPath);
-          console.error('[Login] RedirectGuard 상태:', redirectGuard.getStatus());
-          toast.error('리다이렉트 오류가 발생했습니다. 페이지를 새로고침해주세요.');
-        }
+        // 프로필 정보 완성도 확인 (약간의 지연을 두어 profile이 로드될 시간을 줌)
+        setTimeout(() => {
+          const currentProfile = useAuthStore.getState().profile;
+          const needsProfileUpdate = !currentProfile?.name || !currentProfile?.phone;
+          
+          if (needsProfileUpdate) {
+            console.log('[Login] 프로필 정보 미완성, 모달 표시');
+            setShowProfileModal(true);
+            return;
+          }
+          
+          // 프로필이 완성된 경우 리다이렉트 처리
+          handleSuccessfulLoginRedirect();
+        }, 500);
       }
     } catch (error) {
       console.error('[Login] 로그인 예외:', error);
@@ -155,20 +182,17 @@ export default function Login() {
   // authStore가 초기화되는 동안 로딩 표시
   if (!initialized) {
     return (
-      <Layout>
-        <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ms-olive mx-auto"></div>
             <p className="mt-4 text-slate-400">인증 상태 확인 중...</p>
           </div>
         </div>
-      </Layout>
     );
   }
 
   return (
-    <Layout>
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           {/* Logo and Title */}
           <div className="text-center">
@@ -236,7 +260,7 @@ export default function Login() {
                     <span className="ml-2 text-sm text-slate-300">로그인 상태 유지</span>
                   </label>
                   <Link
-                    to="/forgot-password"
+                    to="/password-reset"
                     className="text-sm text-ms-olive font-bold hover:text-ms-olive"
                   >
                     비밀번호 찾기
@@ -267,71 +291,14 @@ export default function Login() {
             </CardContent>
           </Card>
 
-          {/* Demo Account Info */}
-          <Card className="bg-slate-900 border-slate-600">
-            <CardContent className="text-center">
-              <p className="text-sm text-slate-400 mb-2">
-                데모 계정으로 체험해보세요
-              </p>
-              <div className="text-xs text-slate-500 space-y-1">
-                <div>이메일: demo@example.com</div>
-                <div>비밀번호: demo123456</div>
-              </div>
-              <Button
-                onClick={async () => {
-                  setFormData({ email: 'demo@example.com', password: 'demo123456' });
-                  setLoading(true);
-                  
-                  try {
-                    console.log('[Login] 데모 로그인 시도');
-                    const result = await signIn('demo@example.com', 'demo123456');
-                    
-                    if (result.error) {
-                      console.log('[Login] 데모 로그인 실패:', result.error);
-                      toast.error(result.error);
-                      setLoading(false);
-                    } else {
-                      console.log('[Login] 데모 로그인 성공, 즉시 리다이렉트 처리');
-                      toast.success('데모 로그인 성공');
-                      
-                      // 로그인 성공 시 즉시 리다이렉트 처리 (handleSubmit과 동일한 로직)
-                      setLoading(false);
-                      const fromPath = (location.state as any)?.from?.pathname as string | undefined;
-                      let targetPath = '/';
-                      
-                      if (fromPath) {
-                        targetPath = fromPath;
-                        console.log('[Login] 이전 페이지로 이동:', fromPath);
-                      } else {
-                        console.log('[Login] 일반 사용자 계정으로 / 이동');
-                      }
+          {/* Profile Update Modal */}
+          <ProfileUpdateModal
+            isOpen={showProfileModal}
+            onClose={handleProfileUpdateClose}
+            onComplete={handleProfileUpdateComplete}
+          />
 
-                      // 리다이렉트 가드 확인
-                      if (redirectGuard.canRedirect(targetPath, 'Login-demo')) {
-                        redirectGuard.recordRedirect(targetPath, 'Login-demo');
-                        navigate(targetPath, { replace: true });
-                      } else {
-                        console.warn('[Login] 리다이렉트 루프 방지로 인해 리다이렉트 취소:', targetPath);
-                        console.error('[Login] RedirectGuard 상태:', redirectGuard.getStatus());
-                        toast.error('리다이렉트 오류가 발생했습니다. 페이지를 새로고침해주세요.');
-                      }
-                    }
-                  } catch (error) {
-                    console.error('[Login] 데모 로그인 예외:', error);
-                    toast.error('로그인 중 오류가 발생했습니다.');
-                    setLoading(false);
-                  }
-                }}
-                className="mt-3 w-full bg-ms-olive hover:bg-ms-olive/90"
-                size="sm"
-                disabled={loading}
-              >
-                🧪 데모 로그인 테스트
-              </Button>
-            </CardContent>
-          </Card>
         </div>
       </div>
-    </Layout>
   )
 }

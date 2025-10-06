@@ -85,6 +85,7 @@ interface AdminStore {
   
   // 로딩 상태
   isLoading: boolean
+  error: string | null
   
   // 액션
   fetchSystemMetrics: () => Promise<void>
@@ -110,245 +111,149 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   adminUsers: [],
   paymentRisks: [],
   isLoading: false,
+  error: null,
 
-  // 시스템 메트릭 가져오기
+  // 시스템 메트릭 조회
   fetchSystemMetrics: async () => {
-    set({ isLoading: true })
     try {
-      // LLM 분석 로그에서 비용 및 사용량 계산
-      const { data: llmLogs } = await supabase
-        .from('llm_analysis_logs')
-        .select('total_tokens, cost_estimate, processing_time_ms, created_at')
-        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-
-      // 시스템 메트릭에서 캐싱 및 성능 데이터
-      const { data: systemData } = await supabase
-        .from('system_metrics')
-        .select('*')
-        .gte('recorded_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-
-      const totalCost = llmLogs?.reduce((sum, log) => sum + (Number(log.cost_estimate) || 0), 0) || 0
-      const totalTokens = llmLogs?.reduce((sum, log) => sum + (log.total_tokens || 0), 0) || 0
-      const avgLatency = llmLogs?.reduce((sum, log) => sum + (log.processing_time_ms || 0), 0) / (llmLogs?.length || 1) || 0
-
-      // 캐싱 히트율 계산 (시스템 메트릭에서)
-      const cachingMetric = systemData?.find(m => m.metric_name === 'cache_hit_rate')
-      const cachingHitRate = cachingMetric ? Number(cachingMetric.value) : 75.0
-
-      const systemMetrics: SystemMetrics = {
-        llmCost: totalCost,
-        llmUsage: totalTokens,
-        cachingHitRate,
-        estimatedSavings: totalCost * (cachingHitRate / 100),
-        apiLatency: avgLatency,
-        errorRate: 0.8, // 기본값
-        systemHealth: totalCost > 2000 ? 'warning' : 'healthy'
+      set({ isLoading: true });
+      
+      const response = await fetch('/api/admin/statistics?type=system-metrics');
+      if (!response.ok) {
+        throw new Error('시스템 메트릭 조회 실패');
       }
       
-      set({ systemMetrics })
+      const result = await response.json();
+      if (result.success) {
+        set({ systemMetrics: result.data });
+      } else {
+        throw new Error(result.error || '시스템 메트릭 조회 실패');
+      }
     } catch (error) {
-      console.error('Failed to fetch system metrics:', error)
+      console.error('시스템 메트릭 조회 실패:', error);
+      set({ error: '시스템 메트릭을 불러오는데 실패했습니다.' });
     } finally {
-      set({ isLoading: false })
+      set({ isLoading: false });
     }
   },
 
-  // 사용자 통계 가져오기
+  // 사용자 통계 조회
   fetchUserStats: async () => {
-    set({ isLoading: true })
     try {
-      // 전체 사용자 수
-      const { count: totalUsers } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-
-      // 프리미엄 사용자 수
-      const { count: premiumUsers } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .eq('subscription_plan', 'premium')
-
-      // 최근 30일 활성 사용자 (활동 기록이 있는 사용자)
-      const { data: activeUserData } = await supabase
-        .from('user_activities')
-        .select('user_id')
-        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-
-      const activeUsers = new Set(activeUserData?.map(a => a.user_id)).size
-
-      // 최근 7일 신규 가입자
-      const { count: newSignups } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
-
-      const userStats: UserStats = {
-        totalUsers: totalUsers || 0,
-        activeUsers,
-        newSignups: newSignups || 0,
-        premiumUsers: premiumUsers || 0,
-        freeUsers: (totalUsers || 0) - (premiumUsers || 0)
+      set({ isLoading: true });
+      
+      const response = await fetch('/api/admin/statistics?type=user-stats');
+      if (!response.ok) {
+        throw new Error('사용자 통계 조회 실패');
       }
       
-      set({ userStats })
+      const result = await response.json();
+      if (result.success) {
+        set({ userStats: result.data });
+      } else {
+        throw new Error(result.error || '사용자 통계 조회 실패');
+      }
     } catch (error) {
-      console.error('Failed to fetch user stats:', error)
+      console.error('사용자 통계 조회 실패:', error);
+      set({ error: '사용자 통계를 불러오는데 실패했습니다.' });
     } finally {
-      set({ isLoading: false })
+      set({ isLoading: false });
     }
   },
 
-  // 수익 메트릭 가져오기
+  // 수익 메트릭 조회
   fetchRevenueMetrics: async () => {
-    set({ isLoading: true })
     try {
-      // 결제 이벤트에서 수익 데이터 계산
-      const { data: billingEvents } = await supabase
-        .from('billing_events')
-        .select('amount, event_type, processed_at')
-        .in('event_type', ['subscription_created', 'invoice_paid'])
-
-      const totalRevenue = billingEvents?.reduce((sum, event) => sum + (Number(event.amount) || 0), 0) || 0
+      set({ isLoading: true });
       
-      // 월간 반복 수익 (MRR) - 최근 30일 구독 수익
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-      const recentRevenue = billingEvents?.filter(e => e.processed_at >= thirtyDaysAgo)
-        .reduce((sum, event) => sum + (Number(event.amount) || 0), 0) || 0
-
-      const revenueMetrics: RevenueMetrics = {
-        mrr: recentRevenue,
-        churnRate: 3.2, // 기본값 - 실제로는 구독 취소 이벤트에서 계산
-        arr: recentRevenue * 12,
-        totalRevenue,
-        avgRevenuePerUser: totalRevenue / Math.max(1, (await supabase.from('users').select('*', { count: 'exact', head: true })).count || 1)
+      const response = await fetch('/api/admin/statistics?type=revenue-metrics');
+      if (!response.ok) {
+        throw new Error('수익 메트릭 조회 실패');
       }
       
-      set({ revenueMetrics })
+      const result = await response.json();
+      if (result.success) {
+        set({ revenueMetrics: result.data });
+      } else {
+        throw new Error(result.error || '수익 메트릭 조회 실패');
+      }
     } catch (error) {
-      console.error('Failed to fetch revenue metrics:', error)
+      console.error('수익 메트릭 조회 실패:', error);
+      set({ error: '수익 메트릭을 불러오는데 실패했습니다.' });
     } finally {
-      set({ isLoading: false })
+      set({ isLoading: false });
     }
   },
 
-  // 검색 키워드 가져오기
+  // 검색 키워드 통계 조회
   fetchSearchKeywords: async () => {
-    set({ isLoading: true })
     try {
-      // 특허 검색 분석에서 인기 키워드 추출
-      const { data: searchData } = await supabase
-        .from('patent_search_analytics')
-        .select('search_query, created_at')
-        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-
-      // 키워드별 카운트 계산
-      const keywordCounts: { [key: string]: number } = {}
-      searchData?.forEach(search => {
-        const keyword = search.search_query.toLowerCase()
-        keywordCounts[keyword] = (keywordCounts[keyword] || 0) + 1
-      })
-
-      // 상위 10개 키워드 선택
-      const searchKeywords: SearchKeyword[] = Object.entries(keywordCounts)
-        .sort(([,a], [,b]) => b - a)
-        .slice(0, 10)
-        .map(([keyword, count]) => ({
-          keyword,
-          count,
-          growthRate: Math.random() * 30 - 10 // 임시 성장률
-        }))
-
-      set({ searchKeywords })
+      set({ isLoading: true });
+      
+      const response = await fetch('/api/admin/statistics?type=search-keywords');
+      if (!response.ok) {
+        throw new Error('검색 키워드 통계 조회 실패');
+      }
+      
+      const result = await response.json();
+      if (result.success) {
+        set({ searchKeywords: result.data });
+      } else {
+        throw new Error(result.error || '검색 키워드 조회 실패');
+      }
     } catch (error) {
-      console.error('Failed to fetch search keywords:', error)
+      console.error('검색 키워드 조회 실패:', error);
+      set({ error: '검색 키워드를 불러오는데 실패했습니다.' });
     } finally {
-      set({ isLoading: false })
+      set({ isLoading: false });
     }
   },
 
   // 기술 분포 가져오기
   fetchTechDistribution: async () => {
-    set({ isLoading: true })
     try {
-      // IPC/CPC 코드별 분석 건수
-      const { data: searchData } = await supabase
-        .from('patent_search_analytics')
-        .select('ipc_codes, cpc_codes')
-        .not('ipc_codes', 'is', null)
-
-      const codeCounts: { [key: string]: number } = {}
-      let totalCount = 0
-
-      searchData?.forEach(search => {
-        const codes = [...(search.ipc_codes || []), ...(search.cpc_codes || [])]
-        codes.forEach(code => {
-          if (code) {
-            const category = code.substring(0, 4) // 첫 4자리로 카테고리 분류
-            codeCounts[category] = (codeCounts[category] || 0) + 1
-            totalCount++
-          }
-        })
-      })
-
-      const techDistribution: TechDistribution[] = Object.entries(codeCounts)
-        .sort(([,a], [,b]) => b - a)
-        .slice(0, 8)
-        .map(([category, count]) => ({
-          category,
-          count,
-          percentage: (count / totalCount) * 100
-        }))
-
-      set({ techDistribution })
+      set({ isLoading: true });
+      
+      const response = await fetch('/api/admin/statistics?type=tech-distribution');
+      if (!response.ok) {
+        throw new Error('기술 분포 통계 조회 실패');
+      }
+      
+      const result = await response.json();
+      if (result.success) {
+        set({ techDistribution: result.data });
+      } else {
+        throw new Error(result.error || '기술 분포 조회 실패');
+      }
     } catch (error) {
-      console.error('Failed to fetch tech distribution:', error)
+      console.error('기술 분포 조회 실패:', error);
+      set({ error: '기술 분포를 불러오는데 실패했습니다.' });
     } finally {
-      set({ isLoading: false })
+      set({ isLoading: false });
     }
   },
 
   // 인기 특허 가져오기
   fetchTopPatents: async () => {
-    set({ isLoading: true })
     try {
-      // LLM 분석 로그에서 가장 많이 분석된 특허
-      const { data: analysisData } = await supabase
-        .from('llm_analysis_logs')
-        .select('patent_application_number')
-        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-
-      const patentCounts: { [key: string]: number } = {}
-      analysisData?.forEach(analysis => {
-        const patent = analysis.patent_application_number
-        patentCounts[patent] = (patentCounts[patent] || 0) + 1
-      })
-
-      // AI 분석 리포트에서 특허 정보 가져오기
-      const topPatentNumbers = Object.entries(patentCounts)
-        .sort(([,a], [,b]) => b - a)
-        .slice(0, 10)
-        .map(([patent]) => patent)
-
-      const { data: patentDetails } = await supabase
-        .from('ai_analysis_reports')
-        .select('application_number, invention_title')
-        .in('application_number', topPatentNumbers)
-
-      const topPatents: TopPatent[] = topPatentNumbers.map(patentNumber => {
-        const detail = patentDetails?.find(p => p.application_number === patentNumber)
-        return {
-          applicationNumber: patentNumber,
-          title: detail?.invention_title || '제목 없음',
-          applicant: '출원인 정보 없음', // 별도 테이블에서 가져와야 함
-          analysisCount: patentCounts[patentNumber]
-        }
-      })
-
-      set({ topPatents })
+      set({ isLoading: true });
+      
+      const response = await fetch('/api/admin/statistics?type=top-patents');
+      if (!response.ok) {
+        throw new Error('인기 특허 통계 조회 실패');
+      }
+      
+      const result = await response.json();
+      if (result.success) {
+        set({ topPatents: result.data });
+      } else {
+        throw new Error(result.error || '인기 특허 조회 실패');
+      }
     } catch (error) {
-      console.error('Failed to fetch top patents:', error)
+      console.error('인기 특허 조회 실패:', error);
+      set({ error: '인기 특허를 불러오는데 실패했습니다.' });
     } finally {
-      set({ isLoading: false })
+      set({ isLoading: false });
     }
   },
 

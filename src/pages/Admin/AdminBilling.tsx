@@ -22,47 +22,23 @@ import {
 } from 'lucide-react';
 
 const AdminBilling: React.FC = () => {
-  const { 
-    revenueStats,
+  const {
+    revenueMetrics,
     paymentRisks,
-    loading, 
-    error, 
-    fetchRevenueStats,
+    isLoading,
+    fetchRevenueMetrics,
     fetchPaymentRisks
   } = useAdminStore();
 
   useEffect(() => {
-    fetchRevenueStats();
+    fetchRevenueMetrics();
     fetchPaymentRisks();
-  }, [fetchRevenueStats, fetchPaymentRisks]);
+  }, [fetchRevenueMetrics, fetchPaymentRisks]);
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
-            ))}
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {[...Array(2)].map((_, i) => (
-              <div key={i} className="h-64 bg-gray-200 rounded-lg"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <div className="flex items-center">
-          <AlertTriangle className="h-5 w-5 text-red-500 mr-2" />
-          <span className="text-red-700">{error}</span>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-500">로딩 중...</div>
       </div>
     );
   }
@@ -119,16 +95,16 @@ const AdminBilling: React.FC = () => {
             <Flex alignItems="start">
               <div>
                 <Text className="text-gray-600">월간 반복 수익 (MRR)</Text>
-                <Metric className="text-ms-text">${revenueStats?.mrr.toLocaleString()}</Metric>
+                <Metric className="text-ms-text">${revenueMetrics?.mrr?.toLocaleString() || 0}</Metric>
               </div>
               <DollarSign className="h-8 w-8 text-ms-olive" />
             </Flex>
             <Flex className="mt-4">
               <BadgeDelta 
-                deltaType={getDeltaType(revenueStats?.mrrChange || 0)}
+                deltaType="unchanged"
                 size="xs"
               >
-                {revenueStats?.mrrChange > 0 ? '+' : ''}{revenueStats?.mrrChange}%
+                변화 없음
               </BadgeDelta>
               <Text className="text-xs text-gray-500">전월 대비</Text>
             </Flex>
@@ -139,16 +115,16 @@ const AdminBilling: React.FC = () => {
             <Flex alignItems="start">
               <div>
                 <Text className="text-gray-600">이탈률 (Churn Rate)</Text>
-                <Metric className="text-ms-text">{revenueStats?.churnRate}%</Metric>
+                <Metric className="text-ms-text">{revenueMetrics?.churnRate?.toFixed(1) || 0}%</Metric>
               </div>
               <TrendingDown className="h-8 w-8 text-ms-olive" />
             </Flex>
             <Flex className="mt-4">
               <BadgeDelta 
-                deltaType={getDeltaType(-(revenueStats?.churnChange || 0))}
+                deltaType="unchanged"
                 size="xs"
               >
-                {revenueStats?.churnChange > 0 ? '+' : ''}{revenueStats?.churnChange}%
+                변화 없음
               </BadgeDelta>
               <Text className="text-xs text-gray-500">전월 대비</Text>
             </Flex>
@@ -159,16 +135,16 @@ const AdminBilling: React.FC = () => {
             <Flex alignItems="start">
               <div>
                 <Text className="text-gray-600">연간 반복 수익 (ARR)</Text>
-                <Metric className="text-ms-text">${revenueStats?.arr.toLocaleString()}</Metric>
+                <Metric className="text-ms-text">${revenueMetrics?.arr?.toLocaleString() || 0}</Metric>
               </div>
               <TrendingUp className="h-8 w-8 text-ms-olive" />
             </Flex>
             <Flex className="mt-4">
               <BadgeDelta 
-                deltaType={getDeltaType(revenueStats?.arrChange || 0)}
+                deltaType="unchanged"
                 size="xs"
               >
-                {revenueStats?.arrChange > 0 ? '+' : ''}{revenueStats?.arrChange}%
+                변화 없음
               </BadgeDelta>
               <Text className="text-xs text-gray-500">전년 대비</Text>
             </Flex>
@@ -215,7 +191,7 @@ const AdminBilling: React.FC = () => {
                     <CreditCard className="h-5 w-5 text-gray-400" />
                     <div>
                       <div className="font-medium text-ms-text">{risk.email}</div>
-                      <div className="text-sm text-gray-600">{risk.issue}</div>
+                      <div className="text-sm text-gray-600">{risk.riskType}</div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">

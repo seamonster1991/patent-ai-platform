@@ -13,6 +13,7 @@ import AuthCallback from "@/pages/AuthCallback";
 import ProtectedRoute from "@/components/Auth/ProtectedRoute";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
+import PasswordReset from "@/pages/PasswordReset";
 import TestReportGeneration from "@/components/TestReportGeneration";
 import Reports from "@/pages/Reports";
 import TestLogin from "@/pages/TestLogin";
@@ -23,10 +24,14 @@ import AdminUsers from "@/pages/Admin/AdminUsers";
 import AdminBilling from "@/pages/Admin/AdminBilling";
 import { useAuthStore } from "@/store/authStore";
 import { useThemeStore } from "@/store/themeStore";
+import { usePageTracking } from "@/hooks/usePageTracking";
 
 export default function App() {
   const { initialize } = useAuthStore();
   const { isDark } = useThemeStore();
+  
+  // 페이지 네비게이션 추적 활성화
+  usePageTracking();
 
   useEffect(() => {
     initialize();
@@ -65,12 +70,9 @@ export default function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/password-reset" element={<PasswordReset />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
-              <Route path="/search" element={
-                <ProtectedRoute>
-                  <Search />
-                </ProtectedRoute>
-              } />
+              <Route path="/search" element={<Search />} />
               <Route path="/patent/:applicationNumber" element={
                 <ProtectedRoute>
                   <PatentDetail />

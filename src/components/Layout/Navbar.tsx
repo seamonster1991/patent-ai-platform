@@ -1,281 +1,227 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Search, User, LogOut, Menu, X, Moon, Sun } from 'lucide-react'
-import { useState, useMemo, useCallback } from 'react'
-import { useAuthStore } from '../../store/authStore'
-import { useThemeStore } from '../../store/themeStore'
-import { cn } from '../../lib/utils'
-import { toast } from 'sonner'
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, User, LogOut, Settings, Sun, Moon, Search, FileText } from 'lucide-react';
+import { useAuthStore } from '../../store/authStore';
+import { useThemeStore } from '../../store/themeStore';
 
-export default function Navbar() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { user, signOut, loading, initialized } = useAuthStore()
-  const { isDark, toggleTheme } = useThemeStore()
-  const location = useLocation()
-  const navigate = useNavigate()
+const Navbar: React.FC = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuthStore();
+  const { isDark, toggleTheme } = useThemeStore();
 
-  // 네비게이션 메뉴 메모이제이션
-  const navigation = useMemo(() => [
-    { name: '홈', href: '/', icon: Search },
-    { name: '검색', href: '/search', icon: Search },
-    { name: '대시보드', href: '/dashboard', icon: User },
-  ], [])
+  const handleLogout = () => {
+    signOut();
+    navigate('/');
+    setIsProfileOpen(false);
+  };
 
-  // 활성 경로 확인 함수 메모이제이션
-  const isActive = useCallback((path: string) => {
-    if (path === '/') {
-      return location.pathname === '/'
-    }
-    return location.pathname.startsWith(path)
-  }, [location.pathname])
+  const isActive = (path: string) => location.pathname === path;
 
-  // 로그아웃 핸들러 메모이제이션
-  const handleSignOut = useCallback(async () => {
-    try {
-      await signOut()
-      setIsMenuOpen(false)
-      toast.success('로그아웃되었습니다.')
-      navigate('/')
-    } catch (error) {
-      console.error('로그아웃 오류:', error)
-      toast.error('로그아웃 중 오류가 발생했습니다.')
-    }
-  }, [signOut, navigate])
-
-  // 보호된 네비게이션 핸들러 메모이제이션
-  const handleProtectedNavigation = useCallback((href: string, name: string) => {
-    if (!user) {
-      toast.error(`${name} 페이지는 로그인이 필요합니다.`)
-      navigate('/login')
-      return
-    }
-    navigate(href)
-  }, [user, navigate])
-
-  // AuthStore가 초기화되지 않았으면 간단한 로딩 상태 표시
-  if (!initialized) {
-    return (
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-ms-line">
-        <div className="ms-container">
-          <div className="flex justify-between items-center h-16">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-md border border-ms-line bg-white/70 flex items-center justify-center">
-                <Search className="w-5 h-5 text-ms-olive" />
-              </div>
-              <span className="text-xl font-semibold text-ms-text">P-AI</span>
-            </Link>
-            <div className="w-6 h-6 border-2 border-ms-olive border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        </div>
-      </nav>
-    )
-  }
-
-
+  const navLinks = [
+    { path: '/', label: '홈', icon: null },
+    { path: '/search', label: '특허 검색', icon: Search },
+    { path: '/dashboard', label: '대시보드', icon: null, requireAuth: false },
+  ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/70 dark:bg-slate-900/60 backdrop-blur border-b border-ms-line">
-      <div className="ms-container">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo and main navigation */}
-          <div className="flex items-center">
-            <Link 
-              to="/" 
-              className="flex items-center space-x-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ms-olive focus-visible:ring-offset-2 focus-visible:ring-offset-white rounded-md"
-            >
-              <div className="w-8 h-8 rounded-md border border-ms-line bg-white/70 flex items-center justify-center">
-                <Search className="w-5 h-5 text-ms-olive" />
-              </div>
-              <span className="text-xl font-semibold text-ms-text">P-AI</span>
-            </Link>
-
-            {/* Desktop navigation */}
-            <div className="hidden md:ml-10 md:flex md:space-x-8">
-              {navigation.map((item) => {
-                // 홈 페이지는 항상 표시, 검색과 대시보드는 로그인 상태에 따라 처리
-                if (item.href === '/') {
-                  return (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      className={cn(
-                        'inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 transition-colors',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ms-olive focus-visible:ring-offset-2',
-                        'focus-visible:ring-offset-white',
-                        isActive(item.href)
-                          ? 'border-ms-olive text-ms-olive'
-                          : 'border-transparent text-gray-700 hover:text-ms-olive hover:border-ms-line'
-                      )}
-                    >
-                      <item.icon className="w-4 h-4 mr-2" />
-                      {item.name}
-                    </Link>
-                  )
-                }
-
-                // 검색과 대시보드는 로그인 상태에 따라 처리
-                return (
-                  <button
-                    key={item.name}
-                    onClick={() => handleProtectedNavigation(item.href, item.name)}
-                    className={cn(
-                      'inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 transition-colors',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ms-olive focus-visible:ring-offset-2',
-                      'focus-visible:ring-offset-white',
-                      isActive(item.href)
-                        ? 'border-ms-olive text-ms-olive'
-                        : 'border-transparent text-gray-700 hover:text-ms-olive hover:border-ms-line',
-                      !user && 'opacity-75'
-                    )}
-                  >
-                    <item.icon className="w-4 h-4 mr-2" />
-                    {item.name}
-                    {!user && <span className="ml-1 text-xs text-secondary-400">🔒</span>}
-                  </button>
-                )
-              })}
+    <nav className="bg-ms-white border-b border-ms-line sticky top-0 z-50 backdrop-blur-sm bg-opacity-95">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 min-h-[4rem]">
+          {/* Logo */}
+          <Link 
+            to="/" 
+            className="flex items-center space-x-3 group flex-shrink-0"
+          >
+            <div className="w-8 h-8 bg-ms-olive rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">P</span>
             </div>
+            <span className="text-ms-primary font-semibold text-lg tracking-tight group-hover:text-ms-olive transition-colors">
+              Patent AI
+            </span>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-0.5 flex-shrink-0">
+            {navLinks.map((link) => {
+              if (link.requireAuth && !user) return null;
+              
+              return (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`px-2.5 py-2 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+                    isActive(link.path)
+                      ? 'bg-ms-olive text-white shadow-ms-sm'
+                      : 'text-ms-secondary hover:text-ms-olive hover:bg-ms-soft'
+                  }`}
+                >
+                  <div className="flex items-center space-x-1.5">
+                    {link.icon && <link.icon className="w-4 h-4" />}
+                    <span>{link.label}</span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
 
-          {/* User menu */}
-          <div className="flex items-center space-x-4">
+          {/* Desktop Actions */}
+          <div className="hidden md:flex items-center space-x-2 flex-shrink-0">
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="text-gray-700 hover:text-ms-olive transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ms-olive focus-visible:ring-offset-2 focus-visible:ring-offset-white rounded-md p-1"
-              aria-label={isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}
+              className="p-2 rounded-md text-ms-secondary hover:text-ms-olive hover:bg-ms-soft transition-all duration-200"
+              aria-label="테마 변경"
             >
-              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
 
             {user ? (
-              <>
-                <Link
-                  to="/profile"
-                  className="text-gray-700 hover:text-ms-olive transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ms-olive focus-visible:ring-offset-2 focus-visible:ring-offset-white rounded-md p-1"
-                  aria-label="개인정보 수정"
-                >
-                  <User className="h-5 w-5" />
-                </Link>
+              /* User Profile Dropdown */
+              <div className="relative">
                 <button
-                  onClick={handleSignOut}
-                  className="text-gray-700 hover:text-danger-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white rounded-md p-1"
-                  aria-label="로그아웃"
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center space-x-2 p-2 rounded-md text-ms-secondary hover:text-ms-olive hover:bg-ms-soft transition-all duration-200"
                 >
-                  <LogOut className="h-5 w-5" />
+                  <User className="w-5 h-5" />
+                  <span className="text-sm font-medium">{user.email}</span>
                 </button>
-              </>
+
+                {isProfileOpen && (
+                  <div className="absolute right-0 mt-2 w-56 bg-ms-white border border-ms-line rounded-lg shadow-ms-lg py-2 z-50">
+                    <div className="px-4 py-2 border-b border-ms-soft">
+                      <p className="text-sm font-medium text-ms-primary">{user.email}</p>
+                      <p className="text-xs text-ms-muted">사용자</p>
+                    </div>
+                    
+                    <Link
+                      to="/profile"
+                      className="flex items-center space-x-2 px-4 py-2 text-sm text-ms-secondary hover:text-ms-olive hover:bg-ms-soft transition-colors"
+                      onClick={() => setIsProfileOpen(false)}
+                    >
+                      <Settings className="w-4 h-4" />
+                      <span>프로필 설정</span>
+                    </Link>
+                    
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-ms-secondary hover:text-ms-olive hover:bg-ms-soft transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>로그아웃</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
-              <div className="flex items-center space-x-2">
+              /* Auth Buttons */
+              <div className="flex items-center space-x-1.5">
                 <Link
                   to="/login"
-                  className="text-gray-800 hover:text-ms-olive transition-colors px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ms-olive focus-visible:ring-offset-2 focus-visible:ring-offset-white rounded-md"
+                  className="px-3 py-2 text-sm font-medium text-ms-olive hover:text-ms-olive/80 transition-colors"
                 >
                   로그인
                 </Link>
                 <Link
                   to="/register"
-                  className="border border-ms-line text-ms-olive px-4 py-2 rounded-md hover:bg-ms-olive/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ms-olive focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                  className="ms-btn-primary"
                 >
                   회원가입
                 </Link>
               </div>
             )}
-
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden text-secondary-600 dark:text-secondary-300 hover:text-ms-olive transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ms-olive focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900 rounded-lg p-1"
-              aria-label={isMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
-              aria-expanded={isMenuOpen}
-            >
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
           </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="md:hidden p-2 rounded-md text-ms-secondary hover:text-ms-olive hover:bg-ms-soft transition-all duration-200"
+            aria-label="메뉴 열기"
+          >
+            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
         </div>
 
-        {/* Mobile menu */}
+        {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden bg-white/70 dark:bg-slate-900/60 backdrop-blur border-t border-ms-line">
-            <div className="px-2 pt-2 pb-3 space-y-1">
-              {navigation.map((item) => {
-                // 홈 페이지는 항상 표시
-                if (item.href === '/') {
-                  return (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      onClick={() => setIsMenuOpen(false)}
-                      className={cn(
-                        'flex items-center px-3 py-2 text-base font-medium rounded-lg transition-colors',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ms-olive focus-visible:ring-offset-2',
-                        'focus-visible:ring-offset-white',
-                        isActive(item.href)
-                          ? 'text-ms-olive'
-                          : 'text-gray-600 hover:text-ms-olive'
-                      )}
-                    >
-                      <item.icon className="w-5 h-5 mr-3" />
-                      {item.name}
-                    </Link>
-                  )
-                }
-
-                // 검색과 대시보드는 로그인 상태에 따라 처리
+          <div className="md:hidden border-t border-ms-soft bg-ms-white">
+            <div className="py-4 space-y-2">
+              {navLinks.map((link) => {
+                if (link.requireAuth && !user) return null;
+                
                 return (
-                  <button
-                    key={item.name}
-                    onClick={() => {
-                      setIsMenuOpen(false)
-                      handleProtectedNavigation(item.href, item.name)
-                    }}
-                    className={cn(
-                      'flex items-center w-full px-3 py-2 text-base font-medium rounded-lg transition-colors',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ms-olive focus-visible:ring-offset-2',
-                      'focus-visible:ring-offset-white',
-                      isActive(item.href)
-                        ? 'text-ms-olive'
-                        : 'text-gray-600 hover:text-ms-olive',
-                      !user && 'opacity-75'
-                    )}
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className={`flex items-center space-x-3 px-4 py-3 rounded-md text-sm font-medium transition-all duration-200 ${
+                      isActive(link.path)
+                        ? 'bg-ms-olive text-white'
+                        : 'text-ms-secondary hover:text-ms-olive hover:bg-ms-soft'
+                    }`}
+                    onClick={() => setIsMenuOpen(false)}
                   >
-                    <item.icon className="w-5 h-5 mr-3" />
-                    {item.name}
-                    {!user && <span className="ml-auto text-xs text-secondary-400">🔒</span>}
-                  </button>
-                )
+                    {link.icon && <link.icon className="w-4 h-4" />}
+                    <span>{link.label}</span>
+                  </Link>
+                );
               })}
-              
+
+              {/* Mobile Theme Toggle */}
+              <button
+                onClick={() => {
+                  toggleTheme();
+                  setIsMenuOpen(false);
+                }}
+                className="flex items-center space-x-3 w-full px-4 py-3 rounded-md text-sm font-medium text-ms-secondary hover:text-ms-olive hover:bg-ms-soft transition-all duration-200"
+              >
+                {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                <span>{isDark ? '라이트 모드' : '다크 모드'}</span>
+              </button>
+
               {user ? (
-                <div className="border-t border-secondary-200 dark:border-secondary-700 pt-4 mt-4">
+                /* Mobile User Menu */
+                <div className="border-t border-ms-soft pt-4 mt-4">
+                  <div className="px-4 py-2 mb-2">
+                    <p className="text-sm font-medium text-ms-primary">{user.email}</p>
+                    <p className="text-xs text-ms-muted">사용자</p>
+                  </div>
+                  
                   <Link
                     to="/profile"
+                    className="flex items-center space-x-3 px-4 py-3 rounded-md text-sm font-medium text-ms-secondary hover:text-ms-olive hover:bg-ms-soft transition-colors"
                     onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center px-3 py-2 text-base font-medium text-secondary-600 dark:text-secondary-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-secondary-100 dark:hover:bg-secondary-800 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900"
                   >
-                    <User className="w-5 h-5 mr-3" />
-                    프로필
+                    <Settings className="w-4 h-4" />
+                    <span>프로필 설정</span>
                   </Link>
+                  
                   <button
-                    onClick={handleSignOut}
-                    className="flex items-center w-full px-3 py-2 text-base font-medium text-secondary-600 dark:text-secondary-300 hover:text-danger-600 dark:hover:text-danger-400 hover:bg-secondary-100 dark:hover:bg-secondary-800 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900"
+                    onClick={() => {
+                      handleLogout();
+                      setIsMenuOpen(false);
+                    }}
+                    className="flex items-center space-x-3 w-full px-4 py-3 rounded-md text-sm font-medium text-ms-secondary hover:text-ms-olive hover:bg-ms-soft transition-colors"
                   >
-                    <LogOut className="w-5 h-5 mr-3" />
-                    로그아웃
+                    <LogOut className="w-4 h-4" />
+                    <span>로그아웃</span>
                   </button>
                 </div>
               ) : (
-                <div className="border-t border-secondary-200 dark:border-secondary-700 pt-4 mt-4 space-y-1">
+                /* Mobile Auth Buttons */
+                <div className="border-t border-ms-soft pt-4 mt-4 space-y-2">
                   <Link
                     to="/login"
+                    className="block px-4 py-3 rounded-md text-sm font-medium text-ms-olive hover:text-ms-olive/80 hover:bg-ms-soft transition-colors"
                     onClick={() => setIsMenuOpen(false)}
-                    className="block px-3 py-2 text-base font-medium text-secondary-600 dark:text-secondary-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-secondary-100 dark:hover:bg-secondary-800 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900"
                   >
                     로그인
                   </Link>
                   <Link
                     to="/register"
+                    className="block px-4 py-3 rounded-md text-sm font-medium bg-ms-olive text-white hover:bg-ms-olive/90 transition-colors"
                     onClick={() => setIsMenuOpen(false)}
-                    className="block px-3 py-2 text-base font-medium bg-primary-600 text-white hover:bg-primary-700 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900"
                   >
                     회원가입
                   </Link>
@@ -285,6 +231,24 @@ export default function Navbar() {
           </div>
         )}
       </div>
+
+      {/* Overlay for mobile menu */}
+      {isMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-20 z-40 md:hidden"
+          onClick={() => setIsMenuOpen(false)}
+        />
+      )}
+
+      {/* Overlay for profile dropdown */}
+      {isProfileOpen && (
+        <div 
+          className="fixed inset-0 z-40"
+          onClick={() => setIsProfileOpen(false)}
+        />
+      )}
     </nav>
-  )
-}
+  );
+};
+
+export default Navbar;

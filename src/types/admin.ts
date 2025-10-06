@@ -10,6 +10,70 @@ export interface AdminStats {
   reportsToday: number;
 }
 
+// 시스템 메트릭 타입 정의
+export interface SystemMetrics {
+  llmCost: number;
+  llmUsage: number;
+  cachingHitRate: number;
+  estimatedSavings: number;
+  apiLatency: number;
+  errorRate: number;
+  systemHealth: 'healthy' | 'warning' | 'critical';
+}
+
+// 사용자 통계 타입 정의
+export interface UserStats {
+  totalUsers: number;
+  activeUsers: number;
+  newSignups: number;
+  premiumUsers: number;
+  freeUsers: number;
+}
+
+// 수익 메트릭 타입 정의
+export interface RevenueMetrics {
+  mrr: number; // Monthly Recurring Revenue
+  churnRate: number;
+  arr: number; // Annual Recurring Revenue
+  totalRevenue: number;
+  avgRevenuePerUser: number;
+}
+
+// 검색 키워드 타입 정의
+export interface SearchKeyword {
+  keyword: string;
+  count: number;
+  growthRate: number;
+}
+
+// 기술 분야별 분포 타입 정의
+export interface TechDistribution {
+  category: string;
+  count: number;
+  percentage: number;
+}
+
+// 인기 특허 타입 정의
+export interface TopPatent {
+  applicationNumber: string;
+  title: string;
+  applicant: string;
+  analysisCount: number;
+}
+
+// 결제 위험 타입 정의
+export interface PaymentRisk {
+  id: string;
+  userId: string;
+  userEmail: string;
+  riskType: 'failed_payment' | 'chargeback' | 'fraud_suspected' | 'expired_card';
+  riskLevel: 'low' | 'medium' | 'high';
+  amount: number;
+  description: string;
+  detectedAt: string;
+  status: 'pending' | 'resolved' | 'investigating';
+}
+
 export interface SystemHealth {
   status: 'healthy' | 'warning' | 'critical';
   overallStatus: 'healthy' | 'warning' | 'error';
@@ -83,6 +147,8 @@ export interface AdminUser {
   lastLogin?: string;
   createdAt: string;
   isActive: boolean;
+  reportCount?: number;
+  lastActivity?: string;
 }
 
 export interface BillingEvent {

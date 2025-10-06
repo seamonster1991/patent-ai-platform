@@ -43,23 +43,23 @@ function Button({
     ].join(' '),
     
     secondary: [
-      'bg-white hover:bg-secondary-50 active:bg-secondary-100',
-      'text-secondary-900 dark:text-secondary-100',
-      'border border-ms-line dark:border-secondary-700',
+      'bg-white hover:bg-ms-surface active:bg-ms-surface-hover',
+      'text-ms-text dark:text-ms-text',
+      'border border-ms-line',
       'shadow-none',
       'focus-visible:ring-ms-olive focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900'
     ].join(' '),
     
     outline: [
-      'bg-transparent hover:bg-ms-olive/5 active:bg-ms-olive/10',
-      'text-secondary-900 dark:text-secondary-100',
+      'bg-transparent hover:bg-ms-surface active:bg-ms-surface-hover',
+      'text-ms-text dark:text-ms-text',
       'border border-ms-line',
       'hover:border-ms-olive/40',
-      'focus-visible:ring-ms-olive focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900'
+        'focus-visible:ring-ms-olive focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900'
     ].join(' '),
     
     ghost: [
-      'bg-transparent hover:bg-ms-olive/5 active:bg-ms-olive/10',
+      'bg-transparent hover:bg-ms-surface active:bg-ms-surface-hover',
       'text-ms-olive',
       'border border-transparent',
       'shadow-none',
@@ -91,10 +91,9 @@ function Button({
     ].join(' '),
     
     default: [
-      'bg-transparent hover:bg-secondary-50 active:bg-secondary-100',
-      'dark:hover:bg-dark-800 dark:active:bg-dark-700',
-      'text-secondary-900 dark:text-secondary-100',
-      'border border-ms-line dark:border-secondary-700',
+      'bg-transparent hover:bg-ms-surface active:bg-ms-surface-hover',
+      'text-ms-text dark:text-ms-text',
+      'border border-ms-line',
       'shadow-none',
       'focus-visible:ring-ms-olive focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900'
     ].join(' ')

@@ -87,11 +87,12 @@ interface KiprisSearchResponse {
   body: {
     items: KiprisPatentItem[]
     count: {
-      numOfRows: number
-      pageNo: number
-      totalCount: number
+      totalCount: number | string
+      pageNo: number | string
+      numOfRows: number | string
     }
   }
+  totalCount?: number // 백엔드에서 추가된 총 검색건수 (레거시 호환)
 }
 
 interface SearchState {
@@ -190,6 +191,16 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   reports: [],
 
   setFilters: (newFilters) => {
+    const { filters: currentFilters } = get()
+    
+    // 필터 변경 추적
+    const activityTracker = ActivityTracker.getInstance()
+    const { user } = useAuthStore.getState()
+    
+    if (user) {
+      activityTracker.trackFilterChange(currentFilters, { ...currentFilters, ...newFilters })
+    }
+    
     set((state) => ({
       filters: { ...state.filters, ...newFilters }
     }))
@@ -232,7 +243,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
       console.log('🔍 [SearchStore] API 호출 시작:', { searchParams });
 
-      // 새로운 API 유틸리티 사용
+      // 새로운 API 유티리티 사용
       const data = await apiSearchPatents(searchParams)
 
       console.log('🔍 [SearchStore] API 응답 데이터:', data);
@@ -243,43 +254,45 @@ export const useSearchStore = create<SearchState>((set, get) => ({
         return { error: errorMessage }
       }
 
-      const kiprisResponse: KiprisSearchResponse = data.data
+      // 백엔드에서 처리된 응답 구조
+      const responseData = data.data
 
-      // KIPRIS API 응답 검증
-      if (kiprisResponse?.header?.successYN !== 'Y') {
-        const errorMessage = kiprisResponse?.header?.resultMsg || 'KIPRIS API 오류가 발생했습니다.'
+      if (!responseData) {
+        const errorMessage = '검색 결과 데이터가 없습니다.'
         set({ loading: false, error: errorMessage })
         return { error: errorMessage }
       }
 
-      const finalTotalCount = kiprisResponse.body.count?.totalCount || 0;
-      const currentResults = kiprisResponse.body.items || [];
-      
-      console.log('🔍 [SearchStore] API에서 받은 정확한 데이터:', {
-        totalCount: finalTotalCount,
-        itemsLength: currentResults.length,
-        pageNo: kiprisResponse.body.count?.pageNo,
-        numOfRows: kiprisResponse.body.count?.numOfRows
-      });
-      
-      set({
-        results: currentResults,
-        totalCount: finalTotalCount,
-        loading: false,
-        error: null
-      })
+      // 응답 데이터에서 필요한 정보 추출 (객체 형태 { items, count }를 안전하게 처리)
+      const bodyObj: any = (responseData as any).body || {};
+      const items: KiprisPatentItem[] = Array.isArray(bodyObj)
+        ? (bodyObj as KiprisPatentItem[]) // 레거시: body가 배열인 경우
+        : (bodyObj.items || []);
+      const countObject: any = Array.isArray(bodyObj) ? {} : (bodyObj.count || {});
+      const totalCountRaw = (countObject.totalCount ?? (responseData as any).totalCount ?? 0) as number | string;
+      const pageNoRaw = (countObject.pageNo ?? get().filters.pageNo ?? 1) as number | string;
+      const numOfRowsRaw = (countObject.numOfRows ?? get().filters.numOfRows ?? 30) as number | string;
 
-      console.log('✅ [SearchStore] 상태 업데이트 완료:', {
-        resultsLength: currentResults.length,
-        totalCount: finalTotalCount,
-        currentPage: page
-      });
+      const totalCount = typeof totalCountRaw === 'string' ? parseInt(totalCountRaw, 10) || 0 : totalCountRaw;
+      const pageNo = typeof pageNoRaw === 'string' ? parseInt(pageNoRaw, 10) || 1 : pageNoRaw;
+      const numOfRows = typeof numOfRowsRaw === 'string' ? parseInt(numOfRowsRaw, 10) || 30 : numOfRowsRaw;
+
+      // 상태 업데이트
+       set({
+         results: items,
+         totalCount: totalCount, // 추출된 totalCount 사용
+         currentPage: pageNo,
+         loading: false,
+         error: null
+       });
+      
+      
 
       // 검색 성공 시 상태 자동 저장
       get().saveSearchState()
       
       // 검색 기록을 데이터베이스에 저장
-      get().saveSearchToHistory(filters.word || filters.keyword || '', finalTotalCount)
+      get().saveSearchToHistory(filters.word || filters.keyword || '', totalCount)
 
       // 사용자 활동 추적 - 검색 실행
       try {
@@ -294,7 +307,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
               filters: filters,
               searchType: 'patent_search'
             },
-            finalTotalCount
+            totalCount
           )
         }
       } catch (error) {
@@ -302,10 +315,10 @@ export const useSearchStore = create<SearchState>((set, get) => ({
         // 활동 추적 실패는 검색 기능에 영향을 주지 않음
       }
 
-      return {}
+      return { error: null }
     } catch (error) {
       console.error('🔍 [SearchStore] 검색 오류:', error)
-      const errorMessage = error instanceof Error ? error.message : '네트워크 오류가 발생했습니다.'
+      const errorMessage = error instanceof Error ? error.message : '검색 중 오류가 발생했습니다.'
       set({ loading: false, error: errorMessage })
       return { error: errorMessage }
     }

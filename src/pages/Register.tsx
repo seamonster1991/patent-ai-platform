@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Search, Check } from 'lucide-react'
-import Layout from '../components/Layout/Layout'
 import Button from '../components/UI/Button'
 import Input from '../components/UI/Input'
 import Card, { CardContent, CardHeader, CardTitle } from '../components/UI/Card'
@@ -47,8 +46,10 @@ export default function Register() {
       newErrors.email = '올바른 이메일 형식을 입력해주세요.'
     }
 
-    if (formData.phone && !/^[0-9-+\s()]{10,15}$/.test(formData.phone.replace(/\s/g, ''))) {
-      newErrors.phone = '올바른 전화번호 형식을 입력해주세요.'
+    if (!formData.phone.trim()) {
+      newErrors.phone = '전화번호를 입력해주세요.'
+    } else if (!/^\d{3}-\d{4}-\d{4}$/.test(formData.phone)) {
+      newErrors.phone = '전화번호는 000-0000-0000 형식으로 입력해주세요.'
     }
 
     if (!formData.password) {
@@ -82,7 +83,7 @@ export default function Register() {
       const result = await signUp(formData.email, formData.password, {
         name: formData.name,
         company: formData.company || null,
-        phone: formData.phone || null,
+        phone: formData.phone,
       })
 
       if (result.error) {
@@ -115,10 +116,31 @@ export default function Register() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({ 
-      ...prev, 
-      [name]: value 
-    }))
+    
+    // Format phone number automatically
+    if (name === 'phone') {
+      const phoneValue = value.replace(/\D/g, '') // Remove non-digits
+      let formattedPhone = phoneValue
+      
+      if (phoneValue.length >= 3) {
+        formattedPhone = phoneValue.slice(0, 3) + '-'
+        if (phoneValue.length >= 7) {
+          formattedPhone += phoneValue.slice(3, 7) + '-' + phoneValue.slice(7, 11)
+        } else {
+          formattedPhone += phoneValue.slice(3)
+        }
+      }
+      
+      setFormData(prev => ({ 
+        ...prev, 
+        [name]: formattedPhone 
+      }))
+    } else {
+      setFormData(prev => ({ 
+        ...prev, 
+        [name]: value 
+      }))
+    }
     
     // Clear error when user starts typing
     if (errors[name]) {
@@ -136,8 +158,7 @@ export default function Register() {
   ]
 
   return (
-    <Layout>
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           {/* Logo and Title */}
           <div className="text-center">
@@ -162,7 +183,7 @@ export default function Register() {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <Input
-                  label="이름"
+                  label="이름 (필수)"
                   type="text"
                   name="name"
                   value={formData.name}
@@ -170,10 +191,11 @@ export default function Register() {
                   error={errors.name}
                   placeholder="홍길동"
                   autoComplete="name"
+                  required
                 />
 
                 <Input
-                  label="이메일"
+                  label="이메일 (필수)"
                   type="email"
                   name="email"
                   value={formData.email}
@@ -181,6 +203,7 @@ export default function Register() {
                   error={errors.email}
                   placeholder="your@email.com"
                   autoComplete="email"
+                  required
                 />
 
                 <Input
@@ -194,19 +217,20 @@ export default function Register() {
                 />
 
                 <Input
-                  label="전화번호 (선택사항)"
+                  label="전화번호 (필수)"
                   type="tel"
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
                   error={errors.phone}
-                  placeholder="010-1234-5678"
+                  placeholder="000-0000-0000"
                   autoComplete="tel"
+                  required
                 />
 
                 <div className="relative">
                   <Input
-                    label="비밀번호"
+                    label="비밀번호 (필수)"
                     type={showPassword ? 'text' : 'password'}
                     name="password"
                     value={formData.password}
@@ -214,6 +238,7 @@ export default function Register() {
                     error={errors.password}
                     placeholder="비밀번호를 입력하세요"
                     autoComplete="new-password"
+                    required
                   />
                   <button
                     type="button"
@@ -255,7 +280,7 @@ export default function Register() {
 
                 <div className="relative">
                   <Input
-                    label="비밀번호 확인"
+                    label="비밀번호 확인 (필수)"
                     type={showConfirmPassword ? 'text' : 'password'}
                     name="confirmPassword"
                     value={formData.confirmPassword}
@@ -263,6 +288,7 @@ export default function Register() {
                     error={errors.confirmPassword}
                     placeholder="비밀번호를 다시 입력하세요"
                     autoComplete="new-password"
+                    required
                   />
                   <button
                     type="button"
@@ -298,7 +324,7 @@ export default function Register() {
                       type="checkbox"
                       checked={agreedToPrivacy}
                       onChange={(e) => setAgreedToPrivacy(e.target.checked)}
-                      className="w-4 h-4 mt-0.5 text-ms-olive bg-slate-700 border-ms-line rounded focus:ring-ms-olive focus:ring-2"
+                      className="w-4 h-4 mt-0.5 text-ms-burgundy bg-slate-700 border-ms-line rounded focus:ring-ms-burgundy focus:ring-2"
                     />
                     <span className="text-sm text-slate-300">
                       <Link to="/privacy" className="text-blue-400 hover:text-blue-300">
@@ -369,6 +395,5 @@ export default function Register() {
           </Card>
         </div>
       </div>
-    </Layout>
   )
 }

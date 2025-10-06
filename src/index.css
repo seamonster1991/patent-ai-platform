@@ -2,190 +2,456 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CSS 변수를 통한 프리미엄 색상 시스템 */
+/* ===== Minimal Strategist Design System ===== */
+/* 미니멀 스트래티지스트 컨셉: 순백색/저대비 미색 배경, 딥 버건디/다크 올리브 강조색 */
+
 :root {
-  /* 프리미엄 라이트 모드 색상 */
-  --color-primary: 30 58 138; /* 네이비 블루 */
-  --color-primary-foreground: 255 255 255;
-  --color-secondary: 71 85 105; /* 슬레이트 그레이 */
-  --color-secondary-foreground: 255 255 255;
-  --color-accent: 217 119 6; /* 골드 */
-  --color-accent-foreground: 255 255 255;
-  --color-background: 255 255 255;
-  --color-foreground: 15 23 42;
-  --color-muted: 248 250 252;
-  --color-muted-foreground: 100 116 139;
-  --color-border: 226 232 240;
-  --color-input: 226 232 240;
-  --color-ring: 30 58 138;
-  --color-success: 5 150 105;
-  --color-warning: 217 119 6;
-  --color-danger: 220 38 38;
+  /* === Minimal Strategist Color Palette === */
+  /* Deep Olive & Dark Olive Accent Colors */
+  --ms-olive: #6B7280;        /* Deep olive primary */
+  --ms-olive-50: #F9FAFB;     /* Very light olive */
+  --ms-olive-100: #F3F4F6;    /* Light olive */
+  --ms-olive-600: #6B7280;    /* Main olive */
+  --ms-olive-700: #4B5563;    /* Dark olive */
+  --ms-olive-800: #374151;    /* Darker olive */
   
-  /* 프리미엄 그라데이션 색상 */
-  --gradient-primary: linear-gradient(135deg, rgb(30 58 138) 0%, rgb(59 130 246) 100%);
-  --gradient-secondary: linear-gradient(135deg, rgb(71 85 105) 0%, rgb(100 116 139) 100%);
-  --gradient-accent: linear-gradient(135deg, rgb(217 119 6) 0%, rgb(245 158 11) 100%);
-  --gradient-success: linear-gradient(135deg, rgb(5 150 105) 0%, rgb(34 197 94) 100%);
+  --ms-olive: #365314;           /* Dark olive primary */
+  --ms-olive-50: #F7FEE7;        /* Very light olive */
+  --ms-olive-100: #ECFCCB;       /* Light olive */
+  --ms-olive-600: #365314;       /* Main olive */
+  --ms-olive-700: #1A2E05;       /* Dark olive */
+  --ms-olive-800: #14532D;       /* Darker olive */
+
+  /* === Minimal Background & Text === */
+  /* Pure white/off-white backgrounds with deep neutral text */
+  --ms-bg: 255 255 255;          /* Pure white background */
+  --ms-bg-soft: 249 250 251;     /* Soft off-white (gray-50) */
+  --ms-text: 17 24 39;           /* Deep neutral text (gray-900) */
+  --ms-text-secondary: 75 85 99; /* Secondary text (gray-600) */
+  --ms-text-muted: 107 114 128;  /* Muted text (gray-500) */
   
-  /* 고급 그림자 */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+  /* === Minimal Lines & Borders === */
+  --ms-line: 229 231 235;        /* Subtle border (gray-200) */
+  --ms-line-soft: 243 244 246;   /* Very soft border (gray-100) */
   
-  /* 프리미엄 색상 팔레트 */
-  --navy-50: 248 250 252;
-  --navy-100: 241 245 249;
-  --navy-200: 226 232 240;
-  --navy-300: 203 213 225;
-  --navy-400: 148 163 184;
-  --navy-500: 100 116 139;
-  --navy-600: 71 85 105;
-  --navy-700: 51 65 85;
-  --navy-800: 30 41 59;
-  --navy-900: 15 23 42;
+  /* === Minimal Shadows === */
+  --ms-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --ms-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --ms-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  
+  /* === Typography Scale === */
+  --ms-font-xs: 0.75rem;         /* 12px */
+  --ms-font-sm: 0.875rem;        /* 14px */
+  --ms-font-base: 1rem;          /* 16px */
+  --ms-font-lg: 1.125rem;        /* 18px */
+  --ms-font-xl: 1.25rem;         /* 20px */
+  --ms-font-2xl: 1.5rem;         /* 24px */
+  --ms-font-3xl: 1.875rem;       /* 30px */
+  --ms-font-4xl: 2.25rem;        /* 36px */
+  
+  /* === Spacing Scale === */
+  --ms-space-xs: 0.5rem;         /* 8px */
+  --ms-space-sm: 0.75rem;        /* 12px */
+  --ms-space-md: 1rem;           /* 16px */
+  --ms-space-lg: 1.5rem;         /* 24px */
+  --ms-space-xl: 2rem;           /* 32px */
+  --ms-space-2xl: 3rem;          /* 48px */
+  --ms-space-3xl: 4rem;          /* 64px */
 }
 
-/* 커스텀 스크롤바 스타일링 */
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgb(203 213 225) transparent;
+/* === Dark Mode Overrides === */
+.dark {
+  --ms-bg: 9 9 11;               /* Dark background (zinc-900) */
+  --ms-bg-soft: 24 24 27;        /* Soft dark background (zinc-800) */
+  --ms-text: 244 244 245;        /* Light text (zinc-100) */
+  --ms-text-secondary: 161 161 170; /* Secondary light text (zinc-400) */
+  --ms-text-muted: 113 113 122;  /* Muted light text (zinc-500) */
+  --ms-line: 39 39 42;           /* Dark border (zinc-700) */
+  --ms-line-soft: 63 63 70;      /* Soft dark border (zinc-600) */
 }
 
-.custom-scrollbar::-webkit-scrollbar {
+/* ===== Base Typography & Layout ===== */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    font-size: 16px;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: rgb(var(--ms-bg));
+    color: rgb(var(--ms-text));
+    font-family: 'system-ui', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  /* === Minimal Typography Hierarchy === */
+  h1 { 
+    font-size: var(--ms-font-4xl); 
+    font-weight: 700; 
+    line-height: 1.1; 
+    letter-spacing: -0.025em; 
+    margin: 0 0 var(--ms-space-lg) 0;
+    color: rgb(var(--ms-text));
+  }
+  
+  h2 { 
+    font-size: var(--ms-font-3xl); 
+    font-weight: 600; 
+    line-height: 1.2; 
+    letter-spacing: -0.025em; 
+    margin: 0 0 var(--ms-space-md) 0;
+    color: rgb(var(--ms-text));
+  }
+  
+  h3 { 
+    font-size: var(--ms-font-2xl); 
+    font-weight: 600; 
+    line-height: 1.3; 
+    margin: 0 0 var(--ms-space-sm) 0;
+    color: rgb(var(--ms-text));
+  }
+  
+  h4 { 
+    font-size: var(--ms-font-xl); 
+    font-weight: 500; 
+    line-height: 1.4; 
+    margin: 0 0 var(--ms-space-sm) 0;
+    color: rgb(var(--ms-text));
+  }
+  
+  p { 
+    font-size: var(--ms-font-base); 
+    line-height: 1.7; 
+    margin: 0 0 var(--ms-space-md) 0;
+    color: rgb(var(--ms-text-secondary));
+  }
+
+  /* === Focus States === */
+  *:focus-visible {
+    outline: 2px solid var(--ms-olive);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* === Selection === */
+  ::selection {
+    background-color: rgba(124, 45, 18, 0.15);
+    color: rgb(var(--ms-text));
+  }
+
+  ::-moz-selection {
+    background-color: rgba(124, 45, 18, 0.15);
+    color: rgb(var(--ms-text));
+  }
+}
+
+/* ===== Minimal Strategist Utility Classes ===== */
+@layer utilities {
+  /* === Background Colors === */
+  .bg-ms-white { background-color: rgb(var(--ms-bg)); }
+  .bg-ms-soft { background-color: rgb(var(--ms-bg-soft)); }
+  .bg-ms-surface { background-color: rgb(var(--ms-bg-soft)); }
+  .bg-ms-surface-hover { background-color: rgb(var(--ms-line-soft)); }
+  .bg-ms-olive { background-color: var(--ms-olive); }
+  .bg-ms-olive { background-color: var(--ms-olive); }
+  
+  /* === Text Colors === */
+  .text-ms-primary { color: rgb(var(--ms-text)); }
+  .text-ms-secondary { color: rgb(var(--ms-text-secondary)); }
+  .text-ms-muted { color: rgb(var(--ms-text-muted)); }
+  .text-ms-text { color: rgb(var(--ms-text)); }
+  .text-ms-text-light { color: rgb(var(--ms-text-secondary)); }
+  .text-ms-text-muted { color: rgb(var(--ms-text-muted)); }
+  .text-ms-olive { color: var(--ms-olive); }
+  .text-ms-olive { color: var(--ms-olive); }
+  .ms-olive { color: var(--ms-olive); }
+  
+  /* === Border Colors === */
+  .border-ms-line { border-color: rgb(var(--ms-line)); }
+  .border-ms-soft { border-color: rgb(var(--ms-line-soft)); }
+  .border-ms-line-soft { border-color: rgb(var(--ms-line-soft)); }
+  .border-ms-olive { border-color: var(--ms-olive); }
+  .border-ms-olive { border-color: var(--ms-olive); }
+  .ms-line { border-color: rgb(var(--ms-line)); }
+  
+  /* === Focus and Ring Colors === */
+  .focus\:border-ms-olive:focus { border-color: var(--ms-olive); }
+  .focus\:ring-ms-olive:focus { 
+    box-shadow: 0 0 0 3px rgba(54, 83, 20, 0.1); 
+  }
+  .focus-visible\:ring-ms-olive:focus-visible { 
+    box-shadow: 0 0 0 2px var(--ms-olive); 
+  }
+  .focus-visible\:ring-offset-white:focus-visible { 
+    box-shadow: 0 0 0 2px white, 0 0 0 4px var(--ms-olive); 
+  }
+  
+  /* === Hover Effects === */
+  .hover\:bg-ms-soft:hover { background-color: rgb(var(--ms-bg-soft)); }
+  .hover\:text-ms-olive:hover { color: var(--ms-olive); }
+  .hover\:text-ms-olive:hover { color: var(--ms-olive); }
+  .hover\:text-ms-text:hover { color: rgb(var(--ms-text)); }
+  .hover\:border-ms-olive:hover { border-color: var(--ms-olive); }
+  
+  /* === Shadows === */
+  .shadow-ms-sm { box-shadow: var(--ms-shadow-sm); }
+  .shadow-ms-md { box-shadow: var(--ms-shadow-md); }
+  .shadow-ms-lg { box-shadow: var(--ms-shadow-lg); }
+  
+  /* === Spacing === */
+  .space-ms-xs { margin: var(--ms-space-xs); }
+  .space-ms-sm { margin: var(--ms-space-sm); }
+  .space-ms-md { margin: var(--ms-space-md); }
+  .space-ms-lg { margin: var(--ms-space-lg); }
+  .space-ms-xl { margin: var(--ms-space-xl); }
+  .space-ms-2xl { margin: var(--ms-space-2xl); }
+  .space-ms-3xl { margin: var(--ms-space-3xl); }
+  
+  /* === Minimal Cards === */
+  .ms-card {
+    background-color: rgb(var(--ms-bg));
+    border: 1px solid rgb(var(--ms-line));
+    border-radius: 8px;
+    padding: var(--ms-space-lg);
+    box-shadow: var(--ms-shadow-sm);
+    transition: all 0.2s ease;
+  }
+  
+  .ms-card:hover {
+    box-shadow: var(--ms-shadow-md);
+    border-color: rgb(var(--ms-line));
+  }
+  
+  .ms-card-minimal {
+    background-color: rgb(var(--ms-bg));
+    border: 1px solid rgb(var(--ms-line-soft));
+    border-radius: 8px;
+    padding: var(--ms-space-md);
+    transition: all 0.2s ease;
+  }
+  
+  .ms-card-minimal:hover {
+    border-color: rgb(var(--ms-line));
+    box-shadow: var(--ms-shadow-sm);
+  }
+  
+  /* === Minimal Buttons === */
+  .ms-btn-primary {
+    background-color: var(--ms-olive);
+    color: white;
+    border: 1px solid var(--ms-olive);
+    padding: var(--ms-space-sm) var(--ms-space-lg);
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: var(--ms-font-sm);
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  
+  .ms-btn-primary:hover {
+    background-color: var(--ms-olive-700);
+    border-color: var(--ms-olive-700);
+  }
+  
+  .ms-btn-secondary {
+    background-color: transparent;
+    color: var(--ms-olive);
+    border: 1px solid var(--ms-olive);
+    padding: var(--ms-space-sm) var(--ms-space-lg);
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: var(--ms-font-sm);
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  
+  .ms-btn-secondary:hover {
+    background-color: var(--ms-olive-50);
+    border-color: var(--ms-olive-700);
+    color: var(--ms-olive-700);
+  }
+  
+  /* === Container === */
+  .ms-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--ms-space-lg);
+  }
+  
+  /* === Minimal Layout === */
+  .ms-section {
+    padding: var(--ms-space-3xl) 0;
+  }
+  
+  .ms-section-sm {
+    padding: var(--ms-space-2xl) 0;
+  }
+  
+  /* === Minimal Grid === */
+  .ms-grid {
+    display: grid;
+    gap: var(--ms-space-lg);
+  }
+  
+  .ms-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .ms-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .ms-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  @media (max-width: 768px) {
+    .ms-grid-2,
+    .ms-grid-3,
+    .ms-grid-4 {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+/* ===== Form Controls ===== */
+@layer components {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="number"],
+  input[type="url"],
+  input[type="tel"],
+  select,
+  textarea {
+    background-color: rgb(var(--ms-bg));
+    border: 1px solid rgb(var(--ms-line));
+    border-radius: 6px;
+    padding: var(--ms-space-sm) var(--ms-space-md);
+    font-size: var(--ms-font-base);
+    color: rgb(var(--ms-text));
+    transition: all 0.2s ease;
+  }
+  
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus,
+  input[type="search"]:focus,
+  input[type="number"]:focus,
+  input[type="url"]:focus,
+  input[type="tel"]:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: var(--ms-olive);
+    box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.1);
+  }
+  
+  input[type="text"]:hover,
+  input[type="email"]:hover,
+  input[type="password"]:hover,
+  input[type="search"]:hover,
+  input[type="number"]:hover,
+  input[type="url"]:hover,
+  input[type="tel"]:hover,
+  select:hover,
+  textarea:hover {
+    border-color: rgb(var(--ms-text-muted));
+  }
+}
+
+/* ===== Scrollbar Styling ===== */
+::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
+::-webkit-scrollbar-track {
+  background: rgb(var(--ms-bg-soft));
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgb(203 213 225);
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--ms-line));
   border-radius: 3px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: rgb(148 163 184);
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--ms-text-muted));
 }
 
-/* 다크 모드 스크롤바 */
-.dark .custom-scrollbar {
-  scrollbar-color: rgb(71 85 105) transparent;
-}
-
-.dark .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgb(71 85 105);
-}
-
-.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: rgb(100 116 139);
-  
-  --gold-50: 255 251 235;
-  --gold-100: 254 243 199;
-  --gold-200: 253 230 138;
-  --gold-300: 252 211 77;
-  --gold-400: 251 191 36;
-  --gold-500: 245 158 11;
-  --gold-600: 217 119 6;
-  --gold-700: 180 83 9;
-  --gold-800: 146 64 14;
-  --gold-900: 120 53 15;
-  
-  /* 폰트 설정 */
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-  line-height: 1.6;
-  font-weight: 400;
-  font-size: 16px;
-
-  /* 렌더링 최적화 */
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
-  -ms-text-size-adjust: 100%;
-}
-
-/* 프리미엄 다크 모드 색상 */
-.dark {
-  --color-primary: 59 130 246;
-  --color-primary-foreground: 255 255 255;
-  --color-secondary: 100 116 139;
-  --color-secondary-foreground: 248 250 252;
-  --color-accent: 245 158 11;
-  --color-accent-foreground: 15 23 42;
-  --color-background: 2 6 23;
-  --color-foreground: 248 250 252;
-  --color-muted: 30 41 59;
-  --color-muted-foreground: 148 163 184;
-  --color-border: 51 65 85;
-  --color-input: 51 65 85;
-  --color-ring: 59 130 246;
-  --color-success: 34 197 94;
-  --color-warning: 245 158 11;
-  --color-danger: 239 68 68;
-  
-  /* 다크 모드 그라데이션 */
-  --gradient-primary: linear-gradient(135deg, rgb(59 130 246) 0%, rgb(99 102 241) 100%);
-  --gradient-secondary: linear-gradient(135deg, rgb(100 116 139) 0%, rgb(148 163 184) 100%);
-  --gradient-accent: linear-gradient(135deg, rgb(245 158 11) 0%, rgb(251 191 36) 100%);
-  --gradient-success: linear-gradient(135deg, rgb(34 197 94) 0%, rgb(59 130 246) 100%);
-}
-
-/* 기본 요소 스타일 재설정 */
+/* Firefox */
 * {
-  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--ms-line)) rgb(var(--ms-bg-soft));
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  margin: 0;
-  padding: 0;
-  background-color: rgb(var(--ms-bg));
-  color: rgb(var(--ms-text));
-  transition: background-color 0.2s ease, color 0.2s ease;
-  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-}
-
-/* 접근성 개선 */
-*:focus-visible {
-  outline: 2px solid rgb(var(--color-ring));
-  outline-offset: 2px;
-}
-
-/* 고대비 모드 지원 */
-@media (prefers-contrast: high) {
-  :root {
-    --color-border: 0 0 0;
-    --color-ring: 0 0 0;
+/* ===== Animation Classes ===== */
+@layer utilities {
+  .ms-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
   }
   
-  .dark {
-    --color-border: 255 255 255;
-    --color-ring: 255 255 255;
+  .ms-slide-up {
+    animation: slideUp 0.6s ease-out;
+  }
+  
+  .ms-scale-in {
+    animation: scaleIn 0.4s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideUp {
+    from { 
+      opacity: 0; 
+      transform: translateY(20px); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+  }
+  
+  @keyframes scaleIn {
+    from { 
+      opacity: 0; 
+      transform: scale(0.95); 
+    }
+    to { 
+      opacity: 1; 
+      transform: scale(1); 
+    }
   }
 }
 
-/* 모션 감소 설정 */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+/* ===== Responsive Design ===== */
+@media (max-width: 640px) {
+  :root {
+    --ms-font-4xl: 2rem;         /* 32px on mobile */
+    --ms-font-3xl: 1.5rem;       /* 24px on mobile */
+    --ms-space-3xl: 2.5rem;      /* 40px on mobile */
+  }
+  
+  .ms-container {
+    padding: 0 var(--ms-space-md);
   }
 }
 
-/* 프리미엄 인쇄 스타일 */
+/* ===== Print Styles ===== */
 @media print {
   * {
     background: transparent !important;
@@ -201,512 +467,39 @@ body {
     background: white;
   }
   
-  /* 페이지 설정 */
-  @page {
-    margin: 2cm;
-    size: A4;
-  }
-  
-  /* 제목 스타일 */
-  h1, h2, h3, h4, h5, h6 {
-    color: black !important;
-    page-break-after: avoid;
-    break-after: avoid;
-  }
-  
-  h1 {
-    font-size: 18pt;
-    font-weight: bold;
-    margin-bottom: 12pt;
-  }
-  
-  h2 {
-    font-size: 16pt;
-    font-weight: bold;
-    margin-bottom: 10pt;
-  }
-  
-  h3 {
-    font-size: 14pt;
-    font-weight: bold;
-    margin-bottom: 8pt;
-  }
-  
-  /* 차트 및 이미지 */
-  .recharts-wrapper,
-  .recharts-surface,
-  svg {
-    max-width: 100% !important;
-    height: auto !important;
-    page-break-inside: avoid;
-    break-inside: avoid;
-  }
-  
-  /* 카드 컴포넌트 */
-  .card,
-  [class*="Card"] {
+  .ms-card {
     border: 1px solid #ccc !important;
-    margin-bottom: 16pt;
-    page-break-inside: avoid;
-    break-inside: avoid;
     background: white !important;
+    page-break-inside: avoid;
   }
   
-  /* 테이블 */
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    margin-bottom: 16pt;
-  }
-  
-  th, td {
-    border: 1px solid #ccc;
-    padding: 8pt;
-    text-align: left;
-  }
-  
-  th {
-    background: #f5f5f5 !important;
-    font-weight: bold;
-  }
-  
-  /* 링크 */
-  a,
-  a:visited {
-    text-decoration: underline;
-    color: black !important;
-  }
-  
-  a[href]:after {
-    content: " (" attr(href) ")";
-    font-size: 10pt;
-    color: #666;
-  }
-  
-  /* 숨김 요소 */
-  .no-print,
-  .print-hidden,
-  button,
-  .btn,
-  nav,
-  .navigation,
-  .sidebar,
-  .header-actions,
-  .floating-action {
+  .no-print {
     display: none !important;
   }
-  
-  /* 페이지 나누기 */
-  .page-break-before {
-    page-break-before: always;
-    break-before: page;
+}
+
+/* ===== Accessibility ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (prefers-contrast: high) {
+  :root {
+    --ms-line: 0 0 0;
+    --ms-olive: #000000;
+    --ms-olive: #000000;
   }
   
-  .page-break-after {
-    page-break-after: always;
-    break-after: page;
-  }
-  
-  .page-break-inside-avoid {
-    page-break-inside: avoid;
-    break-inside: avoid;
-  }
-  
-  /* 그라데이션 대체 */
-  .gradient-primary,
-  .gradient-secondary,
-  .gradient-accent,
-  .gradient-success {
-    background: #f5f5f5 !important;
-    border: 1px solid #ccc !important;
-  }
-  
-  /* 아이콘 크기 조정 */
-  svg {
-    width: 16pt !important;
-    height: 16pt !important;
-  }
-  
-  /* 여백 조정 */
-  .print-mt-0 { margin-top: 0 !important; }
-  .print-mb-4 { margin-bottom: 16pt !important; }
-  .print-p-4 { padding: 16pt !important; }
-}
-
-/* Minimal Strategist: base typography, separators, and single-column container */
-@layer base {
-  h1 { font-weight: 800; letter-spacing: -0.01em; margin: 2.5rem 0 1rem; font-size: clamp(1.75rem, 3.2vw, 2.25rem); }
-  h2 { font-weight: 700; letter-spacing: -0.01em; margin: 2rem 0 0.75rem; font-size: clamp(1.5rem, 2.6vw, 2rem); }
-  h3 { font-weight: 700; margin: 1.75rem 0 0.5rem; font-size: clamp(1.25rem, 2.2vw, 1.5rem); }
-  h4 { font-weight: 600; margin: 1.5rem 0 0.5rem; font-size: 1.125rem; }
-  p  { line-height: 1.75; margin: 0.5rem 0; }
-  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 0.95em; }
-  hr { border: none; border-top: 1px solid rgb(var(--ms-line)); margin: 2rem 0; }
-  blockquote { 
-    margin: 1rem 0; padding: 1rem 1.25rem; 
-    border-left: 2px solid rgb(var(--ms-accent));
-    background-color: rgba(var(--ms-line), 0.25);
-    color: rgb(var(--ms-text));
+  .dark {
+    --ms-line: 255 255 255;
+    --ms-olive: #ffffff;
+    --ms-olive: #ffffff;
   }
 }
-
-.report-container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem 1rem 4rem;
-}
-
-/* 브라우저별 호환성 */
-/* Chrome, Safari, Edge */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgb(var(--color-muted));
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgb(var(--color-muted-foreground));
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgb(var(--color-foreground) / 0.7);
-}
-
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgb(var(--color-muted-foreground)) rgb(var(--color-muted));
-}
-
-/* 선택 영역 스타일 */
-::selection {
-  background-color: rgb(var(--color-primary) / 0.2);
-  color: rgb(var(--color-foreground));
-}
-
-::-moz-selection {
-  background-color: rgb(var(--color-primary) / 0.2);
-  color: rgb(var(--color-foreground));
-}
-
-/* 프리미엄 타이포그래피 클래스 */
-.typography-display {
-  font-size: 3.75rem;
-  line-height: 1;
-  font-weight: 800;
-  letter-spacing: -0.025em;
-}
-
-.typography-h1 {
-  font-size: 3rem;
-  line-height: 1.1;
-  font-weight: 700;
-  letter-spacing: -0.025em;
-}
-
-.typography-h2 {
-  font-size: 2.25rem;
-  line-height: 1.2;
-  font-weight: 600;
-  letter-spacing: -0.025em;
-}
-
-.typography-h3 {
-  font-size: 1.875rem;
-  line-height: 1.3;
-  font-weight: 600;
-  letter-spacing: -0.025em;
-}
-
-.typography-h4 {
-  font-size: 1.5rem;
-  line-height: 1.4;
-  font-weight: 600;
-}
-
-.typography-body-large {
-  font-size: 1.125rem;
-  line-height: 1.6;
-  font-weight: 400;
-}
-
-.typography-body {
-  font-size: 1rem;
-  line-height: 1.6;
-  font-weight: 400;
-}
-
-.typography-body-small {
-  font-size: 0.875rem;
-  line-height: 1.5;
-  font-weight: 400;
-}
-
-.typography-caption {
-  font-size: 0.75rem;
-  line-height: 1.4;
-  font-weight: 500;
-  letter-spacing: 0.025em;
-  text-transform: uppercase;
-}
-
-/* 프리미엄 유틸리티 클래스 */
-.gradient-primary {
-  background: var(--gradient-primary);
-}
-
-.gradient-secondary {
-  background: var(--gradient-secondary);
-}
-
-.gradient-accent {
-  background: var(--gradient-accent);
-}
-
-.gradient-success {
-  background: var(--gradient-success);
-}
-
-.shadow-premium {
-  box-shadow: var(--shadow-xl);
-}
-
-.shadow-premium-lg {
-  box-shadow: var(--shadow-2xl);
-}
-
-.glass-effect {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.dark .glass-effect {
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* 애니메이션 클래스 */
-.animate-fade-in {
-  animation: fadeIn 0.5s ease-in-out;
-}
-
-.animate-slide-up {
-  animation: slideUp 0.6s ease-out;
-}
-
-.animate-scale-in {
-  animation: scaleIn 0.4s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* 호버 효과 */
-.hover-lift {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.hover-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-xl);
-}
-
-/* 반응형 타이포그래피 */
-@media (max-width: 768px) {
-  .typography-display {
-    font-size: 2.5rem;
-  }
-  
-  .typography-h1 {
-    font-size: 2rem;
-  }
-  
-  .typography-h2 {
-    font-size: 1.75rem;
-  }
-  
-  .typography-h3 {
-    font-size: 1.5rem;
-  }
-}
-
-/* Minimal Strategist — Dark Olive Accent */
-:root {
-  /* Dark Olive brand accents (warmer tone) */
-  --ms-olive: #34463D;      /* brand */
-  --ms-olive-600: #3C4F46;  /* hover */
-  --ms-olive-700: #2D3D35;  /* pressed */
-}
-
-/* Global link styling with Dark Olive accent */
-a {
-  color: var(--ms-olive);
-  text-underline-offset: 3px;
-}
-a:hover {
-  color: var(--ms-olive-600);
-  text-decoration-thickness: 2px;
-}
-
-/* Selection and focus accents */
-::selection {
-  background-color: rgba(47, 59, 40, 0.15);
-  color: #111827;
-}
-::-moz-selection {
-  background-color: rgba(47, 59, 40, 0.15);
-  color: #111827;
-}
-:focus-visible {
-  outline: 2px solid rgba(47, 59, 40, 0.45);
-  outline-offset: 3px;
-}
-
-/* Minimal Strategist — utility classes for Dark Olive accent */
-.ms-olive-text { color: var(--ms-olive); }
-.ms-olive-icon { color: var(--ms-olive-600); }
-.ms-olive-border { border-color: var(--ms-olive); }
-.ms-olive-hover { transition: background-color 160ms ease; }
-.ms-olive-hover:hover { background-color: rgba(47, 59, 40, 0.06); }
-.ms-olive-pill { background-color: rgba(47, 59, 40, 0.12); color: var(--ms-olive-700); }
-.ms-card-minimal { box-shadow: none; }
-.ms-card-minimal:hover { background-color: rgba(16, 18, 20, 0.02); }
-
-/* ===== Form Controls: Consistent Olive Focus/Hover and 1px Border ===== */
-@layer base {
-  /* Textual inputs */
-  input[type="text"],
-  input[type="email"],
-  input[type="password"],
-  input[type="search"],
-  input[type="number"],
-  input[type="url"],
-  input[type="tel"],
-  select,
-  textarea {
-    @apply border border-ms-line dark:border-dark-700 rounded-md transition-colors;
-    @apply focus:outline-none focus:ring-2 focus:ring-ms-olive focus:border-ms-olive;
-    @apply focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-dark-900;
-    @apply hover:border-ms-olive/40;
-  }
-
-  /* Avoid interfering with checkboxes/radios visuals, but set accent/focus color */
-  input[type="checkbox"],
-  input[type="radio"] {
-    @apply accent-ms-olive focus:ring-ms-olive;
-  }
-}
-
-/* Bold, sophisticated wallpaper and surfaces */
-:root {
-  /* Brass accent to complement olive */
-  --ms-brass: #B08F4F;
-  --ms-brass-400: #B89A5C;
-  --ms-brass-600: #9B7A36;
-
-  /* Minimalist global tones (RGB) */
-  --ms-bg: 255 255 255;      /* Pure white for report bodies */
-  --ms-text: 20 24 22;       /* Deep neutral text */
-  --ms-line: 32 40 38;       /* Thin neutral divider */
-}
-
-.dark {
-  /* Minimalist global tones for dark mode (RGB) */
-  --ms-bg: 10 12 11;         /* Deep neutral */
-  --ms-text: 235 239 237;    /* Soft light text */
-  --ms-line: 46 56 52;       /* Neutral line for dark */
-}
-
-/* Global wallpaper: flat, non-gradient background for consistency */
-.ms-wallpaper {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-color: rgb(var(--ms-bg));
-}
-
-.dark .ms-wallpaper {
-  background-color: rgb(var(--ms-bg));
-}
-
-/* Content container for comfortable reading width */
-.ms-container {
-  position: relative;
-  z-index: 1;
-  max-width: 1080px;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: clamp(1rem, 3vw, 1.75rem);
-  padding-right: clamp(1rem, 3vw, 1.75rem);
-}
-
-/* Glass surface card utility */
-.ms-surface {
-  position: relative;
-  z-index: 1;
-  background: rgba(28, 33, 31, 0.40);
-  border: 1px solid var(--ms-line);
-  backdrop-filter: saturate(115%) blur(8px);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.28);
-}
-
-.dark .ms-surface {
-  background: rgba(20, 24, 22, 0.42);
-}
-
-.light .ms-surface, :root:not(.dark) .ms-surface {
-  background: rgba(255, 255, 255, 0.6);
-}
-
-/* Stronger hover/active states for interactive elements */
-.hover\:ms-bump:hover { transform: translateY(-1px); transition: transform 150ms ease; }
-.active\:ms-press:active { transform: translateY(0); filter: brightness(0.96); }
-
-/* === Minimal Strategist — Line frames and white text weight === */
-/* Refined perimeter lines for search boxes and tables */
-.border-ms-line {
-  border-color: rgb(var(--ms-line));
-  border-width: 1.5px; /* slightly thicker for refined look */
-}
-
-.ms-line-frame {
-  border: 1.5px solid rgb(var(--ms-line));
-}
-
-/* Make white text visually stronger for better readability */
-.text-white { font-weight: 600; }
-.dark .dark\:text-white { font-weight: 600; }
