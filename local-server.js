@@ -17,6 +17,7 @@ const searchHandler = require('./api/search.js');
 const detailHandler = require('./api/detail.js');
 const documentsHandler = require('./api/documents.js');
 const healthHandler = require('./api/health.js');
+const classifyKeywordHandler = require('./api/classify-keyword.js');
 
 // API Routes
 app.all('/api/ai-analysis', aiAnalysisHandler);
@@ -25,12 +26,14 @@ app.all('/api/search', searchHandler);
 app.all('/api/detail', detailHandler);
 app.all('/api/documents', documentsHandler);
 app.all('/api/health', healthHandler);
+app.all('/api/classify-keyword', classifyKeywordHandler);
 
 // User routes
 const userReportsHandler = require('./api/users/reports.js');
 const userSearchHistoryHandler = require('./api/users/search-history.js');
 const userStatsHandler = require('./api/users/stats.js');
 const userProfileHandler = require('./api/users/profile.js');
+const userKeywordAnalyticsHandler = require('./api/users/keyword-analytics.js');
 const adminStatisticsHandler = require('./api/admin/statistics.js');
 
 app.all('/api/ai-analysis', aiAnalysisHandler);
@@ -45,6 +48,7 @@ app.all('/api/users/reports', userReportsHandler);
 app.all('/api/users/search-history', userSearchHistoryHandler);
 app.all('/api/users/stats', userStatsHandler);
 app.all('/api/users/profile', userProfileHandler);
+app.all('/api/users/keyword-analytics', userKeywordAnalyticsHandler);
 
 // Admin routes
 app.all('/api/admin/statistics', adminStatisticsHandler);

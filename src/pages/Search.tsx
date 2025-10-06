@@ -3,7 +3,6 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { SearchIcon, Filter, X, Hash, Calendar, User, ChevronLeft, ChevronRight } from 'lucide-react'
 import Button from '@/components/UI/Button'
 import Input from '@/components/UI/Input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/Card'
 import Loading from '@/components/UI/Loading'
 import ErrorMessage from '@/components/UI/ErrorMessage'
 import { cn } from '@/lib/utils'
@@ -125,6 +124,33 @@ function Search() {
     setTotalPages(calculated)
   }, [totalCount, filters.numOfRows])
 
+  // 키워드 분류 및 기록 함수
+  const recordKeywordAnalytics = async (keyword: string) => {
+    if (!keyword || !user) return
+
+    try {
+      // 키워드 분류 API 호출
+      const classifyResponse = await fetch('/api/classify-keyword', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ keyword }),
+      })
+
+      if (classifyResponse.ok) {
+        const classificationData = await classifyResponse.json()
+        console.log('✅ [Search] 키워드 분류 및 기록 완료:', classificationData)
+        return classificationData
+      } else {
+        console.warn('⚠️ [Search] 키워드 분류 실패:', classifyResponse.statusText)
+      }
+    } catch (error) {
+      console.error('❌ [Search] 키워드 분류 중 오류:', error)
+    }
+    return null
+  }
+
   const handleSearch = async (page = 1) => {
     console.log('🔍 [Search] 검색 시작:', { page, currentTotalCount: totalCount });
     // 로그인 가드: 비로그인 상태면 로그인 페이지로 이동
@@ -132,6 +158,12 @@ function Search() {
       toast.error('검색 기능은 로그인 후 이용 가능합니다.')
       navigate('/login', { replace: true, state: { redirectTo: `/search?q=${encodeURIComponent(filters.word || '')}` } })
       return
+    }
+    
+    // 새로운 검색인 경우 (page === 1) 키워드 분류 및 기록
+    let classificationData = null
+    if (page === 1 && filters.word) {
+      classificationData = await recordKeywordAnalytics(filters.word)
     }
     
     // searchStore의 searchPatents 함수 사용
@@ -142,6 +174,26 @@ function Search() {
       // 검색 상태 저장
       saveSearchState()
       console.log('✅ [Search] 검색 완료 및 상태 저장')
+      
+      // 키워드 분류 결과가 있으면 검색 히스토리에 기술 분야 정보 업데이트
+      if (classificationData && classificationData.success) {
+        try {
+          await fetch('/api/users/search-history', {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              user_id: user.id,
+              keyword: filters.word,
+              technology_field: classificationData.data.technology_field,
+              field_confidence: classificationData.data.field_confidence
+            }),
+          })
+        } catch (error) {
+          console.error('❌ [Search] 검색 히스토리 업데이트 중 오류:', error)
+        }
+      }
     }
   }
 

@@ -187,30 +187,45 @@ module.exports = async function handler(req, res) {
     
     // 검색 기록 저장
     const userId = req.body.userId;
+    console.log('🔍 [DEBUG] 검색 기록 저장 시작:', { userId, hasSupabase: !!supabase });
     if (userId && supabase) {
       try {
         const searchKeyword = processedData.searchQuery;
         const resultsCount = processedData.totalCount;
         
-        await supabase
+        const activityData = {
+          user_id: userId,
+          activity_type: 'search',
+          activity_data: {
+            keyword: searchKeyword,
+            filters: searchParams,
+            results_count: resultsCount,
+            total_count: processedData.totalCount,
+            timestamp: new Date().toISOString()
+          }
+        };
+        
+        console.log('🔍 [DEBUG] 삽입할 데이터:', JSON.stringify(activityData, null, 2));
+        
+        const { data, error } = await supabase
           .from('user_activities')
-          .insert({
-            user_id: userId,
-            activity_type: 'search',
-            activity_data: {
-              keyword: searchKeyword,
-              filters: searchParams,
-              results_count: resultsCount,
-              total_count: processedData.totalCount,
-              timestamp: new Date().toISOString()
-            }
-          });
+          .insert(activityData)
+          .select();
+        
+        if (error) {
+          console.error('❌ user_activities 삽입 오류:', error);
+        } else {
+          console.log('✅ user_activities 삽입 성공:', data);
+        }
         
         console.log('✅ 검색 기록 저장 완료');
       } catch (historyError) {
         console.warn('⚠️ 검색 기록 저장 실패:', historyError.message);
+        console.error('⚠️ 검색 기록 저장 실패 상세:', historyError);
         // 검색 기록 저장 실패는 전체 응답에 영향을 주지 않음
       }
+    } else {
+      console.log('⚠️ 검색 기록 저장 건너뜀:', { userId, hasSupabase: !!supabase });
     }
 
 

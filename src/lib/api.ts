@@ -147,12 +147,34 @@ export async function searchPatents(searchParams: any): Promise<ApiResponse> {
  */
 export async function getUserStats(userId: string): Promise<ApiResponse> {
   console.log('📊 [API] 사용자 통계 요청:', userId);
-  // 로컬 API 서버(포트 3001)로 요청
-  return apiGet(`http://localhost:3001/api/users/stats?userId=${encodeURIComponent(userId)}`, {
-    timeout: 20000,
-    retries: 2,
-    retryDelay: 1500,
-  });
+  
+  try {
+    const response = await apiGet(`/api/users/stats?userId=${encodeURIComponent(userId)}`, {
+      timeout: 20000,
+      retries: 2,
+      retryDelay: 1500,
+    });
+    
+    console.log('📊 [API] 사용자 통계 응답:', {
+      success: response.success,
+      dataKeys: response.data ? Object.keys(response.data) : [],
+      message: response.message,
+      error: response.error
+    });
+    
+    if (!response.success) {
+      console.error('❌ [API] 사용자 통계 요청 실패:', response.error || response.message);
+    }
+    
+    return response;
+  } catch (error) {
+    console.error('❌ [API] 사용자 통계 요청 중 예외 발생:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '사용자 통계를 가져오는 중 오류가 발생했습니다.',
+      data: null
+    };
+  }
 }
 
 /**

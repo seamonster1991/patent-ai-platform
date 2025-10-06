@@ -1,5 +1,5 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { createClient } = require('@supabase/supabase-js');
+const fetch = require('node-fetch');
 
 // Supabase 클라이언트 초기화 (강화된 환경변수 처리)
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -55,19 +55,19 @@ module.exports = async function handler(req, res) {
     console.log('=== 리포트 생성 API 요청 시작 ===');
     console.log('Request body:', req.body);
 
-    // 환경변수에서 Gemini API 키 가져오기
-    const apiKey = process.env.GEMINI_API_KEY;
+    // 환경변수에서 OpenRouter API 키 가져오기
+    const apiKey = process.env.OPENROUTER_API_KEY;
     
     if (!apiKey) {
-      console.error('Gemini API key not found in environment variables');
+      console.error('OpenRouter API key not found in environment variables');
       return res.status(500).json({
         success: false,
         error: 'API configuration error',
-        message: 'Gemini API key is not configured'
+        message: 'OpenRouter API key is not configured'
       });
     }
 
-    console.log('Gemini API Key found:', apiKey ? 'Yes' : 'No');
+    console.log('OpenRouter API Key found:', apiKey ? 'Yes' : 'No');
 
     // 요청 데이터 검증 - reportType을 먼저 추출
     const { patentData, reportType, userId } = req.body;
@@ -94,18 +94,6 @@ module.exports = async function handler(req, res) {
     }
 
     console.log('Report type:', reportType, 'Timeout:', TIMEOUT_MS + 'ms');
-    
-    // Gemini AI 초기화 - 맥킨지 스타일 상세 분석을 위한 최적화
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
-      generationConfig: {
-        temperature: 0.8, // 창의적 인사이트를 위해 증가
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 4096, // 상세한 분석을 위해 Vercel에서도 4096으로 증가
-      }
-    });
 
     // 특허 정보 추출
     const patentInfo = extractPatentInfo(patentData);
@@ -131,10 +119,27 @@ module.exports = async function handler(req, res) {
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(`Attempt ${attempt}/${maxRetries} - Calling Gemini API (timeout: ${TIMEOUT_MS/1000}s)...`);
+        console.log(`Attempt ${attempt}/${maxRetries} - Calling OpenRouter API (timeout: ${TIMEOUT_MS/1000}s)...`);
         
-        const analysisPromise = model.generateContent({
-          contents: [{ role: 'user', parts: [{ text: prompt }] }]
+        const analysisPromise = fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'http://localhost:3001',
+            'X-Title': 'Patent AI Report Generator'
+          },
+          body: JSON.stringify({
+            model: 'anthropic/claude-3.5-sonnet',
+            messages: [
+              {
+                role: 'user',
+                content: prompt
+              }
+            ],
+            temperature: 0.8,
+            max_tokens: 4096
+          })
         });
         
         const timeoutPromise = new Promise((_, reject) => {
@@ -143,9 +148,14 @@ module.exports = async function handler(req, res) {
           }, TIMEOUT_MS);
         });
 
-        const result = await Promise.race([analysisPromise, timeoutPromise]);
-        const response = await result.response;
-        analysisText = response.text();
+        const response = await Promise.race([analysisPromise, timeoutPromise]);
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(`OpenRouter API error: ${data.error?.message || response.statusText}`);
+        }
+        
+        analysisText = data.choices?.[0]?.message?.content;
         
         // 응답 검증 - 비즈니스 리포트는 더 엄격한 검증 (500자 이상)
         const minLength = reportType === 'business' ? 500 : 200;
@@ -209,8 +219,11 @@ module.exports = async function handler(req, res) {
     // 활동 추적 (검색 API 패턴 적용)
     if (userId && supabase) {
       try {
+        console.log('💾 데이터베이스 저장 시작...');
+        
         // AI 분석 활동 추적
-        await supabase
+        console.log('📝 AI 분석 활동 추적 중...');
+        const { error: activityError } = await supabase
           .from('user_activities')
           .insert({
             user_id: userId,
@@ -223,23 +236,41 @@ module.exports = async function handler(req, res) {
             }
           });
 
-        // 보고서 저장
-        const { data: reportRecord } = await supabase
+        if (activityError) {
+          console.error('❌ AI 분석 활동 추적 실패:', activityError);
+        } else {
+          console.log('✅ AI 분석 활동 추적 성공');
+        }
+
+        // 보고서 저장 - 새로운 명명 규칙 적용
+        const reportName = generateReportName(patentInfo, reportType);
+        console.log('📄 보고서 저장 중...', { reportName, userId, reportType });
+        
+        const { data: reportRecord, error: reportError } = await supabase
           .from('ai_analysis_reports')
           .insert({
             user_id: userId,
-            patent_id: patentInfo.applicationNumber,
-            invention_title: patentInfo.inventionTitle,
             application_number: patentInfo.applicationNumber,
+            invention_title: patentInfo.inventionTitle,
             analysis_type: reportType,
-            analysis_data: structuredResult,
+            report_name: reportName, // 새로운 명명 규칙 적용
+            market_penetration: structuredResult.content?.sections?.[0]?.content || '',
+            competitive_landscape: structuredResult.content?.sections?.[1]?.content || '',
+            market_growth_drivers: structuredResult.content?.sections?.[2]?.content || '',
+            risk_factors: structuredResult.content?.sections?.[3]?.content || '',
             created_at: new Date().toISOString()
           })
           .select()
           .single();
 
-        if (reportRecord) {
-          await supabase
+        if (reportError) {
+          console.error('❌ 보고서 저장 실패:', reportError);
+        } else {
+          console.log('✅ 보고서 저장 성공:', reportRecord?.id);
+          
+          // 보고서 생성 활동 추적
+          console.log('📝 보고서 생성 활동 추적 중...');
+          const { error: reportActivityError } = await supabase
             .from('user_activities')
             .insert({
               user_id: userId,
@@ -252,12 +283,22 @@ module.exports = async function handler(req, res) {
                 timestamp: new Date().toISOString()
               }
             });
+
+          if (reportActivityError) {
+            console.error('❌ 보고서 생성 활동 추적 실패:', reportActivityError);
+          } else {
+            console.log('✅ 보고서 생성 활동 추적 성공');
+          }
         }
 
       } catch (trackingError) {
-        console.warn('Activity tracking failed:', trackingError.message);
+        console.error('❌ 데이터베이스 저장 중 오류:', trackingError);
+        console.error('❌ 오류 상세:', trackingError.message);
+        console.error('❌ 오류 스택:', trackingError.stack);
         // 활동 추적 실패는 리포트 생성에 영향을 주지 않음
       }
+    } else {
+      console.warn('⚠️ 데이터베이스 저장 건너뜀:', { hasUserId: !!userId, hasSupabase: !!supabase });
     }
 
     // 성공 응답 (검색 API 패턴 적용)
@@ -758,4 +799,29 @@ function createFallbackResult(originalText, reportType, reason) {
     isFallback: true,
     fallbackReason: reason
   };
+}
+
+// 리포트 이름 생성 함수를 추가
+function generateReportName(patentInfo, reportType) {
+  const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD 형식
+  
+  // 특허 제목 정리 (특수문자 제거, 길이 제한)
+  let cleanTitle = patentInfo.inventionTitle || '특허분석';
+  cleanTitle = cleanTitle.replace(/[^\w\s가-힣]/g, '').trim(); // 특수문자 제거
+  if (cleanTitle.length > 30) {
+    cleanTitle = cleanTitle.substring(0, 30) + '...';
+  }
+  
+  // 분석 타입 한글 변환
+  const analysisTypeMap = {
+    'market': '시장분석',
+    'business': '인사이트'
+  };
+  const analysisType = analysisTypeMap[reportType] || '분석';
+  
+  // 특허번호 정리
+  const patentNumber = patentInfo.applicationNumber || 'Unknown';
+  
+  // 형식: "특허제목_분석타입_특허번호_날짜"
+  return `${cleanTitle}_${analysisType}_${patentNumber}_${currentDate}`;
 }

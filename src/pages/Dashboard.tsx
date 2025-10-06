@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Card, { CardContent, CardDescription, CardHeader, CardTitle } from '../components/UI/Card'
 import Button from '../components/UI/Button'
 import { 
@@ -15,7 +15,8 @@ import {
   LineChart,
   Line,
   ComposedChart,
-  Legend
+  Legend,
+  Doughnut
 } from 'recharts'
 import { 
   Search, 
@@ -32,7 +33,9 @@ import {
   Target,
   Zap,
   History,
-  Download
+  Download,
+  Brain,
+  Tag
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -68,18 +71,21 @@ interface RecentReport {
   downloadUrl: string;
 }
 
-// 키워드 기술 분야 간단 분류 함수 (프론트엔드용)
-const classifyTechField = (keyword: string) => {
-  if (!keyword) return '기타'
-  const k = keyword.toLowerCase()
-  if (/(ai|artificial intelligence|인공지능|machine learning|머신러닝|deep learning|딥러닝|neural network|신경망)/.test(k)) return 'AI/머신러닝'
-  if (/(bio|바이오|medical|의료|healthcare|헬스케어|pharmaceutical|제약|diagnosis|진단)/.test(k)) return '바이오/의료'
-  if (/(software|소프트웨어|algorithm|알고리즘|database|데이터베이스|network|네트워크|security|보안)/.test(k)) return 'IT/소프트웨어'
-  if (/(semiconductor|반도체|electronic|전자|chip|칩|circuit|회로|processor|프로세서)/.test(k)) return '전자/반도체'
-  if (/(communication|통신|wireless|무선|5g|6g|antenna|안테나|signal|신호)/.test(k)) return '통신'
-  if (/(automotive|자동차|vehicle|차량|autonomous|자율주행|electric vehicle|전기차)/.test(k)) return '자동차'
-  if (/(energy|에너지|battery|배터리|solar|태양광|renewable|재생에너지|fuel cell|연료전지)/.test(k)) return '에너지'
-  return '기타'
+interface KeywordAnalytics {
+  fieldDistribution: Array<{
+    field: string;
+    count: number;
+    percentage: number;
+  }>;
+  searchTrends: Array<{
+    date: string;
+    count: number;
+  }>;
+  topKeywords: Array<{
+    keyword: string;
+    count: number;
+    field: string;
+  }>;
 }
 
 interface UserStats {
@@ -185,184 +191,207 @@ export default function Dashboard() {
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isNewUser, setIsNewUser] = useState(false)
-  const [welcomeMessage, setWelcomeMessage] = useState<string | null>(null)
+  const [keywordAnalytics, setKeywordAnalytics] = useState<KeywordAnalytics>({
+    fieldDistribution: [],
+    searchTrends: [],
+    topKeywords: []
+  })
 
-  // 데이터 로딩
-  useEffect(() => {
-    const loadDashboardData = async () => {
-      if (!user?.id) {
-        console.log('🚫 [Dashboard] 사용자 ID가 없음')
-        setLoading(false)
-        return
+  // 키워드 분석 데이터 로딩 함수
+  const loadKeywordAnalytics = async () => {
+    if (!user?.id) return
+
+    try {
+      const response = await fetch(`/api/users/keyword-analytics?user_id=${user.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        setKeywordAnalytics(data)
+      } else {
+        console.warn('키워드 분석 데이터 로딩 실패')
       }
+    } catch (error) {
+      console.error('키워드 분석 API 호출 실패:', error)
+    }
+  }
 
-      try {
-        setLoading(true)
-        setError(null)
-
-        console.log('📊 [Dashboard] 사용자 통계 요청 시작:', user.id)
-
-        // API에서 사용자 통계 가져오기
-        const response = await getUserStats(user.id)
-        
-        console.log('📊 [Dashboard] API 응답 전체:', response)
-        console.log('📊 [Dashboard] API 응답 성공 여부:', response.success)
-        console.log('📊 [Dashboard] API 응답 데이터:', response.data)
-        
-        if (response.success && response.data) {
-          const stats = response.data
-          console.log('📊 [Dashboard] API 응답 전체:', response)
-          console.log('📊 [Dashboard] API 응답 성공 여부:', response.success)
-          console.log('📊 [Dashboard] API 응답 데이터:', stats)
-
-          // 새 사용자 정보 확인
-          if (stats.isNewUser) {
-            setIsNewUser(true)
-            setWelcomeMessage(stats.message || '환영합니다! 첫 번째 특허 검색을 시작해보세요.')
-            toast.success('환영합니다! 특허 AI 플랫폼에 오신 것을 환영합니다.', {
-              description: '첫 번째 특허 검색을 시작해보세요.',
-              duration: 5000
-            })
-          }
-          console.log('📊 [Dashboard] daily_activities 데이터:', stats.daily_activities)
-          console.log('📊 [Dashboard] daily_activities_100days 데이터:', stats.daily_activities_100days)
-          console.log('📊 [Dashboard] 통계 데이터 구조:', {
-            summary: stats.summary,
-            recent_searches: stats.recent_searches?.length || 0,
-            recent_reports: stats.recent_reports?.length || 0,
-            top_keywords: stats.top_keywords?.length || 0,
-            field_distribution: stats.field_distribution?.length || 0,
-            weekly_activities: stats.weekly_activities?.length || 0,
-            hourly_activities: stats.hourly_activities?.length || 0,
-            daily_activities: stats.daily_activities?.length || 0,
-            daily_activities_100days: stats.daily_activities_100days?.length || 0
-          })
-          
-          // API 응답을 UserStats 형태로 매핑
-          const mappedStats = {
-            totalSearches: stats.summary?.search_count || 0,
-            reportsGenerated: stats.summary?.ai_analysis_count || 0,
-            monthlyActivity: stats.summary?.total_login_count || 0,
-            savedPatents: stats.summary?.detail_view_count || 0,
-            totalLogins: stats.summary?.total_login_count || 0,
-            engagementScore: Math.min(100, (stats.summary?.search_count || 0) * 2),
-            averageSearchResults: stats.summary?.average_search_results || 0,
-            aiAnalysisCount: stats.summary?.ai_analysis_count || 0,
-            totalUsageCost: stats.summary?.total_usage_cost || 0,
-            searchHistory: [], // API에서 제공하지 않음
-            searchKeywords: (stats.top_keywords || []).map((item: any) => ({
-              keyword: item.keyword,
-              count: item.count,
-              field: classifyTechField(item.keyword)
-            })),
-            recentSearches: (stats.recent_searches || []).map((search: any) => ({
-              keyword: search.query || '검색어 없음',
-              searchDate: search.timestamp,
-              resultsCount: search.results || 0,
-              field: classifyTechField(search.query || '')
-            })),
-            recentReports: (stats.recent_reports || []).map((report: any) => ({
-              id: report.id,
-              patentTitle: report.title || report.patent_title || '리포트 제목 없음',
-              patentNumber: report.patent_number || '특허번호 없음',
-              reportType: report.report_type || 'analysis',
-              createdAt: report.timestamp
-            })),
-            fieldDistribution: stats.field_distribution || [],
-            weeklyActivity: stats.weekly_activities || [],
-            hourlyActivity: stats.hourly_activities || [],
-            dailyActivities: stats.daily_activities_100days || stats.daily_activities || []
-          }
-          
-          console.log('📊 [Dashboard] 매핑된 통계:', mappedStats)
-          console.log('📊 [Dashboard] 매핑된 dailyActivities:', mappedStats.dailyActivities)
-          console.log('📊 [Dashboard] dailyActivities 길이:', mappedStats.dailyActivities?.length)
-          console.log('📊 [Dashboard] dailyActivities 첫 번째 항목:', mappedStats.dailyActivities?.[0])
-          console.log('📊 [Dashboard] dailyActivities 마지막 항목:', mappedStats.dailyActivities?.[mappedStats.dailyActivities.length - 1])
-
-          setUserStats(mappedStats)
-
-          // 차트 데이터 설정
-          setChartData({
-            hourlyActivity: stats.hourly_activities || Array.from({ length: 24 }, (_, i) => ({ hour: i, count: 0 })),
-            weeklyActivity: stats.weekly_activities || [
-              { day: '월', dayIndex: 1, count: 0, searchCount: 0, aiAnalysisCount: 0 },
-              { day: '화', dayIndex: 2, count: 0, searchCount: 0, aiAnalysisCount: 0 },
-              { day: '수', dayIndex: 3, count: 0, searchCount: 0, aiAnalysisCount: 0 },
-              { day: '목', dayIndex: 4, count: 0, searchCount: 0, aiAnalysisCount: 0 },
-              { day: '금', dayIndex: 5, count: 0, searchCount: 0, aiAnalysisCount: 0 },
-              { day: '토', dayIndex: 6, count: 0, searchCount: 0, aiAnalysisCount: 0 },
-              { day: '일', dayIndex: 0, count: 0, searchCount: 0, aiAnalysisCount: 0 }
-            ]
-          })
-        } else {
-          console.warn('⚠️ [Dashboard] API 응답이 성공하지 않음 또는 데이터가 없음')
-          console.warn('⚠️ [Dashboard] 응답:', response)
-          
-          // 폴백 데이터 설정
-          setUserStats({
-            totalSearches: 0,
-            reportsGenerated: 0,
-            monthlyActivity: 0,
-            savedPatents: 0,
-            totalLogins: 0,
-            engagementScore: 0,
-            averageSearchResults: 0,
-            aiAnalysisCount: 0,
-            totalUsageCost: 0,
-            searchHistory: [],
-            searchKeywords: [],
-            recentSearches: [],
-            recentReports: [],
-            fieldDistribution: [],
-            weeklyActivity: [],
-            hourlyActivity: [],
-            dailyActivities: []
-          })
-
-          setChartData({
-            hourlyActivity: Array.from({ length: 24 }, (_, i) => ({ hour: i, count: 0 })),
-            weeklyActivity: [
-              { day: '월', dayIndex: 1, count: 0, searchCount: 0, aiAnalysisCount: 0 },
-              { day: '화', dayIndex: 2, count: 0, searchCount: 0, aiAnalysisCount: 0 },
-              { day: '수', dayIndex: 3, count: 0, searchCount: 0, aiAnalysisCount: 0 },
-              { day: '목', dayIndex: 4, count: 0, searchCount: 0, aiAnalysisCount: 0 },
-              { day: '금', dayIndex: 5, count: 0, searchCount: 0, aiAnalysisCount: 0 },
-              { day: '토', dayIndex: 6, count: 0, searchCount: 0, aiAnalysisCount: 0 },
-              { day: '일', dayIndex: 0, count: 0, searchCount: 0, aiAnalysisCount: 0 }
-            ]
-          })
-        }
-      } catch (err) {
-        console.error('❌ [Dashboard] 대시보드 데이터 로딩 실패:', err)
-        const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.'
-        setError(`대시보드 데이터를 불러오는데 실패했습니다: ${errorMessage}`)
-        
-        // 네트워크 오류인 경우 재시도 제안
-        if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
-          toast.error('네트워크 연결을 확인해주세요', {
-            description: '잠시 후 다시 시도해보세요.',
-            action: {
-              label: '재시도',
-              onClick: () => {
-                setError(null)
-                loadDashboardData()
-              }
-            }
-          })
-        } else {
-          toast.error('데이터 로딩 실패', {
-            description: errorMessage
-          })
-        }
-      } finally {
-        setLoading(false)
-      }
+  // 대시보드 데이터 로딩 함수
+  const loadDashboardData = useCallback(async () => {
+    // 인증된 사용자만 데이터 로드
+    if (!user?.id) {
+      console.log('🚫 [Dashboard] 인증되지 않은 사용자')
+      setLoading(false)
+      setError('로그인이 필요합니다.')
+      return
     }
 
-    loadDashboardData()
+    const currentUserId = user.id;
+
+    try {
+      setLoading(true)
+      setError(null)
+
+      console.log('📊 [Dashboard] 사용자 통계 요청 시작:', currentUserId)
+
+      // API에서 사용자 통계 가져오기
+      const response = await getUserStats(currentUserId)
+      
+      console.log('📊 [Dashboard] API 응답 전체:', response)
+      console.log('📊 [Dashboard] API 응답 성공 여부:', response.success)
+      console.log('📊 [Dashboard] API 응답 데이터:', response.data)
+      
+      if (response.success && response.data) {
+        const stats = response.data
+        console.log('📊 [Dashboard] API 응답 전체:', response)
+        console.log('📊 [Dashboard] API 응답 성공 여부:', response.success)
+        console.log('📊 [Dashboard] API 응답 데이터:', stats)
+
+        // 새 사용자 정보는 더 이상 표시하지 않음
+        console.log('📊 [Dashboard] daily_activities 데이터:', stats.daily_activities)
+        console.log('📊 [Dashboard] daily_activities_100days 데이터:', stats.daily_activities_100days)
+        console.log('📊 [Dashboard] 통계 데이터 구조:', {
+          summary: stats.summary,
+          recent_searches: stats.recent_searches?.length || 0,
+          recent_reports: stats.recent_reports?.length || 0,
+          top_keywords: stats.top_keywords?.length || 0,
+          field_distribution: stats.field_distribution?.length || 0,
+          weekly_activities: stats.weekly_activities?.length || 0,
+          hourly_activities: stats.hourly_activities?.length || 0,
+          daily_activities: stats.daily_activities?.length || 0,
+          daily_activities_100days: stats.daily_activities_100days?.length || 0
+        })
+        
+        // API 응답을 UserStats 형태로 매핑
+        const mappedStats = {
+          totalSearches: stats.summary?.search_count || 0,
+          reportsGenerated: stats.summary?.ai_analysis_count || 0,
+          monthlyActivity: stats.summary?.total_login_count || 0,
+          savedPatents: stats.summary?.detail_view_count || 0,
+          totalLogins: stats.summary?.total_login_count || 0,
+          engagementScore: Math.min(100, (stats.summary?.search_count || 0) * 2),
+          averageSearchResults: stats.summary?.average_search_results || 0,
+          aiAnalysisCount: stats.summary?.ai_analysis_count || 0,
+          totalUsageCost: stats.summary?.total_usage_cost || 0,
+          searchHistory: [], // API에서 제공하지 않음
+          searchKeywords: (stats.top_keywords || []).map((item: any) => ({
+            keyword: item.keyword,
+            count: item.count,
+            field: item.technology_field || '기타'
+          })),
+          recentSearches: (stats.recent_searches || []).map((search: any) => ({
+            keyword: search.query || '검색어 없음',
+            searchDate: search.timestamp,
+            resultsCount: search.results || 0,
+            field: search.technology_field || '기타'
+          })),
+          recentReports: (stats.recent_reports || []).map((report: any) => ({
+            id: report.id,
+            patentTitle: report.title || report.patent_title || '리포트 제목 없음',
+            patentNumber: report.patent_number || '특허번호 없음',
+            reportType: report.report_type || 'analysis',
+            createdAt: report.timestamp
+          })),
+          fieldDistribution: stats.field_distribution || [],
+          weeklyActivity: stats.weekly_activities || [],
+          hourlyActivity: stats.hourly_activities || [],
+          dailyActivities: stats.daily_activities_100days || stats.daily_activities || []
+        }
+        
+        console.log('📊 [Dashboard] 매핑된 통계:', mappedStats)
+        console.log('📊 [Dashboard] 매핑된 dailyActivities:', mappedStats.dailyActivities)
+        console.log('📊 [Dashboard] dailyActivities 길이:', mappedStats.dailyActivities?.length)
+        console.log('📊 [Dashboard] dailyActivities 첫 번째 항목:', mappedStats.dailyActivities?.[0])
+        console.log('📊 [Dashboard] dailyActivities 마지막 항목:', mappedStats.dailyActivities?.[mappedStats.dailyActivities.length - 1])
+
+        setUserStats(mappedStats)
+
+        // 차트 데이터 설정
+        setChartData({
+          hourlyActivity: stats.hourly_activities || Array.from({ length: 24 }, (_, i) => ({ hour: i, count: 0 })),
+          weeklyActivity: stats.weekly_activities || [
+            { day: '월', dayIndex: 1, count: 0, searchCount: 0, aiAnalysisCount: 0 },
+            { day: '화', dayIndex: 2, count: 0, searchCount: 0, aiAnalysisCount: 0 },
+            { day: '수', dayIndex: 3, count: 0, searchCount: 0, aiAnalysisCount: 0 },
+            { day: '목', dayIndex: 4, count: 0, searchCount: 0, aiAnalysisCount: 0 },
+            { day: '금', dayIndex: 5, count: 0, searchCount: 0, aiAnalysisCount: 0 },
+            { day: '토', dayIndex: 6, count: 0, searchCount: 0, aiAnalysisCount: 0 },
+            { day: '일', dayIndex: 0, count: 0, searchCount: 0, aiAnalysisCount: 0 }
+          ]
+        })
+      } else {
+        console.warn('⚠️ [Dashboard] API 응답이 성공하지 않음 또는 데이터가 없음')
+        console.warn('⚠️ [Dashboard] 응답:', response)
+        
+        // 폴백 데이터 설정
+        setUserStats({
+          totalSearches: 0,
+          reportsGenerated: 0,
+          monthlyActivity: 0,
+          savedPatents: 0,
+          totalLogins: 0,
+          engagementScore: 0,
+          averageSearchResults: 0,
+          aiAnalysisCount: 0,
+          totalUsageCost: 0,
+          searchHistory: [],
+          searchKeywords: [],
+          recentSearches: [],
+          recentReports: [],
+          fieldDistribution: [],
+          weeklyActivity: [],
+          hourlyActivity: [],
+          dailyActivities: []
+        })
+
+        setChartData({
+          hourlyActivity: Array.from({ length: 24 }, (_, i) => ({ hour: i, count: 0 })),
+          weeklyActivity: [
+            { day: '월', dayIndex: 1, count: 0, searchCount: 0, aiAnalysisCount: 0 },
+            { day: '화', dayIndex: 2, count: 0, searchCount: 0, aiAnalysisCount: 0 },
+            { day: '수', dayIndex: 3, count: 0, searchCount: 0, aiAnalysisCount: 0 },
+            { day: '목', dayIndex: 4, count: 0, searchCount: 0, aiAnalysisCount: 0 },
+            { day: '금', dayIndex: 5, count: 0, searchCount: 0, aiAnalysisCount: 0 },
+            { day: '토', dayIndex: 6, count: 0, searchCount: 0, aiAnalysisCount: 0 },
+            { day: '일', dayIndex: 0, count: 0, searchCount: 0, aiAnalysisCount: 0 }
+          ]
+        })
+      }
+    } catch (err) {
+      console.error('❌ [Dashboard] 대시보드 데이터 로딩 실패:', err)
+      const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.'
+      setError(`대시보드 데이터를 불러오는데 실패했습니다: ${errorMessage}`)
+      
+      // 네트워크 오류인 경우 재시도 제안
+      if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+        toast.error('네트워크 연결을 확인해주세요', {
+          description: '잠시 후 다시 시도해보세요.',
+          action: {
+            label: '재시도',
+            onClick: () => {
+              setError(null)
+              loadDashboardData()
+            }
+          }
+        })
+      } else {
+        toast.error('데이터 로딩 실패', {
+          description: errorMessage
+        })
+      }
+    } finally {
+      setLoading(false)
+    }
   }, [user?.id])
+
+  // 데이터 로딩 - 새로고침 기능 제거, 초기 로드만 수행
+  useEffect(() => {
+    const loadAllData = async () => {
+      await loadDashboardData()
+      await loadKeywordAnalytics()
+    }
+
+    // 초기 데이터 로드만 수행 (자동 새로고침 제거)
+    loadAllData()
+  }, [user?.id, loadDashboardData])
 
   // 통계 카드 데이터
   const stats = useMemo(() => {
@@ -580,12 +609,23 @@ export default function Dashboard() {
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-ms-text mb-2">오류가 발생했습니다</h2>
           <p className="text-ms-text-muted mb-4">{error}</p>
-          <Button 
-            onClick={() => window.location.reload()} 
-            className="bg-ms-olive hover:bg-ms-olive/90 text-white"
-          >
-            다시 시도
-          </Button>
+          <div className="flex gap-3 justify-center">
+            {error.includes('로그인') ? (
+              <Button 
+                onClick={() => navigate('/login')} 
+                className="bg-ms-olive hover:bg-ms-olive/90 text-white"
+              >
+                로그인하기
+              </Button>
+            ) : (
+              <Button 
+                onClick={() => window.location.reload()} 
+                className="bg-ms-olive hover:bg-ms-olive/90 text-white"
+              >
+                다시 시도
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     )
@@ -603,56 +643,17 @@ export default function Dashboard() {
                 안녕하세요, {user?.email || '사용자'}님! 특허 검색 활동을 확인해보세요.
               </p>
             </div>
-            <div className="mt-4 sm:mt-0">
+            <div className="mt-4 sm:mt-0 flex gap-3">
               <Link to="/search">
-            <Button className="bg-ms-olive hover:bg-ms-olive/90 text-white flex items-center space-x-2">
-              <Search className="h-4 w-4" />
-              <span>새 검색</span>
-            </Button>
-          </Link>
-        </div>
+                <Button className="bg-ms-olive hover:bg-ms-olive/90 text-white flex items-center space-x-2">
+                  <Search className="h-4 w-4" />
+                  <span>새 검색</span>
+                </Button>
+              </Link>
+            </div>
       </div>
 
-      {/* 새 사용자 환영 섹션 */}
-      {isNewUser && welcomeMessage && (
-        <Card className="ms-card bg-gradient-to-r from-ms-olive/10 to-ms-olive/5 border-ms-olive/20">
-          <CardContent className="p-6">
-            <div className="flex items-start space-x-4">
-              <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-ms-olive/20 rounded-full flex items-center justify-center">
-                  <Zap className="h-6 w-6 text-ms-olive" />
-                </div>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-ms-text mb-2">
-                  특허 AI 플랫폼에 오신 것을 환영합니다! 🎉
-                </h3>
-                <p className="text-ms-text-muted mb-4">
-                  {welcomeMessage}
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Link to="/search">
-                    <Button className="bg-ms-olive hover:bg-ms-olive/90 text-white flex items-center space-x-2">
-                      <Search className="h-4 w-4" />
-                      <span>첫 번째 검색 시작하기</span>
-                    </Button>
-                  </Link>
-                  <Button 
-                    variant="outline" 
-                    className="border-ms-olive text-ms-olive hover:bg-ms-olive/10"
-                    onClick={() => {
-                      setIsNewUser(false)
-                      setWelcomeMessage(null)
-                    }}
-                  >
-                    나중에 하기
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+
 
       {/* 통계 카드 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -718,8 +719,7 @@ export default function Dashboard() {
                         }
                         return value
                       }}
-                      formatter={(value, name) => [
-                        `누적 ${value}${name === '누적 검색 수' ? '회' : '개'}`, 
+                      formatter={(value) => [`누적 ${value}${name === '누적 검색 수' ? '회' : '개'}`, 
                         name
                       ]}
                     />
@@ -812,6 +812,216 @@ export default function Dashboard() {
                 </PieChart>
               </ResponsiveContainer>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 키워드 분석 섹션 */}
+      <div className="space-y-6">
+        <div className="flex items-center space-x-2">
+          <Brain className="h-6 w-6 text-ms-olive" />
+          <h2 className="text-xl font-semibold text-ms-text">키워드 분석</h2>
+          <p className="text-sm text-ms-text-muted">AI 기반 검색 키워드 분석 결과</p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* 기술 분야별 분포 도넛 차트 */}
+          <Card className="ms-card">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-ms-text">
+                <PieChartIcon className="h-5 w-5 text-ms-text-light" />
+                <span>기술 분야별 분포</span>
+              </CardTitle>
+              <CardDescription className="text-ms-text-muted">
+                AI가 분류한 검색 키워드의 기술 분야별 분포
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {keywordAnalytics.fieldDistribution && keywordAnalytics.fieldDistribution.length > 0 ? (
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={keywordAnalytics.fieldDistribution}
+                        dataKey="count"
+                        nameKey="field"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={120}
+                        paddingAngle={2}
+                        label={({ field, percentage }) => 
+                          percentage > 5 ? `${field} ${percentage.toFixed(1)}%` : ''
+                        }
+                        labelLine={false}
+                      >
+                        {keywordAnalytics.fieldDistribution.map((entry, index) => (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={[
+                              "#059669", // 에메랄드
+                              "#0891B2", // 시안
+                              "#7C3AED", // 바이올렛
+                              "#DC2626", // 레드
+                              "#EA580C", // 오렌지
+                              "#CA8A04", // 옐로우
+                              "#16A34A", // 그린
+                              "#9333EA", // 퍼플
+                              "#0284C7", // 스카이
+                              "#DB2777"  // 핑크
+                            ][index % 10]} 
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value, name) => [`${value}개 (${((value / keywordAnalytics.fieldDistribution.reduce((sum, item) => sum + item.count, 0)) * 100).toFixed(1)}%)`, name]}
+                        labelFormatter={(label) => `분야: ${label}`}
+                      />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-80 flex items-center justify-center">
+                  <div className="text-center">
+                    <PieChartIcon className="h-16 w-16 text-ms-text-light mx-auto mb-4 opacity-50" />
+                    <h3 className="text-lg font-medium text-ms-text mb-2">분야별 데이터가 없습니다</h3>
+                    <p className="text-ms-text-muted mb-4">
+                      검색을 시작하면 AI가 키워드를 분석하여 기술 분야별로 분류합니다.
+                    </p>
+                    <Link to="/search">
+                      <Button className="bg-ms-olive hover:bg-ms-olive/90 text-white">
+                        검색 시작하기
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* 검색 트렌드 라인 차트 */}
+          <Card className="ms-card">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-ms-text">
+                <TrendingUp className="h-5 w-5 text-ms-text-light" />
+                <span>키워드 검색 트렌드</span>
+              </CardTitle>
+              <CardDescription className="text-ms-text-muted">
+                최근 30일간 키워드 검색 빈도 변화
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {keywordAnalytics.searchTrends && keywordAnalytics.searchTrends.length > 0 ? (
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={keywordAnalytics.searchTrends}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis 
+                        dataKey="date" 
+                        tick={{ fontSize: 12 }}
+                        tickFormatter={(value) => {
+                          try {
+                            const date = new Date(value)
+                            return `${date.getMonth() + 1}/${date.getDate()}`
+                          } catch (e) {
+                            return value
+                          }
+                        }}
+                        interval="preserveStartEnd"
+                      />
+                      <YAxis tick={{ fontSize: 12 }} />
+                      <Tooltip 
+                        labelFormatter={(value) => {
+                          try {
+                            const date = new Date(value)
+                            return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`
+                          } catch (e) {
+                            return value
+                          }
+                        }}
+                        formatter={(value) => [`${value}회`, '검색 수']}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="count" 
+                        stroke="#059669"
+                        strokeWidth={3}
+                        dot={{ fill: "#059669", strokeWidth: 2, r: 4 }}
+                        activeDot={{ r: 6, fill: "#059669" }}
+                        name="검색 수"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-80 flex items-center justify-center">
+                  <div className="text-center">
+                    <TrendingUp className="h-16 w-16 text-ms-text-light mx-auto mb-4 opacity-50" />
+                    <h3 className="text-lg font-medium text-ms-text mb-2">트렌드 데이터가 없습니다</h3>
+                    <p className="text-ms-text-muted mb-4">
+                      검색 활동이 누적되면 키워드 검색 트렌드를 확인할 수 있습니다.
+                    </p>
+                    <Link to="/search">
+                      <Button className="bg-ms-olive hover:bg-ms-olive/90 text-white">
+                        검색 시작하기
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* 인기 키워드 목록 */}
+        <Card className="ms-card">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2 text-ms-text">
+              <Tag className="h-5 w-5 text-ms-text-light" />
+              <span>인기 키워드</span>
+            </CardTitle>
+            <CardDescription className="text-ms-text-muted">
+              가장 많이 검색된 키워드와 해당 기술 분야
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {keywordAnalytics.topKeywords && keywordAnalytics.topKeywords.length > 0 ? (
+              <div className="space-y-3">
+                {keywordAnalytics.topKeywords.slice(0, 10).map((keyword, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-ms-soft rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-ms-olive/20 rounded-full flex items-center justify-center">
+                        <span className="text-sm font-semibold text-ms-olive">
+                          {index + 1}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-ms-text">{keyword.keyword}</p>
+                        <p className="text-sm text-ms-text-muted">{keyword.field}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-ms-text">{keyword.count}회</p>
+                      <p className="text-xs text-ms-text-muted">검색됨</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Tag className="h-16 w-16 text-ms-text-light mx-auto mb-4 opacity-50" />
+                <h3 className="text-lg font-medium text-ms-text mb-2">키워드 데이터가 없습니다</h3>
+                <p className="text-ms-text-muted mb-4">
+                  검색을 시작하면 인기 키워드 순위를 확인할 수 있습니다.
+                </p>
+                <Link to="/search">
+                  <Button className="bg-ms-olive hover:bg-ms-olive/90 text-white">
+                    검색 시작하기
+                  </Button>
+                </Link>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -1022,7 +1232,7 @@ export default function Dashboard() {
                         {report.patentTitle}
                       </p>
                       <p className="text-xs text-ms-text-light">
-                        특허번호: {report.patentNumber} • {report.reportType}
+                        특허번호: {report.patentNumber} • {report.reportType === 'market' ? '시장분석' : '인사이트'}
                       </p>
                     </div>
                     <div className="flex items-center space-x-2">

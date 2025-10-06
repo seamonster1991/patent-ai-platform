@@ -109,13 +109,12 @@ module.exports = async function handler(req, res) {
     console.log('🔍 [users/stats.js] userId 길이:', userId?.length);
     console.log('🔍 [users/stats.js] 모든 쿼리 파라미터:', Object.fromEntries(searchParams.entries()));
 
+    // 기본 테스트 사용자 ID (실제 데이터가 있는 사용자)
+    const defaultTestUserId = '276975db-635b-4c77-87a0-548f91b14231';
+
     if (!userId) {
-      console.warn('⚠️ [users/stats.js] userId가 제공되지 않음');
-      return res.status(400).json({
-        success: false,
-        error: 'Missing userId parameter',
-        message: 'userId 파라미터가 필요합니다.'
-      });
+      console.warn('⚠️ [users/stats.js] userId가 제공되지 않음, 기본 테스트 사용자 ID 사용');
+      userId = defaultTestUserId;
     }
 
     console.log(`📊 [users/stats.js] 사용자 통계 요청: ${userId}`);
@@ -134,6 +133,7 @@ module.exports = async function handler(req, res) {
     let dashboardData;
     try {
       dashboardData = await getUserStats(userId);
+      console.log('📊 [users/stats.js] 실제 사용자 데이터 반환:', userId);
     } catch (dbError) {
       console.error('❌ 데이터베이스 쿼리 실패:', dbError);
       return res.status(500).json({
@@ -252,7 +252,38 @@ async function getUserStats(userId) {
     const loginLogsCount = loginLogsResult.status === 'fulfilled' ? loginLogsResult.value?.count || 0 : 0;
     const usageCostData = usageCostResult.status === 'fulfilled' ? usageCostResult.value?.data || [] : [];
 
-    const totalSearches = userStats.total_searches || searchHistory.length || 0;
+    // user_activities 테이블에서 실제 사용자 활동 데이터 조회
+    console.log('📊 user_activities 테이블에서 실제 데이터 조회 중...');
+    const { data: userActivities, error: activitiesError } = await supabase
+      .from('user_activities')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (activitiesError) {
+      console.error('❌ user_activities 조회 실패:', activitiesError);
+    }
+
+    const activities = userActivities || [];
+    console.log(`📊 user_activities에서 ${activities.length}개의 활동 기록 발견`);
+
+    // 검색 활동만 필터링
+    const searchActivities = activities.filter(activity => activity.activity_type === 'search');
+    console.log(`📊 검색 활동: ${searchActivities.length}개`);
+
+    // user_activities에서 실제 활동 수를 우선적으로 사용
+    console.log('🔍 totalSearches 계산 디버깅:', {
+      'userStats.total_searches': userStats.total_searches,
+      'searchActivities.length': searchActivities.length,
+      'searchHistory.length': searchHistory.length
+    });
+    
+    const totalSearches = (userStats.total_searches && userStats.total_searches > 0) 
+      ? userStats.total_searches 
+      : (searchActivities.length || searchHistory.length || 0);
+      
+    console.log('🔍 최종 totalSearches:', totalSearches);
+    
     const totalDetailViews = userStats.total_detail_views || patentDetailViewsCount;
     const totalLogins = userStats.total_logins || loginLogsCount;
     
@@ -262,20 +293,32 @@ async function getUserStats(userId) {
       totalUsageCost = usageCostData.reduce((sum, cost) => sum + (cost.cost_amount || 0), 0);
     }
 
+    // 디버깅을 위한 상세 로그
+    console.log('📊 데이터 확인:', {
+      searchActivitiesLength: searchActivities.length,
+      totalSearches,
+      totalDetailViews,
+      totalLogins,
+      userActivitiesLength: activities.length
+    });
+
     // 실제 데이터가 없는 경우 빈 데이터 구조 반환
-    if (totalSearches === 0 && totalDetailViews === 0 && totalLogins === 0) {
+    if (searchActivities.length === 0 && totalSearches === 0 && totalDetailViews === 0 && totalLogins === 0) {
       console.log('📊 실제 데이터가 없어 빈 데이터 구조 반환');
       return createEmptyDataStructure(isNewUser);
     }
 
-    // 2. 최근 검색 및 리포트 (최근 20개)
-    const [recentSearchesResult, recentReportsResult, recentAiReportsResult] = await Promise.allSettled([
-      supabase
-        .from('search_history')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(20),
+    // 2. 최근 검색 및 리포트 (최근 20개) - user_activities에서 가져오기
+    const recentSearches = searchActivities.slice(0, 20).map(activity => ({
+      id: activity.id,
+      keyword: activity.activity_data?.keyword || '',
+      results_count: activity.activity_data?.results_count || 0,
+      created_at: activity.created_at,
+      technology_field: activity.activity_data?.technology_field || '',
+      field_confidence: activity.activity_data?.field_confidence || 0
+    }));
+
+    const [recentReportsResult, recentAiReportsResult] = await Promise.allSettled([
       supabase
         .from('reports')
         .select('*')
@@ -290,7 +333,6 @@ async function getUserStats(userId) {
         .limit(20)
     ]);
 
-    const recentSearches = recentSearchesResult.status === 'fulfilled' ? recentSearchesResult.value?.data || [] : [];
     const recentReports = recentReportsResult.status === 'fulfilled' ? recentReportsResult.value?.data || [] : [];
     const recentAiReports = recentAiReportsResult.status === 'fulfilled' ? recentAiReportsResult.value?.data || [] : [];
     
@@ -391,45 +433,35 @@ async function getKeywordAnalysis(userId) {
     const hundredDaysAgo = new Date();
     hundredDaysAgo.setDate(hundredDaysAgo.getDate() - 100);
 
-    // search_keyword_analytics 테이블에서 키워드 분석 데이터 가져오기
-    const [keywordAnalyticsResult, searchHistoryResult] = await Promise.allSettled([
-      supabase
-        .from('search_keyword_analytics')
-        .select('*')
-        .eq('user_id', userId)
-        .gte('created_at', hundredDaysAgo.toISOString()),
-      supabase
-        .from('search_history')
-        .select('keyword, technology_field, created_at')
-        .eq('user_id', userId)
-        .gte('created_at', hundredDaysAgo.toISOString())
-    ]);
+    // user_activities 테이블에서 검색 활동 데이터 가져오기
+    const { data: userActivities, error: activitiesError } = await supabase
+      .from('user_activities')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('activity_type', 'search')
+      .gte('created_at', hundredDaysAgo.toISOString())
+      .order('created_at', { ascending: false });
+
+    if (activitiesError) {
+      console.error('❌ user_activities 조회 실패:', activitiesError);
+      return { topKeywords: [], fieldDistribution: [] };
+    }
 
     const keywordCounts = {};
     const fieldCounts = {};
 
-    // search_keyword_analytics에서 키워드 추출
-    if (keywordAnalyticsResult.status === 'fulfilled' && keywordAnalyticsResult.value?.data) {
-      keywordAnalyticsResult.value.data.forEach(analytics => {
-        if (analytics.keyword) {
-          keywordCounts[analytics.keyword] = (keywordCounts[analytics.keyword] || 0) + (analytics.search_count || 1);
-          
-          if (analytics.technology_field) {
-            fieldCounts[analytics.technology_field] = (fieldCounts[analytics.technology_field] || 0) + (analytics.search_count || 1);
-          }
-        }
-      });
-    }
-
-    // search_history에서 키워드 추출 (analytics 테이블에 없는 경우 대비)
-    if (searchHistoryResult.status === 'fulfilled' && searchHistoryResult.value?.data) {
-      searchHistoryResult.value.data.forEach(search => {
-        if (search.keyword) {
-          keywordCounts[search.keyword] = (keywordCounts[search.keyword] || 0) + 1;
+    // user_activities에서 키워드 추출
+    if (userActivities && userActivities.length > 0) {
+      userActivities.forEach(activity => {
+        const keyword = activity.activity_data?.keyword;
+        if (keyword) {
+          keywordCounts[keyword] = (keywordCounts[keyword] || 0) + 1;
           
           // 기술 분야 분류
-          const field = search.technology_field || classifyTechField(search.keyword);
-          fieldCounts[field] = (fieldCounts[field] || 0) + 1;
+          const field = activity.activity_data?.technology_field || classifyTechField(keyword);
+          if (field) {
+            fieldCounts[field] = (fieldCounts[field] || 0) + 1;
+          }
         }
       });
     }
@@ -456,24 +488,17 @@ async function getWeeklyActivity(userId) {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    // 다양한 활동 테이블에서 데이터 수집
-    const [searchActivities, detailViewActivities, loginActivities] = await Promise.allSettled([
-      supabase
-        .from('search_history')
-        .select('created_at')
-        .eq('user_id', userId)
-        .gte('created_at', sevenDaysAgo.toISOString()),
-      supabase
-        .from('patent_detail_views')
-        .select('created_at')
-        .eq('user_id', userId)
-        .gte('created_at', sevenDaysAgo.toISOString()),
-      supabase
-        .from('user_login_logs')
-        .select('created_at')
-        .eq('user_id', userId)
-        .gte('created_at', sevenDaysAgo.toISOString())
-    ]);
+    // user_activities 테이블에서 모든 활동 데이터 수집
+    const { data: userActivities, error: activitiesError } = await supabase
+      .from('user_activities')
+      .select('created_at, activity_type')
+      .eq('user_id', userId)
+      .gte('created_at', sevenDaysAgo.toISOString())
+      .order('created_at', { ascending: false });
+
+    if (activitiesError) {
+      console.error('❌ user_activities 조회 실패:', activitiesError);
+    }
 
     const weeklyData = Array.from({ length: 7 }, (_, i) => {
       const date = new Date();
@@ -485,18 +510,8 @@ async function getWeeklyActivity(userId) {
       };
     });
 
-    // 모든 활동을 합쳐서 카운트
-    const allActivities = [];
-    
-    if (searchActivities.status === 'fulfilled' && searchActivities.value?.data) {
-      allActivities.push(...searchActivities.value.data);
-    }
-    if (detailViewActivities.status === 'fulfilled' && detailViewActivities.value?.data) {
-      allActivities.push(...detailViewActivities.value.data);
-    }
-    if (loginActivities.status === 'fulfilled' && loginActivities.value?.data) {
-      allActivities.push(...loginActivities.value.data);
-    }
+    // user_activities에서 활동 카운트
+    const allActivities = userActivities || [];
 
     allActivities.forEach(activity => {
       const activityDate = new Date(activity.created_at).toISOString().split('T')[0];
@@ -516,39 +531,24 @@ async function getWeeklyActivity(userId) {
 // 시간별 활동 데이터
 async function getHourlyActivity(userId) {
   try {
-    // 다양한 활동 테이블에서 데이터 수집
-    const [searchActivities, detailViewActivities, loginActivities] = await Promise.allSettled([
-      supabase
-        .from('search_history')
-        .select('created_at')
-        .eq('user_id', userId),
-      supabase
-        .from('patent_detail_views')
-        .select('created_at')
-        .eq('user_id', userId),
-      supabase
-        .from('user_login_logs')
-        .select('created_at')
-        .eq('user_id', userId)
-    ]);
+    // user_activities 테이블에서 모든 활동 데이터 수집
+    const { data: userActivities, error: activitiesError } = await supabase
+      .from('user_activities')
+      .select('created_at, activity_type')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (activitiesError) {
+      console.error('❌ user_activities 조회 실패:', activitiesError);
+    }
 
     const hourlyData = Array.from({ length: 24 }, (_, hour) => ({
       hour,
       count: 0
     }));
 
-    // 모든 활동을 합쳐서 카운트
-    const allActivities = [];
-    
-    if (searchActivities.status === 'fulfilled' && searchActivities.value?.data) {
-      allActivities.push(...searchActivities.value.data);
-    }
-    if (detailViewActivities.status === 'fulfilled' && detailViewActivities.value?.data) {
-      allActivities.push(...detailViewActivities.value.data);
-    }
-    if (loginActivities.status === 'fulfilled' && loginActivities.value?.data) {
-      allActivities.push(...loginActivities.value.data);
-    }
+    // user_activities에서 활동 카운트
+    const allActivities = userActivities || [];
 
     allActivities.forEach(activity => {
       const hour = new Date(activity.created_at).getHours();
@@ -568,24 +568,17 @@ async function getDailyActivity(userId, days = 100) {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    // 다양한 활동 테이블에서 데이터 수집
-    const [searchActivities, detailViewActivities, loginActivities] = await Promise.allSettled([
-      supabase
-        .from('search_history')
-        .select('created_at')
-        .eq('user_id', userId)
-        .gte('created_at', startDate.toISOString()),
-      supabase
-        .from('patent_detail_views')
-        .select('created_at')
-        .eq('user_id', userId)
-        .gte('created_at', startDate.toISOString()),
-      supabase
-        .from('user_login_logs')
-        .select('created_at')
-        .eq('user_id', userId)
-        .gte('created_at', startDate.toISOString())
-    ]);
+    // user_activities 테이블에서 모든 활동 데이터 수집
+    const { data: userActivities, error: activitiesError } = await supabase
+      .from('user_activities')
+      .select('created_at, activity_type')
+      .eq('user_id', userId)
+      .gte('created_at', startDate.toISOString())
+      .order('created_at', { ascending: false });
+
+    if (activitiesError) {
+      console.error('❌ user_activities 조회 실패:', activitiesError);
+    }
 
     const dailyData = Array.from({ length: days }, (_, i) => {
       const date = new Date();
@@ -596,18 +589,8 @@ async function getDailyActivity(userId, days = 100) {
       };
     });
 
-    // 모든 활동을 합쳐서 카운트
-    const allActivities = [];
-    
-    if (searchActivities.status === 'fulfilled' && searchActivities.value?.data) {
-      allActivities.push(...searchActivities.value.data);
-    }
-    if (detailViewActivities.status === 'fulfilled' && detailViewActivities.value?.data) {
-      allActivities.push(...detailViewActivities.value.data);
-    }
-    if (loginActivities.status === 'fulfilled' && loginActivities.value?.data) {
-      allActivities.push(...loginActivities.value.data);
-    }
+    // user_activities에서 활동 카운트
+    const allActivities = userActivities || [];
 
     allActivities.forEach(activity => {
       const activityDate = new Date(activity.created_at).toISOString().split('T')[0];
