@@ -489,25 +489,32 @@ export default function Dashboard() {
       .slice(0, 8) // 상위 8개만
   }, [userStats.fieldDistribution, userStats.searchKeywords])
 
-  // 활동 트렌드 데이터 (검색수와 보고서수를 일자별로 표시)
+  // 활동 트렌드 데이터 (검색수와 보고서수를 누적으로 표시)
   const activityTrendData = useMemo(() => {
     if (!userStats.dailyActivities || userStats.dailyActivities.length === 0) {
       return []
     }
 
-    // dailyActivities 데이터를 기반으로 검색수와 보고서수 생성
+    // dailyActivities 데이터를 기반으로 누적 검색수와 보고서수 생성
+    let cumulativeSearchCount = 0
+    let cumulativeReportCount = 0
+    
     return userStats.dailyActivities.map((item, index) => {
-      // 검색수는 실제 데이터 사용
-      const searchCount = item.count || 0
+      // 일별 검색수는 실제 데이터 사용
+      const dailySearchCount = item.count || 0
       
-      // 보고서수는 검색수를 기반으로 시뮬레이션 (실제 API에서 보고서 데이터가 없는 경우)
+      // 일별 보고서수는 검색수를 기반으로 시뮬레이션 (실제 API에서 보고서 데이터가 없는 경우)
       // 검색이 있는 날의 약 30-50% 확률로 보고서 생성으로 가정
-      const reportCount = searchCount > 0 ? Math.floor(searchCount * (0.3 + Math.random() * 0.2)) : 0
+      const dailyReportCount = dailySearchCount > 0 ? Math.floor(dailySearchCount * (0.3 + Math.random() * 0.2)) : 0
+      
+      // 누적 계산
+      cumulativeSearchCount += dailySearchCount
+      cumulativeReportCount += dailyReportCount
       
       return {
         date: item.date,
-        searchCount,
-        reportCount,
+        searchCount: cumulativeSearchCount,  // 누적 검색수
+        reportCount: cumulativeReportCount,  // 누적 보고서수
         // 날짜 포맷팅을 위한 추가 필드
         formattedDate: (() => {
           try {
@@ -685,7 +692,7 @@ export default function Dashboard() {
               <Activity className="h-5 w-5 text-ms-text-light" />
               <span>활동 트렌드</span>
             </CardTitle>
-            <CardDescription className="text-ms-text-muted">최근 100일간 검색수와 보고서 생성 현황</CardDescription>
+            <CardDescription className="text-ms-text-muted">최근 100일간 누적 검색수와 보고서 생성 현황</CardDescription>
           </CardHeader>
           <CardContent>
             {activityTrendData && activityTrendData.length > 0 ? (
@@ -712,7 +719,7 @@ export default function Dashboard() {
                         return value
                       }}
                       formatter={(value, name) => [
-                        `${value}${name === '검색 수' ? '회' : '개'}`, 
+                        `누적 ${value}${name === '누적 검색 수' ? '회' : '개'}`, 
                         name
                       ]}
                     />
@@ -724,7 +731,7 @@ export default function Dashboard() {
                       strokeWidth={2}
                       dot={{ fill: "#3B82F6", strokeWidth: 2, r: 3 }}
                       activeDot={{ r: 5, fill: "#3B82F6" }}
-                      name="검색 수"
+                      name="누적 검색 수"
                     />
                     <Line 
                       type="monotone" 
@@ -733,7 +740,7 @@ export default function Dashboard() {
                       strokeWidth={2}
                       dot={{ fill: "#F59E0B", strokeWidth: 2, r: 3 }}
                       activeDot={{ r: 5, fill: "#F59E0B" }}
-                      name="보고서 수"
+                      name="누적 보고서 수"
                     />
                   </ComposedChart>
                 </ResponsiveContainer>
