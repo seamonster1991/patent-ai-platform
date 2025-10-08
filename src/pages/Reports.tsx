@@ -16,7 +16,7 @@ import {
   Loader2
 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
-import { ActivityTracker } from '../lib/activityTracker'
+import { activityTracker } from '../lib/activityTracker'
 import { cn } from '../lib/utils'
 
 interface Report {
@@ -93,7 +93,7 @@ export default function Reports() {
         ...(filters.endDate && { endDate: filters.endDate })
       })
 
-      const response = await fetch(`/api/users/reports?${params}`, {
+      const response = await fetch(`http://localhost:3005/api/users/reports?${params}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -118,6 +118,13 @@ export default function Reports() {
     }
   }
 
+  // 사용자 ID 설정
+  useEffect(() => {
+    if (user?.id) {
+      activityTracker.setUserId(user.id)
+    }
+  }, [user?.id])
+
   // 초기 로드
   useEffect(() => {
     loadReports(1)
@@ -127,18 +134,33 @@ export default function Reports() {
   const handleFilterChange = (key: string, value: string | number) => {
     setFilters(prev => ({ ...prev, [key]: value }))
     setCurrentPage(1)
+    
+    // 필터 변경 활동 추적
+    if (user?.id) {
+      activityTracker.trackFilterChange({ [key]: value }, filters)
+    }
   }
 
   // 정렬 변경 핸들러
   const handleSortChange = (sortBy: string) => {
     const newSortOrder = filters.sortBy === sortBy && filters.sortOrder === 'desc' ? 'asc' : 'desc'
     setFilters(prev => ({ ...prev, sortBy, sortOrder: newSortOrder }))
+    
+    // 정렬 변경 활동 추적
+    if (user?.id) {
+      activityTracker.trackFilterChange({ sort: `${sortBy}_${newSortOrder}` }, { sortBy, sortOrder: newSortOrder })
+    }
   }
 
   // 페이지 변경 핸들러
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= pagination.totalPages) {
       loadReports(page)
+      
+      // 페이지 변경 활동 추적
+      if (user?.id) {
+        activityTracker.trackPageNavigation(`/reports?page=${page}`, 'reports')
+      }
     }
   }
 
@@ -146,12 +168,11 @@ export default function Reports() {
   const handleDownload = async (report: Report) => {
     try {
       // 사용자 활동 추적 - 보고서 다운로드
-      if (user) {
-        const activityTracker = ActivityTracker.getInstance()
-        activityTracker.setUserId(user.id)
-        await activityTracker.trackDocumentDownload(
+      if (user?.id) {
+        activityTracker.trackDocumentDownload(
           report.application_number || 'unknown',
-          'ai_analysis_report'
+          'ai_analysis_report',
+          0 // 파일 크기는 알 수 없음
         )
       }
     } catch (error) {

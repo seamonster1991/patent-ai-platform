@@ -18,11 +18,15 @@ app.use((req, res, next) => {
 })
 
 // API 라우트 등록
-app.use('/api/users/stats', require('./api/users/stats.js'))
-app.use('/api/users/profile', require('./api/users/profile.js'))
+// ES Module 기반 라우터는 CommonJS 래퍼를 통해 마운트합니다
+app.use('/api/users', require('./api/users-wrapper.js'))
+app.use('/api/admin', require('./api/admin-wrapper.js'))
+
+// CommonJS 핸들러/라우터
 app.use('/api/search', require('./api/search.js'))
 app.use('/api/detail', require('./api/detail.js'))
 app.use('/api/ai-analysis', require('./api/ai-analysis.js'))
+app.use('/api/dashboard-stats', require('./api/dashboard-stats.js'))
 
 // 헬스 체크 엔드포인트
 app.get('/api/health', (req, res) => {

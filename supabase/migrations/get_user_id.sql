@@ -1,2 +1,5 @@
--- 현재 로그인된 사용자의 ID 조회
-SELECT id, email FROM auth.users WHERE email = 'seongwankim@gmail.com';
+-- 실제 사용자 ID 가져오기
+SELECT id, email, name 
+FROM public.users 
+ORDER BY created_at DESC 
+LIMIT 1;

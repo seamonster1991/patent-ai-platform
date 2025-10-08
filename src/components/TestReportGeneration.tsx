@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { handleReportGeneratedFromAPI } from '../utils/eventUtils';
 
 const TestReportGeneration: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -41,7 +42,8 @@ const TestReportGeneration: React.FC = () => {
     try {
       const requestData = {
         patentData: testPatentData,
-        reportType
+        reportType,
+        userId: '276975db-635b-4c77-87a0-548f91b14231' // 테스트 사용자 ID (seongwankim@gmail.com)
       };
       
       console.log('📡 API 요청 전송 중...');
@@ -115,6 +117,21 @@ const TestReportGeneration: React.FC = () => {
         setReport(data.data.content);
         toast.success(`${reportType === 'market' ? '시장 분석' : '비즈니스 인사이트'} 리포트가 생성되었습니다!`);
         console.log('🎉 리포트 생성 완료:', data.data.content);
+        
+        // 대시보드 실시간 업데이트를 위한 이벤트 발생
+        if (typeof window !== 'undefined') {
+          console.log('📊 [TestReportGeneration] reportGenerated 이벤트 발생 준비');
+          
+          // eventUtils를 사용하여 이벤트 발생
+          const eventDispatched = handleReportGeneratedFromAPI(data, {
+            reportType: reportType,
+            reportTitle: `${reportType === 'market' ? '시장 분석' : '비즈니스 인사이트'} 리포트`,
+            patentTitle: testPatentData.biblioSummaryInfo.inventionTitle,
+            patentNumber: testPatentData.biblioSummaryInfo.applicationNumber
+          });
+          
+          console.log('✅ [TestReportGeneration] 이벤트 발생 완료:', eventDispatched);
+        }
       } else {
         throw new Error(data.message || '리포트 데이터가 유효하지 않습니다.');
       }

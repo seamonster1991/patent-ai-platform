@@ -15,6 +15,8 @@ import { toast } from 'sonner'
 import ReportLoadingState from './ReportLoadingState'
 import ReportErrorState from './ReportErrorState'
 import { useAuthStore } from '../../store/authStore'
+import { useNavigate } from 'react-router-dom'
+import { handleReportGeneratedFromAPI } from '../../utils/eventUtils';
 
 interface MarketAnalysisReportProps {
   patent: KiprisPatentDetailItem
@@ -239,13 +241,14 @@ const renderContent = (content: string) => {
   const elements: React.ReactNode[] = []
   let ul: string[] = []
   let ol: string[] = []
+  let keyCounter = 0
 
   const flush = () => {
     if (ul.length) {
       elements.push(
-        <ul className="list-disc ml-6 space-y-1">
+        <ul key={`ul-${keyCounter++}`} className="list-disc ml-6 space-y-1">
           {ul.map((item, i) => (
-            <li key={`ul-${i}`} className="text-sm leading-relaxed text-gray-700 font-medium" dangerouslySetInnerHTML={{ __html: toHtml(item) }} />
+            <li key={`ul-item-${keyCounter}-${i}`} className="text-sm leading-relaxed text-gray-700 font-medium" dangerouslySetInnerHTML={{ __html: toHtml(item) }} />
           ))}
         </ul>
       )
@@ -253,9 +256,9 @@ const renderContent = (content: string) => {
     }
     if (ol.length) {
       elements.push(
-        <ol className="list-decimal ml-6 space-y-1">
+        <ol key={`ol-${keyCounter++}`} className="list-decimal ml-6 space-y-1">
           {ol.map((item, i) => (
-            <li key={`ol-${i}`} className="text-sm leading-relaxed text-gray-700 font-medium" dangerouslySetInnerHTML={{ __html: toHtml(item) }} />
+            <li key={`ol-item-${keyCounter}-${i}`} className="text-sm leading-relaxed text-gray-700 font-medium" dangerouslySetInnerHTML={{ __html: toHtml(item) }} />
           ))}
         </ol>
       )
@@ -276,14 +279,14 @@ const renderContent = (content: string) => {
     }
     if (line === '---') { // 구분선
       flush()
-      elements.push(<div key={`divider-${elements.length}`} className="my-5 border-t border-ms-line/50" />)
+      elements.push(<div key={`divider-${keyCounter++}`} className="my-5 border-t border-ms-line/50" />)
       continue
     }
     // 일반 문단
     if (line.length > 3) {
       flush()
       elements.push(
-        <p key={`p-${elements.length}`} className="text-sm leading-relaxed text-gray-700 font-medium" dangerouslySetInnerHTML={{ __html: toHtml(line) }} />
+        <p key={`p-${keyCounter++}`} className="text-sm leading-relaxed text-gray-700 font-medium" dangerouslySetInnerHTML={{ __html: toHtml(line) }} />
       )
     }
   }
@@ -355,6 +358,7 @@ export default function MarketAnalysisReport({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const { user } = useAuthStore()
+  const navigate = useNavigate()
 
   const formatGeneratedDate = (dateString: string) => {
     try {
@@ -388,7 +392,10 @@ export default function MarketAnalysisReport({
   const generateReport = async () => {
     // ... (generateReport 함수의 기존 fetch 로직 유지)
     if (!patent || !user) {
-      toast.error('특허 정보 또는 사용자 정보가 없습니다.')
+      // 안전한 toast 호출 - setTimeout 사용
+      setTimeout(() => {
+        toast.error('특허 정보 또는 사용자 정보가 없습니다.')
+      }, 0)
       return
     }
 
@@ -396,10 +403,10 @@ export default function MarketAnalysisReport({
     setError('')
 
     try {
-      const response = await fetch('/api/ai-analysis', {
+      const response = await fetch('http://localhost:3005/api/generate-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ patentData: patent, analysisType: 'market_analysis' }),
+        body: JSON.stringify({ patentData: patent, reportType: 'market' }),
       })
 
       if (!response.ok) {
@@ -445,10 +452,13 @@ export default function MarketAnalysisReport({
               errorMessage = '잘못된 요청입니다. 특허 번호를 확인해주세요.'
               break
             case 401:
-              errorMessage = '인증이 필요합니다. 다시 로그인해주세요.'
+              errorMessage = '인증에 실패했습니다. 로그인 상태를 확인해주세요.'
               break
-            case 408:
-              errorMessage = '요청 시간이 초과되었습니다. 다시 시도해주세요.'
+            case 403:
+              errorMessage = '접근 권한이 없습니다.'
+              break
+            case 404:
+              errorMessage = '요청한 리소스를 찾을 수 없습니다.'
               break
             case 429:
               errorMessage = '너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.'
@@ -470,36 +480,175 @@ export default function MarketAnalysisReport({
 
       const data = await response.json()
       
-      if (data.success && data.data && data.data.analysis) {
+      if (data.success && data.data) {
         const reportData: ReportData = {
-          reportType: 'market_analysis',
-          reportName: '시장 분석 리포트',
-          sections: parseComplexContent(data.data.analysis),
-          generatedAt: new Date().toISOString()
+          reportType: data.data.reportType || 'market',
+          reportName: data.data.reportName || '시장 분석 리포트',
+          sections: data.data.sections || [],
+          generatedAt: data.data.generatedAt || new Date().toISOString()
         };
         
         setReportData(reportData);
-        toast.success('시장 분석 리포트가 생성되었습니다.');
+        // 안전한 toast 호출 - setTimeout 사용
+        setTimeout(() => {
+          toast.success('시장 분석 리포트가 생성되었습니다.');
+        }, 0);
+        
+        // 데이터베이스에 리포트 생성 활동 추적
+        try {
+          const { supabase } = await import('../../lib/supabase')
+          await supabase
+            .from('ai_analysis_reports')
+            .insert({
+              user_id: user.id,
+              patent_application_number: patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber,
+              invention_title: patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle,
+              analysis_type: 'market',
+              report_name: reportData.reportName,
+              report_content: JSON.stringify(reportData.sections),
+              status: 'completed'
+            })
+          console.log('✅ [MarketAnalysisReport] 데이터베이스 추적 완료')
+        } catch (error) {
+          console.error('❌ [MarketAnalysisReport] 데이터베이스 추적 실패:', error)
+        }
+        
+        // 대시보드 업데이트를 위한 이벤트 발생
+        if (typeof window !== 'undefined') {
+          console.log('🔧 [MarketAnalysisReport] 이벤트 디스패치 준비 중...', {
+            hasWindow: typeof window !== 'undefined',
+            shouldDispatchEvent: data.shouldDispatchEvent,
+            hasEventData: !!data.eventData,
+            currentPath: window.location.pathname
+          });
+          
+          // eventUtils를 사용하여 이벤트 발생
+          const eventDispatched = handleReportGeneratedFromAPI(data, {
+            reportType: 'market',
+            reportTitle: reportData.reportName,
+            patentTitle: patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle || '특허 제목',
+            patentNumber: patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber || '특허 번호'
+          });
+          
+          console.log('✅ [MarketAnalysisReport] 이벤트 발생 완료:', eventDispatched);
+
+          // 백엔드에서 제공하는 이벤트 데이터 사용
+          let eventDetail;
+          if (data.shouldDispatchEvent && data.eventData) {
+            eventDetail = data.eventData;
+            console.log('📊 [MarketAnalysisReport] 백엔드 제공 이벤트 데이터 사용:', eventDetail);
+          } else {
+            // 폴백: 기존 방식
+            eventDetail = {
+              type: 'reportGenerated',
+              reportType: 'market',
+              reportTitle: reportData.reportName,
+              patentTitle: patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle,
+              patentNumber: patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber,
+              timestamp: reportData.generatedAt
+            };
+            console.log('📊 [MarketAnalysisReport] 폴백 이벤트 데이터 사용:', eventDetail);
+          }
+          
+          console.log('📊 [MarketAnalysisReport] reportGenerated 이벤트 발생 준비:', {
+            eventType: 'reportGenerated',
+            eventDetail: eventDetail,
+            timestamp: new Date().toISOString()
+          });
+          
+          // 이벤트 ��스패치 전 현재 등록된 리스너 확인
+          const listeners = 'N/A'; // getEventListeners는 개발자 도구에서만 사용 가능
+          console.log('🔍 [MarketAnalysisReport] 현재 등록된 이벤트 리스너:', listeners);
+          
+          const customEvent = new CustomEvent('reportGenerated', {
+            detail: eventDetail,
+            bubbles: true,
+            cancelable: true
+          });
+          
+          console.log('📤 [MarketAnalysisReport] 이벤트 디스패치 실행...');
+          const dispatched = window.dispatchEvent(customEvent);
+          
+          console.log('✅ [MarketAnalysisReport] reportGenerated 이벤트 디스패치 완료:', {
+            dispatched: dispatched,
+            eventType: customEvent.type,
+            bubbles: customEvent.bubbles,
+            cancelable: customEvent.cancelable,
+            timestamp: new Date().toISOString()
+          });
+          
+          // 대시보드가 열려있는지 확인하고 직접 새로고침 트리거
+          setTimeout(() => {
+            console.log('🔍 [MarketAnalysisReport] 이벤트 디스패치 후 상태 확인 (1초 후)');
+            
+            // 대시보드가 열려있다면 직접 새로고침 이벤트 발생
+            if (window.location.pathname === '/dashboard') {
+              console.log('🌐 [MarketAnalysisReport] 대시보드 페이지에서 직접 새로고침 트리거');
+              window.dispatchEvent(new CustomEvent('dashboardRefresh', {
+                detail: eventDetail
+              }));
+            } else {
+              console.log('🌐 [MarketAnalysisReport] 현재 페이지가 대시보드가 아님:', window.location.pathname);
+            }
+          }, 1000);
+
+          // 리포트 생성 완료 알림
+          requestAnimationFrame(() => {
+            toast.success('리포트가 생성되었습니다!', {
+              duration: 3000
+            });
+          });
+        } else {
+          console.warn('⚠️ [MarketAnalysisReport] window 객체를 사용할 수 없습니다.');
+        }
       } else {
         throw new Error(data.message || '리포트 데이터를 받지 못했습니다.');
       }
 
     } catch (error) {
-      // ... (기존 에러 메시지 처리 및 finally 블록 유지)
-      let displayError = error.message || '알 수 없는 오류가 발생했습니다.'
+      console.error('❌ [MarketAnalysisReport] 리포트 생성 오류:', {
+        error: error.message,
+        stack: error.stack,
+        patentNumber: patent?.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber,
+        timestamp: new Date().toISOString()
+      });
       
+      let displayError = error.message || '알 수 없는 오류가 발생했습니다.'
+      let errorIcon = '❌'
+      let errorType = 'error'
+      
+      // 에러 타입별 상세 처리
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        displayError = '네트워크 연결에 문제가 있습니다.\n\n해결 방법:\n• 인터넷 연결을 확인해주세요\n• 방화벽 설정을 확인해주세요\n• VPN 연결을 확인해주세요'
+        displayError = '🌐 네트워크 연결에 문제가 있습니다.\n\n💡 해결 방법:\n• 인터넷 연결을 확인해주세요\n• 방화벽 설정을 확인해주세요\n• VPN 연결을 확인해주세요'
+        errorIcon = '🌐'
+        errorType = 'network'
       } else if (error.message.includes('Failed to fetch')) {
-        displayError = '서버에 연결할 수 없습니다.\n\n해결 방법:\n• 서버가 실행 중인지 확인해주세요\n• 네트워크 연결을 확인해주세요\n• 잠시 후 다시 시도해주세요'
+        displayError = '🔌 서버에 연결할 수 없습니다.\n\n💡 해결 방법:\n• 서버가 실행 중인지 확인해주세요\n• 네트워크 연결을 확인해주세요\n• 잠시 후 다시 시도해주세요'
+        errorIcon = '🔌'
+        errorType = 'connection'
       } else if (error.message.includes('timeout') || error.message.includes('시간 초과')) {
-        displayError = '요청 시간이 초과되었습니다.\n\n해결 방법:\n• 잠시 후 다시 시도해주세요\n• 특허 데이터가 복잡할 수 있습니다\n• 네트워크 상태를 확인해주세요'
+        displayError = '⏰ AI 분석 시간이 초과되었습니다.\n\n💡 해결 방법:\n• 잠시 후 다시 시도해주세요 (5분 후 권장)\n• 특허 데이터가 복잡하여 처리 시간이 오래 걸릴 수 있습니다\n• 네트워크 상태를 확인해주세요\n• 브라우저를 새로고침 후 재시도해주세요'
+        errorIcon = '⏰'
+        errorType = 'timeout'
+      } else if (error.message.includes('AI 서비스')) {
+        displayError = '🤖 AI 서비스에 문제가 발생했습니다.\n\n💡 해결 방법:\n• 잠시 후 다시 시도해주세요\n• 서비스가 일시적으로 과부하 상태일 수 있습니다\n• 문제가 지속되면 관리자에게 문의해주세요'
+        errorIcon = '🤖'
+        errorType = 'ai_service'
+      } else if (error.message.includes('인증')) {
+        displayError = '🔐 인증에 문제가 발생했습니다.\n\n💡 해결 방법:\n• 로그인 상태를 확인해주세요\n• 페이지를 새로고침 후 재시도해주세요\n• 문제가 지속되면 관리자에게 문의해주세요'
+        errorIcon = '🔐'
+        errorType = 'auth'
       }
       
       setError(displayError);
       
-      const toastMessage = displayError.split('\n')[0] || '리포트 생성에 실패했습니다.'
-      toast.error(toastMessage);
+      // 토스트 메시지는 첫 번째 줄만 표시 - Wrap in requestAnimationFrame
+      const toastMessage = `${errorIcon} ${displayError.split('\n')[0].replace(/^[🌐🔌⏰🤖🔐❌]\s*/, '')}`;
+      requestAnimationFrame(() => {
+        toast.error(toastMessage, {
+          duration: errorType === 'timeout' ? 6000 : 4000, // 타임아웃 에러는 더 오래 표시
+        });
+      });
     } finally {
       setLoading(false);
     }
@@ -522,6 +671,7 @@ export default function MarketAnalysisReport({
         description="AI가 특허 기술의 시장 동향과 경쟁 환경을 분석합니다"
         iconColor="bg-ms-olive/10 dark:bg-ms-olive/20"
         Icon={({ className }) => <TrendingUp className={`${className} text-ms-olive`} />}
+        estimatedTime={300} // 5분 (300초)
       />
     )
   }

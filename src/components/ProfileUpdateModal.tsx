@@ -61,14 +61,23 @@ export default function ProfileUpdateModal({ isOpen, onClose, onComplete }: Prof
       })
 
       if (result.error) {
-        toast.error(`프로필 업데이트 실패: ${result.error}`)
+        // 안전한 toast 호출 - 렌더 사이클 외부에서 실행
+        setTimeout(() => {
+          toast.error(`프로필 업데이트 실패: ${result.error}`)
+        }, 0)
       } else {
-        toast.success('프로필이 성공적으로 업데이트되었습니다.')
+        // 안전한 toast 호출 - 렌더 사이클 외부에서 실행
+        setTimeout(() => {
+          toast.success('프로필이 성공적으로 업데이트되었습니다.')
+        }, 0)
         onComplete()
       }
     } catch (error) {
       console.error('Profile update error:', error)
-      toast.error('프로필 업데이트 중 오류가 발생했습니다.')
+      // 안전한 toast 호출 - 렌더 사이클 외부에서 실행
+      setTimeout(() => {
+        toast.error('프로필 업데이트 중 오류가 발생했습니다.')
+      }, 0)
     } finally {
       setIsLoading(false)
     }

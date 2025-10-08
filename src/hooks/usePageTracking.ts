@@ -6,13 +6,14 @@ import { ActivityTracker } from '../lib/activityTracker'
 export function usePageTracking() {
   let location
   let currentPath = ''
+  let hasRouterContext = true
   
   try {
     location = useLocation()
     currentPath = location.pathname
   } catch (error) {
     // Router 컨텍스트가 없는 경우 무시
-    console.warn('usePageTracking: Router 컨텍스트가 없습니다.')
+    hasRouterContext = false
     return
   }
 

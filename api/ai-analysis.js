@@ -70,6 +70,24 @@ module.exports = async function handler(req, res) {
     console.log('🔍 Step 2: 요청 데이터 파싱 시작');
     const { patentData, analysisType = 'comprehensive' } = req.body;
     
+    // 🔍 DEBUG: 받은 데이터 구조 상세 로깅
+    console.log('📥 받은 patentData 구조:');
+    console.log('- patentData 타입:', typeof patentData);
+    console.log('- patentData 키들:', patentData ? Object.keys(patentData) : 'null');
+    if (patentData) {
+      console.log('- biblioSummaryInfoArray 존재:', !!patentData.biblioSummaryInfoArray);
+      if (patentData.biblioSummaryInfoArray) {
+        console.log('- biblioSummaryInfo 존재:', !!patentData.biblioSummaryInfoArray.biblioSummaryInfo);
+        if (patentData.biblioSummaryInfoArray.biblioSummaryInfo) {
+          const biblio = patentData.biblioSummaryInfoArray.biblioSummaryInfo;
+          console.log('- applicationNumber:', biblio.applicationNumber);
+          console.log('- inventionTitle:', biblio.inventionTitle);
+          console.log('- abstract 관련 키들:', Object.keys(patentData).filter(key => key.toLowerCase().includes('abstract')));
+          console.log('- claim 관련 키들:', Object.keys(patentData).filter(key => key.toLowerCase().includes('claim')));
+        }
+      }
+    }
+    
     if (!patentData) {
       return res.status(400).json({
         success: false,
@@ -80,57 +98,75 @@ module.exports = async function handler(req, res) {
 
     // 특허 정보 추출 (키 누락 시에도 동작)
     const patentInfo = extractPatentInfo(patentData);
+    
+    // 🔍 DEBUG: 추출된 특허 정보 로깅
+    console.log('📊 추출된 특허 정보:');
+    console.log('- applicationNumber:', patentInfo.applicationNumber);
+    console.log('- inventionTitle:', patentInfo.inventionTitle);
+    console.log('- abstract 길이:', patentInfo.abstract?.length || 0);
+    console.log('- claims 길이:', patentInfo.claims?.length || 0);
 
+    // 🔧 DEBUGGING: 캐시 비활성화 및 Gemini API 강제 사용
+    console.log('🔧 DEBUG: Gemini API 키 상태 확인');
+    console.log('- API 키 존재:', !!geminiApiKey);
+    console.log('- API 키 길이:', geminiApiKey?.length || 0);
+    console.log('- API 키 시작 부분:', geminiApiKey?.substring(0, 10) || 'N/A');
+    
     // 🔧 Gemini API 키가 없거나 무효인 경우: 캐시/스켈레톤 리포트로 graceful fallback
     if (!geminiApiKey || geminiApiKey.includes('JKJKJK') || geminiApiKey.length < 30) {
       console.warn('⚠️ Gemini API 키가 유효하지 않음. 캐시된 리포트 또는 스켈레톤 리포트로 대체합니다.');
 
-      // 1) 캐시된 리포트 조회 (Supabase)
+      // 🔧 DEBUG: 캐시 조회 비활성화 (디버깅용)
+      console.log('🔧 DEBUG: 캐시 조회를 건너뛰고 스켈레톤 리포트 생성');
+      console.log('🔧 DEBUG: 추출된 특허 정보로 스켈레톤 리포트 생성:', {
+        applicationNumber: patentInfo.applicationNumber,
+        inventionTitle: patentInfo.inventionTitle,
+        abstractLength: patentInfo.abstract?.length || 0,
+        claimsLength: patentInfo.claims?.length || 0
+      });
+      
+      // 1) 캐시된 리포트 조회 (Supabase) - 디버깅을 위해 비활성화
       let cachedReport = null;
-      try {
-        if (supabase && patentInfo.applicationNumber) {
-          const { data: rows, error } = await supabase
-            .from('ai_analysis_reports')
-            .select('*')
-            .eq('application_number', patentInfo.applicationNumber)
-            .order('created_at', { ascending: false })
-            .limit(1);
-          if (error) {
-            console.error('❌ 캐시 리포트 조회 실패:', error.message);
-          }
-          cachedReport = rows && rows.length > 0 ? rows[0] : null;
-        }
-      } catch (e) {
-        console.error('❌ 캐시 리포트 조회 예외:', e);
-      }
-
-      // 2) 캐시 리포트가 있다면 구조화하여 반환
-      if (cachedReport) {
-        console.log('✅ 캐시된 리포트 발견, 구조화하여 반환');
-        const structured = buildStructuredReportFromRow(cachedReport, analysisType);
-        return res.status(200).json({
-          success: true,
-          data: structured,
-          cached: true,
-          message: 'Returned cached AI analysis report due to missing Gemini API key'
+      // */
+      
+      // 3) 캐시가 없다면 스켈레톤 리포트 생성 (요약 중심) - 실제 특허 정보 사용
+      console.log('ℹ️ 캐시 없음 - 실제 특허 정보로 스켈레톤 리포트 생성');
+      const sections = [];
+      
+      // 실제 특허 정보가 있는 경우에만 추가
+      if (patentInfo.applicationNumber && patentInfo.applicationNumber !== '') {
+        sections.push({
+          title: '특허 번호',
+          content: patentInfo.applicationNumber
         });
       }
-
-      // 3) 캐시가 없다면 스켈레톤 리포트 생성 (요약 중심)
-      console.log('ℹ️ 캐시 없음 - 스켈레톤 리포트 생성');
-      const sections = [];
-      if (patentInfo.abstract) {
+      
+      if (patentInfo.inventionTitle && patentInfo.inventionTitle !== '') {
+        sections.push({
+          title: '발명의 명칭',
+          content: patentInfo.inventionTitle
+        });
+      }
+      
+      if (patentInfo.abstract && patentInfo.abstract.length > 0) {
         sections.push({
           title: '특허 요약',
           content: patentInfo.abstract.slice(0, 800)
         });
       }
-      if (patentInfo.claims) {
+      
+      if (patentInfo.claims && patentInfo.claims.length > 0) {
         sections.push({
           title: '주요 청구항(발췌)',
           content: patentInfo.claims.slice(0, 800)
         });
       }
+      
+      // 기본 메시지 추가
+      sections.push({
+        title: '분석 상태',
+        content: `특허 ${patentInfo.applicationNumber || 'UNKNOWN'} "${patentInfo.inventionTitle || 'Untitled Patent'}"에 대한 AI 분석을 위해서는 Gemini API 키가 필요합니다. 현재는 기본 정보만 표시됩니다.`
+      });
 
       const skeletonReport = {
         analysisType: analysisType,
@@ -138,11 +174,11 @@ module.exports = async function handler(req, res) {
         patentTitle: patentInfo.inventionTitle || 'Untitled Patent',
         analysisDate: new Date().toISOString(),
         analysis: {
-          reportType: 'Comprehensive',
-          reportName: 'Skeleton Analysis (No AI key)',
+          reportType: 'Skeleton',
+          reportName: `${patentInfo.inventionTitle || 'Untitled Patent'} - 기본 정보`,
           sections,
           generatedAt: new Date().toISOString(),
-          insightsSummary: 'AI 키가 없어 최소 요약 위주의 스켈레톤 리포트를 제공합니다.',
+          insightsSummary: `특허 ${patentInfo.applicationNumber || 'UNKNOWN'}의 기본 정보입니다. 완전한 AI 분석을 위해서는 Gemini API 키가 필요합니다.`,
           keyInsights: []
         },
         rawAnalysis: ''
@@ -159,8 +195,8 @@ module.exports = async function handler(req, res) {
     console.log('🔍 Step 3: GoogleGenerativeAI 초기화 시작');
     const genAI = new GoogleGenerativeAI(geminiApiKey);
     
-    // JSON 출력을 위해 강력한 모델 사용 권장 및 responseSchema 지정
-    // 모델 호환성 개선: Vercel 환경에서 검증된 모델로 통일
+    // JSON 출력을 위해 사용 가능한 최신 모델 사용
+    // 모델 호환성 개선: 검증된 모델로 통일
     const model = genAI.getGenerativeModel({ 
       model: "gemini-2.5-flash"
     });
@@ -198,7 +234,23 @@ module.exports = async function handler(req, res) {
     patentInfo.claims = truncateText(patentInfo.claims, CLAIMS_MAX_LEN);
     
     // 분석 타입에 따른 프롬프트 생성 (JSON 출력을 유도하는 강화 프롬프트)
+    console.log('🔍 프롬프트 생성에 사용될 특허 정보:', {
+      applicationNumber: patentInfo.applicationNumber,
+      inventionTitle: patentInfo.inventionTitle,
+      abstractLength: patentInfo.abstract?.length || 0,
+      claimsLength: patentInfo.claims?.length || 0,
+      abstractPreview: patentInfo.abstract?.substring(0, 100) || 'N/A',
+      claimsPreview: patentInfo.claims?.substring(0, 100) || 'N/A'
+    });
+    
     const prompt = generateAnalysisPrompt(patentInfo, analysisType);
+    
+    console.log('🔍 생성된 프롬프트 정보:', {
+      promptLength: prompt?.length || 0,
+      containsPatentNumber: prompt?.includes(patentInfo.applicationNumber || ''),
+      containsPatentTitle: prompt?.includes(patentInfo.inventionTitle || ''),
+      promptPreview: prompt?.substring(0, 500) + '...'
+    });
     
     let analysisText;
     let lastError;
@@ -443,17 +495,8 @@ module.exports = async function handler(req, res) {
     
     console.log('🔧 Step 7: 응답 반환 준비 완료');
     
-    // DB에 리포트 저장 (비동기로 실행하여 응답 속도에 영향 없도록)
-    const userId = req.headers['x-user-id'] || req.body.userId || 'anonymous';
-    saveReportToDatabase(patentInfo, analysisType, structuredAnalysis, userId)
-      .then(savedReport => {
-        if (savedReport) {
-          console.log('✅ 리포트 DB 저장 완료:', savedReport.id);
-        }
-      })
-      .catch(error => {
-        console.error('❌ 리포트 DB 저장 실패:', error);
-      });
+    // 중복 제거: DB 저장은 generate-report.js에서만 처리
+    console.log('ℹ️ DB 저장은 generate-report.js에서 통합 처리됨 (중복 제거)');
     
     return res.status(200).json(aiResponse);
     
@@ -536,6 +579,7 @@ module.exports = async function handler(req, res) {
       }
     }
     
+    const isVercel = !!process.env.VERCEL;
     const errorResponse = {
       success: false,
       error: errorCode,
@@ -562,11 +606,11 @@ function getTimeoutMs(attempt) {
     console.log(`🔧 Vercel 환경 타임아웃: ${result}ms (${result/1000}초)`);
     return result;
   } else {
-    // 로컬 환경에서는 기존 설정 유지
-    const base = Number(process.env.ANALYSIS_TIMEOUT_MS) || 300000;
-    const step = Number(process.env.ANALYSIS_TIMEOUT_STEP_MS) || 30000;
+    // 로컬 환경에서는 디버깅을 위해 짧은 타임아웃 사용
+    const base = Number(process.env.ANALYSIS_TIMEOUT_MS) || 60000; // 60초로 증가
+    const step = Number(process.env.ANALYSIS_TIMEOUT_STEP_MS) || 10000; // 10초 증가
     const result = base + (attempt - 1) * step;
-    console.log(`🔧 로컬 환경 타임아웃: ${result}ms (${result/1000}초)`);
+    console.log(`🔧 로컬 환경 타임아웃 (디버깅용): ${result}ms (${result/1000}초)`);
     return result;
   }
 }
@@ -581,16 +625,24 @@ function truncateText(text, maxLen) {
 
 // 특허 데이터에서 주요 정보 추출 및 텍스트 길이 최적화
 function extractPatentInfo(patentData) {
-  const biblioInfo = patentData.biblioSummaryInfo || {};
-  const abstractInfo = patentData.abstractInfo || {};
-  const claimInfo = patentData.claimInfo || {};
-  const ipcInfo = patentData.ipcInfo || [];
-  const applicantInfo = patentData.applicantInfo || [];
-  const inventorInfo = patentData.inventorInfo || [];
+  console.log('🔍 extractPatentInfo 시작 - 데이터 구조 분석');
+  
+  // 올바른 데이터 구조 접근: biblioSummaryInfoArray.biblioSummaryInfo
+  const biblioInfo = patentData.biblioSummaryInfoArray?.biblioSummaryInfo || patentData.biblioSummaryInfo || {};
+  const abstractInfo = patentData.abstractInfoArray?.abstractInfo || patentData.abstractInfo || {};
+  const claimInfo = patentData.claimInfoArray?.claimInfo || patentData.claimInfo || {};
+  const ipcInfo = patentData.ipcInfoArray?.ipcInfo || patentData.ipcInfo || [];
+  const applicantInfo = patentData.applicantInfoArray?.applicantInfo || patentData.applicantInfo || [];
+  const inventorInfo = patentData.inventorInfoArray?.inventorInfo || patentData.inventorInfo || [];
+
+  console.log('📋 데이터 구조 확인:');
+  console.log('- biblioInfo 키들:', Object.keys(biblioInfo));
+  console.log('- abstractInfo 키들:', Object.keys(abstractInfo));
+  console.log('- claimInfo 타입:', typeof claimInfo, Array.isArray(claimInfo) ? '(배열)' : '(객체)');
 
   let claims = '';
   if (Array.isArray(claimInfo)) {
-    claims = claimInfo.map(claim => claim.claimScope || '').join('\n');
+    claims = claimInfo.map(claim => claim.claimScope || claim.claimTextKor || '').join('\n');
   } else if (claimInfo.claimTextKor) {
     claims = claimInfo.claimTextKor;
   } else if (claimInfo.claimScope) {
@@ -606,6 +658,12 @@ function extractPatentInfo(patentData) {
     abstract = abstractInfo.abstractText;
   }
 
+  console.log('📝 추출된 원본 텍스트:');
+  console.log('- abstract 길이:', abstract.length);
+  console.log('- claims 길이:', claims.length);
+  console.log('- applicationNumber:', biblioInfo.applicationNumber);
+  console.log('- inventionTitle:', biblioInfo.inventionTitle);
+
   // 텍스트 길이 최적화: 너무 긴 텍스트는 잘라서 API 오버로드 방지
   const MAX_ABSTRACT_LENGTH = 2000;
   const MAX_CLAIMS_LENGTH = 5000;
@@ -615,7 +673,7 @@ function extractPatentInfo(patentData) {
   
   console.log(`📊 텍스트 최적화: 초록 ${abstract.length} → ${optimizedAbstract.length}자, 청구항 ${claims.length} → ${optimizedClaims.length}자`);
 
-  return {
+  const result = {
     applicationNumber: biblioInfo.applicationNumber || '',
     inventionTitle: biblioInfo.inventionTitle || '',
     inventionTitleEng: biblioInfo.inventionTitleEng || '',
@@ -628,6 +686,9 @@ function extractPatentInfo(patentData) {
     applicants: Array.isArray(applicantInfo) ? applicantInfo.map(app => app.name || '').join(', ') : (biblioInfo.applicantName || ''),
     inventors: Array.isArray(inventorInfo) ? inventorInfo.map(inv => inv.name || '').join(', ') : (biblioInfo.inventorName || '')
   };
+  
+  console.log('✅ 최종 추출 결과:', result);
+  return result;
 }
 
 // McKinsey 수준 고품질 프롬프트 생성
@@ -1283,6 +1344,14 @@ function removeMcKinseyReferences(text) {
     .replace(/맥킨지&컴퍼니시장분석리포트[^]*?뉴로퓨전주식회사특허\([^)]*\)/gi, '')
     .replace(/맥킨지&컴퍼니스타일비즈니스인사이트리포트[^]*?일자:\s*\d{4}년\s*\d{1,2}월\s*\d{1,2}일/gi, '')
     .replace(/맥킨지\s*&?\s*컴퍼니\s*스타일\s*비즈니스\s*인사이트\s*리포트[^]*?일자:[^]*?\d{4}년[^]*?\d{1,2}월[^]*?\d{1,2}일/gi, '')
+    // 사용자 요청 특정 헤더 텍스트 제거
+    .replace(/🚨CEO\/이사회용전략적의사결정보고서:아크레이다시스템및그동작방법\(특허번호:\)[^\n]*/gi, '')
+    .replace(/🚨CEO\/이사회용전략적의사결정보고서:[^)]*\(특허번호:[^)]*\)[^\n]*/gi, '')
+    .replace(/🚨CEO.*이사회.*전략적.*의사결정.*보고서.*특허번호[^\n]*/gi, '')
+    .replace(/발신:\s*전문\s*컨설턴트\s*팀[^\n]*/gi, '')
+    .replace(/수신:\s*CEO\s*및\s*이사회[^\n]*/gi, '')
+    .replace(/날짜:\s*2024년\s*10월\s*27일[^\n]*/gi, '')
+    .replace(/날짜:\s*\d{4}년\s*\d{1,2}월\s*\d{1,2}일[^\n]*/gi, '')
     // 수신/발신 정보 제거
     .replace(/수신:\s*Fortune\s*500\s*기업\s*CEO\s*및\s*이사회[^\n]*/gi, '')
     .replace(/수신:\s*Fortune\s*500\s*CEO\s*및\s*이사회[^\n]*/gi, '')
@@ -1314,8 +1383,12 @@ function removeMcKinseyReferences(text) {
   return cleaned;
 }
 
-// 리포트를 DB에 저장하는 함수 (개선된 버전)
+// 리포트를 DB에 저장하는 함수 (개선된 버전) - 중복 제거를 위해 비활성화
 async function saveReportToDatabase(patentInfo, analysisType, structuredAnalysis, userId, retryCount = 0) {
+  // 중복 제거: DB 저장은 generate-report.js에서만 처리
+  console.log('ℹ️ saveReportToDatabase 함수는 중복 제거를 위해 비활성화됨 - generate-report.js에서 통합 처리');
+  return null;
+  
   const maxRetries = 3;
   const retryDelay = 1000; // 1초
   
@@ -1436,6 +1509,37 @@ async function saveReportToDatabase(patentInfo, analysisType, structuredAnalysis
       retryCount: retryCount + 1,
       timestamp: new Date().toISOString()
     });
+    
+    // user_activities 테이블에 AI 분석 활동 기록 추가
+    if (data[0] && userId && userId !== 'anonymous') {
+      try {
+        console.log('📝 [활동기록] AI 분석 활동 기록 시작...');
+        const activityData = {
+          user_id: userId,
+          activity_type: 'ai_analysis',
+          activity_data: {
+            application_number: patentInfo.applicationNumber,
+            analysis_type: analysisType,
+            patent_title: patentInfo.inventionTitle,
+            report_id: data[0].id,
+            timestamp: new Date().toISOString()
+          }
+        };
+
+        const { data: activityResult, error: activityError } = await supabase
+          .from('user_activities')
+          .insert(activityData)
+          .select();
+
+        if (activityError) {
+          console.error('❌ [활동기록] AI 분석 활동 추적 실패:', activityError);
+        } else {
+          console.log('✅ [활동기록] AI 분석 활동 추적 성공:', activityResult);
+        }
+      } catch (activityTrackError) {
+        console.error('❌ [활동기록] AI 분석 활동 추적 예외:', activityTrackError);
+      }
+    }
     
     return data[0];
     

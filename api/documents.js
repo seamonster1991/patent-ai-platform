@@ -55,7 +55,7 @@ module.exports = async function handler(req, res) {
     }
 
     // 환경변수에서 KIPRIS API 키 가져오기
-    const kiprisApiKey = process.env.KIPRIS_API_KEY;
+    const kiprisApiKey = process.env.KIPRIS_API_KEY || process.env.KIPRIS_SERVICE_KEY;
     
     if (!kiprisApiKey) {
       console.error('KIPRIS API key not found in environment variables');
@@ -80,13 +80,19 @@ module.exports = async function handler(req, res) {
     console.log('출원번호:', applicationNumber);
     console.log('문서 타입:', documentType);
     
-    // 문서 타입에 따른 API 엔드포인트 결정
+    // 문서 타입에 따른 API 엔드포인트 결정 - KIPRIS Plus API 정보에 맞춰 업데이트
     const documentEndpoints = {
-      publication: 'getPubFullTextInfoSearch',           // 공개전문PDF
-      announcement: 'getAnnounceFullTextInfoSearch',     // 공고전문PDF
-      drawing: 'getRepresentativeDrawingInfoSearch',     // 대표도면
-      publicationBooklet: 'getPublicationBookletInfoSearch', // 공개책자
-      gazetteBooklet: 'getGazetteBookletInfoSearch'      // 공보책자
+      publication: 'getPubFullTextInfoSearch',           // 1. 공개전문PDF
+      announcement: 'getAnnounceFullTextInfoSearch',     // 2. 공고전문PDF
+      correction: 'getCorrectionAnnouncementInfoSearch', // 3. 정정공고PDF(폐기예정)
+      drawing: 'getRepresentativeDrawingInfoSearch',     // 4. 대표도면
+      correctionV2: 'getCorrectionAnnouncementV2InfoSearch', // 5. 정정공고PDF_V2
+      publicationBooklet: 'getPublicationBookletInfoSearch', // 6. 공개책자
+      gazetteBooklet: 'getGazetteBookletInfoSearch',     // 7. 공보책자
+      allDocuments: 'getAllDocumentsInfoSearch',         // 8. 모든 전문 및 대표도 유무
+      fullTextInfo: 'getFullTextFileInfoSearch',         // 9. 전문파일정보
+      standardPublication: 'getStandardPubFullTextInfoSearch', // 10. 표준화 공개전문PDF
+      standardAnnouncement: 'getStandardAnnounceFullTextInfoSearch' // 11. 표준화 공고전문PDF
     };
 
     const endpoint = documentEndpoints[documentType];
@@ -98,8 +104,8 @@ module.exports = async function handler(req, res) {
       });
     }
     
-    // KIPRIS API URL 구성 - 특허 검색 REST 엔드포인트로 수정
-    const kiprisApiUrl = `http://plus.kipris.or.kr/openapi/rest/patentInfoSearchService/${endpoint}`;
+    // KIPRIS Plus API URL 구성 - 사용자 제공 정보에 맞춰 수정
+    const kiprisApiUrl = `http://plus.kipris.or.kr/kipo-api/kipi/patUtiModInfoSearchSevice/${endpoint}`;
     
     // 검색 파라미터 준비
     const params = new URLSearchParams();
@@ -132,7 +138,7 @@ module.exports = async function handler(req, res) {
     
     console.log('📄 JSON 변환 완료');
     
-    // KIPRIS 응답 구조 파싱
+    // KIPRIS Plus API 응답 구조 파싱 - 사용자 제공 정보에 맞춰 수정
     let kiprisResponse = {
       success: false,
       header: {
@@ -146,7 +152,9 @@ module.exports = async function handler(req, res) {
       }
     };
     
-    // 실제 응답 데이터 처리
+    console.log('🔍 JSON 변환된 응답 구조:', JSON.stringify(jsonData, null, 2));
+    
+    // 실제 응답 데이터 처리 - KIPRIS Plus API 구조에 맞춰 수정
     if (jsonData && jsonData.response) {
       const responseData = jsonData.response;
       
@@ -155,28 +163,53 @@ module.exports = async function handler(req, res) {
         kiprisResponse.header = {
           successYN: responseData.header.successYN || 'N',
           resultCode: responseData.header.resultCode || '99',
-          resultMsg: responseData.header.resultMsg || 'Unknown error'
+          resultMsg: responseData.header.resultMsg || 'Unknown error',
+          requestMsgID: responseData.header.requestMsgID || '',
+          responseTime: responseData.header.responseTime || '',
+          responseMsgID: responseData.header.responseMsgID || ''
         };
         
-        // 성공 여부 판단
-        kiprisResponse.success = responseData.header.successYN === 'Y' || responseData.header.resultCode === '00';
+        // 성공 여부 판단 - KIPRIS Plus API에서 resultCode '00'이 성공
+        kiprisResponse.success = responseData.header.resultCode === '00';
+        
+        console.log('📋 헤더 정보:', kiprisResponse.header);
       }
       
-      // 바디 데이터 처리
-      if (responseData.body && responseData.body.item) {
-        const itemData = responseData.body.item;
+      // 바디 데이터 처리 - KIPRIS Plus API 응답 구조에 맞춰 수정
+      if (responseData.body) {
+        let itemData = null;
         
-        // 단일 아이템인 경우 배열로 변환
-        const items = Array.isArray(itemData) ? itemData : [itemData];
+        // KIPRIS Plus API 구조: <body><item><docName>파일명</docName><path>파일경로</path></item></body>
+        if (responseData.body.item) {
+          itemData = responseData.body.item;
+        } else if (responseData.body.Item) {
+          itemData = responseData.body.Item;
+        }
         
-        kiprisResponse.data.files = items.map(item => ({
-          docName: item.docName || '',
-          path: item.path || '',
-          downloadUrl: item.path || ''
-        }));
-        
-        console.log(`📁 파일 ${kiprisResponse.data.files.length}개 발견`);
+        if (itemData) {
+          // 단일 아이템인 경우 배열로 변환
+          const items = Array.isArray(itemData) ? itemData : [itemData];
+          
+          kiprisResponse.data.files = items.map(item => {
+            const file = {
+              docName: item.docName || item.DocName || '',
+              path: item.path || item.Path || '',
+              downloadUrl: item.path || item.Path || ''
+            };
+            
+            console.log('📄 파일 정보:', file);
+            return file;
+          });
+          
+          console.log(`📁 총 ${kiprisResponse.data.files.length}개 파일 발견`);
+        } else {
+          console.log('⚠️ body에서 item 데이터를 찾을 수 없습니다.');
+        }
+      } else {
+        console.log('⚠️ 응답에서 body를 찾을 수 없습니다.');
       }
+    } else {
+      console.log('⚠️ 응답에서 response를 찾을 수 없습니다.');
     }
     
     // 활동 로깅: 문서 다운로드

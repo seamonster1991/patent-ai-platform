@@ -25,9 +25,15 @@ module.exports = function handler(req, res) {
       environment: {
         isVercel: !!process.env.VERCEL,
         nodeEnv: process.env.NODE_ENV,
+        viteAppEnv: process.env.VITE_APP_ENV,
         hasGeminiKey: !!process.env.GEMINI_API_KEY,
         hasSupabaseUrl: !!process.env.SUPABASE_URL,
         hasSupabaseAnonKey: !!process.env.SUPABASE_ANON_KEY,
+        hasSupabaseServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+        hasViteSupabaseUrl: !!process.env.VITE_SUPABASE_URL,
+        hasViteSupabaseAnonKey: !!process.env.VITE_SUPABASE_ANON_KEY,
+        supabaseUrlMatch: process.env.SUPABASE_URL === process.env.VITE_SUPABASE_URL,
+        supabaseAnonKeyMatch: process.env.SUPABASE_ANON_KEY === process.env.VITE_SUPABASE_ANON_KEY,
       },
       api: {
         endpoint: '/api/health',

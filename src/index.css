@@ -7,20 +7,13 @@
 
 :root {
   /* === Minimal Strategist Color Palette === */
-  /* Deep Olive & Dark Olive Accent Colors */
-  --ms-olive: #6B7280;        /* Deep olive primary */
-  --ms-olive-50: #F9FAFB;     /* Very light olive */
-  --ms-olive-100: #F3F4F6;    /* Light olive */
-  --ms-olive-600: #6B7280;    /* Main olive */
-  --ms-olive-700: #4B5563;    /* Dark olive */
-  --ms-olive-800: #374151;    /* Darker olive */
-  
-  --ms-olive: #365314;           /* Dark olive primary */
-  --ms-olive-50: #F7FEE7;        /* Very light olive */
-  --ms-olive-100: #ECFCCB;       /* Light olive */
-  --ms-olive-600: #365314;       /* Main olive */
-  --ms-olive-700: #1A2E05;       /* Dark olive */
-  --ms-olive-800: #14532D;       /* Darker olive */
+  /* Olive (main) & neutrals — compact/minimal */
+  --ms-olive: #34463D;           /* Main olive */
+  --ms-olive-50: #F2F4F3;        /* Very light olive-tint surface */
+  --ms-olive-100: #E6EAE8;       /* Light olive-tint */
+  --ms-olive-600: #34463D;       /* Olive core */
+  --ms-olive-700: #2C3A34;       /* Dark olive */
+  --ms-olive-800: #23302A;       /* Darker olive */
 
   /* === Minimal Background & Text === */
   /* Pure white/off-white backgrounds with deep neutral text */
@@ -136,6 +129,13 @@
     color: rgb(var(--ms-text-secondary));
   }
 
+  /* === Input and Textarea Direction Fix === */
+  input, textarea {
+    direction: ltr;
+    unicode-bidi: embed;
+    text-align: left;
+  }
+
   /* === Focus States === */
   *:focus-visible {
     outline: 2px solid var(--ms-olive);
@@ -145,12 +145,12 @@
 
   /* === Selection === */
   ::selection {
-    background-color: rgba(124, 45, 18, 0.15);
+    background-color: rgba(52, 70, 61, 0.15); /* olive tint */
     color: rgb(var(--ms-text));
   }
 
   ::-moz-selection {
-    background-color: rgba(124, 45, 18, 0.15);
+    background-color: rgba(52, 70, 61, 0.15);
     color: rgb(var(--ms-text));
   }
 }
@@ -163,7 +163,6 @@
   .bg-ms-surface { background-color: rgb(var(--ms-bg-soft)); }
   .bg-ms-surface-hover { background-color: rgb(var(--ms-line-soft)); }
   .bg-ms-olive { background-color: var(--ms-olive); }
-  .bg-ms-olive { background-color: var(--ms-olive); }
   
   /* === Text Colors === */
   .text-ms-primary { color: rgb(var(--ms-text)); }
@@ -173,14 +172,12 @@
   .text-ms-text-light { color: rgb(var(--ms-text-secondary)); }
   .text-ms-text-muted { color: rgb(var(--ms-text-muted)); }
   .text-ms-olive { color: var(--ms-olive); }
-  .text-ms-olive { color: var(--ms-olive); }
   .ms-olive { color: var(--ms-olive); }
   
   /* === Border Colors === */
   .border-ms-line { border-color: rgb(var(--ms-line)); }
   .border-ms-soft { border-color: rgb(var(--ms-line-soft)); }
   .border-ms-line-soft { border-color: rgb(var(--ms-line-soft)); }
-  .border-ms-olive { border-color: var(--ms-olive); }
   .border-ms-olive { border-color: var(--ms-olive); }
   .ms-line { border-color: rgb(var(--ms-line)); }
   
@@ -198,7 +195,19 @@
   
   /* === Hover Effects === */
   .hover\:bg-ms-soft:hover { background-color: rgb(var(--ms-bg-soft)); }
-  .hover\:text-ms-olive:hover { color: var(--ms-olive); }
+  
+  /* === Text Direction === */
+  .direction-ltr { 
+    direction: ltr; 
+    unicode-bidi: embed; 
+    text-align: left;
+  }
+  
+  .direction-rtl { 
+    direction: rtl; 
+    unicode-bidi: embed; 
+    text-align: right;
+  }
   .hover\:text-ms-olive:hover { color: var(--ms-olive); }
   .hover\:text-ms-text:hover { color: rgb(var(--ms-text)); }
   .hover\:border-ms-olive:hover { border-color: var(--ms-olive); }

@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
-import { SearchIcon, Filter, X, Hash, Calendar, User, ChevronLeft, ChevronRight } from 'lucide-react'
-import Button from '@/components/UI/Button'
-import Input from '@/components/UI/Input'
-import Loading from '@/components/UI/Loading'
-import ErrorMessage from '@/components/UI/ErrorMessage'
-import { cn } from '@/lib/utils'
-import { searchPatents, getPatentDetail } from '@/lib/api'
-import { toast } from 'react-hot-toast'
-import { useAuthStore } from '../store/authStore'
-import { useSearchStore } from '../store/searchStore'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Search as SearchIcon, Filter, Calendar, Building, FileText, TrendingUp, ChevronLeft, ChevronRight, Settings, X, Plus, Hash, User } from 'lucide-react'
 
-// 타입 정의
+import Button from '../components/UI/Button'
+import Input from '../components/UI/Input'
+import Card, { CardContent, CardHeader, CardTitle } from '../components/UI/Card'
+import Loading from '../components/UI/Loading'
+import { useSearchStore } from '../store/searchStore'
+import { formatDate, truncateText, cn } from '../lib/utils'
+import { toast } from 'sonner'
+import { activityTracker } from '../lib/activityTracker'
+import { useAuthStore } from '../store/authStore'
+
 interface Patent {
   indexNo?: string
   applicationNumber: string
@@ -21,232 +21,205 @@ interface Patent {
 }
 
 interface SearchFilters {
+  // 기본 검색 필드
   word?: string
-  numOfRows?: number
-  pageNo?: number
-  sortSpec?: string
-  descSort?: boolean
+  // 발명의 명칭
   inventionTitle?: string
-  keyword?: string
-  patent?: boolean
-  utility?: boolean
-  lastvalue?: string
-  applicationNumber?: string
-  publicationNumber?: string
-  registerNumber?: string
-  publicationDate?: string
-  registerDate?: string
-  priorityApplicationDate?: string
-  internationalApplicationDate?: string
-  applicant?: string
-  inventors?: string
-  agent?: string
-  rightHoler?: string
-  claimScope?: string
-  openNumber?: string
-  priorityApplicationNumber?: string
-  internationalApplicationNumber?: string
-  applicationDate?: string
-  openDate?: string
-  ipcNumber?: string
+  // 초록
   astrtCont?: string
+  // 청구범위
+  claimScope?: string
+  // IPC 코드
+  ipcNumber?: string
+  // CPC 코드
+  cpcNumber?: string
+  // 출원번호
+  applicationNumber?: string
+  // 공개번호
+  openNumber?: string
+  // 공고번호
+  publicationNumber?: string
+  // 등록번호
+  registerNumber?: string
+  // 우선권주장번호
+  priorityApplicationNumber?: string
+  // 국제출원번호
+  internationalApplicationNumber?: string
+  // 국제공개번호
+  internationOpenNumber?: string
+  // 출원일자
+  applicationDate?: string
+  // 공개일자
+  openDate?: string
+  // 공고일자
+  publicationDate?: string
+  // 등록일자
+  registerDate?: string
+  // 우선권주장일자
+  priorityApplicationDate?: string
+  // 국제출원일자
+  internationalApplicationDate?: string
+  // 국제공개일자
+  internationOpenDate?: string
+  // 출원인
+  applicant?: string
+  // 발명자
+  inventors?: string
+  // 대리인
+  agent?: string
+  // 등록권자
+  rightHoler?: string
+  // 특허 포함 여부
+  patent?: boolean
+  // 실용신안 포함 여부
+  utility?: boolean
+  // 행정처분 상태
+  lastvalue?: string
+  // 페이지 번호
+  pageNo?: number
+  // 페이지당 건수
+  numOfRows?: number
+  // 정렬 기준
+  sortSpec?: string
+  // 정렬 방식
+  descSort?: boolean
+  // 기존 호환성을 위한 키워드 필드
+  keyword?: string
 }
 
-function Search() {
-  const [searchParams, setSearchParams] = useSearchParams()
+export default function Search() {
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
+  const [activeTab, setActiveTab] = useState<'basic' | 'number' | 'date' | 'person'>('basic')
+  const [searchField, setSearchField] = useState<'word' | 'inventionTitle' | 'astrtCont' | 'applicant'>('word')
   const navigate = useNavigate()
-  const { user } = useAuthStore()
+  const [searchParams] = useSearchParams()
   
-  // Use search store
   const {
     filters,
     results,
     loading,
-    error,
     totalCount,
     currentPage,
     setFilters,
-    searchPatents: storeSearchPatents,
+    searchPatents,
     clearResults,
     resetFilters,
-    saveSearchState,
     loadSearchState
   } = useSearchStore()
-  
-  const [totalPages, setTotalPages] = useState(0)
-  
-  // UI state
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
-  const [activeTab, setActiveTab] = useState<'basic' | 'number' | 'date' | 'person'>('basic')
 
-  console.log('🔍 [Search] 현재 검색 상태:', { totalCount, resultsLength: results.length, currentPage, filters })
+  const { user } = useAuthStore()
 
-  // URL 파라미터 처리 및 검색 상태 복원
+  // 사용자 ID 설정
   useEffect(() => {
+    if (user?.id) {
+      activityTracker.setUserId(user.id)
+    }
+  }, [user?.id])
+
+  useEffect(() => {
+    // URL 파라미터에서 검색어 확인
     const queryFromUrl = searchParams.get('q')
+    
     if (queryFromUrl) {
-      // 로그인 가드: 비로그인 시 로그인 페이지로 이동
-      if (!user) {
-        toast.error('검색 기능은 로그인 후 이용 가능합니다.')
-        navigate('/login', { replace: true, state: { redirectTo: `/search?q=${encodeURIComponent(queryFromUrl)}` } })
-        return
-      }
-      
-      console.log('🔍 [Search] URL에서 검색어 감지:', queryFromUrl)
-      
-      // 필터 초기화 및 검색어 설정
+      // URL에서 온 검색어가 있으면 모든 상태를 초기화하고 새로운 검색 실행
       resetFilters()
       clearResults()
-      setFilters({ 
-        word: queryFromUrl,
-        inventionTitle: queryFromUrl 
-      })
+      
+      // 새로운 검색어로 필터 설정
+      setFilters({ word: queryFromUrl })
+      
+      // 다음 렌더링 사이클에서 검색 실행
+      setTimeout(() => {
+        searchPatents(1).then(({ error }) => {
+          if (error) {
+            toast.error(error)
+          }
+        })
+      }, 0)
     } else {
-      // URL 파라미터가 없으면 저장된 검색 상태 복원 시도
-      const hasRestoredState = loadSearchState()
-      if (hasRestoredState) {
-        console.log('✅ 검색 상태 복원 완료')
+      // URL 파라미터가 없으면 기존 로직 실행
+      const stateRestored = loadSearchState()
+      
+      // 상태가 복원되지 않았고 검색어가 있다면 자동 검색 실행
+      if (stateRestored === false) {
+        const hasSearchTerm = filters.word || filters.inventionTitle || filters.keyword
+        if (hasSearchTerm) {
+          setTimeout(() => {
+            searchPatents(1).then(({ error }) => {
+              if (error) {
+                toast.error(error)
+              }
+            })
+          }, 0)
+        }
       }
     }
-  }, [searchParams, user, navigate])
-
-  // 필터가 변경되고 검색어가 있을 때 자동 검색 실행
-  useEffect(() => {
-    if (filters.word && user) {
-      console.log('🔍 [Search] 필터 변경으로 인한 자동 검색 실행:', filters.word)
-      storeSearchPatents()
-    }
-  }, [filters.word, user])
-
-  // totalPages 업데이트
-  useEffect(() => {
-    const calculated = Math.ceil(totalCount / (filters.numOfRows || 30))
-    setTotalPages(calculated)
-  }, [totalCount, filters.numOfRows])
-
-  // 키워드 분류 및 기록 함수
-  const recordKeywordAnalytics = async (keyword: string) => {
-    if (!keyword || !user) return
-
-    try {
-      // 키워드 분류 API 호출
-      const classifyResponse = await fetch('/api/classify-keyword', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ keyword }),
-      })
-
-      if (classifyResponse.ok) {
-        const classificationData = await classifyResponse.json()
-        console.log('✅ [Search] 키워드 분류 및 기록 완료:', classificationData)
-        return classificationData
-      } else {
-        console.warn('⚠️ [Search] 키워드 분류 실패:', classifyResponse.statusText)
-      }
-    } catch (error) {
-      console.error('❌ [Search] 키워드 분류 중 오류:', error)
-    }
-    return null
-  }
+  }, [searchParams])
 
   const handleSearch = async (page = 1) => {
-    console.log('🔍 [Search] 검색 시작:', { page, currentTotalCount: totalCount });
-    // 로그인 가드: 비로그인 상태면 로그인 페이지로 이동
-    if (!user) {
-      toast.error('검색 기능은 로그인 후 이용 가능합니다.')
-      navigate('/login', { replace: true, state: { redirectTo: `/search?q=${encodeURIComponent(filters.word || '')}` } })
-      return
-    }
+    console.log('[SEARCH] [Search] 검색 시작:', { page, currentTotalCount: totalCount });
     
-    // 새로운 검색인 경우 (page === 1) 키워드 분류 및 기록
-    let classificationData = null
-    if (page === 1 && filters.word) {
-      classificationData = await recordKeywordAnalytics(filters.word)
-    }
+    // 검색 활동 추적을 위한 데이터 준비
+    const searchKeyword = filters.word || filters.inventionTitle || filters.astrtCont || filters.applicant || filters.keyword || ''
+    const searchFilters = { ...filters }
     
-    // searchStore의 searchPatents 함수 사용
-    const result = await storeSearchPatents(page)
-    if (result.error) {
-      toast.error(result.error)
+    const { error } = await searchPatents(page)
+    if (error) {
+      toast.error(error)
+      // 검색 오류 추적
+      if (user?.id) {
+        activityTracker.trackError('search_error', error, `Search failed for keyword: ${searchKeyword}`)
+      }
     } else {
-      // 검색 상태 저장
-      saveSearchState()
-      console.log('✅ [Search] 검색 완료 및 상태 저장')
+      console.log('[SUCCESS] [Search] 검색 완료:', { 
+        resultsLength: results.length, 
+        totalCount, 
+        currentPage 
+      });
       
-      // 키워드 분류 결과가 있으면 검색 히스토리에 기술 분야 정보 업데이트
-      if (classificationData && classificationData.success) {
-        try {
-          await fetch('/api/users/search-history', {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              user_id: user.id,
-              keyword: filters.word,
-              technology_field: classificationData.data.technology_field,
-              field_confidence: classificationData.data.field_confidence
-            }),
-          })
-        } catch (error) {
-          console.error('❌ [Search] 검색 히스토리 업데이트 중 오류:', error)
-        }
+      // 중복 제거: 검색 성공 활동 추적은 searchStore에서 이미 처리됨
+      // 검색 성공 활동 추적
+      // if (user?.id && searchKeyword) {
+      //   activityTracker.trackSearch(searchKeyword, searchFilters, totalCount)
+      // }
+      
+      // 대시보드 실시간 업데이트를 위한 이벤트 발생
+      if (typeof window !== 'undefined' && user?.id && searchKeyword) {
+        console.log('🔍 [Search] searchCompleted 이벤트 발생:', {
+          keyword: searchKeyword,
+          totalResults: totalCount,
+          userId: user.id
+        })
+        
+        const searchCompletedEvent = new CustomEvent('searchCompleted', {
+          detail: {
+            keyword: searchKeyword,
+            totalResults: totalCount,
+            userId: user.id,
+            timestamp: new Date().toISOString()
+          }
+        })
+        
+        window.dispatchEvent(searchCompletedEvent)
       }
     }
   }
 
   const handleFilterChange = (field: string, value: string | boolean | number) => {
-    // searchStore의 setFilters 사용
     setFilters({ [field]: value })
+    
+    // 필터 변경 활동 추적
+    if (user?.id) {
+      activityTracker.trackFilterChange({ [field]: value }, filters)
+    }
   }
-
-  // 결과에 초록(astrtCont)이 없는 경우, 상세 API로 일부 항목을 보강
-  useEffect(() => {
-    const enrichAbstracts = async () => {
-      try {
-        const candidates = results
-          .map((item, idx) => ({ item, idx }))
-          .filter(({ item }) => !item.astrtCont && !!item.applicationNumber)
-          .slice(0, 10) // 페이지당 최대 10건만 보강하여 과도한 요청 방지
-
-        if (candidates.length === 0) return
-
-        const updated = [...results]
-        for (const { item, idx } of candidates) {
-          const resp = await getPatentDetail(item.applicationNumber)
-          if (resp.success && resp.data) {
-            const dBody = (resp.data as any).body || {}
-            const dItem = dBody.item || (resp.data as any).item || null
-            if (dItem) {
-              updated[idx] = {
-                ...item,
-                astrtCont: dItem.astrtCont || item.astrtCont,
-                inventionTitle: dItem.inventionTitle || item.inventionTitle,
-                applicantName: dItem.applicantName || item.applicantName
-              }
-            }
-          }
-        }
-        // setResults(updated) // TODO: searchStore에 결과 업데이트 함수 추가 필요
-      } catch (e) {
-        console.warn('⚠️ 초록 보강 중 경고:', e)
-      }
-    }
-
-    // 로딩 중이 아니고 결과가 있을 때만 보강 수행
-    if (!loading && results && results.length > 0) {
-      enrichAbstracts()
-    }
-  }, [results, currentPage])
 
   const handleClearFilters = () => {
     resetFilters()
     clearResults()
-    // URL 파라미터도 제거
-    setSearchParams({})
   }
+
+  const totalPages = Math.ceil(totalCount / (filters.numOfRows || 30))
 
   // 정렬 옵션
   const sortOptions = [
@@ -265,362 +238,394 @@ function Search() {
     { value: 'A', label: '공개' },
     { value: 'C', label: '취하' },
     { value: 'F', label: '소멸' },
-    { value: 'G', label: '등록' },
-    { value: 'R', label: '거절' },
-    { value: 'W', label: '철회' }
+    { value: 'G', label: '포기' },
+    { value: 'I', label: '무효' },
+    { value: 'J', label: '거절' },
+    { value: 'R', label: '등록' }
   ]
 
   return (
-    <div className="min-h-screen bg-ms-white">
-        {/* 헤더 섹션 */}
-        <div className="bg-ms-soft border-b border-ms-line">
-          <div className="max-w-7xl mx-auto px-6 py-12">
-            <div className="text-center">
-              <h1 className="text-4xl font-light text-ms-text mb-4">
-                KIPRIS 특허 검색
-              </h1>
-              <p className="text-lg text-ms-text-muted font-light max-w-2xl mx-auto">
-                한국특허정보원의 공식 데이터베이스에서 특허 정보를 검색하세요
-              </p>
-            </div>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Search Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-secondary-900 dark:text-secondary-100 mb-4">
+            KIPRIS 특허 검색
+          </h1>
+          <p className="text-secondary-600 dark:text-secondary-400 text-lg">
+            한국특허정보원(KIPI) KIPRIS API와 연동된 전문 특허 검색 시스템
+          </p>
         </div>
 
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          {/* 검색 폼 */}
-          <div className="ms-card mb-12">
-            <div className="p-8">
-              <div className="flex gap-4 mb-6">
-                <div className="flex-1">
-                  <Input
-                    type="text"
-                    placeholder="검색어를 입력하세요..."
-                    value={filters.word || ''}
-                    onChange={(e) => handleFilterChange('word', e.target.value)}
-                    className="text-lg py-4 border-ms-line focus:border-ms-olive"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSearch(1)
-                      }
-                    }}
-                  />
+        {/* Search Form */}
+        <Card className="mb-8" variant="elevated">
+          <CardContent>
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault()
+                handleSearch()
+              }}
+              className="space-y-6"
+            >
+              {/* Basic Search */}
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex-1">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">
+                        검색 필드 선택
+                      </label>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {[
+                          { value: 'word', label: '전체검색', desc: '모든 필드에서 검색' },
+                          { value: 'inventionTitle', label: '발명의명칭', desc: '특허 제목에서만 검색' },
+                          { value: 'astrtCont', label: '초록', desc: '특허 초록에서만 검색' },
+                          { value: 'applicant', label: '출원인', desc: '출원인명에서만 검색' }
+                        ].map((field) => (
+                          <button
+                            key={field.value}
+                            type="button"
+                            onClick={() => {
+                              setSearchField(field.value as any)
+                              // 기존 검색어를 새로운 필드로 이동
+                              const currentValue = filters[searchField as keyof typeof filters] as string || ''
+                              if (currentValue) {
+                                handleFilterChange(searchField, '') // 기존 필드 클리어
+                                handleFilterChange(field.value, currentValue) // 새 필드에 설정
+                              }
+                            }}
+                            className={cn(
+                              'px-3 py-2 text-sm rounded-lg border transition-colors',
+                              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
+                              searchField === field.value
+                                ? 'bg-primary-50 border-primary-200 text-primary-700 dark:bg-primary-900/20 dark:border-primary-700 dark:text-primary-300'
+                                : 'bg-white border-secondary-300 text-secondary-700 hover:bg-secondary-50 dark:bg-secondary-800 dark:border-secondary-600 dark:text-secondary-300 dark:hover:bg-secondary-700'
+                            )}
+                            title={field.desc}
+                          >
+                            {field.label}
+                          </button>
+                        ))}
+                      </div>
+                      <Input
+                        label={searchField === 'word' ? '검색어' : 
+                               searchField === 'inventionTitle' ? '발명의명칭' :
+                               searchField === 'astrtCont' ? '초록 검색어' :
+                               searchField === 'applicant' ? '출원인명' : '검색어'}
+                        placeholder={
+                          searchField === 'word' ? '특허 제목, 키워드, 출원인 등을 입력하세요' :
+                          searchField === 'inventionTitle' ? '발명의 명칭을 입력하세요' :
+                          searchField === 'astrtCont' ? '초록에서 찾을 키워드를 입력하세요' :
+                          searchField === 'applicant' ? '출원인명을 입력하세요' : '검색어를 입력하세요'
+                        }
+                        value={(filters[searchField] as string) || ''}
+                        onChange={(e) => handleFilterChange(searchField, e.target.value)}
+                        size="lg"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 sm:items-end">
+                    <Button 
+                      type="submit" 
+                      loading={loading}
+                      size="lg"
+                      className="min-w-[120px]"
+                    >
+                      <SearchIcon className="w-5 h-5 mr-2" />
+                      검색
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                      size="lg"
+                      aria-expanded={showAdvancedFilters}
+                      aria-controls="advanced-filters"
+                    >
+                      <Filter className="w-5 h-5 mr-2" />
+                      {showAdvancedFilters ? '간단히' : '상세'}
+                    </Button>
+                  </div>
                 </div>
-                <Button
-                  onClick={() => handleSearch(1)}
-                  disabled={loading}
-                  className="px-8 py-4 bg-ms-olive hover:bg-ms-olive/90 text-white font-medium"
-                >
-                  <SearchIcon className="w-5 h-5 mr-2" />
-                  검색
-                </Button>
-              </div>
 
-              {/* 빠른 액션 */}
-              <div className="flex items-center justify-between">
-                <div className="flex gap-3">
+                {/* Quick Actions */}
+                <div className="flex flex-wrap gap-2">
                   <Button
-                    variant="outline"
-                    onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                    className="border-ms-line text-ms-text hover:bg-ms-soft"
-                  >
-                    <Filter className="w-4 h-4 mr-2" />
-                    고급 필터
-                  </Button>
-                  <Button
-                    variant="outline"
+                    type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={handleClearFilters}
-                    className="border-ms-line text-ms-text-muted hover:bg-ms-soft"
+                    className="text-secondary-600 dark:text-secondary-400"
                   >
-                    <X className="w-4 h-4 mr-2" />
-                    초기화
+                    <X className="w-4 h-4 mr-1" />
+                    필터 초기화
                   </Button>
                 </div>
-                
-                {totalCount > 0 && (
-                  <div className="text-sm text-ms-text-muted font-light">
-                    총 <span className="font-medium text-ms-olive">{totalCount.toLocaleString()}</span>건의 결과
-                  </div>
-                )}
               </div>
-            </div>
 
-            {/* 고급 필터 */}
-            {showAdvancedFilters && (
-              <div className="border-t border-ms-line-soft bg-ms-soft/30">
-                <div className="p-8">
-                  {/* 탭 네비게이션 */}
-                  <div className="flex border-b border-ms-line-soft mb-8">
-                    {[
-                      { key: 'basic', label: '기본 검색', icon: SearchIcon },
-                      { key: 'number', label: '번호 검색', icon: Hash },
-                      { key: 'date', label: '날짜 검색', icon: Calendar },
-                      { key: 'person', label: '인명 검색', icon: User }
-                    ].map(({ key, label, icon: Icon }) => (
-                      <button
-                        key={key}
-                        onClick={() => setActiveTab(key as any)}
-                        className={cn(
-                          "flex items-center px-6 py-3 font-medium border-b-2 transition-colors",
-                          activeTab === key
-                            ? "border-ms-olive text-ms-olive"
-                            : "border-transparent text-ms-text-muted hover:text-ms-text"
-                        )}
-                      >
-                        <Icon className="w-4 h-4 mr-2" />
-                        {label}
-                      </button>
-                    ))}
+              {/* Advanced Filters */}
+              {showAdvancedFilters && (
+                <div 
+                  id="advanced-filters"
+                  className="border-t border-secondary-200 dark:border-secondary-700 pt-6 space-y-6"
+                >
+                  {/* Filter Tabs */}
+                  <div className="border-b border-secondary-200 dark:border-secondary-700">
+                    <nav className="-mb-px flex space-x-8" aria-label="필터 탭">
+                      {[
+                        { id: 'basic', label: '기본 검색', icon: SearchIcon },
+                        { id: 'number', label: '번호 검색', icon: Hash },
+                        { id: 'date', label: '날짜 검색', icon: Calendar },
+                        { id: 'person', label: '인명 검색', icon: User }
+                      ].map((tab) => (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => setActiveTab(tab.id as any)}
+                          className={cn(
+                            'group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors',
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
+                            activeTab === tab.id
+                              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                              : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300 dark:text-secondary-400 dark:hover:text-secondary-300 dark:hover:border-secondary-600'
+                          )}
+                          aria-current={activeTab === tab.id ? 'page' : undefined}
+                        >
+                          <tab.icon className="w-5 h-5 mr-2" />
+                          {tab.label}
+                        </button>
+                      ))}
+                    </nav>
                   </div>
 
-                  {/* 기본 검색 탭 */}
+                  {/* Basic Search Tab */}
                   {activeTab === 'basic' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-ms-text mb-2">
-                          발명의 명칭
-                        </label>
+                    <div className="space-y-4">
+                      <div className="grid md:grid-cols-2 gap-4">
                         <Input
-                          type="text"
+                          label="발명의명칭"
+                          placeholder="발명의명칭을 입력하세요"
                           value={filters.inventionTitle || ''}
                           onChange={(e) => handleFilterChange('inventionTitle', e.target.value)}
-                          placeholder="발명의 명칭을 입력하세요"
-                          className="border-ms-line focus:border-ms-olive"
                         />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-ms-text mb-2">
-                          IPC 분류코드
-                        </label>
                         <Input
-                          type="text"
+                          label="IPC 코드"
+                          placeholder="IPC 코드를 입력하세요 (예: G06F)"
                           value={filters.ipcNumber || ''}
                           onChange={(e) => handleFilterChange('ipcNumber', e.target.value)}
-                          placeholder="예: A01B1/00"
-                          className="border-ms-line focus:border-ms-olive"
                         />
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-ms-text mb-2">
-                          요약
-                        </label>
+                      <div className="grid md:grid-cols-2 gap-4">
                         <Input
-                          type="text"
-                          value={filters.astrtCont || ''}
-                          onChange={(e) => handleFilterChange('astrtCont', e.target.value)}
-                          placeholder="요약 내용을 입력하세요"
-                          className="border-ms-line focus:border-ms-olive"
+                          label="CPC 코드"
+                          placeholder="CPC 코드를 입력하세요 (예: G06F3/01)"
+                          value={filters.cpcNumber || ''}
+                          onChange={(e) => handleFilterChange('cpcNumber', e.target.value)}
                         />
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-ms-text mb-2">
-                          청구범위
-                        </label>
-                        <Input
-                          type="text"
-                          value={filters.claimScope || ''}
-                          onChange={(e) => handleFilterChange('claimScope', e.target.value)}
-                          placeholder="청구범위 내용을 입력하세요"
-                          className="border-ms-line focus:border-ms-olive"
-                        />
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-2">초록</label>
+                          <textarea
+                            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent direction-ltr"
+                            placeholder="초록 내용을 입력하세요"
+                            rows={3}
+                            value={filters.astrtCont || ''}
+                            onChange={(e) => handleFilterChange('astrtCont', e.target.value)}
+                            style={{ direction: 'ltr', textAlign: 'left' }}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-2">청구범위</label>
+                          <textarea
+                            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent direction-ltr"
+                            placeholder="청구범위 내용을 입력하세요"
+                            rows={3}
+                            value={filters.claimScope || ''}
+                            onChange={(e) => handleFilterChange('claimScope', e.target.value)}
+                            style={{ direction: 'ltr', textAlign: 'left' }}
+                          />
+                        </div>
                       </div>
                     </div>
                   )}
 
-                  {/* 번호 검색 탭 */}
+                  {/* Number Search Tab */}
                   {activeTab === 'number' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-ms-text mb-2">
-                          출원번호
-                        </label>
-                        <Input
-                          type="text"
-                          value={filters.applicationNumber || ''}
-                          onChange={(e) => handleFilterChange('applicationNumber', e.target.value)}
-                          placeholder="예: 1020230001234"
-                          className="border-ms-line focus:border-ms-olive"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-ms-text mb-2">
-                          공개번호
-                        </label>
-                        <Input
-                          type="text"
-                          value={filters.publicationNumber || ''}
-                          onChange={(e) => handleFilterChange('publicationNumber', e.target.value)}
-                          placeholder="예: 1020230001234"
-                          className="border-ms-line focus:border-ms-olive"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-ms-text mb-2">
-                          등록번호
-                        </label>
-                        <Input
-                          type="text"
-                          value={filters.registerNumber || ''}
-                          onChange={(e) => handleFilterChange('registerNumber', e.target.value)}
-                          placeholder="예: 1012345678"
-                          className="border-ms-line focus:border-ms-olive"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-ms-text mb-2">
-                          공고번호
-                        </label>
-                        <Input
-                          type="text"
-                          value={filters.openNumber || ''}
-                          onChange={(e) => handleFilterChange('openNumber', e.target.value)}
-                          placeholder="예: 1020230001234"
-                          className="border-ms-line focus:border-ms-olive"
-                        />
-                      </div>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <Input
+                        label="출원번호"
+                        placeholder="출원번호를 입력하세요"
+                        value={filters.applicationNumber || ''}
+                        onChange={(e) => handleFilterChange('applicationNumber', e.target.value)}
+                      />
+                      <Input
+                        label="공개번호"
+                        placeholder="공개번호를 입력하세요"
+                        value={filters.openNumber || ''}
+                        onChange={(e) => handleFilterChange('openNumber', e.target.value)}
+                      />
+                      <Input
+                        label="공고번호"
+                        placeholder="공고번호를 입력하세요"
+                        value={filters.publicationNumber || ''}
+                        onChange={(e) => handleFilterChange('publicationNumber', e.target.value)}
+                      />
+                      <Input
+                        label="등록번호"
+                        placeholder="등록번호를 입력하세요"
+                        value={filters.registerNumber || ''}
+                        onChange={(e) => handleFilterChange('registerNumber', e.target.value)}
+                      />
+                      <Input
+                        label="우선권주장번호"
+                        placeholder="우선권주장번호를 입력하세요"
+                        value={filters.priorityApplicationNumber || ''}
+                        onChange={(e) => handleFilterChange('priorityApplicationNumber', e.target.value)}
+                      />
+                      <Input
+                        label="국제출원번호"
+                        placeholder="국제출원번호를 입력하세요"
+                        value={filters.internationalApplicationNumber || ''}
+                        onChange={(e) => handleFilterChange('internationalApplicationNumber', e.target.value)}
+                      />
+                      <Input
+                        label="국제공개번호"
+                        placeholder="국제공개번호를 입력하세요"
+                        value={filters.internationOpenNumber || ''}
+                        onChange={(e) => handleFilterChange('internationOpenNumber', e.target.value)}
+                      />
                     </div>
                   )}
 
-                  {/* 날짜 검색 탭 */}
+                  {/* Date Search Tab */}
                   {activeTab === 'date' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-ms-text mb-2">
-                          출원일자
-                        </label>
-                        <Input
-                          type="date"
-                          value={filters.applicationDate || ''}
-                          onChange={(e) => handleFilterChange('applicationDate', e.target.value)}
-                          className="border-ms-line focus:border-ms-olive"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-ms-text mb-2">
-                          공개일자
-                        </label>
-                        <Input
-                          type="date"
-                          value={filters.openDate || ''}
-                          onChange={(e) => handleFilterChange('openDate', e.target.value)}
-                          className="border-ms-line focus:border-ms-olive"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-ms-text mb-2">
-                          공고일자
-                        </label>
-                        <Input
-                          type="date"
-                          value={filters.publicationDate || ''}
-                          onChange={(e) => handleFilterChange('publicationDate', e.target.value)}
-                          className="border-ms-line focus:border-ms-olive"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-ms-text mb-2">
-                          등록일자
-                        </label>
-                        <Input
-                          type="date"
-                          value={filters.registerDate || ''}
-                          onChange={(e) => handleFilterChange('registerDate', e.target.value)}
-                          className="border-ms-line focus:border-ms-olive"
-                        />
-                      </div>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <Input
+                        label="출원일자"
+                        type="date"
+                        value={filters.applicationDate || ''}
+                        onChange={(e) => handleFilterChange('applicationDate', e.target.value)}
+                      />
+                      <Input
+                        label="공개일자"
+                        type="date"
+                        value={filters.openDate || ''}
+                        onChange={(e) => handleFilterChange('openDate', e.target.value)}
+                      />
+                      <Input
+                        label="공고일자"
+                        type="date"
+                        value={filters.publicationDate || ''}
+                        onChange={(e) => handleFilterChange('publicationDate', e.target.value)}
+                      />
+                      <Input
+                        label="등록일자"
+                        type="date"
+                        value={filters.registerDate || ''}
+                        onChange={(e) => handleFilterChange('registerDate', e.target.value)}
+                      />
+                      <Input
+                        label="우선권주장일자"
+                        type="date"
+                        value={filters.priorityApplicationDate || ''}
+                        onChange={(e) => handleFilterChange('priorityApplicationDate', e.target.value)}
+                      />
+                      <Input
+                        label="국제출원일자"
+                        type="date"
+                        value={filters.internationalApplicationDate || ''}
+                        onChange={(e) => handleFilterChange('internationalApplicationDate', e.target.value)}
+                      />
+                      <Input
+                        label="국제공개일자"
+                        type="date"
+                        value={filters.internationOpenDate || ''}
+                        onChange={(e) => handleFilterChange('internationOpenDate', e.target.value)}
+                      />
                     </div>
                   )}
 
-                  {/* 인명 검색 탭 */}
+                  {/* Person Info Tab */}
                   {activeTab === 'person' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-ms-text mb-2">
-                          출원인
-                        </label>
-                        <Input
-                          type="text"
-                          value={filters.applicant || ''}
-                          onChange={(e) => handleFilterChange('applicant', e.target.value)}
-                          placeholder="출원인명을 입력하세요"
-                          className="border-ms-line focus:border-ms-olive"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-ms-text mb-2">
-                          발명자
-                        </label>
-                        <Input
-                          type="text"
-                          value={filters.inventors || ''}
-                          onChange={(e) => handleFilterChange('inventors', e.target.value)}
-                          placeholder="발명자명을 입력하세요"
-                          className="border-ms-line focus:border-ms-olive"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-ms-text mb-2">
-                          대리인
-                        </label>
-                        <Input
-                          type="text"
-                          value={filters.agent || ''}
-                          onChange={(e) => handleFilterChange('agent', e.target.value)}
-                          placeholder="대리인명을 입력하세요"
-                          className="border-ms-line focus:border-ms-olive"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-ms-text mb-2">
-                          권리자
-                        </label>
-                        <Input
-                          type="text"
-                          value={filters.rightHoler || ''}
-                          onChange={(e) => handleFilterChange('rightHoler', e.target.value)}
-                          placeholder="권리자명을 입력하세요"
-                          className="border-ms-line focus:border-ms-olive"
-                        />
-                      </div>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <Input
+                        label="출원인"
+                        placeholder="출원인명을 입력하세요"
+                        value={filters.applicant || ''}
+                        onChange={(e) => handleFilterChange('applicant', e.target.value)}
+                      />
+                      <Input
+                        label="발명자"
+                        placeholder="발명자명을 입력하세요"
+                        value={filters.inventors || ''}
+                        onChange={(e) => handleFilterChange('inventors', e.target.value)}
+                      />
+                      <Input
+                        label="대리인"
+                        placeholder="대리인명을 입력하세요"
+                        value={filters.agent || ''}
+                        onChange={(e) => handleFilterChange('agent', e.target.value)}
+                      />
+                      <Input
+                        label="등록권자"
+                        placeholder="등록권자명을 입력하세요"
+                        value={filters.rightHoler || ''}
+                        onChange={(e) => handleFilterChange('rightHoler', e.target.value)}
+                      />
                     </div>
                   )}
 
-                  {/* 추가 옵션 */}
-                  <div className="mt-8 pt-8 border-t border-ms-line-soft">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Additional Options */}
+                  <div className="border-t border-secondary-200 dark:border-secondary-700 pt-4 mt-6">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                      {/* Patent Type */}
                       <div>
-                        <label className="block text-sm font-medium text-ms-text mb-2">
-                          특허 유형
-                        </label>
+                        <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">특허 유형</label>
                         <div className="space-y-2">
                           <label className="flex items-center">
                             <input
                               type="checkbox"
                               checked={filters.patent || false}
                               onChange={(e) => handleFilterChange('patent', e.target.checked)}
-                              className="mr-2 text-ms-olive border-ms-line focus:ring-ms-olive"
+                              className="mr-2 rounded border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-800 text-primary-600 focus:ring-primary-500"
                             />
-                            <span className="text-sm text-ms-text">특허</span>
+                            <span className="text-sm text-secondary-700 dark:text-secondary-300">특허</span>
                           </label>
                           <label className="flex items-center">
                             <input
                               type="checkbox"
                               checked={filters.utility || false}
                               onChange={(e) => handleFilterChange('utility', e.target.checked)}
-                              className="mr-2 text-ms-olive border-ms-line focus:ring-ms-olive"
+                              className="mr-2 rounded border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-800 text-primary-600 focus:ring-primary-500"
                             />
-                            <span className="text-sm text-ms-text">실용신안</span>
+                            <span className="text-sm text-secondary-700 dark:text-secondary-300">실용신안</span>
                           </label>
                         </div>
                       </div>
 
+                      {/* Administrative Status */}
                       <div>
-                        <label className="block text-sm font-medium text-ms-text mb-2">
-                          정렬 기준
-                        </label>
+                        <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">행정처분</label>
+                        <select
+                          value={filters.lastvalue || ''}
+                          onChange={(e) => handleFilterChange('lastvalue', e.target.value)}
+                          className="w-full px-3 py-2 bg-white dark:bg-secondary-800 border border-secondary-300 dark:border-secondary-600 rounded-lg text-secondary-900 dark:text-secondary-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        >
+                          {statusOptions.map(option => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Sort Options */}
+                      <div>
+                        <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">정렬 기준</label>
                         <select
                           value={filters.sortSpec || 'AD'}
                           onChange={(e) => handleFilterChange('sortSpec', e.target.value)}
-                          className="w-full px-3 py-2 border border-ms-line rounded-md focus:border-ms-olive bg-white text-ms-text"
+                          className="w-full px-3 py-2 bg-white dark:bg-secondary-800 border border-secondary-300 dark:border-secondary-600 rounded-lg text-secondary-900 dark:text-secondary-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
                         >
                           {sortOptions.map(option => (
                             <option key={option.value} value={option.value}>
@@ -630,201 +635,336 @@ function Search() {
                         </select>
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-ms-text mb-2">
-                          정렬 방향 및 페이지 크기
+                      {/* Sort Direction & Page Size */}
+                      <div className="space-y-2">
+                        <label className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={filters.descSort || false}
+                            onChange={(e) => handleFilterChange('descSort', e.target.checked)}
+                            className="mr-2 rounded border-secondary-300 bg-secondary-800 text-blue-500 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-secondary-300">내림차순</span>
                         </label>
-                        <div className="space-y-2">
-                          <select
-                            value={filters.descSort ? 'desc' : 'asc'}
-                            onChange={(e) => handleFilterChange('descSort', e.target.value === 'desc')}
-                            className="w-full px-3 py-2 border border-ms-line rounded-md focus:border-ms-olive bg-white text-ms-text"
-                          >
-                            <option value="asc">오름차순</option>
-                            <option value="desc">내림차순</option>
-                          </select>
+                        <div>
+                          <label className="block text-xs text-secondary-400 mb-1">페이지당 건수</label>
                           <select
                             value={filters.numOfRows || 30}
                             onChange={(e) => handleFilterChange('numOfRows', parseInt(e.target.value))}
-                            className="w-full px-3 py-2 border border-ms-line rounded-md focus:border-ms-olive bg-white text-ms-text"
+                            className="w-full px-2 py-1 text-sm bg-secondary-800 border border-secondary-300 dark:border-secondary-600 rounded text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                           >
-                            <option value={10}>10개씩 보기</option>
-                            <option value={30}>30개씩 보기</option>
-                            <option value={50}>50개씩 보기</option>
-                            <option value={100}>100개씩 보기</option>
+                            <option value={10}>10</option>
+                            <option value={30}>30</option>
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
                           </select>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex justify-end gap-3 mt-6">
+                    <div className="flex justify-end gap-2">
                       <Button
-                        variant="outline"
+                        type="button"
+                        variant="ghost"
                         onClick={handleClearFilters}
-                        className="border-ms-line text-ms-text-muted hover:bg-ms-soft"
                       >
-                        필터 초기화
+                        전체 초기화
                       </Button>
                       <Button
+                        type="button"
+                        variant="outline"
                         onClick={() => setShowAdvancedFilters(false)}
-                        className="bg-ms-olive hover:bg-ms-olive/90 text-white"
                       >
-                        필터 닫기
+                        <X className="w-4 h-4 mr-2" />
+                        닫기
                       </Button>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Search Results */}
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loading size="lg" text="KIPRIS에서 검색 중..." />
           </div>
-
-          {/* 검색 결과 */}
-          {loading && (
-            <div className="flex justify-center py-12">
-              <Loading />
-            </div>
-          )}
-
-          {error && (
-            <div className="mb-8">
-              <ErrorMessage message={error} />
-            </div>
-          )}
-
-          {!loading && !error && results.length > 0 && (
-            <div>
-              {/* 결과 헤더 */}
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-light text-ms-text">
+        ) : results.length > 0 ? (
+          <>
+            {/* Results Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-secondary-900 dark:text-secondary-100">
                   검색 결과
                 </h2>
-                <div className="text-sm text-ms-text-muted">
-                  {currentPage}페이지 / 총 {totalPages}페이지
-                </div>
+                <p className="text-secondary-600 dark:text-secondary-400 mt-1">
+                  총 <span className="font-medium text-primary-600 dark:text-primary-400">{totalCount.toLocaleString()}</span>건의 특허가 검색되었습니다
+                  {totalPages > 0 && (
+                    <span className="ml-2">
+                      페이지 <span className="font-medium">{currentPage}</span> / <span className="font-medium">{totalPages}</span>
+                    </span>
+                  )}
+                </p>
               </div>
+              
+              {/* Results per page selector */}
+              <div className="flex items-center gap-2">
+                <label htmlFor="results-per-page" className="text-sm text-secondary-600 dark:text-secondary-400">
+                  페이지당:
+                </label>
+                <select
+                  id="results-per-page"
+                  value={filters.numOfRows || 30}
+                  onChange={(e) => handleFilterChange('numOfRows', parseInt(e.target.value))}
+                  className="px-3 py-1 bg-white dark:bg-secondary-800 border border-secondary-300 dark:border-secondary-600 rounded text-sm text-secondary-900 dark:text-secondary-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value={10}>10개</option>
+                  <option value={20}>20개</option>
+                  <option value={30}>30개</option>
+                  <option value={50}>50개</option>
+                </select>
+              </div>
+            </div>
 
-              {/* 결과 목록 */}
-              <div className="space-y-6">
-                {results.map((patent, index) => (
-                  <div key={patent.applicationNumber || index} className="ms-card-minimal">
-                    <div className="p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <span className="text-sm font-medium text-ms-olive bg-ms-olive/10 px-2 py-1 rounded">
-                              {patent.applicationNumber}
+            {/* Results List */}
+            <div className="space-y-4 mb-8">
+              {results.map((patent, index) => (
+                <Card key={`${patent.applicationNumber}-${index}`} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex flex-col lg:flex-row lg:items-start gap-4">
+                      <div className="flex-1 space-y-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
+                            {patent.applicationNumber}
+                          </span>
+                          {patent.registerNumber && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900 dark:text-success-200">
+                              등록: {patent.registerNumber}
                             </span>
-                          </div>
-                          <h3 className="text-lg font-medium text-ms-text mb-2 leading-relaxed">
+                          )}
+                          {patent.registerStatus && (
+                            <span className={cn(
+                              "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+                              patent.registerStatus === '등록' 
+                                ? 'bg-success-100 text-success-800 dark:bg-success-900 dark:text-success-200'
+                                : 'bg-secondary-100 text-secondary-800 dark:bg-secondary-800 dark:text-secondary-200'
+                            )}>
+                            {patent.registerStatus}
+                          </span>
+                          )}
+                        </div>
+                        
+                        <h3 className="text-lg font-semibold">
+                          <Link 
+                            to={`/patent/${patent.applicationNumber}`}
+                            className={cn(
+                              "text-primary-700 dark:text-primary-300",
+                              "hover:text-primary-800 dark:hover:text-primary-200",
+                              "visited:text-purple-700 dark:visited:text-purple-300",
+                              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2",
+                              "focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-900",
+                              "rounded transition-colors duration-200",
+                              "underline decoration-primary-300 dark:decoration-primary-600",
+                              "hover:decoration-primary-500 dark:hover:decoration-primary-400"
+                            )}
+                          >
                             {patent.inventionTitle}
-                          </h3>
-                          <p className="text-sm text-ms-text-muted leading-relaxed mb-3">
-                            {(patent.astrtCont && patent.astrtCont.trim().length > 0)
-                              ? (patent.astrtCont.length > 200
-                                  ? `${patent.astrtCont.substring(0, 200)}...`
-                                  : patent.astrtCont)
-                              : '요약 정보가 없습니다.'}
+                          </Link>
+                        </h3>
+                        
+                        {patent.astrtCont && (
+                          <p className="text-secondary-600 dark:text-secondary-400 leading-relaxed">
+                            {truncateText(patent.astrtCont, 200)}
                           </p>
-                          {patent.applicantName && (
-                            <div className="text-sm text-ms-text-light">
-                              <span className="font-medium">출원인:</span> {patent.applicantName}
+                        )}
+                        
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-secondary-500 dark:text-secondary-400">
+                          <div className="flex items-center">
+                            <Building className="w-4 h-4 mr-1 flex-shrink-0" />
+                            <span className="font-medium">{patent.applicantName}</span>
+                          </div>
+                          {patent.applicationDate && (
+                            <div className="flex items-center">
+                              <Calendar className="w-4 h-4 mr-1 flex-shrink-0" />
+                              출원: {formatDate(patent.applicationDate)}
+                            </div>
+                          )}
+                          {patent.registerDate && (
+                            <div className="flex items-center">
+                              <Calendar className="w-4 h-4 mr-1 flex-shrink-0" />
+                              등록: {formatDate(patent.registerDate)}
+                            </div>
+                          )}
+                          {patent.ipcNumber && (
+                            <div className="flex items-center">
+                              <FileText className="w-4 h-4 mr-1 flex-shrink-0" />
+                              IPC: {patent.ipcNumber}
                             </div>
                           )}
                         </div>
                       </div>
-                      <div className="flex justify-end">
+                      
+                      {/* Patent Image and Actions */}
+                      <div className="flex lg:flex-col items-center lg:items-end gap-3">
+                        {patent.drawing && (
+                          <img 
+                            src={patent.drawing} 
+                            alt={`${patent.inventionTitle} 특허 도면`}
+                            className="w-20 h-20 object-cover rounded-lg border border-secondary-200 dark:border-secondary-700 shadow-sm"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none'
+                            }}
+                          />
+                        )}
                         <Button
+                          size="sm"
                           variant="outline"
-                          onClick={() => navigate(`/patent/${patent.applicationNumber}`)}
-                          className="border-ms-olive text-ms-olive hover:bg-ms-olive hover:text-white"
+                          asChild
+                          onClick={() => {
+                            // 특허 상세보기 클릭 활동 추적
+                            if (user?.id) {
+                              activityTracker.trackPatentView(patent.applicationNumber, patent.inventionTitle, {
+                                applicantName: patent.applicantName,
+                                source: 'search_results'
+                              })
+                            }
+                          }}
                         >
-                          상세보기
+                          <Link to={`/patent/${patent.applicationNumber}`}>
+                            <FileText className="w-4 h-4 mr-1" />
+                            상세보기
+                          </Link>
                         </Button>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
-              {/* 페이지네이션 */}
-              {totalPages > 1 && (
-                <div className="flex justify-center mt-12">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setFilters({ ...filters, pageNo: currentPage - 1 })
-                        storeSearchPatents()
-                      }}
-                      disabled={currentPage <= 1}
-                      className="border-ms-line text-ms-text hover:bg-ms-soft disabled:opacity-50"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </Button>
-                    
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i
-                      return (
-                        <Button
-                          key={pageNum}
-                          variant={currentPage === pageNum ? "default" : "outline"}
-                          onClick={() => {
-                            setFilters({ ...filters, pageNo: pageNum })
-                            storeSearchPatents()
-                          }}
-                          className={cn(
-                            "min-w-[40px]",
-                            currentPage === pageNum
-                              ? "bg-ms-olive text-white"
-                              : "border-ms-line text-ms-text hover:bg-ms-soft"
-                          )}
-                        >
-                          {pageNum}
-                        </Button>
-                      )
-                    })}
-                    
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setFilters({ ...filters, pageNo: currentPage + 1 })
-                        storeSearchPatents()
-                      }}
-                      disabled={currentPage >= totalPages}
-                      className="border-ms-line text-ms-text hover:bg-ms-soft disabled:opacity-50"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between border-t border-secondary-200 dark:border-secondary-700 pt-6">
+                <div className="flex-1 flex justify-between sm:hidden">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleSearch(currentPage - 1)}
+                    disabled={currentPage <= 1}
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    이전
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleSearch(currentPage + 1)}
+                    disabled={currentPage >= totalPages}
+                  >
+                    다음
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
+                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-secondary-700 dark:text-secondary-300">
+                      <span className="font-medium">{((currentPage - 1) * (filters.numOfRows || 30)) + 1}</span>
+                      {' - '}
+                      <span className="font-medium">
+                        {Math.min(currentPage * (filters.numOfRows || 30), totalCount)}
+                      </span>
+                      {' / '}
+                      <span className="font-medium">{totalCount.toLocaleString()}</span>
+                      {' 건'}
+                    </p>
+                  </div>
+                  <div>
+                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSearch(currentPage - 1)}
+                        disabled={currentPage <= 1}
+                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-800 text-sm font-medium text-secondary-500 dark:text-secondary-400 hover:bg-secondary-50 dark:hover:bg-secondary-700"
+                      >
+                        <span className="sr-only">이전</span>
+                        <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                      </Button>
+                      
+                      {/* Page Numbers */}
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i
+                        if (pageNum > totalPages) return null
+                        
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentPage === pageNum ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handleSearch(pageNum)}
+                            className={cn(
+                              "relative inline-flex items-center px-4 py-2 border text-sm font-medium",
+                              currentPage === pageNum
+                                ? "z-10 bg-primary-50 dark:bg-primary-900 border-primary-500 text-primary-600 dark:text-primary-400"
+                                : "bg-white dark:bg-secondary-800 border-secondary-300 dark:border-secondary-600 text-secondary-500 dark:text-secondary-400 hover:bg-secondary-50 dark:hover:bg-secondary-700"
+                            )}
+                          >
+                            {pageNum}
+                          </Button>
+                        )
+                      })}
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSearch(currentPage + 1)}
+                        disabled={currentPage >= totalPages}
+                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-800 text-sm font-medium text-secondary-500 dark:text-secondary-400 hover:bg-secondary-50 dark:hover:bg-secondary-700"
+                      >
+                        <span className="sr-only">다음</span>
+                        <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                      </Button>
+                    </nav>
                   </div>
                 </div>
-              )}
-            </div>
-          )}
-
-          {!loading && !error && results.length === 0 && filters.word && (
-            <div className="text-center py-16">
-              <div className="ms-card max-w-md mx-auto">
-                <div className="p-8">
-                  <SearchIcon className="w-12 h-12 text-ms-text-muted mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-ms-text mb-2">
-                    검색 결과가 없습니다
-                  </h3>
-                  <p className="text-sm text-ms-text-muted mb-6">
-                    다른 검색어를 시도하거나 필터를 조정해보세요.
-                  </p>
-                    <Button
-                      onClick={handleClearFilters}
-                      className="bg-ms-olive hover:bg-ms-olive/90 text-white"
-                    >
-                      검색 초기화
-                    </Button>
-                </div>
+              </div>
+            )}
+          </>
+        ) : filters.word ? (
+          <>
+            {/* Results Header for No Results */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-secondary-900 dark:text-secondary-100">
+                  검색 결과
+                </h2>
+                <p className="text-secondary-600 dark:text-secondary-400 mt-1">
+                  총 <span className="font-medium text-primary-600 dark:text-primary-400">{totalCount.toLocaleString()}</span>건의 특허가 검색되었습니다
+                  {totalPages > 0 && (
+                    <span className="ml-2">
+                      페이지 <span className="font-medium">{currentPage}</span> / <span className="font-medium">{totalPages}</span>
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
-          )}
-        </div>
+            
+            <Card className="text-center py-12">
+              <CardContent>
+                <SearchIcon className="mx-auto h-12 w-12 text-secondary-400 dark:text-secondary-500 mb-4" />
+                <h3 className="text-lg font-medium text-secondary-900 dark:text-secondary-100 mb-2">
+                  검색 결과가 없습니다
+                </h3>
+                <p className="text-secondary-600 dark:text-secondary-400 mb-4">
+                  다른 검색어를 시도하거나 필터를 조정해보세요.
+                </p>
+                <Button variant="outline" onClick={handleClearFilters}>
+                  필터 초기화
+                </Button>
+              </CardContent>
+            </Card>
+          </>
+        ) : null}
       </div>
   )
 }
-
-export default Search

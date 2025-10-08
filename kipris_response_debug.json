@@ -6,7 +6,7 @@
           ""
         ],
         "responseTime": [
-          "2025-10-06 18:25:01.251"
+          "2025-10-09 06:48:04.484"
         ],
         "responseMsgID": [
           ""
@@ -29,87 +29,87 @@
             "item": [
               {
                 "applicantName": [
-                  "서울시립대학교 산학협력단"
+                  "가천대학교 산학협력단"
                 ],
                 "applicationDate": [
-                  "20220420"
+                  "20250925"
                 ],
                 "applicationNumber": [
-                  "1020220049146"
+                  "1020250138581"
                 ],
                 "astrtCont": [
-                  "인공지능 모델 학습 장치 및 방법이 제공된다. 상기 인공지능 모델 학습 장치는 특성 데이터, 상기 특성 데이터와 연관된 민감 데이터 및 레이블 데이터를 이용하여, 민감 잠재 표현 및 비-민감 잠재 표현을 생성하는 잠재 표현 생성부, 상기 민감 잠재 표현 및 상기 비-민감 잠재 표현을 이용하여 복원 특성 데이터 및 복원 민감 데이터를 생성하고, 상기 비-민감 잠재 표현을 이용하여 복원 레이블 데이터를 생성하는 데이터 복원부 및 상기 복원 특성 데이터, 상기 복원 민감 데이터 및 상기 복원 레이블 데이터를 이용하여 손실함수를 연산하고, 상기 손실함수를 이용하여 잠재 표현 생성부 및 상기 데이터 복원부 중 적어도 하나를 업데이트하는 손실 연산부를 포함한다."
+                  "본 개시 내용에 따르면, 코로나 바이러스와 같은 검출 대상 바이러스의 RNA가 포집 프로브(capture probe)인 금-DNA-양자점에 부착되어 DNA-RNA 부합체를 형성한 다음, 이중나선 특이적 핵산분해효소(Duplex-specific nuclease; DSN)에 의하여 DNA가 소화됨에 따라 포집 프로브로부터 양자점의 금속 이온이 방출되고, 이와 같이 방출된 양자점의 금속 이온을 센싱함으로써 시료 내 검출 대상 바이러스(구체적으로, 코로나 바이러스)를 정량적 및/또는 정성적으로 검출하는데 적합한 복합 전극 및 센서가 기재된다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d845279955cad78338e70326246a05796bb883e1dbd1cacacfb168012883a09ed1357a24a51df4677cb308941929c71275f4823a58123504"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d776c9acbce09a4a9e86d8acdd0f56046ab5237de5df28a3e1097d07ecf1f7e33875e02849c6cd29dea79ee87c44d7f8ccec0995e6b33ad5"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfd425841bf85ad0f0e25af265fee33a3ec53968ef6ee01e2a37a83d95af8231e4250a2f8ea6c28a54c2732041d02df638a4a1b2f7f7d068af"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf41278d8e0c9c5e5f11403e0577311c01a650c3cef81eff076f3c2cddf1c4bfa52c0392d92d3328f5b94d346e8226ed741d51bdbc0060b7ed"
                 ],
                 "indexNo": [
                   "1"
                 ],
                 "inventionTitle": [
-                  "인공지능 모델 학습 장치 및 방법"
+                  "코로나 바이러스 유전자의 검출에 적합한 복합 전극 및 센서"
                 ],
                 "ipcNumber": [
-                  "G06N 3/08|G06N 3/045"
+                  "C12Q 1/70|C12Q 1/6825|C12Q 1/00"
                 ],
                 "openDate": [
-                  "20231030"
+                  "20250930"
                 ],
                 "openNumber": [
-                  "1020230149914"
+                  "1020250142840"
                 ],
                 "publicationDate": [
-                  "20251002"
+                  ""
                 ],
                 "publicationNumber": [
                   ""
                 ],
                 "registerDate": [
-                  "20250925"
+                  ""
                 ],
                 "registerNumber": [
-                  "1028663760000"
+                  ""
                 ],
                 "registerStatus": [
-                  "등록"
+                  "공개"
                 ]
               },
               {
                 "applicantName": [
-                  "서강대학교산학협력단"
+                  "국립부경대학교 산학협력단|국립공주대학교 산학협력단"
                 ],
                 "applicationDate": [
-                  "20231229"
+                  "20250923"
                 ],
                 "applicationNumber": [
-                  "1020230196345"
+                  "1020250136972"
                 ],
                 "astrtCont": [
-                  "본 발명은 대화형 인공지능 시스템을 개시한다. 보다 상세하게는, 본 발명은 일상 수준 이거나 전문 지식을 기반으로 하는 다양한 형태의 주제에 대한 질의 응답을 처리할 수 있는 복합형 질의 응답 서비스를 제공하는 대화형 인공지능 시스템에 관한 것이다.  본 발명의 실시예에 따르면, 일상 대화와 설명 가능한 법률 도메인 질의 응답을 복합적으로 제공하는 인공지능 대화 인터페이스 제공함에 따라, 일상 대화와 법률 지식 기반 질의 응답을 복합적이고 원활하게 제공함으로써, 시스템을 이용하는 사용자들의 대화 몰입도와 응답의 자연스러움을 높일 수 있는 효과가 있다."
+                  "본 발명은 김을 포함하는 대체육 및 이의 제조방법에 관한 것으로, 김 첨가하는 단계를 포함하고, 압출성형 공정으로 제조되는 물리적 및 기능적 특성이 증진된 대체육 및 이의 제조방법으로, 본 발명에 의하면 김을 첨가함으로써, 항산화능, 조직감이 개선되는 효과가 있다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93177963701f90017668320c96f0174ba878211a17cec0cb109777119b7562352b398ed15cfd63903cf1e2c9ff250ec31bb2f5b59fcbdd2a08"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d776c9acbce09a4a9e86d8acdd0f560422579fce83e2b2924e46b12299557a9605ae1e6b183a89d3a1d7be8cbc063a12875e4685cb104a7a"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf3e97f307204c011c27b9b76d3f7a221627bf1f720718b6e81877af173eac2fd5e7473963ca3c257e5c26f8af458ab3471dbe2563857f1f1e"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf41278d8e0c9c5e5f11403e0577311c0123a5956aef6796e630ff5f02bdca906fb7bda36f8deecc3e141523165724dab60d4e46720bcbbd8f"
                 ],
                 "indexNo": [
                   "2"
                 ],
                 "inventionTitle": [
-                  "복합형 질의 응답 서비스를 제공하는 대화형 인공지능 시스템 및 방법"
+                  "김을 포함하는 대체육 및 이의 제조방법"
                 ],
                 "ipcNumber": [
-                  "G06F 16/332|G06F 16/338|G06F 16/31|G06N 3/0475|G06N 3/096"
+                  "A23L 11/00|A23L 29/212|A23L 29/256|A23P 30/20|A23L 33/185|A23L 17/60"
                 ],
                 "openDate": [
-                  "20250708"
+                  "20250930"
                 ],
                 "openNumber": [
-                  "1020250104207"
+                  "1020250142281"
                 ],
                 "publicationDate": [
                   ""
@@ -129,237 +129,237 @@
               },
               {
                 "applicantName": [
-                  "원광대학교산학협력단"
+                  "삼성전자주식회사"
                 ],
                 "applicationDate": [
-                  "20201230"
+                  "20250923"
                 ],
                 "applicationNumber": [
-                  "1020200187691"
+                  "1020250137285"
                 ],
                 "astrtCont": [
-                  "본 발명은 근 감소증 인공지능 진단 시스템 및 방법에 관한 것으로, 더욱 상세하게는 따라서 본 발명의 목적은 근 감소증 환자의 신체액(혈액, 침, 소변 등)의 바이오마커 중 근 감소에 영향을 줄 수 있는 복수의 신체액 바이오마커(이하 \"선택 신체액 바이오마커\"라 함)를 추출하고, 추출된 선택 신체액 바이오마커와, 연령, 성별, 키, 몸부게, 지방량 등을 포함하는 환자정보를 포함하는 데이터세트를 근 감소증 진단 인공지능 모델에 적용하여 학습시키고, 학습된 근 감소증 인공지능 모델에 검사자의 신체액으로부터 검출되는 선택 신체액 바이오마커 및 환자정보를 적용하여 상기 검사자에 대한 근 감소증 결과정보를 출력하는 신체액 샘플을 이용한 근 감소증 인공지능 진단 시스템 및 방법에 관한 것이다."
+                  "사용자의 운동 능력 정보를 제공하는 전자 장치 및 웨어러블 장치, 및 이를 수행하는 전자 장치의 동작 방법이 개시된다. 전자 장치는, 웨어러블 장치로부터 웨어러블 장치를 착용한 사용자의 움직임 정보가 포함된 센서 데이터를 수신하는 통신 모듈, 센서 데이터에 기초하여 사용자의 운동 능력을 추정하고, 추정된 운동 능력에 대한 운동 능력 정보를 생성하는 프로세서, 및 상기 운동 능력 정보를 출력하는 디스플레이 모듈을 포함한다. 센서 데이터는, 웨어러블 장치가 운동 능력 평가 모드에서 동할 때, 사용자가 사용자에게 제시된 하나 이상의 운동 프로그램에 따라 수행한 움직임에 대한 운동 정보를 포함한다. 프로세서는, 운동 정보와 하나 이상의 운동 프로그램에 대응하는 평가 기준 정보에 기초하여 운동 능력 정보를 결정한다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c9327cfcf55e43c8e137bb087c5e290eb1c4385fd2af40e15c27d083c641c24d58307cb53e0613586a35bc29f054c4c2464ec5f86787618cb21"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d776c9acbce09a4a9e86d8acdd0f560408879d9d33e1636c1014ea487ef169564237f8bc4e81b8dac07abec8fdb28b505f7b623f99a0a7f2"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfc0131abd6bcb7073468d8ad5ec2263c94e94625c0f57e9d1f32a8510d2592c386ef13afee189269b758f4cf5adc6b9e20a46b3e13f92bbd7"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf41278d8e0c9c5e5f11403e0577311c01e0193de2e478393c09a5a95feb57f2314ef782e3ccb44146b11f7f404fdec6417c15c670fffed84b"
                 ],
                 "indexNo": [
                   "3"
                 ],
                 "inventionTitle": [
-                  "신체액 샘플을 이용한 근 감소증 인공지능 진단 시스템 및 방법"
+                  "사용자의 운동 능력 정보를 제공하는 전자 장치 및 웨어러블 장치, 및 이들의 동작 방법"
                 ],
                 "ipcNumber": [
-                  "G16H 50/20|G16H 50/70|G16H 10/60|G16B 15/30|A61B 5/00|A61B 5/145|G06N 3/042|G01N 33/68|G06N 3/045|G06N 20/20"
+                  "A61B 5/11|A61B 5/00|B25J 9/00|B25J 13/08|B25J 9/16"
                 ],
                 "openDate": [
-                  "20220707"
+                  "20250930"
                 ],
                 "openNumber": [
-                  "1020220095803"
+                  "1020250142835"
                 ],
                 "publicationDate": [
-                  "20221215"
+                  ""
                 ],
                 "publicationNumber": [
                   ""
                 ],
                 "registerDate": [
-                  "20221209"
+                  ""
                 ],
                 "registerNumber": [
-                  "1024775920000"
+                  ""
                 ],
                 "registerStatus": [
-                  "등록"
+                  "공개"
                 ]
               },
               {
                 "applicantName": [
-                  "리벨리온 주식회사"
+                  "네이버 주식회사"
                 ],
                 "applicationDate": [
-                  "20211102"
+                  "20250916"
                 ],
                 "applicationNumber": [
-                  "1020210149224"
+                  "1020250132481"
                 ],
                 "astrtCont": [
-                  "본 발명은 인공지능 코어, 인공지능 코어 시스템 및 인공지능 코어 시스템의 로드/스토어 방법을 개시한다. 상기 인공지능 코어는, 인풋 액티베이션 및 웨이트를 수신하여 2차원 매트릭스 연산을 통해 아웃풋 액티베이션을 생성하는 프로세싱 유닛 및 외부 인터페이스를 통해서 수신한 상기 프로그램 및 상기 입력 데이터를 상기 온 칩 버퍼로 전달하고, 상기 출력 데이터를 상기 온 칩 버퍼로부터 상기 인터페이스로 전달하는 로드/스토어 작업을 수행하고, 상기 로드/스토어 작업은 상기 프로세싱 유닛이 수행하는 현재 실행 작업에 대한 메인 로드/스토어 작업과, 상기 프로세싱 유닛이 상기 현재 실행 작업 다음에 실행하는 대기 실행 작업에 대한 대기 로드/스토어 작업을 포함하는 로드/스토어 유닛을 포함한다."
+                  "본 발명은 로봇 친화형 건물, 건물을 주행하는 로봇의 제어 방법 및 시스템에 관한 것이다. 보다 구체적으로 본 발명은 같은 공간 속에서 로봇과 사람이 함께 공존하며 사람에게 유용한 서비스를 제공할 수 있도록 하는 로봇 제어 방법 및 시스템에 관한 것이다. 본 발명은 건물에 대한 지도에 기반하여, 상기 건물을 주행하는 로봇을 제어하는 방법을 제공할 수 있다. 본 발명은 상기 건물에서 가상 장애물의 위치를 특정하는 단계, 특정된 상기 가상 장애물의 위치를 이용하여, 상기 가상 장애물에 대한 가상 장애물 정보를 상기 지도에 반영하는 단계, 상기 건물에 위치한 로봇 중 상기 가상 장애물에 대한 기 설정된 거리 조건을 만족하는 적어도 하나의 로봇을 특정하는 단계 및 상기 특정된 로봇이 상기 가상 장애물을 회피하여 주행하도록, 상기 특정된 로봇으로 상기 가상 장애물 정보를 전송하는 단계를 포함하는 로봇 제어 방법을 제공할 수 있다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c937126eb669ce5743b598fc88e283448da41c87fcc2e5e541d273699b0e558714c104eafd5be0ff949fed794f068b4ed1b4731fac77554164f"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d845279955cad783cd3189fd5662e42d37651406a48afe9d612a473f7a7670f54a8eb8221cd01f4b24066135b26f72946de2ca25e1078542"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf57b01c10f1914994e5e9b588a9ebdcb22df84917a0ae1dd71bc2c14a6d6fb35614e95b452e08672acecbb7d8bb907bd4fa52f8ac2f740ec1"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfd425841bf85ad0f0f03eae8eac1ddda2ac93d60a5ed87eaccf691a8647efa3e89491e4f6360ff4b23aa1cfaa45e1d6f0ce90a4b91e4612b8"
                 ],
                 "indexNo": [
                   "4"
                 ],
                 "inventionTitle": [
-                  "인공지능 코어, 인공지능 코어 시스템 및 인공지능 코어 시스템의 로드/스토어 방법"
+                  "로봇 친화형 건물, 건물을 주행하는 로봇 제어 방법 및 시스템"
                 ],
                 "ipcNumber": [
-                  "G06N 3/082|G06N 3/063|G06N 3/045|G06F 9/38|G06F 9/30"
+                  "G05D 1/644"
                 ],
                 "openDate": [
-                  "20230509"
+                  "20251002"
                 ],
                 "openNumber": [
-                  "1020230063791"
+                  "1020250143725"
                 ],
                 "publicationDate": [
-                  "20250214"
+                  ""
                 ],
                 "publicationNumber": [
                   ""
                 ],
                 "registerDate": [
-                  "20250210"
+                  ""
                 ],
                 "registerNumber": [
-                  "1027679770000"
+                  ""
                 ],
                 "registerStatus": [
-                  "등록"
+                  "공개"
                 ]
               },
               {
                 "applicantName": [
-                  "주식회사 코난테크놀로지"
+                  "주식회사 닥터오레고닌"
                 ],
                 "applicationDate": [
-                  "20180309"
+                  "20250916"
                 ],
                 "applicationNumber": [
-                  "1020180028044"
+                  "1020250132546"
                 ],
                 "astrtCont": [
-                  "인공지능 기반 부품 검색 시스템이 개시된다. 일 실시 예에 따른 인공지능 기반 부품 검색 시스템은, 부품정보를 알고자 하는 부품 이미지를 촬영하거나 촬영된 부품 이미지를 획득하여 촬영 부품 이미지와 함께 부품 검색을 요청하는 클라이언트와, 인공지능 기반 기계학습을 통해 다수의 부품 이미지 학습모델을 생성 및 저장하는 학습모델 관리장치와, 클라이언트로부터 부품 검색요청을 수신하면 학습모델 관리장치에 저장된 학습모델에서 촬영 부품 이미지와 매칭되는 부품 이미지를 검색하여 검색된 부품 이미지와 해당 부품 명을 포함한 검색결과를 클라이언트에 제공하는 이미지 검색장치를 포함한다."
+                  "느릅나무 추출물을 유효성분으로 포함하는, 근감소 예방 및 치료용 약학 조성물이 제공된다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=2ba38663aa11ff0f6ca91af6061a2e00b83147196d49dbe80e2f84d3095ffb5101e84923d85bd78c8773b08403a00dec6ba603c811ffe0517768334da7798cad44122134199d72e3"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d776c9acbce09a4a9e86d8acdd0f56043d1c75099de38bf32af1f0964522b84845249d7ec81a185902e83ef3b3038f6d344773d137ad2a81"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf4d2a8421d936ebd044ae5dd0f7d6a4187c68960c442e5d521417b01e6aa5d959c9b3667fc9946b159b86d9f661ab52aeef458ac4b75d4725"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf41278d8e0c9c5e5f11403e0577311c01e7345ca7232f294a1d769fa667ed6c25df2564bf6ec443d63317f37695e177d052709b4aff4b8e2b"
                 ],
                 "indexNo": [
                   "5"
                 ],
                 "inventionTitle": [
-                  "인공지능 기반 부품 검색 시스템"
+                  "느릅나무속 식물 유래 카테킨 배당체 고함량 추출물을 유효성분으로 포함하는 근감소 예방 및 치료용 약학 조성물"
                 ],
                 "ipcNumber": [
-                  "G06F 16/532|G06F 16/583|G06F 3/04842|G06T 7/11|G06Q 30/0601|G06N 20/00"
+                  "A61K 36/185|A61K 31/7048|A61P 21/00|A23L 33/105|A23K 10/30|A23K 20/121"
                 ],
                 "openDate": [
-                  "20190926"
+                  "20250930"
                 ],
                 "openNumber": [
-                  "1020190109669"
+                  "1020250142826"
                 ],
                 "publicationDate": [
-                  "20191105"
+                  ""
                 ],
                 "publicationNumber": [
                   ""
                 ],
                 "registerDate": [
-                  "20191030"
+                  ""
                 ],
                 "registerNumber": [
-                  "1020405250000"
+                  ""
                 ],
                 "registerStatus": [
-                  "등록"
+                  "공개"
                 ]
               },
               {
                 "applicantName": [
-                  "성균관대학교산학협력단"
+                  "한국파라마운트 주식회사|주식회사 테코이코"
                 ],
                 "applicationDate": [
-                  "20181128"
+                  "20250916"
                 ],
                 "applicationNumber": [
-                  "1020180150128"
+                  "1020250132200"
                 ],
                 "astrtCont": [
-                  "본 발명은 인공지능 기반 환경 적응형 시간 동기화 로봇 커버리지 방법 및 시스템에 관한 것으로, 본 발명의 일 실시예에 따른 인공지능 기반 환경 적응형 시간 동기화 로봇 커버리지 방법은, 로봇의 단위 커버리지 영역을 나타내는 셀에 대응하는 방문 위치(LTV(Location to visit))들이 설정된 작업 공간에 대해, 동일 시간 동안 복수의 로봇이 작업을 완료하도록 LTV를 할당하는 방법에 있어서, 상기 작업 공간의 환경정보 및 LTV들에 기초하여 최적 주행 속도를 산출하는 단계, 상기 최적 주행 속도와 이웃하는 LTV 간 거리에 기초하여 LTV간의 거리지표를 산출하는 단계, 각 로봇의 성능정보에 기초하여 각 로봇의 성능지표 비율을 산출하는 단계, 각 로봇의 현재 위치에 해당하는 LTV를 기준으로 거리지표의 합이 성능지표 비율에 비례하도록 각 로봇에 LTV를 할당하는 단계를 포함한다."
+                  "본 발명은 합벽, CIP벽, 토류벽, 지하벽, 지중벽, 굴착벽, 기둥벽, 연속벽, H파일벽, 흙막이벽, 슬러리월, 그라우팅벽, 시이트파일벽, 다이어프럼월, 지중연속벽, 터널, 암거, 지하실, 지하철, 주차장, 지하공간, 지하시설, 지하주차장, 지하구조체, 지하공간물, 지하저장고, 지하공동구, 지하단독구, 지하전력구, 지하통신구, 지하시설물, 지하구조물 등과 관련되는 방수, 방근, 방근방수, 차수, 건설, 공사, 시공, 축조 등의 재료 또는 방법이나 공법을 제공한다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=2ba38663aa11ff0f6ca91af6061a2e00266af337763ddd289f2fbe658b6448735b353ce5d45888d57405af259008cf82300b65af2822209c3ebaa8c1142fdea4f56f5d3d28dd7fdc"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93f47d4789c0476506f5dcce3284fdf2e50aca0bf527ff629d34983bf8d55dab39611123a93726c2179608b784e6e8109413b6cc77cc7ff7f2"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfb53335947a81ee492c4affb347f08b05a6e53dfea72ad3538af6cfbd107adbf46fe0dbc5dad7275872dc66ec6050b91497616479aa4313d9"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf770ce4ac1a7555616c1c0facc8f19fafb8acbd1c0546416f36bd4680e78659fd0665d1b238f35e8d17315ee61f436cb0f9558c464cf66e03"
                 ],
                 "indexNo": [
                   "6"
                 ],
                 "inventionTitle": [
-                  "인공지능 기반 환경 적응형 시간 동기화 군집 로봇 커버리지 방법 및 시스템"
+                  "합벽, CIP벽, 지하벽, H파일벽, 흙막이벽 방수용 벤토나이트 방수재, 방수공법"
                 ],
                 "ipcNumber": [
-                  "B25J 9/16"
+                  "E02D 31/02|E04B 1/64|E04B 1/66"
                 ],
                 "openDate": [
-                  "20200605"
+                  "20250924"
                 ],
                 "openNumber": [
-                  "1020200063879"
+                  "1020250140046"
                 ],
                 "publicationDate": [
-                  "20200805"
+                  ""
                 ],
                 "publicationNumber": [
                   ""
                 ],
                 "registerDate": [
-                  "20200730"
+                  ""
                 ],
                 "registerNumber": [
-                  "1021417140000"
+                  ""
                 ],
                 "registerStatus": [
-                  "등록"
+                  "공개"
                 ]
               },
               {
                 "applicantName": [
-                  "주식회사 히포티앤씨|성균관대학교산학협력단"
+                  "네이버 주식회사"
                 ],
                 "applicationDate": [
-                  "20220726"
+                  "20250916"
                 ],
                 "applicationNumber": [
-                  "1020220092739"
+                  "1020250132482"
                 ],
                 "astrtCont": [
-                  "본 발명은, 멀티 모달 데이터가 시계열적으로 획득될 때 획득되는 데이터에 결측치가 있어 불완전한 경우 이를 보완하기 위한 인공지능을 포함하는 시스템에 관한 것이다.  본 발명에 따른 불완전한 연속 데이터 기반의 인공지능 분석 시스템은 multi-modal 데이터 환경에서 결측이 있더라도 데이터를 분석할 수 있는 효과가 있다."
+                  "본 발명은 로봇의 자세 측정 방법 및 이를 이용한 로봇 시스템에 관한 것이다. 본 발명에 따른 로봇의 자세 측정 방법은, 제1로봇과 제2로봇이 서로 인접하도록 상기 제1로봇과 제2로봇 중 적어도 하나가 이동하는 단계와, 상기 제2로봇의 디스플레이에 비주얼 마커를 출력하는 단계와, 상기 제1로봇이 상기 제2로봇를 촬영하는 단계와, 상기 제1로봇에서 촬영된 이미지에 포함된 비주얼 마커를 검출하여, 상기 이미지에 포함된 비주얼 마커의 자세(pose)를 산출하는 단계, 및 상기 제2로봇의 좌표 데이터와 상기 이미지에 포함된 비주얼 마커의 자세를 이용하여, 상기 제2로봇의 자세를 산출하는 단계를 포함한다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c9303cae34512d528235f5895a4ed374927e82062204e1b55320f107cdb8265fa78e1a189c2b75820f812d0f5b31ddb9e5d396c3f89e2988e3a"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c937cef927a07c26cf497b59f37054fbb29ef17b96af7dff0c045a7a0a99d572cb34b595c8e202b055ad1ab112af95e90b57a55844f1b008f8a"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfc1ad6069b116827c7d1da9a1cc4149c17b994ae05219a6984e9621e8cf86a74a4a445a6a91b427b8c2e360a43b51ffc1b89895fe2b7389fc"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfd1ab411270a03e3c1aa9757efabbe4e4a8f4d497fcbccf6a15aaa9991b150cc1f1a99ab355ac9b32e2cf90f3634fbafc1bfa72007df1e621"
                 ],
                 "indexNo": [
                   "7"
                 ],
                 "inventionTitle": [
-                  "불완전한 연속 데이터 기반의 인공지능 분석 시스템"
+                  "로봇의 자세 측정 방법 및 이를 이용한 로봇 시스템"
                 ],
                 "ipcNumber": [
-                  "G06N 3/08|G06N 3/04|G06F 11/30"
+                  "B25J 13/08|B25J 9/16|B25J 19/02|G05D 1/244"
                 ],
                 "openDate": [
-                  "20240202"
+                  "20250923"
                 ],
                 "openNumber": [
-                  "1020240014941"
+                  "1020250139803"
                 ],
                 "publicationDate": [
                   ""
@@ -379,37 +379,37 @@
               },
               {
                 "applicantName": [
-                  "주식회사 딥인스펙션"
+                  "윤규미"
                 ],
                 "applicationDate": [
-                  "20200929"
+                  "20250915"
                 ],
                 "applicationNumber": [
-                  "1020200126874"
+                  "1020250131331"
                 ],
                 "astrtCont": [
-                  "본 발명은 인공지능 및 포인트클라우드 기반 3차원 도로포장 및 철도레일 안전점검 자동화 시스템에 관한 것이다.  본 발명의 실시예에 따른 인공지능 및 포인트클라우드 기반 3차원 도로포장 및 철도레일 안전점검 자동화 시스템은 영상 데이터를 획득하는 입력부와, 영상 데이터를 이용하여 인공지능 및 포인트클라우드 기반으로 도로 포장 및 철도레일의 안전점검을 자동화하는 프로그램이 저장된 메모리 및 프로그램을 실행시키는 프로세서를 포함하고, 입력부는 스테레오 광학 카메라와 열화상 카메라로 도로포장 및 철도레일의 포인트 클라우드, 영상 데이터, 열화상 데이터를 취득한다."
+                  "본 발명은 현관문에 부착하여 비대면 배달 물품을 안전하고 위생적으로 수령하는 기술에 관한 것이다. 종래의 바닥 방치 및 복잡한 결합 구조의 문제를 해결하기 위해, 현관문에 부착되는 본체 프레임(100)과, 일체형으로 형성된 상단 걸이부(110) 및 하단 걸이부(120)를 포함하는 배달 물품 걸이 구조를 제공하는 것이다. 또한, 배달원에게 비대면 거래를 안내하는 시각 안내문(200)을 구비하는 것이 특징이다.  이러한 구성은 제조 공정을 단순화하고 내구성을 강화하여 생산 단가를 절감하는 효과가 있으며, '배달 물품을 여기에 걸어주세요'와 같은 시각적 안내를 통해 위생적인 물품 수령과 비대면 소통을 원활하게 하는 효과가 있다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93b388cc629277980117c4982703cdfda7f212b102394278d704348a1c28595db69c02c274ea1b0fd2e06ff3425b129b28df2f71fe80fcc919"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d845279955cad783cd3189fd5662e42df0427c50fd91faf3cd631a01683824306ec754a4ac54d51bba5938f96136d16b88b49bbb994816c9"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf53c2caf7c81048cc5ee514bfdbfae7619e2b014102c12f04276569815d4045de04a694a8f0226de6122af246f3670b1802bfc4e6fee08f47"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfd425841bf85ad0f0f03eae8eac1ddda268e8a081c4ccb70edf5df6de0a364082f8ee628fffc0f6ebca4ed7702b5aeb724e5c3adfac40474b"
                 ],
                 "indexNo": [
                   "8"
                 ],
                 "inventionTitle": [
-                  "인공지능 및 포인트클라우드 기반 3차원 도로포장 및 철도레일 안전점검 자동화 시스템"
+                  "배달 물품의 위생적 수령을 위한 현관문 부착용 일체형 배달 물품 걸이 구조 및 시각 안내문 구조"
                 ],
                 "ipcNumber": [
-                  "G06Q 50/10|E21F 17/00|H04N 7/18|H04N 13/204|G06N 5/04|G06T 7/00"
+                  "A47G 29/14|G09F 3/12"
                 ],
                 "openDate": [
-                  "20220405"
+                  "20251002"
                 ],
                 "openNumber": [
-                  "1020220043457"
+                  "1020250143713"
                 ],
                 "publicationDate": [
                   ""
@@ -429,37 +429,37 @@
               },
               {
                 "applicantName": [
-                  "주식회사 딥인스펙션|이철희"
+                  "김동환"
                 ],
                 "applicationDate": [
-                  "20200929"
+                  "20250915"
                 ],
                 "applicationNumber": [
-                  "1020200126873"
+                  "1020250131626"
                 ],
                 "astrtCont": [
-                  "본 발명은 인공지능 및 메타러닝 기반 공공시설물 균열 및 결함검출 자동화 시스템에 관한 것이다.  본 발명의 실시예에 따른 인공지능 및 메타러닝 기반 공공시설물 균열 및 결함검출 자동화 시스템은 영상 데이터를 획득하는 입력부와, 영상 데이터를 이용하여 인공지능 및 메타러닝 기반으로 공공시설물의 균열 및 결함을 검출하는 프로그램이 저장된 메모리 및 프로그램을 실행시키는 프로세서를 포함하고, 프로세서는 포인트 클라우드와 영상 데이터로부터 메타러닝 알고리즘 기반으로 균열 및 결함을 검출하는 것을 특징으로 한다."
+                  "본 발명은 게임을 수행하는데 있어서, 사냥이나 미션수행을 통해서 획득한 경험치를 각 단계별 펫 또는 수호동물을 성장시키는 먹이와 같은 역할로 사용하는 것을 특징으로 한다. 펫이나 수호동물을 획득한 이후에 함께 사냥이나 미션을 수행해서 경험치를 나누어 가지면서 성장을 시킬 수 있으나 이를 통해서만은 아니고 하루에 일정 횟수의 먹이를 주어야 한다.  먹이는 주인공캐릭터의 경험치를 나누어 주는 것부터 사냥을 통해서 획득한 아이템을 먹이로 주는 경우 등 다양하다. 일정한 주기마다 먹이를 주고 칭찬과 같은 교감을 통해서 최강의 펫 또는 수호동물로 성장시키는 것을 특징으로 한다.  [색인어]  펫 또는 수호동물 성장, 경험치 먹이, 아이템 먹이"
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93cf13e783682a6611ceb9f98e7c5d116308806f5314617092f2f94d2603aac8c8eb482adb146c448631a0ef434c9f2633ede0a41a4dc29953"
+                  ""
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfe1aa85d6f54cde0ca6c985504d6147a9ed5d0e8c3c9184758f46285a6fcc790d91e27dc1dec63fd1bda14b8069601d4105285ab3c53dd04b"
+                  ""
                 ],
                 "indexNo": [
                   "9"
                 ],
                 "inventionTitle": [
-                  "인공지능 및 메타러닝 기반 공공시설물 균열 및 결함검출 자동화 시스템"
+                  "펫 또는 수호동물의 성장 관리가 가능한 게임 시스템 및 방법"
                 ],
                 "ipcNumber": [
-                  "G01N 21/88|G01B 11/16|G01B 11/25|G01B 11/02|G06N 3/0985|H04N 13/243"
+                  "A63F 13/69|A63F 13/825|A63F 13/822"
                 ],
                 "openDate": [
-                  "20220406"
+                  "20251002"
                 ],
                 "openNumber": [
-                  "1020220044027"
+                  "1020250143717"
                 ],
                 "publicationDate": [
                   ""
@@ -479,37 +479,37 @@
               },
               {
                 "applicantName": [
-                  "한국과학기술원"
+                  "가부시키가이샤 반다이"
                 ],
                 "applicationDate": [
-                  "20221216"
+                  "20250915"
                 ],
                 "applicationNumber": [
-                  "1020220176909"
+                  "1020250131407"
                 ],
                 "astrtCont": [
-                  "본 발명은 플러그 앤 플레이 방식 기반의 인공지능 모델에 대한 설명 제공 방법에 관한 것이다.  본 발명에 따른 플러그 앤 플레이 방식 기반의 인공지능 모델에 대한 설명 제공 방법은, 서비스 제공업체 서버의 제어부가 인공지능 모델과 설명 모듈 간의 통신을 위해 각 설명 모듈이 잘 설명할 수 있는 인공지능 모델의 종류를 설정하는 단계; 설명이 요구되는 인공지능 모델이 입력되면, 플러그 앤 플레이 매니저가 인공지능 모델의 제조사, 프레임워크, 종류를 인지하는 단계; 플러그 앤 플레이 매니저가 인지 결과를 기반으로 설명 모듈의 제약 조건을 감안하여 사용 가능한 설명 모듈의 목록을 작성하는 단계; 서비스 제공업체 서버가 사용 가능한 설명 모듈의 목록에 있는 설명 모듈들에 대한 주요 사항을 사용자 단말기로 제공하는 단계; 사용자 단말기가 목록에 있는 설명 모듈들에 대한 주요 사항을 참조로 목록상의 설명 모듈들 중 하나를 선택하여 서비스 제공업체 서버로 제공하는 단계; 플러그 앤 플레이 매니저가 사용자 단말기에 의해 선택된 설명 모듈을 목록에 있는 설명 모듈들 중에서 도출하는 단계; 및 도출된 설명 모듈이 입력된 인공지능 모델에 대한 설명을 사용자 단말기로 제공하는 단계를 포함한다."
+                  "대상물을 촬영하고, 촬영된 대상물의 3차원 모델 데이터를 이용하여 가상 공간 상에 3차원 모델을 배치한 영상을 생성할 시에, 임장감 넘치는 영상의 생성을 가능하게 한다.  VR 영상을 외부의 표시 장치에 표시시키기 위한 표시용 데이터를 생성하는 화상 처리 방법이며, 스캐너부에 의해 모형의 외관의 화상을 복수 방향으로부터 스캔하여 생성된 복수의 스캔 화상으로부터 처리부가 상기 모형의 제1 3차원 모델 데이터를 생성하는 제1 생성 공정과, 처리부가 상기 제1 3차원 모델 데이터를 가공하는 가공 공정과, 상기 처리부가, 가공된 상기 제1 3차원 모델 데이터에 이펙트를 부여하는 부여 공정과, 상기 이펙트가 부여된 제1 3차원 모델 데이터를 포함하는 상기 표시용 데이터를 생성하는 제2 생성 공정을 포함한다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c931b3323467b072be7573d69e49af03c18edee38e52232efeb5319bb1e6f91d86c5d1f185afb109b9c3e633613c5060d6672ac7ca60886aefb"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d845279955cad783cd3189fd5662e42df0427c50fd91faf3400197b3a6ba740c9644fbe2bd0018f91b5890e65a107f59a247372e449cbe04"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf91ef38f15fa79abf9bc2b87f7e6a2dc8168aa729fc1a01385d406a11f6fbd7fa3e10d444e75a0a55f56cf7990fd7f8e03b9c2fc9e762abb4"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfd425841bf85ad0f0f03eae8eac1ddda268e8a081c4ccb70eb5779be84d3f4c4042088ad45a9f83cb389bf1cf7c797e0e0736cd04c9c62611"
                 ],
                 "indexNo": [
                   "10"
                 ],
                 "inventionTitle": [
-                  "플러그 앤 플레이 방식 기반의 인공지능 모델에 대한 설명 제공 방법"
+                  "화상 처리 방법, 정보 처리 장치 및 컴퓨터 프로그램"
                 ],
                 "ipcNumber": [
-                  "G06N 3/10|G06F 9/4401"
+                  "G06T 19/00|G06T 17/20|G06T 19/20|G06T 13/20|G02B 27/01"
                 ],
                 "openDate": [
-                  "20240626"
+                  "20251002"
                 ],
                 "openNumber": [
-                  "1020240095615"
+                  "1020250143714"
                 ],
                 "publicationDate": [
                   ""
@@ -529,37 +529,37 @@
               },
               {
                 "applicantName": [
-                  "서강대학교산학협력단"
+                  "주식회사 한국산업기술원"
                 ],
                 "applicationDate": [
-                  "20231229"
+                  "20250915"
                 ],
                 "applicationNumber": [
-                  "1020230196346"
+                  "1020250131620"
                 ],
                 "astrtCont": [
-                  "본 발명은 대화 분석 시스템을 개시한다. 보다 상세하게는, 본 발명은 인공지능 기술에 기반하여 음성 언어 텍스트에 대한 분석을 통해 신뢰성 있는 근거를 추출하는 인공지능 기반 대화 분석 시스템 및 방법에 관한 것이다.  본 발명의 실시예에 따르면, 언어 이해 기술 및 판단 근거 산출 모델을 파이프라인으로 구현하여 대화 분석 판단 값과 동시에 그 근거를 제공함으로써 기술에 대한 사용자들의 이해도와 신뢰성을 높일 수 있는 효과가 있다."
+                  "본 발명은 진단, 계측, 측정, 측량, 관측, 촬영, 균열측정, 모니터링의 수단, 기술, 장비, 드론, 로봇, 방법, 시스템; 또는 IT, IC, AI, VR, AR, MR, 5G, ICT, IoT, LTE, WiFi, 딥러닝, 융합기술, 빅데이터, 클라우드, 웨어러블, 메타버스, 4차산업기술 등이 이용되는 상기 진단 내지 모니터링, 수단 내지 시스템;에 관한 것이다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93177963701f90017668320c96f0174ba878211a17cec0cb109777119b7562352bf3f8690e60e8d4e48af7373e908476576477ffc564a5cb8f"
+                  ""
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf3e97f307204c011c27b9b76d3f7a221627bf1f720718b6e81877af173eac2fd56fc3c41a7c61595f565d9941594dd88a9fcc420ee39e91da"
+                  ""
                 ],
                 "indexNo": [
                   "11"
                 ],
                 "inventionTitle": [
-                  "인공지능 기반 대화 분석 시스템 및 방법"
+                  "드론, 로봇 이용 진단, 균열관측, 강도측정, 철근탐지, 시설진단 방법"
                 ],
                 "ipcNumber": [
-                  "G06F 16/35|G06F 16/332|G06F 40/284|G06Q 50/18|G06N 3/096|G06N 3/0455"
+                  "G06Q 50/10|G01B 5/30|G01B 5/14|G01N 3/34|G01N 3/40|G01M 7/08|G16Y 40/20|G16Y 40/10|H04L 67/12|G16Y 10/30|G16Y 10/80|G16Y 20/10|G16Y 20/20|G06T 7/60|B25J 11/00|B25J 13/00|B25J 19/02|B64U 20/87|B64D 47/00|B64U 101/30|B64U 101/26"
                 ],
                 "openDate": [
-                  "20250708"
+                  "20250923"
                 ],
                 "openNumber": [
-                  "1020250104208"
+                  "1020250139261"
                 ],
                 "publicationDate": [
                   ""
@@ -579,37 +579,37 @@
               },
               {
                 "applicantName": [
-                  "(주)한국인공지능검증원"
+                  "주식회사 한국산업기술원"
                 ],
                 "applicationDate": [
-                  "20221104"
+                  "20250915"
                 ],
                 "applicationNumber": [
-                  "1020220145813"
+                  "1020250131612"
                 ],
                 "astrtCont": [
-                  "본 발명의 실시 예에 따른 인공지능 모델 검증 및 보강 서버는 수집된 인공지능기술 논문데이터를 검증용 인공지능기술 논문데이터와 성능보강용 인공지능기술 논문데이터로 구분하여 저장하고, 사용자의 인공지능 모델 테스트 의뢰가 입력됨에 따라 저장된 검증용 인공지능기술 논문데이터와 성능보강용 인공지능기술 논문데이터를 이용하여 평가대상 인공지능 모델의 성능평가를 수행하고, 성능향상을 위해 참고할 수 있는 성능보강 정보를 제공할 수 있다."
+                  "본 발명은 a) 사람, 로봇, 드론, 근로자, 작업자, 출입자, 장비, 시설, 가시설, 거치대 등에 착용되는 수단, 필드수단, 웨어러블수단, 스트리밍수단, 라이브스트리밍수단, 의류, 조끼, 헬멧, 밴드, 워치, 멜빵; b) 공사나 작업에 이용되는 드론, 장치, 장비, 로봇, AI, IoT, metaverse, 의류, 조끼, 헬멧, 밴드, 워치, 멜빵, 비계, 형틀, 크레인, 펌프카, 삼각대, 분사기, 청정기, 정화기, 계측기; c) 상기 수단 내지 계측기 등에 구비되는 센서, 버튼, 랜턴, 카메라, 무전기, 알림기, 램프, 계측기, 배터리, 제어기, 오존기, 음이온기, 청정기, 히터, 쿨러; d) 상기 수단 내지 쿨러 등에 연계되는 비콘, 게이트웨이, 통신장치, 통신망, 서버, 처리장치, 단말기, 관제센터; e) 상기 수단 내지 관제센터 등에 이용되는 인공지능, 하드웨어, 소프트웨어, 어플리케이션; f) 상기 수단 내지 어플리케이션 등이 이용되는 작업, 업무, 제조, 생산, 공사, 건설, 건축, 스트리밍, 라이브스트리밍, 관리, 안전관리, 자동관리, 출입관리, 공사관리, 작업관리, 환경관리, 건강관리, 냉난방관리; g) 상기 수단 내지 관리 등이 이용되는 공장, 가정, 현장, 건물, 사무실, 작업장, 산업현장; h) 상기 수단 내지 산업현장 등에 관련되는 방법, 공법, 시스템, 메타버스, 안전시스템...(이하생략)"
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93bc92d9041e36d858e830f976982d4df439e0ba31c89c71d9f05e26e3f5bb5e35e71150c18309ec264ebf99b3d6f2f6e51f4c332905b81051"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c937cef927a07c26cf497b59f37054fbb29e0c3823d9846bb8bfbadbf91e5f830a6b5f0a81db0e7cd48e483bdbdc106de1ffbf8d18c7a898e99"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfaf9b70cefbbb55c674c758747f236f3bee9af0bf5832abbc14f2f17a7e7a83a0e5288cab18ee56d6181cca4b38e01efb2f9651468eaddf4e"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfd1ab411270a03e3c1aa9757efabbe4e4c2b9073c5b6fbe0f876feffe4a76820e62a2ecf00e631339b8600096042b91b7a7715073f3a246f7"
                 ],
                 "indexNo": [
                   "12"
                 ],
                 "inventionTitle": [
-                  "인공지능 모델 검증 및 보강 방법, 및 이를 이용하는 서버"
+                  "스트리밍, 인공지능, 메타버스 공사, 건설, 건축, 포장, 작업, 관리, 안전 방법"
                 ],
                 "ipcNumber": [
-                  "G06F 11/36|G06F 11/14|G06F 11/22"
+                  "G06Q 50/08|G06Q 50/10|H04L 67/125|H04W 4/80|G06F 3/00|G01S 19/13|H02S 10/00|H04M 1/724"
                 ],
                 "openDate": [
-                  "20240513"
+                  "20250923"
                 ],
                 "openNumber": [
-                  "1020240064137"
+                  "1020250139260"
                 ],
                 "publicationDate": [
                   ""
@@ -629,37 +629,287 @@
               },
               {
                 "applicantName": [
-                  "이화여자대학교 산학협력단"
+                  "대한민국(농촌진흥청장)"
                 ],
                 "applicationDate": [
-                  "20231228"
+                  "20250912"
                 ],
                 "applicationNumber": [
-                  "1020230194206"
+                  "1020250130653"
                 ],
                 "astrtCont": [
-                  "본 발명은 정확도 정보 및 유사도 정보를 이용한 양자화 인공지능 학습 처리 장치 및 방법에 관한 것으로, 본 발명의 일실시예에 따른 양자화 인공지능 학습 처리 장치는 인공지능 모델을 이용해 입력 데이터를 학습하여 학습 데이터를 출력하는 학습 처리부, 상기 학습 데이터를 양자화(quantization) 처리하여 양자화 데이터를 출력하는 양자화 처리부 및 상기 학습 데이터와 상기 양자화 데이터에 대하여 손실 함수에 기반한 정확도 정보와 분포(distribution) 정보 간의 비율을 고려하여 상기 양자화 데이터를 재학습하는 재학습 처리부를 포함할 수 있다."
+                  "본 발명은, 현삼 유래 화합물을 유효성분으로 포함하는 뇌염증의 예방 또는 치료용 조성물에 관한 것으로서, 본 발명은 현삼 유래의 phenylpropanoid glycoside 계열 화합물인 4-isoferuloyl-alpha-L-rhamnopyranose와 phenylethanoid glycoside 계열 화합물인 2-acetyl-3,4-dimethoxycinnamoyl-alpha-L-ramnopyranose를 분리하였으며, 분리된 화합물이 뇌염증과 관련된 NO 생성을 억제하는 것을 확인하였다. 또한, 뇌염증 관련 단백질인 iNOS 및 COX-2의 발현을 억제시키는 것을 확인하였다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93a1446294581abff52caa1215544b439f9a44bff24263f56a089410ef150f21939f069c000e17962c0f3fcadea68d9ca1d46ebd5122f6d896"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c932de9b094ff4e017050ff36c347bc4bb83b62a5723d38768ed5a5fc446f9f6c14b4508efda9b881faa3a634bb583579760f9000f2bc063ff9"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf38bd7805f89d9f99ac5c29b9327f4a8ea681ec3d956622a6a24e34b13b723956a345797adbb89c17cd1d1654685060f14277ef2bb59fb227"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf35c9256aefb5185e67bb755dacb0de9eb6f05d88408def3d8ff72f376bf578bfff7e09d5da9067f1be99d41295001685603aac9853d5fb30"
                 ],
                 "indexNo": [
                   "13"
                 ],
                 "inventionTitle": [
-                  "정확도 정보 및 유사도 정보를 이용한 양자화 인공지능 학습 처리 장치 및 방법"
+                  "현삼 유래 화합물을 유효성분으로 포함하는 뇌염증의 예방 또는 치료용 조성물"
                 ],
                 "ipcNumber": [
-                  "G06N 3/0495|G06N 3/0442|G06N 3/045"
+                  "C07H 15/18|C07H 1/08|A23L 33/125|A23L 33/105|A61K 31/7024|A61K 36/808|A61P 25/00"
                 ],
                 "openDate": [
-                  "20250707"
+                  "20250926"
                 ],
                 "openNumber": [
-                  "1020250102496"
+                  "1020250141105"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "삼성메디슨 주식회사"
+                ],
+                "applicationDate": [
+                  "20250912"
+                ],
+                "applicationNumber": [
+                  "1020250131124"
+                ],
+                "astrtCont": [
+                  "대상체에 대한 볼륨 데이터를 획득하는 데이터 획득부;와 미리 저장된 랜드마크 정보를 이용하여 볼륨 데이터의 획득 위치가 허용 범위인지 판단하고, 볼륨 데이터의 획득 위치가 허용 범위이면 볼륨 데이터로부터 복수의 표준 단면을 획득하는 프로세서;를 포함하는 초음파 진단 장치를 제공한다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c932de9b094ff4e017050ff36c347bc4bb8b4241c7b23082d09c61c4ea8a344076fce77096081ca28af6a1d7b43d16829c12e8c4a8d9d90e713"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf35c9256aefb5185e67bb755dacb0de9eeda932e5ff8d112495a28f9158fdc139c309b14a3e0bf48a5bc478a4bdc84fe4f4e0cd28b5a32b6d"
+                ],
+                "indexNo": [
+                  "14"
+                ],
+                "inventionTitle": [
+                  "초음파 장치 및 그 제어방법"
+                ],
+                "ipcNumber": [
+                  "A61B 8/00|A61B 8/08"
+                ],
+                "openDate": [
+                  "20250926"
+                ],
+                "openNumber": [
+                  "1020250141108"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "성균관대학교산학협력단|고려대학교 산학협력단"
+                ],
+                "applicationDate": [
+                  "20250909"
+                ],
+                "applicationNumber": [
+                  "1020250128391"
+                ],
+                "astrtCont": [
+                  "본 발명은 코로나바이러스의 G4 구조에 결합하는 화합물을 포함하는 코로나바이러스 감염증 예방 또는 치료용 조성물 등에 관한 것이다. 본 발명에 따른 화합물은 코로나바이러스 G4 구조에 결합해 G4 구조를 안정화 시키고, 코로나바이러스의 단백질 발현을 감소시킬 뿐 아니라 바이러스의 세포 감염을 효과적으로 저해할 수 있으므로, 이를 이용하여 코로나바이러스 감염증 예방 또는 치료에 사용할 수 있을 것으로 기대된다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c930cb50a342a061aa426b7c788dfda5a3504fdd288f946b5786260170c7427d54207e94365f365476dac44acd2fc1f76c2aa6e47f34f1d06bb"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfdfa8a4b3774c34727d6abb93f4eb1aff8379c3dd658d2f6358dd5bf999320fc3aa2d79bf37d08a956fee1ba49dfad69228f64cc396efe09a"
+                ],
+                "indexNo": [
+                  "15"
+                ],
+                "inventionTitle": [
+                  "코로나바이러스의 G4 구조에 결합하는 화합물을 유효성분으로 포함하는, 코로나바이러스 감염증 예방 또는 치료용 약학적 조성물"
+                ],
+                "ipcNumber": [
+                  "A61K 31/4745|A61K 31/4709|A61K 31/409|A61K 31/473|A61K 31/444|A61K 31/497|A61P 31/14|A23L 33/10|A61K 8/49|A61Q 17/00"
+                ],
+                "openDate": [
+                  "20250917"
+                ],
+                "openNumber": [
+                  "1020250137106"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "김인영"
+                ],
+                "applicationDate": [
+                  "20250904"
+                ],
+                "applicationNumber": [
+                  "1020250125762"
+                ],
+                "astrtCont": [
+                  "본 고안은 코 세정기에 관한 것으로, 세정용기로부터 세정용액이 배출되면서  공기와 혼합되어 공기방울이 형성되게 하고, 공기방울이 코속에 사출되게 함으로서 공기방울이 코속에서 터지는 운동에너지가 코속에 전달되어 효과적인 코점막의 세정효과를 가져오면서도 코속의 상승압력으로 세정용액이 유스타키오관을 통해 귀로 유입되어 중이염을 유발시키는 문제를 해소하며, 자화된 세정용액 공기방울의 자기에너지를 섬모와 코점막에 전달하여 전자적으로 혼제되고 교란된 코속의 점액질의 극성을 정화시키고 호흡기 전반 조직에 학습기억된 세포기억의 민감반응 착오를 리셋시켜 코속의 자극반응을 순화시켜 줌으로서 코속 비갑개의 정상적 부종현상을 유도하여 비염현상을 개선시키도록 한 것이다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c937cef927a07c26cf497b59f37054fbb2999c5472062e408462c9382bff26ff20005d84550cd9d38f69cd1967e2c143737237975815ae7855a"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfd1ab411270a03e3c1aa9757efabbe4e4dff49b3adf68425c7d357029ca353d99bbd04d4bfbd6adf380623f4a619cd3367f64d850b42495aa"
+                ],
+                "indexNo": [
+                  "16"
+                ],
+                "inventionTitle": [
+                  "공기방울 코세정기"
+                ],
+                "ipcNumber": [
+                  "A47K 7/04|A61M 3/02|A61M 11/00"
+                ],
+                "openDate": [
+                  "20250923"
+                ],
+                "openNumber": [
+                  "1020250139243"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "삼성전자주식회사"
+                ],
+                "applicationDate": [
+                  "20250904"
+                ],
+                "applicationNumber": [
+                  "1020250125978"
+                ],
+                "astrtCont": [
+                  "전자 장치가 개시된다. 전자 장치는 복수의 렌즈를 포함하는 카메라 및 프로세서를 포함하고, 프로세서는 카메라의 제1 렌즈를 이용하여 제1 영상을 획득하고, 제1 렌즈와 상이한 화각의 영상을 획득할 수 있는 카메라의 제2 렌즈를 이용하여 제2 영상을 획득하며, 적어도 하나의 신경망 모델을 이용하여 제2 영상에 대한 정보 및 제2 영상에 포함된 적어도 하나의 오브젝트에 대한 정보를 획득하고, 제2 영상에 대한 정보 및 제2 영상에 포함된 적어도 하나의 오브젝트에 대한 정보를 바탕으로 제2 영상에 대응되는 필터 셋을 식별하고, 식별된 필터 셋을 바탕으로 제1 영상을 보정한다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c939bc80d05dbf27d03bbd3325a7d9c7ef5c3e33077dd1fa47467d6f1059cb408d5f66d56070e8306b6fbfed696cfe271adb1469fcb1882101c"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf1024b3b7123a61e9549872eed1afdcaedaa7603760fc150724b7c6b0d8e2c0aace0cf8564d2cf6110226041f753f610b0441d2e4e6b8a391"
+                ],
+                "indexNo": [
+                  "17"
+                ],
+                "inventionTitle": [
+                  "전자 장치 및 이의 제어 방법"
+                ],
+                "ipcNumber": [
+                  "H04N 23/951|H04N 23/63|H04N 23/55|G06T 7/194|G06N 3/045|G06N 3/08|G06T 5/10"
+                ],
+                "openDate": [
+                  "20250912"
+                ],
+                "openNumber": [
+                  "1020250135159"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "주식회사 젬백스앤카엘"
+                ],
+                "applicationDate": [
+                  "20250902"
+                ],
+                "applicationNumber": [
+                  "1020250124301"
+                ],
+                "astrtCont": [
+                  "본 발명은 서열번호 1의 아미노산 서열을 포함하는 펩티드, 상기 아미노산 서열과 80% 이상의 서열 상동성을 갖는 펩티드 또는 그 단편인 펩티드로 이루어지는 군으로부터 선택되는 하나 이상을 유효성분으로 포함하는, 4R 타우병증의 예방, 치료, 또는 개선을 위한 약학 조성물 또는 식품 조성물, 또는 4R 타우병증의 예방, 치료, 또는 개선을 위한 상기 펩티드의 의약 용도 등에 관한 것이다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93ef07ad877c9124f5dc0d0f79dae781a487acb65803f59b5ef28ce689c641c0ba85ffec0fd10fd36b7b9fac86c9003a41a374384bfd00b89d"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf93620285adc8d8bf658293a81502890a626a08858b72d3c3a24bb9d1b6e915afe894f39ec8545ee6bfc92dce05815dfbab72ff33c4e83805"
+                ],
+                "indexNo": [
+                  "18"
+                ],
+                "inventionTitle": [
+                  "4R 타우병증의 치료 또는 예방용 펩티드"
+                ],
+                "ipcNumber": [
+                  "A61K 38/10|A61P 25/28|A23L 33/18"
+                ],
+                "openDate": [
+                  "20250911"
+                ],
+                "openNumber": [
+                  "1020250134568"
                 ],
                 "publicationDate": [
                   ""
@@ -682,434 +932,184 @@
                   "가천대학교 산학협력단"
                 ],
                 "applicationDate": [
-                  "20200529"
+                  "20250901"
                 ],
                 "applicationNumber": [
-                  "1020200064861"
+                  "1020250123369"
                 ],
                 "astrtCont": [
-                  "본 발명은 인공지능 챗봇 기반 케어 시스템에 관한 것으로서, 사용자 단말로부터 전송된 질의 또는 사용자로부터 발화된 음성 또는 사용자의 행동을 센서를 통해 수집하고 해당 요청에 대한 결과를 출력시키는 챗봇; 및 상기 챗봇과 네트워크를 통해 연결되며 챗봇으로부터 수집된 정보를 수신하여 상기 수집된 정보를 기반으로 사용자 질의를 파악하여 해당 질의에 대한 처리 정보를 상기 챗봇으로 전송하는 서비스 제공서버; 를 포함하는 것을 특징으로 한다.  이에 의해, 3D캐릭터를 활용한 시각적 챗봇 인터페이스를 적용하여 고령의 시니어 사용자들이 인공지능 챗봇의 대한 용이한 접근이 구현될 수 있다.  또한, 케어 서비스 제공에 있어서, 사실적 홀로그래픽 기법으로 구현되는 상호작용이 가능한 3D그래픽 정보의 출력으로 직관적이고 구체적 정보의 정보전달이 구현될 수 있다.  또한, 인공지능에 의한 생활정보 및 의료상담 서비스의 결과를 인공지능의 음성지원에 매칭되는 3D 아바타에 의한 감성적 인터페이스의 구현으로 고령의 사용자가 가질 수 있는 인공지능에 대한 거부감을 완화하고 사실적 입체감을 구현하는 홀로그래픽 방식을 사용한 다양한 의료정보 서비스를 제공할 수 있다."
+                  "본 발명은, 트랩 하우징, 상기 트랩 하우징 내부에 수용된 유인물질 방출부, 상기 트랩 하우징 내부의 상기 유인물질 방출부에서 발생하는 유인물질을 외부로 방출하도록 상기 트랩 하우징의 벽면을 관통하여 형성되는 가스홀, 및 상기 트랩 하우징의 내부 표면에 상기 가스홀에 연결되어 내부로 연장되되 단부가 상기 내부 표면으로부터 이격되어 위치하는 진입통로를 포함하는 미소절지동물 포획용 트랩에 관한 것이다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93e8b0d9e7e5b8dd2fc8ec96252bf7e5a07d88cf90cfee37f2b0f7d729351a34e4da19e896fb8a98833350f4f43609dbe92ea33023eb0cef5d"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93079b542b4eafd37b04ee3e8fdefe2e5b601779174730a59169c96b4a2267430fb4a40fcd7865e1a854b48b08fdffb91dc674769b98a7bab2"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf0c738515f19d9fdf8a785ca9a5623029fac112422bb9b75e77dab0a6b0911c4f4c28f89437dae31d668e92dbd2cd0c1895469c48b23646de"
-                ],
-                "indexNo": [
-                  "14"
-                ],
-                "inventionTitle": [
-                  "인공지능 챗봇 기반 케어 시스템"
-                ],
-                "ipcNumber": [
-                  "G16H 50/20|G16H 10/20|G06F 3/00|G06F 3/01|G06F 3/16|G16H 50/70|G06N 3/08|G06N 20/00|G03H 1/04|G10L 15/22|H04L 51/02|G10L 15/16"
-                ],
-                "openDate": [
-                  ""
-                ],
-                "openNumber": [
-                  ""
-                ],
-                "publicationDate": [
-                  "20210824"
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  "20210819"
-                ],
-                "registerNumber": [
-                  "1022937430000"
-                ],
-                "registerStatus": [
-                  "등록"
-                ]
-              },
-              {
-                "applicantName": [
-                  "성균관대학교산학협력단|주식회사 스카이칩스"
-                ],
-                "applicationDate": [
-                  "20200619"
-                ],
-                "applicationNumber": [
-                  "1020200075066"
-                ],
-                "astrtCont": [
-                  "본 발명은 인공지능 기반 주파수 합성 장치 및 이를 위한 자동 조정 회로와 인공지능 기반 자동 조정 방법에 관한 것으로, 본 발명의 일 실시예에 따른 인공지능 기반 자동 조정 회로는 온도 감지에 따라 생성된 제1 가중치, 공급 전압 감지에 따라 생성된 제2 가중치 및 공정 변이(process varation) 감지에 따라 생성된 제3 가중치를 입력받고, 입력된 제1 가중치 내지 제3 가중치에 기초하여 제어 비트를 생성하고, 생성된 제어 비트를 출력하는 SRAM 필터 및 제어 비트가 입력되면 인공지능 알고리즘을 링 타입 전압 제어 발진기의 제1 부하 조정 신호, 제1 바이어스 조정 신호 및 제1 이득제어 조정 신호를 병렬로 출력하는 AI 제어기를 포함할 수 있다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=2ba38663aa11ff0f6ca91af6061a2e00745ec6cb915f6fb3f4f261ef62e1461a6d11b458cd1a1bdd4e77afa91cddeb52d65eeb6227f026b6a6e659c42d869f3b7ca68187aaff4681"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf56a5a1bbfd00aa284ae870f1548862ec1a8d19033df4d546f5a39bfe54b71f5edd266fe23ffe26c71ffb6d0c5da1b8d325d3113a7906ec14"
-                ],
-                "indexNo": [
-                  "15"
-                ],
-                "inventionTitle": [
-                  "인공지능 기반 주파수 합성 장치 및 이를 위한 자동 조정 회로"
-                ],
-                "ipcNumber": [
-                  "H03L 7/187|H03L 1/02|H03L 7/24|H03L 7/099"
-                ],
-                "openDate": [
-                  ""
-                ],
-                "openNumber": [
-                  ""
-                ],
-                "publicationDate": [
-                  "20201102"
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  "20201027"
-                ],
-                "registerNumber": [
-                  "1021730750000"
-                ],
-                "registerStatus": [
-                  "등록"
-                ]
-              },
-              {
-                "applicantName": [
-                  "성균관대학교산학협력단|한국표준과학연구원"
-                ],
-                "applicationDate": [
-                  "20210917"
-                ],
-                "applicationNumber": [
-                  "1020210124759"
-                ],
-                "astrtCont": [
-                  "본 발명은 인공지능 신경망을 이용한 음원 분류 및 위치 추적 방법 및 시스템에 관한 것으로, 더욱 상세하게는 인공지능 신경망을 이용하여 음원의 위치와 음원이 내는 소리의 종류를 동시에 파악하는 방법 및 시스템에 관한 것이다.  본 발명의 일 실시 예에 따른 음원 분류 및 위치 추적 방법은, 특정 영역에 존재하는 적어도 하나 이상의 음원에 대한 정보를 이용하여 학습용 목표지도를 생성하는 데이터 생성단계; 상기 신경망 학습용 목표지도 생성에 사용된 음원에 대한 학습용 빔포밍 지도를 비교 입력값으로, 상기 학습용 목표지도를 비교 출력값으로 하여 인공지능 신경망을 학습시키는 신경망 학습단계; 및 상기 인공지능 신경망을 이용하여 임의의 음원에 대한 정보를 포함하는 추론용 빔포밍 지도로부터 추론용 목표지도를 추론하여 출력하는 목표지도 추론단계를 포함할 수 있다.  본 발명의 일 실시 예로서 제공되는 음원 분류 및 위치 추적 방법 및 시스템에 따르면 정확성 및 공간 분해능이 우수한 고해상도 음원지도를 획득할 수 있으며 음원의 분류 및 위치 추적을 동시에 수행할 수 있다는 이점이 있다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c934cf7da3b114b958296d412dde39b7f38beae8ca403f9e5eda4c68d762fd648e1e5e3f5d4c662f249e34ac10953558432f2b8812309da062e"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf0436acfb57bf3d7e3d682e2626ab77df55abe97ad5b46f049d519bce6f985288e08d737d22d49425fa20392d6ffd95daa112d7c33df0c826"
-                ],
-                "indexNo": [
-                  "16"
-                ],
-                "inventionTitle": [
-                  "인공지능 신경망을 이용한 음원 분류 및 위치 추적 방법 및 시스템"
-                ],
-                "ipcNumber": [
-                  "G10L 21/0272|G10L 25/27|G01S 3/808|G06F 18/24|G06N 3/09"
-                ],
-                "openDate": [
-                  "20230324"
-                ],
-                "openNumber": [
-                  "1020230041308"
-                ],
-                "publicationDate": [
-                  "20230719"
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  "20230713"
-                ],
-                "registerNumber": [
-                  "1025568100000"
-                ],
-                "registerStatus": [
-                  "등록"
-                ]
-              },
-              {
-                "applicantName": [
-                  "(주)자이네스"
-                ],
-                "applicationDate": [
-                  "20200618"
-                ],
-                "applicationNumber": [
-                  "1020200074064"
-                ],
-                "astrtCont": [
-                  "본 발명은 사용자에게 전기자극을 주면서 사용자의 신체 정보를 취득하여, 이를 분석해 사용자에게 적절한 운동을 제안하는 근력강화슈트를 이용한 인공지능 기반 트레이닝 관리 시스템에 관한 것이다. 이와 같은 본 발명은 사용자에게 착용되어 사용자의 심박을 측정하여, 심박데이터를 생성하는 스마트밴드; 복수 개의 전극판과 전극판에 일정한 주기로 전기를 인가하는 전원통신기가 착탈되는 근력강화슈트; 스마트밴드 및 근력강화슈트와 무선 통신하고, 스마트밴드 및 근력강화슈트로부터 데이터를 수신하는 어플리케이션이 설치되어, 복수 개의 정보데이터로 생성하는 단말기; 내부에 복수 개의 운동프로그램 데이터를 저장하고 있고, 외부에서 공급되는 운동 처방 데이터를 학습해 단말기에서 정보데이터를 수신하면, 수신된 정보데이터에 대응하는 운동프로그램 데이터를 단말기에 전송하는 AI서버를 포함한다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93953f175d4591d3bcd1eeac6699ad2a821b6bfc45f331ae36c95950182a98f17e9012d58259d8e160478cd0122ef8e1811b7e8b2120f9a268"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf10fc146241bd959c3488aa75d8815d91d45fbd956de9dfb1326c7dbbcc856a89e23560f4b791a4370b2997457e9ed65f491da6669b189a3d"
-                ],
-                "indexNo": [
-                  "17"
-                ],
-                "inventionTitle": [
-                  "근력강화슈트를 이용한 인공지능 기반 트레이닝 관리 시스템"
-                ],
-                "ipcNumber": [
-                  "A63B 24/00|G06N 3/08|A61N 1/36|A61N 1/04|A61B 5/024|A61B 5/103|A61B 5/00"
-                ],
-                "openDate": [
-                  "20211228"
-                ],
-                "openNumber": [
-                  "1020210156891"
-                ],
-                "publicationDate": [
-                  "20220711"
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  "20220705"
-                ],
-                "registerNumber": [
-                  "1024191840000"
-                ],
-                "registerStatus": [
-                  "등록"
-                ]
-              },
-              {
-                "applicantName": [
-                  "하대수"
-                ],
-                "applicationDate": [
-                  "20240202"
-                ],
-                "applicationNumber": [
-                  "1020240016595"
-                ],
-                "astrtCont": [
-                  "인공지능 기반의 운동 데이터 연계 가상 캐릭터를 생성 방법 및 시스템이 개시된다. 본 개시의 일 실시예에 따른, 장치에 의해 수행되는, 인공지능 기반의 운동 데이터 연계 가상 캐릭터를 생성 방법은, 카메라 장치 또는 사용자가 착용하고 있는 웨어러블 장치 중의 적어도 하나로부터 상기 사용자에 대한 제1 영상 데이터를 획득하는 단계; 상기 획득된 제1 영상 데이터로부터 상기 사용자의 스켈레톤(skeleton) 데이터 세트를 추출하는 단계; 상기 사용자의 스켈레톤 데이터 세트에 기초하여 상기 사용자의 제1 움직임 데이터 세트를 획득하는 단계; 상기 사용자의 스켈레톤 데이터 세트, 상기 사용자의 제1 움직임 데이터 세트, 상기 사용자에 대한 제1 영상 데이터로부터 추출된 제1 이미지 데이터 세트, 및 상기 사용자에 대한 정보 중의 적어도 하나를 제1 인공지능(artificial intelligence, AI) 모델에 입력하여 상기 사용자에 대응되는 제1 가상 캐릭터와 관련된 정보를 획득하는 단계; 및 상기 사용자에 대한 제2 영상 데이터, 상기 웨어러블 장치로부터 수신된 생체 신호 및 상기 사용자의 신체 활동과 관련된 제1 목표 달성 여부에 대한 정보 중의 적어도 하나에 기초하여, 상기 제1 가상 캐릭터를 처리하는 단계를 포함할 수 있다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c934cb379fa631e130760146ce9f03cd3c0e695d8458a76d7f7005b419f5340a4bd1da4e1d7505df54d3c0bf9d740d00b84cd7d7fcc9f718d7f"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfcb7e719508a7bbaf12659598308689f9c71ea7c69c7489d63b5a1721e49698ba1b47dbc6ac2bf72609dcf57911cd07be879a1380bb46f2c0"
-                ],
-                "indexNo": [
-                  "18"
-                ],
-                "inventionTitle": [
-                  "인공지능 기반의 운동 데이터 연계 가상 캐릭터를 생성 및 이용하는 방법 및 시스템"
-                ],
-                "ipcNumber": [
-                  "G06T 13/40|G06T 19/20|G06T 7/20|G06T 7/62|A63B 24/00|G06Q 50/10"
-                ],
-                "openDate": [
-                  ""
-                ],
-                "openNumber": [
-                  ""
-                ],
-                "publicationDate": [
-                  "20241015"
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  "20241011"
-                ],
-                "registerNumber": [
-                  "1027183070000"
-                ],
-                "registerStatus": [
-                  "등록"
-                ]
-              },
-              {
-                "applicantName": [
-                  "글로벌사이버대학교 산학협력단"
-                ],
-                "applicationDate": [
-                  "20181109"
-                ],
-                "applicationNumber": [
-                  "1020180137115"
-                ],
-                "astrtCont": [
-                  "본 발명의 인공지능 스피커를 이용하는 위기상황 대응방법이 개시된다. 본 발명의 인공지능 스피커를 이용하는 비명 소리 탐지를 통한 위기 상황 대응 방법은 마이크로폰을 통해서 소리 신호를 수신하는 단계와, 상기 소리 신호로부터 사람의 음성을 분리하고, 상기 음성에서 주파수 성분을 추출하는 단계와, 상기 음성의 주파수가 소정의 비명소리 주파수 범위 내에 속하는지 여부에 따라서 위기 상황을 판단하는 단계와, 상기 판단 결과 위기상황이라면, 미리 정해진 방법으로 상기 위기상황에 대응하는 단계를 포함하여 구성된다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=2ba38663aa11ff0f6ca91af6061a2e00cc2c02e8e3f1ee5a57e35d3c8b383a970a6d328383bd7600b311a39569fd6153b23b4889b088e26cb9baa0e246de3432374b749f9636a09d"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfe5d8adc71df0848d92fd75d94fed644b09748af06be299f3da134bd2e21c95f2b224725020d1d8d438cf636cdd9c56a68138ca0e628d2cfd"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfa61b78736de814d95f1e3c10d7b5ef49aed3045b8c707584d8b33b5d38d0fefb972ba818286ca5023317c7d331916db225da0d0084a8b4bf"
                 ],
                 "indexNo": [
                   "19"
                 ],
                 "inventionTitle": [
-                  "인공지능 스피커를 이용하는 실시간 위기 상황 대응 시스템"
+                  "미소절지동물 포획용 트랩"
                 ],
                 "ipcNumber": [
-                  "G08B 13/16|G08B 13/196|G08B 3/14|G08B 7/06"
+                  "A01M 1/14|A01M 1/02|C12N 1/16|A01M 1/10"
                 ],
                 "openDate": [
-                  "20200519"
+                  "20250918"
                 ],
                 "openNumber": [
-                  "1020200053794"
+                  "1020250137549"
                 ],
                 "publicationDate": [
-                  "20200826"
+                  ""
                 ],
                 "publicationNumber": [
                   ""
                 ],
                 "registerDate": [
-                  "20200713"
+                  ""
                 ],
                 "registerNumber": [
-                  "1021350790000"
+                  ""
                 ],
                 "registerStatus": [
-                  "등록"
+                  "공개"
                 ]
               },
               {
                 "applicantName": [
-                  "주식회사 인공지능팩토리"
+                  "서울대학교병원"
                 ],
                 "applicationDate": [
-                  "20210218"
+                  "20250901"
                 ],
                 "applicationNumber": [
-                  "1020210022170"
+                  "1020250123112"
                 ],
                 "astrtCont": [
-                  "본 발명은 구간 설정에 의한 인터랙션 인공지능 경연대회 시스템과 운영방법에 관한 것이다.  본 발명은 경연대회의 진행기간, 진행시간과 같은 스케줄 정보, 일정 구간 마다 나누어지는 복수의 랩과 같은 진행방식 및 채점 스크립트 정보가 저장되는 저장부(100)와; 상기 저장부에 예정된 진행방식 및 채점방식에 의해 일정 구간마다 나누어지는 복수의 랩에서 하나의 랩이 종료할 때 마다 참가자들이 사용자단말을 통해 업로드한 답안에 대해 경연대회 채점 스크립트에 따라 획득 포인트를 체크하여, 랭킹을 결정하기 위한 연산을 수행하며, 연산된 결과에 따라 복수의 참가자에 대한 랭킹을 정하는 연산부(200)와; 참가자 접속과 연산된 결과 정보를 외부로 송신 가능하도록 네트워킹하는 통신부(300)를 포함하는 경연대회 개최 서버(10)와, 경연대회 개최 서버(10)와 네트워킹되는 사용자단말(20)을 포함하여 구성되어, 참가자의 인공지능 프로그래밍 기술을 향상시키고 산업 현장에서 요구하는 인공지능 솔루션을 발굴한다."
+                  "본 발명은 탈모의 예방, 개선, 및/또는 치료를 위한 병용요법에 관한 것으로서, 알데히드 탈수소효소 2 (ALDH2) 활성화제가 모낭 형성 및 모발 성장을 촉진하며 미녹시딜과 병용시 시너지적인 탈모 치료 효과를 발휘하는 것을 확인하여 완성된 것이다. 구체적으로, ALDH2 활성화제는 모발 성장에 핵심 세포인 모유두세포 및 겉뿌리싸개세포의 증식을 촉진하고, 모발의 생장기를 유도할 뿐만 아니라, 탈모의 원인 중 하나인 산화스트레스를 억제할 수 있음이 확인되었다. 나아가, ALDH2 활성화제 및 미녹시딜의 병용처리는 더욱 우수한 탈모 예방 및 치료 효과를 발휘하는 것으로 나타났다. 따라서, 본 발명에 따른 ALDH2는 그 자체가 모발 성장을 효과적으로 촉진할 뿐만 아니라 미녹시딜과 병용시 더욱 시너지적인 탈모 치료 효과를 달성할 수 있는 바, 탈모의 예방, 개선, 및 치료를 목적으로 한 의료, 미용, 및 식품 분야에서 유용히 활용될 것으로 기대된다. 또한, 본 발명의 ALDH2 활성화제는 미녹시딜보다 훨씬 적은 용량으로도 동등 또는 그 이상의 효과를 발휘할 수 있는 바, 치료제 개발에 있어 비용적 측면에서 절감효과를 가지고, 임상에의 적용도 보다 안전할 것으로 기대된다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c930075fa3a1b3fedb4e5098c05187a0788b6c18f8c68599c3d7ac61274b129596775bd9ffb54a5b8b2e768681790a9a121f25c150929808b19"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93c36a90f6218edad0e57166f4d993e77d623383ad32a6a3fc83f108d9fc0b571740e16ceb8afcce8570fc725ed5ab58bd1134e1bb2c9c376e"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfb680b86fb65b405dcc80437afd9bfe0ad975db49ca25e517bc05cb3dc2e074ea9d0db4318de32de33818f7c578d720f7925609295b722f8c"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfa86d01f579aa2bab1dc23ec9673d3cd2988a53be8293cadba8579acd8e814f2e831d64ea5621b9cd63239459b127ee47e89be1c79757d800"
                 ],
                 "indexNo": [
                   "20"
                 ],
                 "inventionTitle": [
-                  "구간 설정에 의한 인터랙션 인공지능 경연대회 시스템과 운영방법"
+                  "알데하이드 탈수소효소 2 조절을 통한 탈모의 예방, 개선, 또는 치료를 위한 병용요법"
                 ],
                 "ipcNumber": [
-                  "G06Q 50/10"
+                  "A61K 31/36|A61K 31/506|A61K 45/06|A61P 17/14|A61K 8/49|A61Q 7/00|A23L 33/10"
                 ],
                 "openDate": [
-                  "20220825"
+                  "20250916"
                 ],
                 "openNumber": [
-                  "1020220118259"
+                  "1020250136281"
                 ],
                 "publicationDate": [
-                  "20220906"
+                  ""
                 ],
                 "publicationNumber": [
                   ""
                 ],
                 "registerDate": [
-                  "20220901"
+                  ""
                 ],
                 "registerNumber": [
-                  "1024408280000"
+                  ""
                 ],
                 "registerStatus": [
-                  "등록"
+                  "공개"
                 ]
               },
               {
                 "applicantName": [
-                  "(주)비퍼플"
+                  "주식회사 엘지화학"
                 ],
                 "applicationDate": [
-                  "20210706"
+                  "20250829"
                 ],
                 "applicationNumber": [
-                  "1020210088512"
+                  "1020250122181"
                 ],
                 "astrtCont": [
-                  "에지형 인공지능 SoC의 메모리 관리 시스템 및 방법이 개시된다.  본 발명의 일 실시예에 따른 메모리 관리 시스템은 복수의 센서로부터 획득되는 센서 데이터 샘플들을 인공지능 모델을 통해 처리하는 에지형 인공지능 SoC의 메모리를 관리하는 시스템으로서, 상호 독립적으로 전력이 제공되며 상기 복수의 센서로부터 획득된 센서 데이터 샘플들이 분산되어 저장되는 복수의 휘발성 메모리; 상기 복수의 센서 각각에 대해 기 설정된 샘플링 주기마다 샘플링을 수행하여 센서 데이터 샘플들을 획득하고, 획득된 센서 데이터 샘플들을 상기 복수의 휘발성 메모리에 분산하여 저장하되, 상기 복수의 센서 중 제1 센서로부터 획득되는 제1 센서 데이터 샘플을 상기 복수의 휘발성 메모리 중 제1 휘발성 메모리에 저장하는 센서 데이터 관리부; 및 상기 인공지능 모델을 실행하여 상기 복수의 휘발성 메모리에 저장된 센서 데이터 샘플들을 처리하는 프로세서를 포함한다."
+                  "본 발명은 화학식 1로 표시되는 화합물의 황산염의 결정형, 이의 제조 방법 및 이를 포함하는 약학적 조성물에 관한 것이다. 본 발명의 화학식 1로 표시되는 화합물의 황산염의 결정형은 XRPD 패턴, DSC 프로파일, 및/또는 TGA 프로파일에 의해 특성화되는 것일 수 있다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=348aaf18c46825cf02d6c2de1c78338ed1317dba44d9790a00ef408745f42ceaa4867544d55470d2d0ac7c3e5cb5e802d6a964a565f4796dfd1dc8ded337480a51545ce0be600ffb"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c939bc80d05dbf27d03bbd3325a7d9c7ef5fd8081ec5ed6de9bd6295371f983d0c3982d2b88fd9bf600cd6eca1d802896814cfd9534978d41db"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf1ed19c573a05ab9cee17092f1f61a5cc8af35ca56909c8ee1cff976ef279e3ab5e793627db612955def98872947407f8d42c1efa6f0c00aa"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf1024b3b7123a61e9549872eed1afdcaebca98d3e3db56476e451b72b2831cd82bea60537f2b6fd430d12ecc75ee8c1a8468a953c77479976"
                 ],
                 "indexNo": [
                   "21"
                 ],
                 "inventionTitle": [
-                  "에지형 인공지능 SoC의 메모리 관리 시스템 및 방법"
+                  "멜라노코르틴 수용체 작용제 화합물의 황산염의 결정형 및 이의 제조방법"
                 ],
                 "ipcNumber": [
-                  "G06F 13/38|G06F 3/06|G06N 3/063|H04L 65/40|G06F 15/78"
+                  "C07D 207/14|A61K 31/5377|A61P 3/04|A61P 3/10|A61P 29/00|A61P 15/10"
                 ],
                 "openDate": [
-                  "20230113"
+                  "20250912"
                 ],
                 "openNumber": [
-                  "1020230007774"
+                  "1020250135152"
                 ],
                 "publicationDate": [
-                  "20240927"
+                  ""
                 ],
                 "publicationNumber": [
                   ""
                 ],
                 "registerDate": [
-                  "20240924"
+                  ""
                 ],
                 "registerNumber": [
-                  "1027114780000"
+                  ""
                 ],
                 "registerStatus": [
-                  "등록"
+                  "공개"
                 ]
               },
               {
                 "applicantName": [
-                  "서울시립대학교 산학협력단"
+                  "주식회사 엘지화학"
                 ],
                 "applicationDate": [
-                  "20220328"
+                  "20250829"
                 ],
                 "applicationNumber": [
-                  "1020220037790"
+                  "1020250122180"
                 ],
                 "astrtCont": [
-                  "인공지능 모델 생성 장치 및 방법이 제공된다. 상기 인공지능 모델 생성 장치는 제1 및 제2 입력 데이터가 제공되는 입력 모듈, 제1 및 제2 웨이트 데이터가 저장되는 저장 모듈, 상기 제1 입력 데이터와 상기 제1 웨이트 데이터를 이용하여 제1 연산 데이터를 생성하고, 상기 제2 입력 데이터와 상기 제2 웨이트 데이터를 이용하여 제2 연산 데이터를 생성하는 연산 모듈, 상기 제1 연산 데이터를 이용하여 제1 출력 데이터를 생성하고, 상기 제2 연산 데이터를 이용하여 제2 출력 데이터를 생성하는 출력 모듈, 상기 제1 출력 데이터와 제1 정답 데이터를 비교하여, 상기 제1 출력 데이터의 오류 값을 결정하고, 상기 제1 출력 데이터의 오류 값에 따라 상기 연산 모듈에 제1 피드백 데이터를 제공하는 오류 결정 모듈 및 제1 및 제2 랜덤 계수를 생성하고, 상기 제1 및 제2 웨이트 데이터와 상기 제1 및 제2 랜덤 계수를 이용하여 제1 조합 웨이트 데이터를 생성하는 웨이트 조합 모듈을 포함하되, 상기 제2 웨이트 데이터는 상기 제1 웨이트 데이터와 상기 제1 피드백 데이터를 이용하여 생성된다."
+                  "본 발명은 화학식 1로 표시되는 화합물의 유기산 염의 결정형 Ⅳ, 이의 제조 방법 및 이를 포함하는 약학적 조성물에 관한 것이다. 본 발명의 화학식 1로 표시되는 화합물의 유기산 염의 결정형 Ⅳ는 XRPD 패턴, DSC 프로파일, 및/또는 TGA 프로파일에 의해 특성화되는 것일 수 있다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c931c9e99fc41e1d7d9b020dc99ab62e0d14fb6ca2e375774c23392d78d3ca8b1f726bca4a529fc3c460da1910eecd937e319010c034c75da18"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c939bc80d05dbf27d03bbd3325a7d9c7ef5fd8081ec5ed6de9bd6295371f983d0c3bd2e8466681e89c61a0daf9e080b90559b22a886cbabed3c"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf5ccc5c8f47f06ff86851a81f07f2279c346d5bbb178a17ede525e75d69ca5d5fd7f9d0545a928674edd6e5b7896aadbd995a0dbb39b9f1bd"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf1024b3b7123a61e9549872eed1afdcaebca98d3e3db56476e451b72b2831cd8293d447afca3d84989720d8b7738bd9bd07cdfca2e72ae760"
                 ],
                 "indexNo": [
                   "22"
                 ],
                 "inventionTitle": [
-                  "인공지능 모델 생성 장치 및 방법"
+                  "멜라노코르틴 수용체 작용제 화합물의 유기산 염의 결정형 Ⅳ 및 이의 제조방법"
                 ],
                 "ipcNumber": [
-                  "G06N 3/08|G06N 20/20|G06N 3/063"
+                  "C07D 207/14|A61K 31/5377|A61P 3/04|A61P 3/10|A61P 29/00|A61P 15/10"
                 ],
                 "openDate": [
-                  "20231006"
+                  "20250912"
                 ],
                 "openNumber": [
-                  "1020230139920"
+                  "1020250135151"
                 ],
                 "publicationDate": [
                   ""
@@ -1129,237 +1129,237 @@
               },
               {
                 "applicantName": [
-                  "재단법인 아산사회복지재단|울산대학교 산학협력단"
+                  "주식회사 엘지화학"
                 ],
                 "applicationDate": [
-                  "20200318"
+                  "20250829"
                 ],
                 "applicationNumber": [
-                  "1020200032938"
+                  "1020250122179"
                 ],
                 "astrtCont": [
-                  "인공지능 기반의 코멧 어세이 분석 방법, 프로그램 및 시스템이 제공된다. 상기 인공지능 기반의 코멧 어세이 분석 방법은 컴퓨터에 의해 수행되는 코멧어세이를 분석하는 방법으로서, 입력 코멧어세이영상을 획득하는 단계 및 상기 입력 코멧어세이영상을 코멧어세이 분석모델에 입력하여, 코멧영역정보, 코멧구성정보 및 코멧종류정보 중 적어도 하나를 추출하는, 코멧특징 추출단계를 포함하고, 상기 코멧어세이 분석모델은, 원본 코멧어세이영상과 상기 원본 코멧어세이영상에 코멧영역정보, 코멧구성정보 및 코멧종류정보의 중 적어도 하나의 정답값을 포함하는 정답 코멧어세이영상을 조합한 훈련데이터를 기반으로 훈련된 것이고, 상기 코멧영역정보는 코멧이 위치하는 영역에 대한 정보이고, 상기 코멧구성정보는 코멧 머리와 코멧 꼬리로 구성된 코멧구성을 예측하는데 이용되는 키포인트를 포함하고, 상기 코멧종류정보는 코멧종류를 분류하는 마스크를 포함할 수 있다."
+                  "본 발명은 화학식 1로 표시되는 화합물의 결정형 Ⅶ, 이의 제조 방법 및 이를 포함하는 약학적 조성물에 관한 것이다. 본 발명의 화학식 1로 표시되는 화합물의 결정형 Ⅶ는 XRD 패턴, DSC 프로파일 및/또는 TGA 프로파일에 의해 특성화되는 것일 수 있다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c9390ad440e659947824090bfc3e04703867d9385e217df09c8f19a4410ed81310c23777b57fed20f82bcbee68269c139a61123f79865bb3511"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c939bc80d05dbf27d03bbd3325a7d9c7ef5fd8081ec5ed6de9bd6295371f983d0c30efac711d268c8dabf56a6d67beb814b50eccc4f7a3677e9"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfbf589d496d0daf83d2ead1f3820d0b283d3673690caf780324fa9fc802093015de646891ab0641d7b2a6a538ab47c0b111d674232d96d5c1"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf1024b3b7123a61e9549872eed1afdcaebca98d3e3db56476e451b72b2831cd826cbf2540f1eddcc0a17b0d1cc231e629f199365871e61c4f"
                 ],
                 "indexNo": [
                   "23"
                 ],
                 "inventionTitle": [
-                  "인공지능 기반의 코멧 어세이 분석모델을 훈련시키는 방법, 프로그램 및 시스템과 그 분석모델을 이용한 코멧 어세이 분석 방법, 프로그램 및 시스템"
+                  "멜라노코르틴 수용체 작용제 화합물의 결정형 Ⅶ 및 이의 제조방법"
                 ],
                 "ipcNumber": [
-                  "G06T 7/00|G06T 5/40|G06T 7/136"
+                  "C07D 207/14|A61K 31/5377|A61P 3/04|A61P 3/10|A61P 29/00|A61P 15/10"
                 ],
                 "openDate": [
-                  "20210929"
+                  "20250912"
                 ],
                 "openNumber": [
-                  "1020210117366"
+                  "1020250135150"
                 ],
                 "publicationDate": [
-                  "20220502"
+                  ""
                 ],
                 "publicationNumber": [
                   ""
                 ],
                 "registerDate": [
-                  "20220426"
+                  ""
                 ],
                 "registerNumber": [
-                  "1023927360000"
+                  ""
                 ],
                 "registerStatus": [
-                  "등록"
+                  "공개"
                 ]
               },
               {
                 "applicantName": [
-                  "동의대학교 산학협력단"
+                  "주식회사 엘지화학"
                 ],
                 "applicationDate": [
-                  "20220124"
+                  "20250829"
                 ],
                 "applicationNumber": [
-                  "1020220009968"
+                  "1020250122178"
                 ],
                 "astrtCont": [
-                  "라벨링된 데이터를 인공지능 모델에 자동으로 업로드하는 방법 및 컴퓨팅 장치가 개시된다. 본 발명은, 라벨링된 데이터를 인공지능 모델에 자동으로 업로드하는 방법에 있어서, 라벨링된 부착 생물의 이미지 데이터를 제1 기준에 따라 분류하는 단계, 상기 제1 기준에 대응하는 인공지능 모델을 검색하는 단계 및 상기 인공지능 모델에 상기 이미지 데이터를 업로드하는 단계를 포함할 수 있다."
+                  "본 발명은 화학식 1로 표시되는 화합물의 결정형 V, 이의 제조 방법 및 이를 포함하는 약학적 조성물에 관한 것이다. 본 발명의 화학식 1로 표시되는 화합물의 결정형 V는 XRD 패턴, DSC 프로파일 및/또는 TGA 프로파일에 의해 특성화되는 것일 수 있다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c9351e454fd4c7cb38120f87fad25c313ff9a1dbe0e7f635127d21fe6c82cf73491da07429743d40a6eeaf715bbcfe21f5a1ddd1e19d2f3ca10"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c939bc80d05dbf27d03bbd3325a7d9c7ef5fd8081ec5ed6de9bd6295371f983d0c342ddd0e76bed818d6d9a7e12ad2ee35c85f09c55bbfe388b"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cff3a2680d184059597422dee31a22c2a86514ea669f50430527d4cf32983e21fbf258409e9d69ef84196119f94b94ed69bf2c50cc3507c02e"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf1024b3b7123a61e9549872eed1afdcaebca98d3e3db56476e451b72b2831cd82c1f06a4bb12deeb80f53dd4e0f33e88b1876acd3be5313ac"
                 ],
                 "indexNo": [
                   "24"
                 ],
                 "inventionTitle": [
-                  "라벨링된 데이터를 인공지능 모델에 자동으로 업로드하는 방법 및 컴퓨팅 장치"
+                  "멜라노코르틴 수용체 작용제 화합물의 결정형 V 및 이의 제조방법"
                 ],
                 "ipcNumber": [
-                  "G06V 10/764|G06V 10/82|G06T 7/00|G06N 3/0464|G06N 3/08"
+                  "C07D 207/14|A61K 31/5377|A61P 3/04|A61P 3/10|A61P 29/00|A61P 15/10"
                 ],
                 "openDate": [
-                  "20230801"
+                  "20250912"
                 ],
                 "openNumber": [
-                  "1020230114008"
+                  "1020250135149"
                 ],
                 "publicationDate": [
-                  "20250604"
+                  ""
                 ],
                 "publicationNumber": [
                   ""
                 ],
                 "registerDate": [
-                  "20250530"
+                  ""
                 ],
                 "registerNumber": [
-                  "1028169990000"
+                  ""
                 ],
                 "registerStatus": [
-                  "등록"
+                  "공개"
                 ]
               },
               {
                 "applicantName": [
-                  "주식회사 제인소프트"
+                  "주식회사 엘지화학"
                 ],
                 "applicationDate": [
-                  "20211209"
+                  "20250829"
                 ],
                 "applicationNumber": [
-                  "1020210175872"
+                  "1020250122182"
                 ],
                 "astrtCont": [
-                  "본 발명은 인공지능 기반의 하이퍼오토메이션 솔루션을 위한 프로세스 실행 요청 에이전트 시스템에 관한 것으로, 해결하고자 하는 과제는 중견 및 대기업을 중심으로 지속적으로 증가하는 비정형 업무와 비정형 데이터를 포함하는 업무 프로세스에 대해 지능형 워크 플로우 기반으로 개별 자동화 솔루션(RPA, 챗봇, OCR, ERP 등)을 통합된 인공지능 기반의 하이퍼오토메이션 솔루션의 프로세스 실행과 더불어 빠르고 안정적으로 업무 자동화를 구축할 수 있고, 프로세스 수행 중 예상하지 못한 오류로 인해 프로세스가 중단되는 문제를 해결하는데 있다.  일례로, 작업 요청자 또는 시스템으로부터 RPA, OCR, 이메일, 챗봇, SAP, Open API를 포함하는 자동화 솔루션으로 구성된 프로세스에 대한 실행 요청을 수신하는 프로세스 실행 요청 수신부; 상기 자동화 프로세스의 세부 내용을 구성하는 단위인 단위서비스의 메타데이터를 저장하는 데이터베이스와, 상기 자동화 솔루션으로부터 상기 자동화 솔루션의 실행에 필요한 데이터를 각각 수집하는 데이터 수집부; 상기 데이터 수집부를 통해 수집된 데이터를 사용하고 선형 회귀 알고리즘을 기반으로 컴퓨터 장치의 운영시스템에 대한 위험도 수치를 산출하여 운영시스템의 부하를 평가하는 시스템 부하 평가 제어부; 및 상기 시스템 부하 평가 제어부의 부하 평가 결과로 제공되는 상기 위험도 수...(이하생략)"
+                  "본 발명은 화학식 1로 표시되는 화합물과 바닐린의 공결정, 이의 제조 방법 및 이를 포함하는 약학적 조성물에 관한 것이다. 본 발명의 화학식 1로 표시되는 화합물과 바닐린의 공결정은 화학적 및 물리적 안정성이 우수한 특징을 가지며, XRPD 패턴, DSC 프로파일, 및/또는 TGA 프로파일에 의해 특성화되는 것일 수 있다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93849042c4514e1ce64a0a7b959003c68c7d4b9c8b24d3be0e9fa8da09736e69b81db868cfd24c2451920f31b5ed0579e5bdb84ba7ed60ff4c"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c939bc80d05dbf27d03bbd3325a7d9c7ef5fd8081ec5ed6de9bd6295371f983d0c3fa5e639165edda809f1ace0333a8ee8da6e20912e6022ec7"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf8e1a6fd54ade94a87905d11fadb2e1df02dc7a6f526226406793d5ff0f370afbb660e5bec99e632fbdc1c35963e2bda187530fe2d968fe09"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf1024b3b7123a61e9549872eed1afdcaebca98d3e3db56476e451b72b2831cd822fa970c38bc7e2bcdb2868eb1ad998b37d9abb41d8b25b3b"
                 ],
                 "indexNo": [
                   "25"
                 ],
                 "inventionTitle": [
-                  "인공지능 기반의 하이퍼오토메이션 솔루션을 위한 프로세스 실행 요청 에이전트 시스템"
+                  "멜라노코르틴 수용체 작용제 화합물과 바닐린의 공결정 및 이의 제조방법"
                 ],
                 "ipcNumber": [
-                  "G06Q 10/10|G06Q 10/06|G06F 9/54|G06F 9/50|G06F 16/901|G06F 16/906|G06F 40/151|G06F 17/18"
+                  "C07D 207/14|A61K 31/5377|A61P 3/04|A61P 3/10|A61P 29/00|A61P 15/10"
                 ],
                 "openDate": [
-                  ""
+                  "20250912"
                 ],
                 "openNumber": [
-                  ""
+                  "1020250135153"
                 ],
                 "publicationDate": [
-                  "20220729"
+                  ""
                 ],
                 "publicationNumber": [
                   ""
                 ],
                 "registerDate": [
-                  "20220722"
+                  ""
                 ],
                 "registerNumber": [
-                  "1024257310000"
+                  ""
                 ],
                 "registerStatus": [
-                  "등록"
+                  "공개"
                 ]
               },
               {
                 "applicantName": [
-                  "주식회사 오션라이트에이아이"
+                  "아이스링커 주식회사"
                 ],
                 "applicationDate": [
-                  "20210105"
+                  "20250829"
                 ],
                 "applicationNumber": [
-                  "1020210000701"
+                  "1020250122471"
                 ],
                 "astrtCont": [
-                  "개시되는 임상 및 이미지 정보를 활용한 인공지능 기반 반려동물 피부 병변 분류 시스템은 모바일 디바이스의 어플리케이션을 이용하는 반려동물 의료 플랫폼 접속부; 모바일 디바이스를 통해 반려동물 피부 병변 이미지 및 임상 정보를 얻을 수 있는 반려동물 의료 데이터 취득부; 모바일 디바이스를 통해 클라우드 서버와 통신할 수 있는 반려동물 의료 데이터 송수신부; 반려동물 의료 데이터 송수신부를 통해 클라우드 서버에 저장되는 반려동물 피부 병변 이미지, 임상 정보 및 사용자 정보를 관리할 수 있는 반려동물 의료 데이터베이스부; 클라우드 서버에 저장되는 반려동물 피부 병변 이미지 및 임상 정보를 기반으로 인공지능 기반 반려동물 피부 병변 분류 모델을 이용하여 체크포인트 파일을 생성할 수 있는 반려동물 피부 병변 분류 학습부; 반려동물 피부 병변 이미지 및 임상 정보를 체크포인트 파일과 인공지능 기반 반려동물 피부 병변 분류 모델을 이용하여 피부 병변 클래스 및 피부 병변 유무를 분류할 수 있는 반려동물 피부 병변 데이터 분류 추론부; 및 반려동물 피부 병변 데이터 분류 추론부에서 분류된 결과를 어플리케이션에 나타낼 수 있는 반려동물 피부 병변 분류 결과 시각화부를 포함할 수 있다."
+                  "본 발명은 Metal Organic Framework의 선택적 흡착 특성에 기반하여 복합 오염물질이 발생하고 습도가 높은 공간의 공기 중 특정 유해물질을 제거하고, 습도를 낮추기 위한 장치에 관한 것이다. 구체적으로, 본 발명은 다중 필터 및 플라즈마 발생 장치에 의하여 정화된 공기에 대하여 MOF(Metal Organic Framework)에 기반하여 습도를 낮추고 특정 유해물질을 제거한 공기를 공간 내 제공함으로써, 공간 내 생명체가 쾌적함을 느낄 수 있는 공기를 제공하기 위하여 공간 내 유해물질 제거, 공기 정화 및 제습을 수행하기 위한 장치에 관한 것이다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c939432a1f7c6a641453e29f996f0894c4a32421bfc87bb2065caf79f901e648c16d211de4d463b84bfb4cefc10eea5f849c0ee5d1b87c51dd2"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c939bc80d05dbf27d03bbd3325a7d9c7ef5fd8081ec5ed6de9b6c16d78f4a56130913cac2938a433ee5a8a70881acf07e5bb756f1358a5e5c39"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfb2471b9e2441e13721f39dc53252f5ac599457adfe5f27713c76b9abdb68ee6549d6a828d65199cb0aaee500aae223e1049731df26ec3095"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf1024b3b7123a61e9549872eed1afdcaebca98d3e3db56476f13d8ca4337aa2db030fa8ee4a9241347459a948604748d11fe82efa3babeb64"
                 ],
                 "indexNo": [
                   "26"
                 ],
                 "inventionTitle": [
-                  "임상 및 이미지 정보를 활용한 인공지능 기반 반려동물 피부 병변 분류 시스템 및 방법"
+                  "메탈 오가닉 프레임워크를 이용하여 공간 내 유해물질 제거, 공기 정화 및 제습을 수행하기 위한 장치"
                 ],
                 "ipcNumber": [
-                  "A61B 5/00|G16H 50/20|G16H 30/20|G16H 30/40|G06N 3/08"
+                  "A01K 1/00|B01D 53/26|B01D 53/06|B01D 53/32|H05H 1/24|A61L 9/22|B01D 46/52"
                 ],
                 "openDate": [
-                  "20220712"
+                  "20250912"
                 ],
                 "openNumber": [
-                  "1020220098869"
+                  "1020250135156"
                 ],
                 "publicationDate": [
-                  "20221006"
+                  ""
                 ],
                 "publicationNumber": [
                   ""
                 ],
                 "registerDate": [
-                  "20220929"
+                  ""
                 ],
                 "registerNumber": [
-                  "1024511020000"
+                  ""
                 ],
                 "registerStatus": [
-                  "등록"
+                  "공개"
                 ]
               },
               {
                 "applicantName": [
-                  "한국과학기술원"
+                  "주식회사 루크레이티브"
                 ],
                 "applicationDate": [
-                  "20230323"
+                  "20250829"
                 ],
                 "applicationNumber": [
-                  "1020230037999"
+                  "1020250122202"
                 ],
                 "astrtCont": [
-                  "본 발명에 따른 인공 신경망과 스파이킹 신경망을 혼합한 저전력 인공지능 처리 시스템은 인공 계층으로 구성된 인공 신경망; 상기 인공 신경망의 인공 계층을 동일한 연산 결과로 출력하는 스파이킹 신경망; 상기 인공 계층 별로 인공 신경망 연산 비용과 스파이킹 신경망 연산 비용을 계산하는 주제어부; 상기 인공 신경망 연산 비용과 스파이킹 신경망 연산 비용을 비교하여 연산 비용이 적은 연산 도메인을 선택하는 연산 도메인 선택부; 상기 연산 도메인 선택부의 스파이킹 신경망 연산 도메인 선택에 따라 상기 인공 신경망의 인공 계층을 상기 스파이킹 신경망의 스파이킹 계층으로 변환하여 혼합 신경망을 구성하는 등가 변환부;를 포함하여 인공 신경망과 비교하였을 때 정확도 손실이 전혀 발생하지 않는 효과가 있다."
+                  "실시예들은 인공지능을 통해 촬영 영상을 기반으로 광고 영상을 생성하는 서비스를 제공하는 방법 및 장치를 제시한다. 일 실시예에 따른 방법은, 상기 사용자 단말로부터 상기 촬영 영상 및 상기 촬영 영상과 관련된 정보를 포함하는 광고 영상 요청 메시지를 수신하고, 상기 촬영 영상 및 상기 촬영 영상과 관련된 정보를 기반으로 상기 촬영 영상에 광고 문구가 삽입된 인서트 영상을 생성하고, 상기 인서트 영상을 포함하는 제1 확인 요청 메시지를 상기 사용자 단말에게 전송하고, 상기 사용자 단말로부터 제1 응답 메시지를 수신하고, 상기 제1 응답 메시지, 상기 인서트 영상 및 사전 설정된 기준 정보를 기반으로 3차원 변환 대상에 대한 정보 및 애니메이션 적용 대상에 대한 정보를 포함하는 조정 대상 정보를 결정하고, 상기 조정 대상 정보를 포함하는 제2 확인 요청 메시지를 상기 사용자 단말에게 전송하고, 상기 사용자 단말로부터 제2 응답 메시지를 수신하고, 상기 제2 응답 메시지 및 상기 인서트 영상을 기반으로 상기 인서트 영상에 포함된 3차원 변환 대상을 3차원 디자인 객체로 변환하고, 상기 인서트 영상에 포함된 애니메이션 적용 대상에 애니메이션을 적용함으로써, 상기 광고 영상을 생성하고, 상기 광고 영상을 상기 사용자 단말에게 전송하는 단계를 포함할 수 있다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=348aaf18c46825cf02d6c2de1c78338e54db4fefe572d9f0c6b021132cbd623a216bf417e2dcb2a42ac4d4e4bcac1fa6109278835351d066f30dcd919097aeeaa4b8676eaff2e538"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93c36a90f6218edad0e57166f4d993e77d828195dd3869dfe0bbce326dc0b5bbebeca4061c7669371d6339c767ba6c3d3a2be80ecf6dfc3526"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf01b9c66b4f51952395baea687f18be19f14372977551f5ea8cdbd5af15d31cd9ffd24bdb96ad3c130de68007e205f7a5cfc9ca84ed755d34"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfa86d01f579aa2bab1dc23ec9673d3cd2db7e80b10a899c17d2dee62b863d213beb837129e87b1dcb4fb31e39ef3c9deaed3b2904f25b2183"
                 ],
                 "indexNo": [
                   "27"
                 ],
                 "inventionTitle": [
-                  "인공 신경망과 스파이킹 신경망을 혼합한 저전력 인공지능 처리 시스템 및 방법"
+                  "인공지능을 통해 촬영 영상을 기반으로 광고 영상을 생성하는 서비스를 제공하는 방법 및 장치"
                 ],
                 "ipcNumber": [
-                  "G06N 3/045|G06N 3/049|G06N 3/063"
+                  "G06Q 30/0241|G06Q 50/10|H04N 21/431|H04N 21/81|G06T 19/00|G06T 19/20|G06V 20/40|G06V 10/82|G06N 3/08"
                 ],
                 "openDate": [
-                  "20241002"
+                  "20250916"
                 ],
                 "openNumber": [
-                  "1020240143125"
+                  "1020250136784"
                 ],
                 "publicationDate": [
                   ""
@@ -1379,37 +1379,37 @@
               },
               {
                 "applicantName": [
-                  "주식회사 코난테크놀로지"
+                  "주식회사 한국산업기술원"
                 ],
                 "applicationDate": [
-                  "20220425"
+                  "20250829"
                 ],
                 "applicationNumber": [
-                  "1020220050914"
+                  "1020250122291"
                 ],
                 "astrtCont": [
-                  "통합 인공지능 학습 프레임워크 시스템이 개시된다. 일 실시 예에 따른 통합 인공지능 학습 프레임워크 시스템은, 소정의 인공지능 학습 프레임워크에서 작성된 명령어를 동작할 인공지능 학습 프레임워크를 결정하고 결정된 인공지능 학습 프레임워크에서 동작할 인공지능 학습부를 생성하는 제어기와 복수의 인공지능 학습부를 포함하며, 각 인공지능 학습부는, 제어기에서 수신한 명령어를 해석하고, 해석된 명령어를 해당 프레임워크에서 동작 가능하도록 변환하는 해석기와, 해석기에서 변환된 명령어를 실행하는 실행기와, 명령어에 따라 작업을 수행하는 복수의 작업기를 포함한다."
+                  "본 발명은 에코, 나노, 미니, 비비, 그린, 청정, 정화, 살균, 소독, 디톡, 처리, 내진, 방진, 배달, 택배, 자동, 수동, 로봇, 자화, 진동, 가진, 오존, 기능, 기능성, 미생물, 바이오, 음이온, 친환경, 스마트, 디지털, 가상, 사이버, 아바타, 황토, 피톤, 편백, 저탄소, 녹색성장, 마이크로, 메타버스, 하이브리드, 인텔리전트 등의 장치, 장비, 자재, 재료, 물품, 물체, 물질, 일, 작업, 업무, 제조, 공사, 정화, 청정, 처리, 공정, 방법, 공법, 시설, 건물, 구조물, 드론, 킥보드, 시스템, 모빌리티, 3D프린터 등에 관한 것이다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93aa4a1a423f8da3b0a569b94e39b42cc72ce94615a117ceb7eec0f08faa2ef96ee6d9fa26e559fb037b9b1aeee15a61fdf0af855a86cbffdd"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c932c822fdd36411db276a46f4ff5d292127b148948c822bc115ea5b20cc4ae85f019820d8d8f0ca07e36fa3ebf3c4d08cf2db75363550a3f3c"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf417901b07c7a3e7c8a28c321302f12060a299c47d8572a3f3628d69bdcf884edc6b46be01a4882c5bef5533d102b83e8a6c40a9c47c05a16"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf71e156f1879efb96b1dae8af7e32a90c1cd9cd8668ca13f93db60d8a00b4cf7fd449eecdb27711dc40f84cd05e0f2805b548cce23a279cc9"
                 ],
                 "indexNo": [
                   "28"
                 ],
                 "inventionTitle": [
-                  "통합 인공지능 학습 프레임워크 시스템 및 그 방법"
+                  "에코근, 수지근, 탄소근, 보강근, 수지철근, 플라스틱근, FRP근, 보강섬유근, 보강섬유플라스틱근"
                 ],
                 "ipcNumber": [
-                  "G06N 20/20"
+                  "E04C 5/01"
                 ],
                 "openDate": [
-                  "20231101"
+                  "20250915"
                 ],
                 "openNumber": [
-                  "1020230151336"
+                  "1020250135753"
                 ],
                 "publicationDate": [
                   ""
@@ -1429,102 +1429,102 @@
               },
               {
                 "applicantName": [
-                  "성균관대학교산학협력단"
+                  "주식회사 루크레이티브"
                 ],
                 "applicationDate": [
-                  "20211115"
+                  "20250829"
                 ],
                 "applicationNumber": [
-                  "1020210156476"
+                  "1020250122203"
                 ],
                 "astrtCont": [
-                  "본 발명은 전자 장치의 인공지능 영상 조작 검출 방법에 관한 것으로서, 영상 조작 검출 방법은 대상 영상에서 연속된 프레임을 추출하는 단계; 각 프레임에 대하여 얼굴 영역을 검출하는 단계; 상기 각 프레임에 대하여 복수개의 얼굴 경계 윈도우를 생성하는 단계; 상기 각 프레임에 대하여 얼굴 영역을 제거한 배경 영역에 존재하는 하나 이상의 물체들을 검출하고, 하나 이상의 물체들의 배경 경계 윈도우를 생성하는 단계; 상기 각 프레임에 대하여 얼굴 경계 윈도우의 픽셀값과 배경 경계 윈도우의 픽셀값에 기초하여 얼굴 경계 특성과 배경 경계 특성을 추출하고 통합한 통합 데이터를 생성하는 단계; 및 상기 통합 데이터를 분석하여 인공지능 영상 조작여부를 판정하는 단계를 포함하는 것을 특징으로 한다."
+                  "실시예들은 인공지능을 통해 촬영 영상을 기반으로 광고 영상을 생성하는 서비스를 제공하는 방법 및 장치를 제시한다. 일 실시예에 따른 방법은, 상기 사용자 단말로부터 상기 촬영 영상 및 상기 촬영 영상과 관련된 정보를 포함하는 광고 영상 요청 메시지를 수신하고, 상기 촬영 영상 및 상기 촬영 영상과 관련된 정보를 기반으로 상기 촬영 영상에 광고 문구가 삽입된 인서트 영상을 생성하고, 상기 인서트 영상을 포함하는 제1 확인 요청 메시지를 상기 사용자 단말에게 전송하고, 상기 사용자 단말로부터 제1 응답 메시지를 수신하고, 상기 제1 응답 메시지, 상기 인서트 영상 및 사전 설정된 기준 정보를 기반으로 3차원 변환 대상에 대한 정보 및 애니메이션 적용 대상에 대한 정보를 포함하는 조정 대상 정보를 결정하고, 상기 조정 대상 정보를 포함하는 제2 확인 요청 메시지를 상기 사용자 단말에게 전송하고, 상기 사용자 단말로부터 제2 응답 메시지를 수신하고, 상기 제2 응답 메시지 및 상기 인서트 영상을 기반으로 상기 인서트 영상에 포함된 3차원 변환 대상을 3차원 디자인 객체로 변환하고, 상기 인서트 영상에 포함된 애니메이션 적용 대상에 애니메이션을 적용함으로써, 상기 광고 영상을 생성하고, 상기 광고 영상을 상기 사용자 단말에게 전송하는 단계를 포함할 수 있다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93082149907f820024fa9c60a7468acd92d02e535bd4ac8af29137d19174f9bbf8f8d9ed929644e5f3a52e8a9135388fbf55691586e1f6aaf7"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93c36a90f6218edad0e57166f4d993e77d828195dd3869dfe0bbce326dc0b5bbeb4816245e01984b4eba2b7be517730004343407c0bde686db"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf1131a4f5d4edd2796cff00484e834239f057b42f3965e7fa2047cfb9bc6ebf10887905fb4f39c3b5092f8289b781900522730e5ea9ea5959"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfa86d01f579aa2bab1dc23ec9673d3cd2db7e80b10a899c17d2dee62b863d213b9440efac02ee8f46024a3c165d8706ddbd7f060f6be48039"
                 ],
                 "indexNo": [
                   "29"
                 ],
                 "inventionTitle": [
-                  "인공지능 영상 조작 검출 방법 및 장치"
+                  "인공지능을 통해 촬영 영상을 기반으로 광고 영상을 생성하는 서비스를 제공하는 방법 및 장치"
                 ],
                 "ipcNumber": [
-                  "G06T 7/00|G06T 7/11|G06T 7/136|G06T 11/20|G06T 7/194"
+                  "G06Q 30/0241|G06T 19/00|H04N 21/431|G06V 10/82|G06V 20/40|G06N 3/0464|G06N 3/0442|G06Q 50/10"
                 ],
                 "openDate": [
-                  "20230523"
+                  "20250916"
                 ],
                 "openNumber": [
-                  "1020230070660"
+                  "1020250136785"
                 ],
                 "publicationDate": [
-                  "20250121"
+                  ""
                 ],
                 "publicationNumber": [
                   ""
                 ],
                 "registerDate": [
-                  "20250117"
+                  ""
                 ],
                 "registerNumber": [
-                  "1027582340000"
+                  ""
                 ],
                 "registerStatus": [
-                  "등록"
+                  "공개"
                 ]
               },
               {
                 "applicantName": [
-                  "성균관대학교산학협력단"
+                  "주식회사 한국산업기술원"
                 ],
                 "applicationDate": [
-                  "20210908"
+                  "20250829"
                 ],
                 "applicationNumber": [
-                  "1020210119944"
+                  "1020250122288"
                 ],
                 "astrtCont": [
-                  "본 명세서는 인공지능 모델의 연합 학습 방법 및 장치에 관한 것이다. 본 명세서의 일 실시예에 따른 인공지능 모델의 연합 학습 방법은 복수의 클라이언트 중 제1 클라이언트 및 제2 클라이언트 각각의 데이터 세트를 이용하여 제1 로컬 인공지능 모델 및 제2 로컬 인공지능 모델을 각각 학습시키는 단계, 제1 로컬 인공지능 모델을 상기 제2 클라이언트로 전송하고, 상기 제2 로컬 인공지능 모델을 상기 제1 클라이언트로 전송하여 상기 제1 로컬 인공지능 모델 및 상기 제2 로컬 인공지능 모델 각각에 대하여 성능값을 산출하는 단계, 성능값을 비교하여 상기 제1 클라이언트 및 제2 클라이언트 중 하나를 제거하는 단계 및 제거되지 않은 클라이언트를 이용하여 글로벌 모델을 학습시키는 단계를 포함한다."
+                  "본 발명은 에코, 나노, 미니, 비비, 그린, 청정, 정화, 살균, 소독, 디톡, 처리, 내진, 방진, 배달, 택배, 자동, 수동, 로봇, 자화, 진동, 가진, 오존, 기능, 기능성, 미생물, 바이오, 음이온, 친환경, 스마트, 디지털, 가상, 사이버, 아바타, 황토, 피톤, 편백, 저탄소, 녹색성장, 마이크로, 메타버스, 하이브리드, 인텔리전트 등의 장치, 장비, 자재, 재료, 물품, 물체, 물질, 일, 작업, 업무, 제조, 공사, 정화, 청정, 처리, 공정, 방법, 공법, 시설, 건물, 구조물, 드론, 킥보드, 시스템, 모빌리티, 3D프린터 등에 관한 것이다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93fbb22d76e0b942705500f8d7b7b2cc99e754f7ed6523fa88d7ce21e7ef2ad4a353130a10336dcf5ff64a25c80ca7565155b8a34742859b6f"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c939bc80d05dbf27d03bbd3325a7d9c7ef5fd8081ec5ed6de9b55598fead736a59cda90fa2e7e1e12549dace1265a4b8a8d34499d0fd59ebae8"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf4a99f49cae731bddfbb1d7e2afae0ba252529c5def9f1f3259291bffb0324ed274f1c51620d4067bc5d796f44770b5b50639dbda1a10939b"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf1024b3b7123a61e9549872eed1afdcaebca98d3e3db564761771a4984ff61f684a9c66179166c048276a061d4525807eb4831f4015ebb6c0"
                 ],
                 "indexNo": [
                   "30"
                 ],
                 "inventionTitle": [
-                  "불균형 데이터를 이용한 인공지능 모델의 연합 학습 방법 및 장치"
+                  "모듈러 이동형 주택, 건물, 시설, 자재, 아파트, 구조물"
                 ],
                 "ipcNumber": [
-                  "G06N 20/20|G06F 18/00"
+                  "G06Q 50/08|G06Q 50/04|G06Q 10/083|G16Y 10/80"
                 ],
                 "openDate": [
-                  "20230315"
+                  "20250912"
                 ],
                 "openNumber": [
-                  "1020230036890"
+                  "1020250135154"
                 ],
                 "publicationDate": [
-                  "20250212"
+                  ""
                 ],
                 "publicationNumber": [
                   ""
                 ],
                 "registerDate": [
-                  "20250210"
+                  ""
                 ],
                 "registerNumber": [
-                  "1027673700000"
+                  ""
                 ],
                 "registerStatus": [
-                  "등록"
+                  "공개"
                 ]
               }
             ]
@@ -1541,7 +1541,7 @@
           "1"
         ],
         "totalCount": [
-          "95415"
+          "314298"
         ]
       }
     ]

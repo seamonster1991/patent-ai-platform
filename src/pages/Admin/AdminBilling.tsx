@@ -1,14 +1,13 @@
-import React, { useEffect } from 'react';
-import { useAdminStore } from '@/store/adminStore';
+import React, { useEffect, useState } from 'react';
 import { 
   Card, 
   Text, 
   Metric,
   BarChart,
+  LineChart,
   Badge,
   Flex,
-  BadgeDelta,
-  DeltaType
+  ProgressBar
 } from '@tremor/react';
 import { 
   DollarSign, 
@@ -18,22 +17,91 @@ import {
   AlertTriangle,
   Users,
   FileText,
-  PieChart
+  PieChart,
+  Calendar,
+  Target
 } from 'lucide-react';
+import { apiGet } from '../../lib/api';
+
+interface BillingStats {
+  summary: {
+    totalRevenue: number;
+    monthlyRevenue: number;
+    averageRevenuePerUser: number;
+    totalTransactions: number;
+    revenueGrowth: number;
+    userGrowth: number;
+    conversionRate: number;
+  };
+  revenueByPlan: Array<{
+    plan: string;
+    revenue: number;
+    users: number;
+    percentage: number;
+  }>;
+  monthlyTrends: Array<{
+    month: string;
+    revenue: number;
+    users: number;
+    transactions: number;
+  }>;
+  topSpenders: Array<{
+    userId: string;
+    email: string;
+    totalSpent: number;
+    lastPayment: string;
+    plan: string;
+  }>;
+  paymentRisks: Array<{
+    userId: string;
+    email: string;
+    riskLevel: 'high' | 'medium' | 'low';
+    reason: string;
+    lastActivity: string;
+  }>;
+}
 
 const AdminBilling: React.FC = () => {
-  const {
-    revenueMetrics,
-    paymentRisks,
-    isLoading,
-    fetchRevenueMetrics,
-    fetchPaymentRisks
-  } = useAdminStore();
+  const [billingStats, setBillingStats] = useState<BillingStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchBillingStats = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      console.log('[DATA] [AdminBilling] 빌링 통계 데이터 로드 시작');
+
+      // 개선된 API 함수 사용
+      const response = await apiGet('/api/admin?resource=billing', {
+        timeout: 30000,
+        retries: 2,
+        requireAuth: true
+      });
+
+      console.log('[DATA] [AdminBilling] API 응답:', response);
+
+      if (!response.success) {
+        throw new Error(response.error || '빌링 데이터를 가져오는데 실패했습니다.');
+      }
+
+      if (response.data) {
+        setBillingStats(response.data);
+        console.log('[DATA] [AdminBilling] 빌링 데이터 설정 완료');
+      }
+    } catch (error) {
+      console.error('[ERROR] [AdminBilling] 빌링 통계 조회 오류:', error);
+      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.';
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    fetchRevenueMetrics();
-    fetchPaymentRisks();
-  }, [fetchRevenueMetrics, fetchPaymentRisks]);
+    fetchBillingStats();
+  }, []);
 
   if (isLoading) {
     return (
@@ -43,14 +111,35 @@ const AdminBilling: React.FC = () => {
     );
   }
 
-  const getDeltaType = (value: number): DeltaType => {
-    if (value > 0) return 'increase';
-    if (value < 0) return 'decrease';
-    return 'unchanged';
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-red-500">오류: {error}</div>
+      </div>
+    );
+  }
+
+  if (!billingStats) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-500">데이터가 없습니다.</div>
+      </div>
+    );
+  }
+
+  const { summary, revenueByPlan, monthlyTrends, topSpenders, paymentRisks } = billingStats;
+
+  const getGrowthBadge = (value: number) => {
+    if (value > 0) {
+      return <Badge color="emerald" size="xs" icon={TrendingUp}>+{value.toFixed(1)}%</Badge>;
+    } else if (value < 0) {
+      return <Badge color="red" size="xs" icon={TrendingDown}>{value.toFixed(1)}%</Badge>;
+    }
+    return <Badge color="gray" size="xs">0%</Badge>;
   };
 
-  const getSeverityBadge = (severity: string) => {
-    switch (severity) {
+  const getRiskBadge = (level: string) => {
+    switch (level) {
       case 'high':
         return <Badge color="red" size="xs">높음</Badge>;
       case 'medium':
@@ -62,216 +151,308 @@ const AdminBilling: React.FC = () => {
     }
   };
 
-  // Mock data for report type preferences
-  const reportTypeData = [
-    { type: '시장분석', count: 450, percentage: 65 },
-    { type: '비즈니스인사이트', count: 242, percentage: 35 }
-  ];
+  // 차트 데이터 준비
+  const revenueChartData = monthlyTrends.slice(-12).map(trend => ({
+    month: trend.month,
+    수익: trend.revenue,
+    사용자: trend.users,
+    거래: trend.transactions
+  }));
 
-  // Mock data for revenue trends
-  const revenueTrendData = [
-    { month: '1월', mrr: 12500, arr: 150000 },
-    { month: '2월', mrr: 13200, arr: 158400 },
-    { month: '3월', mrr: 14100, arr: 169200 },
-    { month: '4월', mrr: 14800, arr: 177600 },
-    { month: '5월', mrr: 15750, arr: 189000 },
-  ];
+  const planRevenueData = revenueByPlan.map(plan => ({
+    plan: plan.plan,
+    revenue: plan.revenue,
+    users: plan.users
+  }));
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-ms-text mb-2">수익 &amp; 구독 관리</h1>
-        <p className="text-gray-600">매출 현황과 구독 관리, 결제 위험 요소를 모니터링합니다</p>
+        <h1 className="text-3xl font-bold text-ms-text mb-2">빌링 & 수익 관리</h1>
+        <p className="text-gray-600">수익 현황과 결제 관리를 확인하세요</p>
       </div>
 
       {/* 핵심 수익 지표 */}
       <div className="space-y-6">
         <h2 className="text-xl font-semibold text-ms-text">핵심 수익 지표</h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* MRR */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* 총 수익 */}
           <Card className="border-0 shadow-sm">
             <Flex alignItems="start">
               <div>
-                <Text className="text-gray-600">월간 반복 수익 (MRR)</Text>
-                <Metric className="text-ms-text">${revenueMetrics?.mrr?.toLocaleString() || 0}</Metric>
+                <Text className="text-gray-600">총 수익</Text>
+                <Metric className="text-ms-text">${summary.totalRevenue.toLocaleString()}</Metric>
               </div>
               <DollarSign className="h-8 w-8 text-ms-olive" />
             </Flex>
             <Flex className="mt-4">
-              <BadgeDelta 
-                deltaType="unchanged"
-                size="xs"
-              >
-                변화 없음
-              </BadgeDelta>
-              <Text className="text-xs text-gray-500">전월 대비</Text>
+              <Text className="text-sm text-gray-600">성장률</Text>
+              {getGrowthBadge(summary.revenueGrowth)}
             </Flex>
           </Card>
 
-          {/* Churn Rate */}
+          {/* 월간 수익 */}
           <Card className="border-0 shadow-sm">
             <Flex alignItems="start">
               <div>
-                <Text className="text-gray-600">이탈률 (Churn Rate)</Text>
-                <Metric className="text-ms-text">{revenueMetrics?.churnRate?.toFixed(1) || 0}%</Metric>
+                <Text className="text-gray-600">월간 수익</Text>
+                <Metric className="text-ms-text">${summary.monthlyRevenue.toLocaleString()}</Metric>
               </div>
-              <TrendingDown className="h-8 w-8 text-ms-olive" />
+              <Calendar className="h-8 w-8 text-ms-olive" />
             </Flex>
             <Flex className="mt-4">
-              <BadgeDelta 
-                deltaType="unchanged"
-                size="xs"
-              >
-                변화 없음
-              </BadgeDelta>
-              <Text className="text-xs text-gray-500">전월 대비</Text>
+              <Text className="text-sm text-gray-600">전월 대비</Text>
+              {getGrowthBadge(summary.revenueGrowth)}
             </Flex>
           </Card>
 
-          {/* ARR */}
+          {/* 사용자당 평균 수익 */}
           <Card className="border-0 shadow-sm">
             <Flex alignItems="start">
               <div>
-                <Text className="text-gray-600">연간 반복 수익 (ARR)</Text>
-                <Metric className="text-ms-text">${revenueMetrics?.arr?.toLocaleString() || 0}</Metric>
+                <Text className="text-gray-600">사용자당 평균 수익</Text>
+                <Metric className="text-ms-text">${summary.averageRevenuePerUser.toFixed(2)}</Metric>
               </div>
-              <TrendingUp className="h-8 w-8 text-ms-olive" />
+              <Users className="h-8 w-8 text-ms-olive" />
             </Flex>
             <Flex className="mt-4">
-              <BadgeDelta 
-                deltaType="unchanged"
-                size="xs"
-              >
-                변화 없음
-              </BadgeDelta>
-              <Text className="text-xs text-gray-500">전년 대비</Text>
+              <Text className="text-sm text-gray-600">사용자 증가율</Text>
+              {getGrowthBadge(summary.userGrowth)}
+            </Flex>
+          </Card>
+
+          {/* 총 거래 */}
+          <Card className="border-0 shadow-sm">
+            <Flex alignItems="start">
+              <div>
+                <Text className="text-gray-600">총 거래</Text>
+                <Metric className="text-ms-text">{summary.totalTransactions.toLocaleString()}</Metric>
+              </div>
+              <CreditCard className="h-8 w-8 text-ms-olive" />
+            </Flex>
+            <Flex className="mt-4">
+              <Text className="text-sm text-gray-600">전환율</Text>
+              <Badge color="blue" size="xs">{summary.conversionRate.toFixed(1)}%</Badge>
             </Flex>
           </Card>
         </div>
+      </div>
 
-        {/* 수익 추이 차트 */}
+      {/* 수익 트렌드 */}
+      <div className="space-y-6">
+        <h2 className="text-xl font-semibold text-ms-text">수익 트렌드</h2>
+        
         <Card className="border-0 shadow-sm">
           <div className="mb-4">
-            <Text className="text-lg font-semibold text-ms-text">수익 추이</Text>
-            <Text className="text-gray-600">월간 및 연간 반복 수익 변화</Text>
+            <Text className="text-lg font-semibold text-ms-text">월별 수익 현황</Text>
+            <Text className="text-gray-600">최근 12개월 수익 및 사용자 증가 추이</Text>
           </div>
-          <BarChart
-            className="h-64"
-            data={revenueTrendData}
+          <LineChart
+            className="h-80"
+            data={revenueChartData}
             index="month"
-            categories={["mrr", "arr"]}
-            colors={["emerald", "blue"]}
-            valueFormatter={(value) => `$${value.toLocaleString()}`}
+            categories={["수익", "사용자", "거래"]}
+            colors={["emerald", "blue", "violet"]}
+            valueFormatter={(value) => value.toLocaleString()}
             yAxisWidth={80}
             showAnimation={true}
           />
         </Card>
       </div>
 
-      {/* 결제 위험 알림 */}
+      {/* 플랜별 수익 분석 */}
       <div className="space-y-6">
         <div className="flex items-center space-x-3">
-          <AlertTriangle className="h-6 w-6 text-ms-olive" />
-          <h2 className="text-xl font-semibold text-ms-text">결제 위험 알림</h2>
+          <PieChart className="h-6 w-6 text-ms-olive" />
+          <h2 className="text-xl font-semibold text-ms-text">플랜별 수익 분석</h2>
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* 플랜별 수익 차트 */}
+          <Card className="border-0 shadow-sm">
+            <div className="mb-4">
+              <Text className="text-lg font-semibold text-ms-text">플랜별 수익 분포</Text>
+              <Text className="text-gray-600">구독 플랜별 수익 현황</Text>
+            </div>
+            <BarChart
+              className="h-80"
+              data={planRevenueData}
+              index="plan"
+              categories={["revenue"]}
+              colors={["emerald"]}
+              valueFormatter={(value) => `$${value.toLocaleString()}`}
+              yAxisWidth={80}
+              showAnimation={true}
+            />
+          </Card>
+
+          {/* 플랜별 상세 통계 */}
+          <Card className="border-0 shadow-sm">
+            <div className="mb-4">
+              <Text className="text-lg font-semibold text-ms-text">플랜별 상세 현황</Text>
+              <Text className="text-gray-600">각 플랜의 수익과 사용자 수</Text>
+            </div>
+            <div className="space-y-4">
+              {revenueByPlan.map((plan, index) => (
+                <div key={plan.plan} className="space-y-2">
+                  <Flex>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-ms-olive rounded-full"></div>
+                      <Text className="font-medium text-ms-text">{plan.plan}</Text>
+                    </div>
+                    <Text className="text-gray-600">${plan.revenue.toLocaleString()}</Text>
+                  </Flex>
+                  <Flex>
+                    <Text className="text-sm text-gray-600">{plan.users}명 사용자</Text>
+                    <Text className="text-sm text-gray-600">{plan.percentage.toFixed(1)}%</Text>
+                  </Flex>
+                  <ProgressBar 
+                    value={plan.percentage} 
+                    color="emerald" 
+                    className="mt-2"
+                  />
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      {/* 고액 사용자 */}
+      <div className="space-y-6">
+        <div className="flex items-center space-x-3">
+          <Target className="h-6 w-6 text-ms-olive" />
+          <h2 className="text-xl font-semibold text-ms-text">고액 사용자</h2>
         </div>
         
         <Card className="border-0 shadow-sm">
           <div className="mb-4">
-            <Text className="text-lg font-semibold text-ms-text">결제 문제 사용자</Text>
-            <Text className="text-gray-600">결제 실패 및 카드 만료 임박 사용자 목록</Text>
+            <Text className="text-lg font-semibold text-ms-text">TOP 고액 사용자</Text>
+            <Text className="text-gray-600">가장 많이 지출한 사용자 목록</Text>
           </div>
           
-          {paymentRisks.length > 0 ? (
-            <div className="space-y-3">
-              {paymentRisks.map((risk, index) => (
-                <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <CreditCard className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <div className="font-medium text-ms-text">{risk.email}</div>
-                      <div className="text-sm text-gray-600">{risk.riskType}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    {getSeverityBadge(risk.severity)}
-                    <button className="text-ms-olive hover:text-ms-text text-sm font-medium">
-                      처리하기
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-3 px-4 font-semibold text-ms-text">순위</th>
+                  <th className="text-left py-3 px-4 font-semibold text-ms-text">사용자</th>
+                  <th className="text-left py-3 px-4 font-semibold text-ms-text">총 지출</th>
+                  <th className="text-left py-3 px-4 font-semibold text-ms-text">플랜</th>
+                  <th className="text-left py-3 px-4 font-semibold text-ms-text">최근 결제</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topSpenders.map((spender, index) => (
+                  <tr key={spender.userId} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="py-3 px-4">
+                      <div className="w-6 h-6 bg-ms-olive text-white rounded-full flex items-center justify-center text-xs font-medium">
+                        {index + 1}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div>
+                        <Text className="font-medium text-ms-text">{spender.email}</Text>
+                        <Text className="text-xs text-gray-500">ID: {spender.userId}</Text>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <Text className="font-semibold text-emerald-600">${spender.totalSpent.toLocaleString()}</Text>
+                    </td>
+                    <td className="py-3 px-4">
+                      <Badge color="blue" size="xs">{spender.plan}</Badge>
+                    </td>
+                    <td className="py-3 px-4">
+                      <Text className="text-sm text-gray-600">
+                        {new Date(spender.lastPayment).toLocaleDateString('ko-KR')}
+                      </Text>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          {topSpenders.length === 0 && (
             <div className="text-center py-8 text-gray-500">
-              현재 결제 위험 요소가 없습니다.
+              고액 사용자 데이터가 없습니다.
             </div>
           )}
         </Card>
       </div>
 
-      {/* 리포트 유형 선호도 */}
+      {/* 결제 위험 관리 */}
       <div className="space-y-6">
         <div className="flex items-center space-x-3">
-          <PieChart className="h-6 w-6 text-ms-olive" />
-          <h2 className="text-xl font-semibold text-ms-text">리포트 유형 선호도</h2>
+          <AlertTriangle className="h-6 w-6 text-red-500" />
+          <h2 className="text-xl font-semibold text-ms-text">결제 위험 관리</h2>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* 선호도 차트 */}
-          <Card className="border-0 shadow-sm">
-            <div className="mb-4">
-              <Text className="text-lg font-semibold text-ms-text">리포트 생성 비율</Text>
-              <Text className="text-gray-600">시장분석 vs 비즈니스인사이트</Text>
-            </div>
-            <BarChart
-              className="h-48"
-              data={reportTypeData}
-              index="type"
-              categories={["count"]}
-              colors={["emerald"]}
-              valueFormatter={(value) => `${value}건`}
-              yAxisWidth={60}
-              showAnimation={true}
-            />
-          </Card>
-
-          {/* 상세 통계 */}
-          <Card className="border-0 shadow-sm">
-            <div className="mb-4">
-              <Text className="text-lg font-semibold text-ms-text">리포트 유형별 상세</Text>
-              <Text className="text-gray-600">각 유형별 생성 현황</Text>
-            </div>
-            <div className="space-y-4">
-              {reportTypeData.map((report) => (
-                <div key={report.type} className="space-y-2">
-                  <Flex>
-                    <div className="flex items-center space-x-2">
-                      <FileText className="h-4 w-4 text-ms-olive" />
-                      <Text className="font-medium text-ms-text">{report.type}</Text>
+        <Card className="border-0 shadow-sm">
+          <div className="mb-4">
+            <Text className="text-lg font-semibold text-ms-text">결제 위험 사용자</Text>
+            <Text className="text-gray-600">결제 문제가 예상되는 사용자 목록</Text>
+          </div>
+          
+          <div className="space-y-3">
+            {paymentRisks.map((risk) => (
+              <div key={risk.userId} className="p-4 border border-gray-200 rounded-lg">
+                <Flex>
+                  <div className="flex items-center space-x-3">
+                    <AlertTriangle className="h-5 w-5 text-red-500" />
+                    <div>
+                      <Text className="font-medium text-ms-text">{risk.email}</Text>
+                      <Text className="text-xs text-gray-500">ID: {risk.userId}</Text>
                     </div>
-                    <Text className="text-gray-600">{report.count}건 ({report.percentage}%)</Text>
-                  </Flex>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-ms-olive h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${report.percentage}%` }}
-                    ></div>
                   </div>
+                  {getRiskBadge(risk.riskLevel)}
+                </Flex>
+                <div className="mt-2">
+                  <Text className="text-sm text-gray-600">{risk.reason}</Text>
+                  <Text className="text-xs text-gray-500 mt-1">
+                    최근 활동: {new Date(risk.lastActivity).toLocaleDateString('ko-KR')}
+                  </Text>
                 </div>
-              ))}
-              
-              <div className="mt-6 p-4 bg-emerald-50 rounded-lg">
-                <div className="flex items-center space-x-2 mb-2">
-                  <TrendingUp className="h-4 w-4 text-emerald-600" />
-                  <Text className="font-medium text-emerald-800">인사이트</Text>
-                </div>
-                <Text className="text-sm text-emerald-700">
-                  시장분석 리포트가 65%로 높은 선호도를 보이고 있습니다. 
-                  비즈니스인사이트 기능 개선을 통해 균형을 맞출 수 있습니다.
-                </Text>
               </div>
+            ))}
+            
+            {paymentRisks.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                현재 결제 위험 사용자가 없습니다.
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
+
+      {/* 수익 요약 */}
+      <div className="space-y-6">
+        <h2 className="text-xl font-semibold text-ms-text">수익 요약</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="border-0 shadow-sm bg-emerald-50">
+            <div className="text-center">
+              <DollarSign className="h-12 w-12 text-emerald-600 mx-auto mb-2" />
+              <Metric className="text-emerald-800">${summary.totalRevenue.toLocaleString()}</Metric>
+              <Text className="text-emerald-600">총 누적 수익</Text>
+            </div>
+          </Card>
+          
+          <Card className="border-0 shadow-sm bg-blue-50">
+            <div className="text-center">
+              <Users className="h-12 w-12 text-blue-600 mx-auto mb-2" />
+              <Metric className="text-blue-800">${summary.averageRevenuePerUser.toFixed(2)}</Metric>
+              <Text className="text-blue-600">사용자당 평균 수익</Text>
+            </div>
+          </Card>
+          
+          <Card className="border-0 shadow-sm bg-violet-50">
+            <div className="text-center">
+              <TrendingUp className="h-12 w-12 text-violet-600 mx-auto mb-2" />
+              <Metric className="text-violet-800">{summary.conversionRate.toFixed(1)}%</Metric>
+              <Text className="text-violet-600">전환율</Text>
             </div>
           </Card>
         </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, User, LogOut, Settings, Sun, Moon, Search, FileText } from 'lucide-react';
+import { Menu, X, User, LogOut, Settings, Sun, Moon, Search, FileText, CreditCard } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
 
@@ -97,6 +97,15 @@ const Navbar: React.FC = () => {
                     </div>
                     
                     <Link
+                      to="/billing"
+                      className="flex items-center space-x-2 px-4 py-2 text-sm text-ms-secondary hover:text-ms-olive hover:bg-ms-soft transition-colors"
+                      onClick={() => setIsProfileOpen(false)}
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      <span>결제정보</span>
+                    </Link>
+                    
+                    <Link
                       to="/profile"
                       className="flex items-center space-x-2 px-4 py-2 text-sm text-ms-secondary hover:text-ms-olive hover:bg-ms-soft transition-colors"
                       onClick={() => setIsProfileOpen(false)}
@@ -187,6 +196,15 @@ const Navbar: React.FC = () => {
                     <p className="text-sm font-medium text-ms-primary">{user.email}</p>
                     <p className="text-xs text-ms-muted">사용자</p>
                   </div>
+                  
+                  <Link
+                    to="/billing"
+                    className="flex items-center space-x-3 px-4 py-3 rounded-md text-sm font-medium text-ms-secondary hover:text-ms-olive hover:bg-ms-soft transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    <span>결제정보</span>
+                  </Link>
                   
                   <Link
                     to="/profile"

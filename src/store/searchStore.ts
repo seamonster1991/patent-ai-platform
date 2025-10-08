@@ -11,6 +11,7 @@ interface SearchFilters {
   astrtCont?: string // 초록
   claimScope?: string // 청구범위
   ipcNumber?: string // IPC코드
+  cpcNumber?: string // CPC코드
   
   // 번호 검색
   applicationNumber?: string // 출원번호
@@ -139,6 +140,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     astrtCont: '',
     claimScope: '',
     ipcNumber: '',
+    cpcNumber: '',
     
     // 번호 검색
     applicationNumber: '',
@@ -299,7 +301,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       // 검색 기록을 데이터베이스에 저장 (기술 분야 정보는 별도로 처리됨)
       get().saveSearchToHistory(filters.word || filters.keyword || '', totalCount)
 
-      // 사용자 활동 추적 - 검색 실행
+      // 활동 추적 (한 번만 실행)
       try {
         const { user } = useAuthStore.getState()
         if (user) {
@@ -314,6 +316,17 @@ export const useSearchStore = create<SearchState>((set, get) => ({
             },
             totalCount
           )
+          
+          // 중복 제거: supabase.rpc 호출 제거
+          // 데이터베이스에 검색 활동 추적
+          // const { supabase } = await import('../lib/supabase')
+          // await supabase.rpc('track_search_activity', {
+          //   p_user_id: user.id,
+          //   p_keyword: filters.word || filters.keyword || '',
+          //   p_technology_field: null, // 기술 분야는 별도 분석 후 업데이트
+          //   p_ipc_class: filters.ipcNumber || null,
+          //   p_result_count: totalCount
+          // })
         }
       } catch (error) {
         console.error('활동 추적 오류:', error)
@@ -462,7 +475,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       const { user } = useAuthStore.getState()
       if (!user) return
 
-      const response = await fetch(`/api/users/search-history/${user.id}`)
+      const response = await fetch(`http://localhost:3005/api/users/search-history/${user.id}`)
       const data = await response.json()
 
       if (data.success) {
@@ -480,7 +493,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
       const { filters } = get()
       
-      await fetch('/api/users/search-history', {
+      await fetch('http://localhost:3005/api/users/search-history', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -504,7 +517,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
   generateReport: async (patentId: string, type: 'market' | 'business') => {
     try {
-      const response = await fetch('/api/reports/generate', {
+      const response = await fetch('http://localhost:3005/api/reports/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -537,7 +550,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       const { user } = useAuthStore.getState()
       if (!user) return
 
-      const response = await fetch(`/api/users/reports/${user.id}`)
+      const response = await fetch(`http://localhost:3005/api/users/reports/${user.id}`)
       const data = await response.json()
 
       if (data.success) {

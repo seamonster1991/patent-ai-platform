@@ -1,48 +1,67 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "functions": {
-    "api/users/stats.js": {
-      "runtime": "@vercel/node@3.1.5",
-      "maxDuration": 30,
-      "memory": 512
-    },
-    "api/users/profile.js": {
-      "runtime": "@vercel/node@3.1.5",
-      "maxDuration": 30,
-      "memory": 512
-    },
-    "api/search.js": {
-      "runtime": "@vercel/node@3.1.5",
-      "maxDuration": 30,
-      "memory": 512
-    }
-  },
   "rewrites": [
-    {
-      "source": "/api/users/stats",
-      "destination": "/api/users/stats.js"
-    },
-    {
-      "source": "/api/users/profile",
-      "destination": "/api/users/profile.js"
-    },
     {
       "source": "/api/search",
       "destination": "/api/search.js"
     },
     {
-      "source": "/((?!api).*)",
+      "source": "/api/generate-report",
+      "destination": "/api/generate-report.js"
+    },
+    {
+      "source": "/api/ai-analysis",
+      "destination": "/api/ai-analysis.js"
+    },
+    {
+      "source": "/api/detail",
+      "destination": "/api/detail.js"
+    },
+    {
+      "source": "/api/health",
+      "destination": "/api/health.js"
+    },
+    {
+      "source": "/api/bookmarks",
+      "destination": "/api/bookmarks.js"
+    },
+    {
+      "source": "/api/documents",
+      "destination": "/api/documents.js"
+    },
+    {
+      "source": "/api/dashboard-stats",
+      "destination": "/api/dashboard-stats.js"
+    },
+    {
+      "source": "/api/dashboard",
+      "destination": "/api/dashboard.js"
+    },
+    {
+      "source": "/api/debug-env",
+      "destination": "/api/debug-env.js"
+    },
+    {
+      "source": "/api/users/(.*)",
+      "destination": "/api/users.js?resource=$1"
+    },
+    {
+      "source": "/api/admin/(.*)",
+      "destination": "/api/admin.js?resource=$1"
+    },
+    {
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/api/(.*)",
       "headers": [
         {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
+          "key": "Content-Type",
+          "value": "application/json"
         },
         {
           "key": "X-Frame-Options",
@@ -51,12 +70,7 @@
         {
           "key": "X-XSS-Protection",
           "value": "1; mode=block"
-        }
-      ]
-    },
-    {
-      "source": "/api/(.*)",
-      "headers": [
+        },
         {
           "key": "Access-Control-Allow-Origin",
           "value": "*"

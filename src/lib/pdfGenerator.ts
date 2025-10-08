@@ -52,8 +52,9 @@ const generateFileName = (patent: KiprisPatentDetailItem, reportType: string): s
   const reportTypeName = reportType === 'market_analysis' ? '시장분석' : '비즈니스인사이트'
   
   // 특허번호 (하이픈 제거)
-  const patentNumber = (patent.applicationNumber || patent.registrationNumber || 'unknown')
-    .replace(/-/g, '')
+  const patentNumber = (patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber || 
+                       patent.biblioSummaryInfoArray?.biblioSummaryInfo?.registerNumber || 
+                       'unknown').replace(/-/g, '')
   
   // 날짜 (YYYYMMDD 형식)
   const date = new Date().toISOString().split('T')[0].replace(/-/g, '')
@@ -605,7 +606,8 @@ export const generateA4ReportPDF = async (
     const reportType = reportData.reportType || '분석 리포트'
     addReportHeader(doc, {
       title: patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle || '특허 분석',
-      patentNumber: patent.applicationNumber || patent.registrationNumber
+      patentNumber: patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber || 
+                   patent.biblioSummaryInfoArray?.biblioSummaryInfo?.registerNumber
     }, reportType)
     
     let currentY = A4_CONFIG.margin.top + A4_CONFIG.header.height + 10
@@ -668,7 +670,7 @@ export const generateA4ReportPDF = async (
     
     // 활동 추적
     activityTracker.trackDocumentDownload(
-      patent.applicationNumber || patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber || 'unknown',
+      patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber || 'unknown',
       'pdf_report'
     )
     

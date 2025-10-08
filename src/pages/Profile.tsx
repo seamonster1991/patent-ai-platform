@@ -6,6 +6,7 @@ import Card, { CardContent, CardHeader, CardTitle } from '../components/UI/Card'
 import { useAuthStore } from '../store/authStore'
 import { formatDate } from '../lib/utils'
 import { toast } from 'sonner'
+import { activityTracker } from '../lib/activityTracker'
 
 export default function Profile() {
   const { user, profile, updateProfile } = useAuthStore()
@@ -21,6 +22,13 @@ export default function Profile() {
     push: false,
     marketing: false
   })
+
+  // 사용자 ID 설정
+  useEffect(() => {
+    if (user?.id) {
+      activityTracker.setUserId(user.id)
+    }
+  }, [user?.id])
 
   // Update formData when profile is loaded
   useEffect(() => {
@@ -85,20 +93,23 @@ export default function Profile() {
     // 입력 유효성 검사
     const validationErrors = validateForm()
     if (validationErrors.length > 0) {
-      toast.error(validationErrors[0]) // 첫 번째 오류만 표시
+      // 안전한 toast 호출 - 렌더 사이클 외부에서 실행
+      setTimeout(() => {
+        toast.error(validationErrors[0]) // 첫 번째 오류만 표시
+      }, 0)
       return
     }
     
     setLoading(true)
     
     try {
-      console.log('📝 [Profile] 프로필 업데이트 요청:', formData)
+      console.log('[UPDATE] [Profile] 프로필 업데이트 요청:', formData)
       const result = await updateProfile(formData)
       
-      console.log('📝 [Profile] 프로필 업데이트 결과:', result)
+      console.log('[UPDATE] [Profile] 프로필 업데이트 결과:', result)
       
       if (result.error || !result.success) {
-        console.error('📝 [Profile] 프로필 업데이트 오류:', result.error)
+        console.error('[ERROR] [Profile] 프로필 업데이트 오류:', result.error)
         // 서버 오류 메시지를 사용자 친화적으로 변환
         let errorMessage = result.error || '프로필 업데이트에 실패했습니다.'
         
@@ -114,14 +125,20 @@ export default function Profile() {
           errorMessage = '데이터베이스 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
         }
         
-        toast.error(errorMessage)
+        // 안전한 toast 호출 - 렌더 사이클 외부에서 실행
+        setTimeout(() => {
+          toast.error(errorMessage)
+        }, 0)
         return
       }
       
       // 성공 처리
       if (result.success && result.profile) {
-        console.log('✅ [Profile] 프로필 업데이트 성공:', result.profile)
-        toast.success('프로필이 성공적으로 업데이트되었습니다.')
+        console.log('[SUCCESS] [Profile] 프로필 업데이트 성공:', result.profile)
+        // 안전한 toast 호출 - 렌더 사이클 외부에서 실행
+        setTimeout(() => {
+          toast.success('프로필이 성공적으로 업데이트되었습니다.')
+        }, 0)
         
         // 폼 데이터를 업데이트된 프로필 데이터로 동기화
         setFormData({
@@ -131,14 +148,27 @@ export default function Profile() {
           bio: result.profile.bio || ''
         })
         
+        // 프로필 업데이트 활동 추적
+        if (user?.id) {
+          activityTracker.trackProfileUpdate({
+            name: result.profile.name,
+            company: result.profile.company,
+            phone: result.profile.phone,
+            bio: result.profile.bio
+          })
+        }
+        
         // 페이지 새로고침 없이 프로필 정보 다시 로드
         window.location.reload()
       } else {
-        console.warn('📝 [Profile] 프로필 업데이트 결과가 예상과 다름:', result)
-        toast.error('프로필 업데이트에 실패했습니다. 다시 시도해주세요.')
+        console.warn('[WARN] [Profile] 프로필 업데이트 결과가 예상과 다름:', result)
+        // 안전한 toast 호출 - 렌더 사이클 외부에서 실행
+        setTimeout(() => {
+          toast.error('프로필 업데이트에 실패했습니다. 다시 시도해주세요.')
+        }, 0)
       }
     } catch (error: any) {
-      console.error('📝 [Profile] 프로필 업데이트 예외:', error)
+      console.error('[ERROR] [Profile] 프로필 업데이트 예외:', error)
       let errorMessage = '프로필 업데이트 중 오류가 발생했습니다.'
       
       if (error?.message?.includes('fetch') || error?.message?.includes('network')) {
@@ -149,7 +179,10 @@ export default function Profile() {
         errorMessage = `오류: ${error.message}`
       }
       
-      toast.error(errorMessage)
+      // 안전한 toast 호출 - 렌더 사이클 외부에서 실행
+      setTimeout(() => {
+        toast.error(errorMessage)
+      }, 0)
     } finally {
       setLoading(false)
     }
@@ -167,6 +200,11 @@ export default function Profile() {
 
   const handleNotificationChange = (key: string, value: boolean) => {
     setNotifications(prev => ({ ...prev, [key]: value }))
+    
+    // 알림 설정 변경 활동 추적
+    if (user?.id) {
+      activityTracker.trackSettingsChange('notification', notifications[key as keyof typeof notifications], value)
+    }
   }
 
   const handleDeleteAccount = () => {
@@ -176,6 +214,11 @@ export default function Profile() {
   }
 
   const handleExportData = () => {
+    // 데이터 내보내기 활동 추적
+    if (user?.id) {
+      activityTracker.trackExportData('profile_data', 'json')
+    }
+    
     toast.success('데이터 내보내기 요청이 처리되었습니다. 이메일로 전송됩니다.')
   }
 

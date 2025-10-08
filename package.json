@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
+    "@heroicons/react": "^2.2.0",
     "@supabase/supabase-js": "^2.39.0",
     "@tremor/react": "^3.18.7",
     "@types/jsonwebtoken": "^9.0.10",

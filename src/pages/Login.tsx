@@ -34,9 +34,9 @@ export default function Login() {
     if (fromPath) {
       targetPath = fromPath;
       console.log('[Login] 이전 페이지로 이동:', fromPath);
-    } else if (formData.email === 'admin@p-ai.com' || isAdmin) {
+    } else if (isAdmin) {
       targetPath = '/admin';
-      console.log('[Login] 관리자 계정으로 /admin 이동');
+      console.log('[Login] 관리자 권한 확인되어 /admin 이동');
     } else {
       console.log('[Login] 일반 사용자 계정으로 / 이동');
     }
@@ -74,7 +74,7 @@ export default function Login() {
       if (fromPath) {
         targetPath = fromPath;
         console.log('[Login] 이전 페이지로 이동:', fromPath);
-      } else if (isAdmin || user.email === 'admin@p-ai.com') {
+      } else if (isAdmin) {
         targetPath = '/admin';
       }
 

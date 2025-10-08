@@ -26,7 +26,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // Get the current origin for redirect URLs
 const getRedirectUrl = () => {
   // 서버 렌더링 시 기본값 사용
-  const fallbackUrl = import.meta.env.DEV ? 'http://localhost:5173' : 'https://p-5rpsnr89l-re-chip.vercel.app'
+  const fallbackUrl = import.meta.env.DEV ? 'http://localhost:5173' : 'https://p-ai-seongwankim-1691-re-chip.vercel.app'
   
   // 클라이언트에서만 window.location 사용
   try {
@@ -114,6 +114,13 @@ export interface User {
   bio?: string
   subscription_plan: 'free' | 'premium'
   usage_count: number
+  role?: 'user' | 'admin' | 'super_admin'
+  total_searches?: number
+  total_detail_views?: number
+  total_logins?: number
+  total_usage_cost?: number
+  last_login_at?: string
+  total_reports?: number
   created_at: string
   updated_at: string
 }

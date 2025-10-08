@@ -7,10 +7,14 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Search from "@/pages/Search";
 import PatentDetail from "@/pages/PatentDetail";
-import Dashboard from "@/pages/Dashboard";
+import Dashboard from "@/pages/Dashboard/index";
+import DashboardActivity from "@/pages/Dashboard/Activity";
+import DashboardBilling from "@/pages/Dashboard/Billing";
 import Profile from "@/pages/Profile";
+import Billing from "@/pages/Billing";
 import AuthCallback from "@/pages/AuthCallback";
 import ProtectedRoute from "@/components/Auth/ProtectedRoute";
+import AdminRoute from "@/components/Auth/AdminRoute";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import PasswordReset from "@/pages/PasswordReset";
@@ -24,14 +28,12 @@ import AdminUsers from "@/pages/Admin/AdminUsers";
 import AdminBilling from "@/pages/Admin/AdminBilling";
 import { useAuthStore } from "@/store/authStore";
 import { useThemeStore } from "@/store/themeStore";
-import { usePageTracking } from "@/hooks/usePageTracking";
+
+
 
 export default function App() {
   const { initialize } = useAuthStore();
   const { isDark } = useThemeStore();
-  
-  // 페이지 네비게이션 추적 활성화
-  usePageTracking();
 
   useEffect(() => {
     initialize();
@@ -49,30 +51,40 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        {/* Admin Routes - With AdminLayout wrapper */}
+        {/* Admin Routes - With AdminRoute protection and AdminLayout wrapper */}
         <Route path="/admin/*" element={
-          <AdminLayout>
-            <Routes>
-              <Route path="/" element={<AdminHome />} />
-              <Route path="/statistics" element={<AdminStatistics />} />
-              <Route path="/users" element={<AdminUsers />} />
-              <Route path="/billing" element={<AdminBilling />} />
-            </Routes>
-          </AdminLayout>
+          <AdminRoute>
+            <AdminLayout>
+              <Routes>
+                <Route path="/" element={<AdminHome />} />
+                <Route path="/statistics" element={<AdminStatistics />} />
+                <Route path="/users" element={<AdminUsers />} />
+                <Route path="/billing" element={<AdminBilling />} />
+              </Routes>
+            </AdminLayout>
+          </AdminRoute>
         } />
         
         {/* Regular Routes - With Layout wrapper */}
         <Route path="/*" element={
           <Layout>
             <Routes>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              } />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/password-reset" element={<PasswordReset />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
-              <Route path="/search" element={<Search />} />
+              <Route path="/search" element={
+                <ProtectedRoute>
+                  <Search />
+                </ProtectedRoute>
+              } />
               <Route path="/patent/:applicationNumber" element={
                 <ProtectedRoute>
                   <PatentDetail />
@@ -83,9 +95,24 @@ export default function App() {
                   <Dashboard />
                 </ProtectedRoute>
               } />
+              <Route path="/dashboard/activity" element={
+                <ProtectedRoute>
+                  <DashboardActivity />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard/billing" element={
+                <ProtectedRoute>
+                  <DashboardBilling />
+                </ProtectedRoute>
+              } />
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              } />
+              <Route path="/billing" element={
+                <ProtectedRoute>
+                  <Billing />
                 </ProtectedRoute>
               } />
               <Route path="/reports" element={

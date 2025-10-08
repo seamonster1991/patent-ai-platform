@@ -22,11 +22,18 @@ export interface BiblioSummaryInfo {
   registerNumber: string;
   registerStatus: string;
   translationSubmitDate: string;
+  registrationNumber?: string; // 등록번호 (registerNumber와 동일하지만 호환성을 위해 추가)
+  cpcNumber?: string; // CPC 번호
 }
 
 export interface IpcInfo {
   ipcDate: string;
   ipcNumber: string;
+}
+
+export interface CpcInfo {
+  cpcDate: string;
+  cpcNumber: string;
 }
 
 export interface FamilyInfo {
@@ -113,7 +120,7 @@ export interface RndInfo {
   rndTaskNumber: string;
 }
 
-// KIPRIS API 상세정보 응답 타입 (실제 사용) - KIPRIS 명세에 맞게 수정
+// KIPRIS API 상세정보 응답 타입 (실제 사용) - KIPRIS Plus API 명세에 완전히 맞게 수정
 export interface KiprisPatentDetailItem {
   biblioSummaryInfoArray: {
     biblioSummaryInfo: BiblioSummaryInfo;
@@ -121,8 +128,11 @@ export interface KiprisPatentDetailItem {
   ipcInfoArray: {
     ipcInfo: IpcInfo[];
   };
+  cpcInfoArray: {
+    cpcInfo: CpcInfo[];
+  };
   familyInfoArray: {
-    familyInfo: FamilyInfo | {};
+    familyInfo: FamilyInfo[];
   };
   abstractInfoArray: {
     abstractInfo: AbstractInfo;
@@ -154,12 +164,14 @@ export interface KiprisPatentDetailItem {
   legalStatusInfoArray: {
     legalStatusInfo: LegalStatusInfo[];
   };
-  imagePathInfo: ImagePathInfo;
+  imagePathInfo: {
+    docName: string;
+    largePath: string;
+    path: string;
+  };
   rndInfoArray: {
     rndInfo: RndInfo[];
   };
-  applicationNumber?: string; // 출원번호
-  registrationNumber?: string; // 등록번호
 }
 
 export interface KiprisDetailApiResponse {
@@ -319,19 +331,18 @@ export interface DocumentDownloadRequest {
   documentType: DocumentType;
 }
 
-export enum DocumentType {
-  PUBLICATION_FULL_TEXT = 'getPubFullTextInfoSearch', // 공개전문PDF
-  ANNOUNCEMENT_FULL_TEXT = 'getAnnFullTextInfoSearch', // 공고전문PDF
-  CORRECTION_ANNOUNCEMENT = 'getCorrectionAnnouncementInfoSearch', // 정정공고PDF (폐기예정)
-  REPRESENTATIVE_DRAWING = 'getRepresentativeDrawingInfoSearch', // 대표도면
-  CORRECTION_ANNOUNCEMENT_V2 = 'getCorrectionAnnouncementV2InfoSearch', // 정정공고PDF_V2
-  PUBLICATION_BOOKLET = 'getPublicationBookletInfoSearch', // 공개책자
-  GAZETTE_BOOKLET = 'getGazetteBookletInfoSearch', // 공보책자
-  ALL_DOCUMENTS_AVAILABILITY = 'getAllDocumentsAvailabilityInfoSearch', // 모든 전문 및 대표도 유무
-  FULL_TEXT_FILE_INFO = 'getFullTextFileInfoSearch', // 전문파일정보
-  STANDARDIZED_PUBLICATION_FULL_TEXT = 'getStandardizedPubFullTextInfoSearch', // 표준화 공개전문PDF
-  STANDARDIZED_ANNOUNCEMENT_FULL_TEXT = 'getStandardizedAnnFullTextInfoSearch' // 표준화 공고전문PDF
-}
+export type DocumentType = 
+  | 'publication'           // 공개전문PDF
+  | 'announcement'          // 공고전문PDF
+  | 'correction'            // 정정공고PDF (폐기예정)
+  | 'drawing'               // 대표도면
+  | 'correctionV2'          // 정정공고PDF_V2
+  | 'publicationBooklet'    // 공개책자
+  | 'gazetteBooklet'        // 공보책자
+  | 'allDocuments'          // 모든 전문 및 대표도 유무
+  | 'fullTextInfo'          // 전문파일정보
+  | 'standardPublication'   // 표준화 공개전문PDF
+  | 'standardAnnouncement'  // 표준화 공고전문PDF
 
 export interface DocumentTypeInfo {
   type: DocumentType;
@@ -342,58 +353,58 @@ export interface DocumentTypeInfo {
 
 export const DOCUMENT_TYPES: DocumentTypeInfo[] = [
   {
-    type: DocumentType.PUBLICATION_FULL_TEXT,
+    type: 'publication',
     name: '공개전문PDF',
     description: '특허 공개공보 전문 PDF 파일'
   },
   {
-    type: DocumentType.ANNOUNCEMENT_FULL_TEXT,
+    type: 'announcement',
     name: '공고전문PDF',
     description: '특허 공고공보 전문 PDF 파일'
   },
   {
-    type: DocumentType.CORRECTION_ANNOUNCEMENT,
+    type: 'correction',
     name: '정정공고PDF',
     description: '정정공고 PDF 파일 (폐기예정)',
     deprecated: true
   },
   {
-    type: DocumentType.REPRESENTATIVE_DRAWING,
+    type: 'drawing',
     name: '대표도면',
     description: '특허의 대표 도면 이미지'
   },
   {
-    type: DocumentType.CORRECTION_ANNOUNCEMENT_V2,
+    type: 'correctionV2',
     name: '정정공고PDF V2',
     description: '정정공고 PDF 파일 (개선된 버전)'
   },
   {
-    type: DocumentType.PUBLICATION_BOOKLET,
+    type: 'publicationBooklet',
     name: '공개책자',
     description: '특허 공개공보 책자 형태 파일'
   },
   {
-    type: DocumentType.GAZETTE_BOOKLET,
+    type: 'gazetteBooklet',
     name: '공보책자',
     description: '특허 공보 책자 형태 파일'
   },
   {
-    type: DocumentType.ALL_DOCUMENTS_AVAILABILITY,
+    type: 'allDocuments',
     name: '문서 가용성 정보',
     description: '모든 전문 및 대표도 유무 확인'
   },
   {
-    type: DocumentType.FULL_TEXT_FILE_INFO,
+    type: 'fullTextInfo',
     name: '전문파일정보',
     description: '전문 파일의 상세 정보'
   },
   {
-    type: DocumentType.STANDARDIZED_PUBLICATION_FULL_TEXT,
+    type: 'standardPublication',
     name: '표준화 공개전문PDF',
     description: '표준화된 공개전문 PDF 파일'
   },
   {
-    type: DocumentType.STANDARDIZED_ANNOUNCEMENT_FULL_TEXT,
+    type: 'standardAnnouncement',
     name: '표준화 공고전문PDF',
     description: '표준화된 공고전문 PDF 파일'
   }

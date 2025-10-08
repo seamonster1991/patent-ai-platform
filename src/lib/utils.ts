@@ -6,12 +6,48 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatDate(date: string | Date) {
-  const d = new Date(date)
-  return d.toLocaleDateString('ko-KR', {
+  if (!date) return ''
+  
+  let dateToFormat: Date
+  
+  // KIPRIS API의 YYYYMMDD 형식 처리 (예: "20060616")
+  if (typeof date === 'string' && /^\d{8}$/.test(date)) {
+    const year = date.substring(0, 4)
+    const month = date.substring(4, 6)
+    const day = date.substring(6, 8)
+    dateToFormat = new Date(`${year}-${month}-${day}`)
+  } else {
+    dateToFormat = new Date(date)
+  }
+  
+  // 유효하지 않은 날짜인 경우 빈 문자열 반환
+  if (isNaN(dateToFormat.getTime())) {
+    return ''
+  }
+  
+  return dateToFormat.toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   })
+}
+
+export function formatDateSimple(date: string | Date) {
+  if (!date) return ''
+  
+  // 이미 YYYYMMDD 형식인 경우 그대로 반환
+  if (typeof date === 'string' && /^\d{8}$/.test(date)) {
+    return date
+  }
+  
+  const d = new Date(date)
+  if (isNaN(d.getTime())) return ''
+  
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  
+  return `${year}${month}${day}`
 }
 
 export function formatDateTime(date: string | Date) {

@@ -4,61 +4,138 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3004;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// Import API handlers
+// Import API handlers (only CommonJS modules)
+const dashboardStatsHandler = require('./api/dashboard-stats.js');
+const healthHandler = require('./api/health.js');
+const searchHandler = require('./api/search.js');
 const aiAnalysisHandler = require('./api/ai-analysis.js');
 const generateReportHandler = require('./api/generate-report.js');
-const searchHandler = require('./api/search.js');
 const detailHandler = require('./api/detail.js');
-const documentsHandler = require('./api/documents.js');
-const healthHandler = require('./api/health.js');
-const classifyKeywordHandler = require('./api/classify-keyword.js');
 
 // API Routes
-app.all('/api/ai-analysis', aiAnalysisHandler);
-app.all('/api/generate-report', generateReportHandler);
-app.all('/api/search', searchHandler);
-app.all('/api/detail', detailHandler);
-app.all('/api/documents', documentsHandler);
-app.all('/api/health', healthHandler);
-app.all('/api/classify-keyword', classifyKeywordHandler);
+app.use('/api/dashboard-stats', dashboardStatsHandler);
+app.use('/api/health', healthHandler);
 
-// User routes
-const userReportsHandler = require('./api/users/reports.js');
-const userSearchHistoryHandler = require('./api/users/search-history.js');
-const userStatsHandler = require('./api/users/stats.js');
-const userProfileHandler = require('./api/users/profile.js');
-const userKeywordAnalyticsHandler = require('./api/users/keyword-analytics.js');
-const adminStatisticsHandler = require('./api/admin/statistics.js');
+// Search API route - wrap the handler function for Express
+app.all('/api/search', async (req, res) => {
+  try {
+    await searchHandler(req, res);
+  } catch (error) {
+    console.error('❌ [Local Server] Search API Error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        message: error.message
+      });
+    }
+  }
+});
 
-app.all('/api/ai-analysis', aiAnalysisHandler);
-app.all('/api/generate-report', generateReportHandler);
-app.all('/api/search', searchHandler);
-app.all('/api/detail', detailHandler);
-app.all('/api/documents', documentsHandler);
-app.all('/api/health', healthHandler);
+// AI Analysis API route
+app.all('/api/ai-analysis', async (req, res) => {
+  try {
+    await aiAnalysisHandler(req, res);
+  } catch (error) {
+    console.error('❌ [Local Server] AI Analysis API Error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        message: error.message
+      });
+    }
+  }
+});
 
-// User routes
-app.all('/api/users/reports', userReportsHandler);
-app.all('/api/users/search-history', userSearchHistoryHandler);
-app.all('/api/users/stats', userStatsHandler);
-app.all('/api/users/profile', userProfileHandler);
-app.all('/api/users/keyword-analytics', userKeywordAnalyticsHandler);
+// Generate Report API route
+app.all('/api/generate-report', async (req, res) => {
+  try {
+    await generateReportHandler(req, res);
+  } catch (error) {
+    console.error('❌ [Local Server] Generate Report API Error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        message: error.message
+      });
+    }
+  }
+});
 
-// Admin routes
-app.all('/api/admin/statistics', adminStatisticsHandler);
+// Detail API route
+app.all('/api/detail', async (req, res) => {
+  try {
+    await detailHandler(req, res);
+  } catch (error) {
+    console.error('❌ [Local Server] Detail API Error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        message: error.message
+      });
+    }
+  }
+});
+
+// Users API route (ES6 module - dynamic import)
+app.all('/api/users/*', async (req, res) => {
+  try {
+    const { default: usersHandler } = await import('./api/users.js');
+    await usersHandler(req, res);
+  } catch (error) {
+    console.error('❌ [Local Server] Users API Error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        message: error.message
+      });
+    }
+  }
+});
+
+// Users API route (for exact /api/users path)
+app.all('/api/users', async (req, res) => {
+  try {
+    const { default: usersHandler } = await import('./api/users.js');
+    await usersHandler(req, res);
+  } catch (error) {
+    console.error('❌ [Local Server] Users API Error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        message: error.message
+      });
+    }
+  }
+});
 
 // Health check
 app.get('/', (req, res) => {
-  res.json({ status: 'Local API Server Running', port: PORT });
+  res.json({ 
+    status: 'OK', 
+    message: 'Patent AI Local Server is running',
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Local API Server running on http://localhost:${PORT}`);
-  console.log(`📡 API endpoints available at http://localhost:${PORT}/api/*`);
+  console.log(`🚀 Local server running on http://localhost:${PORT}`);
+  console.log(`📊 Dashboard Stats API: http://localhost:${PORT}/api/dashboard-stats`);
+  console.log(`🔍 Search API: http://localhost:${PORT}/api/search`);
+  console.log(`🤖 AI Analysis API: http://localhost:${PORT}/api/ai-analysis`);
+  console.log(`📄 Generate Report API: http://localhost:${PORT}/api/generate-report`);
+  console.log(`📋 Detail API: http://localhost:${PORT}/api/detail`);
+  console.log(`👤 Users API: http://localhost:${PORT}/api/users`);
+  console.log(`💚 Health Check API: http://localhost:${PORT}/api/health`);
 });

@@ -1,0 +1,20 @@
+{
+  "patentData": {
+    "biblioSummaryInfo": {
+      "applicationNumber": "1020170001234",
+      "inventionTitle": "테스트 발명",
+      "applicationDate": "20170101",
+      "registerStatus": "등록",
+      "applicants": "테스트 출원인",
+      "ipcCodes": "H04L 29/06"
+    },
+    "abstractInfo": {
+      "abstractTextKor": "테스트 초록 내용입니다."
+    },
+    "claimInfo": {
+      "claimTextKor": "테스트 청구항 내용입니다."
+    }
+  },
+  "reportType": "business",
+  "userId": "276975db-635b-4c77-87a0-548f91b14231"
+}
