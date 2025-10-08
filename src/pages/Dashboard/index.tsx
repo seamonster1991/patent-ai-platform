@@ -34,6 +34,18 @@ interface DashboardStats {
     maxQuota: number
     usagePercentage: number
     remainingQuota: number
+    searches?: {
+      current: number
+      total: number
+    }
+    reports?: {
+      current: number
+      total: number
+    }
+    credits?: {
+      current: number
+      total: number
+    }
   }
   efficiencyMetrics: {
     loginEfficiency: {
@@ -48,30 +60,23 @@ interface DashboardStats {
       totalSearches: number
       reportsGenerated: number
     }
+    loginToReportRate?: number
+    searchToReportRate?: number
+    monthlyReports?: number
+    monthlySearches?: number
   }
   subscriptionPlan?: string
-  recentActivities: {
-    reports: Array<{
-      id: string
-      type: 'report'
-      title: string
-      description?: string
-      timestamp: string
-      metadata?: {
-        reportType?: string
-      }
-    }>
-    searches: Array<{
-      id: string
-      type: 'search'
-      title: string
-      description?: string
-      timestamp: string
-      metadata?: {
-        searchQuery?: string
-      }
-    }>
-  }
+  recentActivities: Array<{
+    id: string
+    type: 'report' | 'search'
+    title: string
+    description?: string
+    timestamp: string
+    metadata?: {
+      reportType?: string
+      searchQuery?: string
+    }
+  }>
   technologyFields: Array<{
     field: string
     count: number
@@ -329,10 +334,28 @@ export default function Dashboard() {
         }
       })(),
       subscriptionPlan: quota?.subscription_plan || '정기 구독',
-      recentActivities: {
-        reports: recentReports,
-        searches: recentSearches
-      },
+      recentActivities: [
+        ...recentReports.map(report => ({
+          id: report.id,
+          type: 'report' as const,
+          title: report.title,
+          description: `${report.report_type} - ${report.status}`,
+          timestamp: report.created_at,
+          metadata: {
+            reportType: report.report_type
+          }
+        })),
+        ...recentSearches.map(search => ({
+          id: search.keyword,
+          type: 'search' as const,
+          title: search.keyword,
+          description: `검색 횟수: ${search.search_count}회`,
+          timestamp: search.last_searched,
+          metadata: {
+            searchQuery: search.keyword
+          }
+        }))
+      ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
       technologyFields,
       // Enhanced analytics data - API 응답 구조에 맞게 수정
       searchTrends: {
@@ -448,15 +471,29 @@ export default function Dashboard() {
     push(['섹션', '지표', '값'])
     
     // Quota
-    push(['할당량', '월간 검색 현재/전체', `${stats.quotaStatus.searches.current}/${stats.quotaStatus.searches.total}`])
-    push(['할당량', '월간 리포트 현재/전체', `${stats.quotaStatus.reports.current}/${stats.quotaStatus.reports.total}`])
-    push(['할당량', '보유 크레딧 현재/전체', `${stats.quotaStatus.credits.current}/${stats.quotaStatus.credits.total}`])
+    if (stats.quotaStatus.searches) {
+      push(['할당량', '월간 검색 현재/전체', `${stats.quotaStatus.searches.current}/${stats.quotaStatus.searches.total}`])
+    }
+    if (stats.quotaStatus.reports) {
+      push(['할당량', '월간 리포트 현재/전체', `${stats.quotaStatus.reports.current}/${stats.quotaStatus.reports.total}`])
+    }
+    if (stats.quotaStatus.credits) {
+      push(['할당량', '보유 크레딧 현재/전체', `${stats.quotaStatus.credits.current}/${stats.quotaStatus.credits.total}`])
+    }
 
     // Efficiency
-    push(['효율성', '로그인→리포트 전환율', `${stats.efficiencyMetrics.loginToReportRate}%`])
-    push(['효율성', '검색→리포트 전환율', `${stats.efficiencyMetrics.searchToReportRate}%`])
-    push(['효율성', '월간 리포트', stats.efficiencyMetrics.monthlyReports])
-    push(['효율성', '월간 검색', stats.efficiencyMetrics.monthlySearches])
+    if (stats.efficiencyMetrics.loginToReportRate !== undefined) {
+      push(['효율성', '로그인→리포트 전환율', `${stats.efficiencyMetrics.loginToReportRate}%`])
+    }
+    if (stats.efficiencyMetrics.searchToReportRate !== undefined) {
+      push(['효율성', '검색→리포트 전환율', `${stats.efficiencyMetrics.searchToReportRate}%`])
+    }
+    if (stats.efficiencyMetrics.monthlyReports !== undefined) {
+      push(['효율성', '월간 리포트', stats.efficiencyMetrics.monthlyReports])
+    }
+    if (stats.efficiencyMetrics.monthlySearches !== undefined) {
+      push(['효율성', '월간 검색', stats.efficiencyMetrics.monthlySearches])
+    }
     
     // Recent Activities (top 5)
     rows.push('')
@@ -785,7 +822,7 @@ export default function Dashboard() {
 
           {/* 7. Recent Activity (Reports and Searches) */}
           <RecentActivity
-            recentActivities={stats?.recentActivities || { reports: [], searches: [] }}
+            recentActivities={stats?.recentActivities || []}
           />
         </div>
       </div>

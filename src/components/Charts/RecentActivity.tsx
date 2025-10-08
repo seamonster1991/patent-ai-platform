@@ -2,44 +2,31 @@ import React, { useState } from 'react';
 import { Card, Title, Text, Button } from '@tremor/react';
 import { CalendarIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 
-interface RecentReport {
+interface RecentActivity {
   id: string;
-  type: 'report';
+  type: 'report' | 'search';
   title: string;
   description?: string;
   timestamp: string;
   metadata?: {
     reportType?: string;
-  };
-}
-
-interface RecentSearch {
-  id: string;
-  type: 'search';
-  title: string;
-  description?: string;
-  timestamp: string;
-  metadata?: {
     searchQuery?: string;
   };
 }
 
 interface RecentActivityProps {
-  recentActivities: {
-    reports: RecentReport[];
-    searches: RecentSearch[];
-  };
+  recentActivities: RecentActivity[];
 }
 
 const RecentActivity: React.FC<RecentActivityProps> = ({
   recentActivities
 }) => {
-  const [showAllReports, setShowAllReports] = useState(false);
-  const [showAllSearches, setShowAllSearches] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
-  const { reports: recentReports, searches: recentSearches } = recentActivities;
-  const displayedReports = showAllReports ? recentReports : recentReports.slice(0, 10);
-  const displayedSearches = showAllSearches ? recentSearches : recentSearches.slice(0, 10);
+  const recentReports = recentActivities.filter(activity => activity.type === 'report');
+  const recentSearches = recentActivities.filter(activity => activity.type === 'search');
+  const displayedReports = showAll ? recentReports : recentReports.slice(0, 5);
+  const displayedSearches = showAll ? recentSearches : recentSearches.slice(0, 5);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -137,15 +124,15 @@ const RecentActivity: React.FC<RecentActivityProps> = ({
           )}
         </div>
 
-        {recentReports.length > 10 && (
+        {recentReports.length > 5 && (
           <div className="mt-4 text-center">
             <Button
               size="xs"
               variant="light"
-              onClick={() => setShowAllReports(!showAllReports)}
-              icon={showAllReports ? ChevronUpIcon : ChevronDownIcon}
+              onClick={() => setShowAll(!showAll)}
+              icon={showAll ? ChevronUpIcon : ChevronDownIcon}
             >
-              {showAllReports ? '접기' : `전체 ${recentReports.length}개 리포트 보기`}
+              {showAll ? '접기' : `전체 ${recentReports.length}개 리포트 보기`}
             </Button>
           </div>
         )}
@@ -189,15 +176,15 @@ const RecentActivity: React.FC<RecentActivityProps> = ({
           )}
         </div>
 
-        {recentSearches.length > 10 && (
+        {recentSearches.length > 5 && (
           <div className="mt-4 text-center">
             <Button
               size="xs"
               variant="light"
-              onClick={() => setShowAllSearches(!showAllSearches)}
-              icon={showAllSearches ? ChevronUpIcon : ChevronDownIcon}
+              onClick={() => setShowAll(!showAll)}
+              icon={showAll ? ChevronUpIcon : ChevronDownIcon}
             >
-              {showAllSearches ? '접기' : `전체 ${recentSearches.length}개 검색 보기`}
+              {showAll ? '접기' : `전체 ${recentSearches.length}개 검색 보기`}
             </Button>
           </div>
         )}
