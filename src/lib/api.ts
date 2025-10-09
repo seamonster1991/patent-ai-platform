@@ -120,19 +120,33 @@ export function getApiUrl(endpoint: string): string {
   
   console.log(`🔗 [API] 환경 감지: ${environment}, 호스트: ${currentHost}`);
   
+  // 엔드포인트 정규화 함수 - 중복된 /api 경로 제거
+  function normalizeEndpoint(baseUrl: string, endpoint: string): string {
+    // baseUrl이 /api로 끝나고 endpoint가 /api로 시작하면 중복 제거
+    if (baseUrl.endsWith('/api') && endpoint.startsWith('/api')) {
+      return `${baseUrl}${endpoint.substring(4)}`; // /api 제거
+    }
+    // baseUrl이 /api로 끝나지 않고 endpoint가 /api로 시작하지 않으면 /api 추가
+    if (!baseUrl.endsWith('/api') && !endpoint.startsWith('/api')) {
+      return `${baseUrl}/api${endpoint}`;
+    }
+    // 그 외의 경우는 그대로 연결
+    return `${baseUrl}${endpoint}`;
+  }
+  
   if (environment === 'development') {
     // 로컬 개발 환경
     if (currentHost.includes('localhost') || currentHost.includes('127.0.0.1')) {
       // 환경변수에서 API URL 확인
       const envApiUrl = import.meta.env.VITE_API_BASE_URL;
       if (envApiUrl) {
-        const localApiUrl = `${envApiUrl}${endpoint}`;
+        const localApiUrl = normalizeEndpoint(envApiUrl, endpoint);
         console.log(`🔗 [API] 환경변수 기반 API URL: ${localApiUrl}`);
         return localApiUrl;
       }
       
       // 기본값으로 로컬 API 서버 사용
-      const localApiUrl = `http://localhost:3005${endpoint}`;
+      const localApiUrl = normalizeEndpoint('http://localhost:3005', endpoint);
       console.log(`🔗 [API] 기본 로컬 API URL: ${localApiUrl}`);
       return localApiUrl;
     }
@@ -140,7 +154,8 @@ export function getApiUrl(endpoint: string): string {
     return endpoint;
   } else {
     // 프로덕션 환경 - Vercel Functions 사용
-    const productionUrl = `${currentProtocol}//${currentHost}/api${endpoint.replace('/api', '')}`;
+    const baseUrl = `${currentProtocol}//${currentHost}`;
+    const productionUrl = normalizeEndpoint(baseUrl, endpoint);
     console.log(`🔗 [API] 프로덕션 API URL 생성: ${productionUrl}`);
     return productionUrl;
   }
@@ -471,7 +486,7 @@ export async function getUserActivityStats(userId: string): Promise<ApiResponse>
 /**
  * 대시보드 통계 조회 API 호출
  */
-export async function getDashboardStats(userId: string, period: string = '30d'): Promise<ApiResponse> {
+export async function getDashboardStats(userId: string, period: string = '100d'): Promise<ApiResponse> {
   try {
     console.log('📊 [API] 대시보드 통계 조회 시작:', { userId, period });
 

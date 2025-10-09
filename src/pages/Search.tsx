@@ -128,14 +128,14 @@ export default function Search() {
       // 새로운 검색어로 필터 설정
       setFilters({ word: queryFromUrl })
       
-      // 다음 렌더링 사이클에서 검색 실행
-      setTimeout(() => {
-        searchPatents(1).then(({ error }) => {
-          if (error) {
-            toast.error(error)
-          }
-        })
-      }, 0)
+      // useEffect 내에서 비동기 함수 실행
+      const executeSearch = async () => {
+        const { error } = await searchPatents(1)
+        if (error) {
+          toast.error(error)
+        }
+      }
+      executeSearch()
     } else {
       // URL 파라미터가 없으면 기존 로직 실행
       const stateRestored = loadSearchState()
@@ -144,13 +144,13 @@ export default function Search() {
       if (stateRestored === false) {
         const hasSearchTerm = filters.word || filters.inventionTitle || filters.keyword
         if (hasSearchTerm) {
-          setTimeout(() => {
-            searchPatents(1).then(({ error }) => {
-              if (error) {
-                toast.error(error)
-              }
-            })
-          }, 0)
+          const executeSearch = async () => {
+            const { error } = await searchPatents(1)
+            if (error) {
+              toast.error(error)
+            }
+          }
+          executeSearch()
         }
       }
     }

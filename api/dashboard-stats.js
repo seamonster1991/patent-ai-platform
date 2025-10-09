@@ -29,9 +29,9 @@ module.exports = async (req, res) => {
     platform: process.env.VERCEL ? 'Vercel' : 'Local',
     allEnvKeys: Object.keys(process.env).filter(key => key.includes('SUPABASE'))
   });
-
-  if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
-    console.error('❌ Missing Supabase environment variables:', {
+  // 필수 항목은 URL과 Service Role Key. Anon Key가 없어도 서비스 키로 인증 절차를 대체할 수 있도록 처리
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('❌ Missing Supabase URL or Service Role Key:', {
       hasUrl: !!supabaseUrl,
       hasServiceKey: !!supabaseServiceKey,
       hasAnonKey: !!supabaseAnonKey,
@@ -40,7 +40,7 @@ module.exports = async (req, res) => {
     return res.status(500).json({ 
       success: false, 
       error: 'Server configuration error',
-      details: 'Missing Supabase environment variables'
+      details: 'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY'
     });
   }
 
@@ -55,13 +55,18 @@ module.exports = async (req, res) => {
       }
     });
     
-    // Anon client for user authentication
-    supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    });
+    // Auth client: 기본은 Anon key, 없으면 Service Role 키로 대체
+    if (supabaseAnonKey) {
+      supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: { autoRefreshToken: false, persistSession: false }
+      });
+      console.log('✅ [Dashboard API] Supabase auth client created with ANON key');
+    } else {
+      supabaseAuth = createClient(supabaseUrl, supabaseServiceKey, {
+        auth: { autoRefreshToken: false, persistSession: false }
+      });
+      console.warn('⚠️ [Dashboard API] SUPABASE_ANON_KEY 누락: Service Role Key로 인증 클라이언트 대체');
+    }
     
     console.log('✅ [Dashboard API] Supabase clients created successfully');
   } catch (clientError) {
@@ -284,7 +289,7 @@ module.exports = async (req, res) => {
     }
 
     // Get query parameters with validation
-    const { user_id, period = '30d' } = req.query;
+    const { user_id, period = '100d' } = req.query;
     
     console.log('📊 [Dashboard API] Query parameters:', {
       requestedUserId: user_id,

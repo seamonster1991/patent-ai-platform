@@ -19,6 +19,7 @@ import {
   Activity,
   DollarSign
 } from 'lucide-react';
+import { getApiUrl } from '../../lib/api';
 
 interface AdminStats {
   summary: {
@@ -75,7 +76,8 @@ const AdminStatistics: React.FC = () => {
         throw new Error('인증 토큰이 없습니다.');
       }
 
-      const response = await fetch('http://localhost:3005/api/admin?resource=stats', {
+      const apiUrl = getApiUrl('/api/admin?resource=stats');
+      const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

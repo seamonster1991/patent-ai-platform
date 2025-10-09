@@ -26,6 +26,8 @@ import EfficiencyMetrics from '@/components/Charts/EfficiencyMetrics'
 import TechnologyFieldChart from '@/components/Charts/TechnologyFieldChart'
 // MarketComparisonChart는 요청에 따라 제거
 import RecentActivity from '@/components/Charts/RecentActivity'
+import IPCAnalysisChart from '@/components/Charts/IPCAnalysisChart'
+import RecentActivityList from '@/components/Charts/RecentActivityList'
 
 // Types
 interface DashboardStats {
@@ -114,6 +116,18 @@ interface DashboardStats {
     ipc_class?: string
     cpc_class?: string
   }>
+  // 새로운 IPC/CPC 분석 데이터
+  technology_fields?: {
+    search_individual: Array<{ field: string; count: number; percentage: number }>
+    search_market: Array<{ field: string; count: number; percentage: number }>
+    report_individual: Array<{ field: string; count: number; percentage: number }>
+    report_market: Array<{ field: string; count: number; percentage: number }>
+  }
+  // 최근 활동 데이터
+  recent_activities?: {
+    recent_searches: Array<{ keyword: string; timestamp: string; count: number }>
+    recent_reports: Array<{ title: string; timestamp: string; type: string }>
+  }
 }
 
 interface MarketTrendData {
@@ -237,12 +251,27 @@ export default function Dashboard() {
     // search_fields_top10과 report_fields_top10을 technologyFields로 변환
     const searchFields = Array.isArray(apiData?.search_fields_top10) ? apiData.search_fields_top10 : []
     const reportFields = Array.isArray(apiData?.report_fields_top10) ? apiData.report_fields_top10 : []
+    // 시장(마켓) 데이터도 준비해두고, 사용자 데이터가 없을 때 안전하게 폴백합니다
+    const marketSearchFields = Array.isArray(apiData?.market_search_fields_top10) ? apiData.market_search_fields_top10 : []
+    const marketReportFields = Array.isArray(apiData?.market_report_fields_top10) ? apiData.market_report_fields_top10 : []
     
     console.log('🔍 [API 데이터] search_fields_top10:', searchFields)
     console.log('🔍 [API 데이터] report_fields_top10:', reportFields)
     
     // 검색 분야와 리포트 분야를 합쳐서 기술 분야 생성
-    const combinedFields = [...searchFields, ...reportFields]
+    // 사용자 데이터가 없으면 시장 데이터를 기반으로 기본 분포를 보여줍니다
+    const combinedFields = (() => {
+      const userHasFields = (searchFields && searchFields.length > 0) || (reportFields && reportFields.length > 0)
+      if (userHasFields) {
+        return [...searchFields, ...reportFields]
+      }
+      // 마켓 데이터를 사용자 데이터 형태로 맞춰서 폴백
+      const marketCombined = [
+        ...marketSearchFields.map((item: any) => ({ field: item.field, count: item.count })),
+        ...marketReportFields.map((item: any) => ({ field: item.field, count: item.count }))
+      ]
+      return marketCombined
+    })()
     const fieldMap = new Map()
     
     combinedFields.forEach((item: any) => {
@@ -340,23 +369,31 @@ export default function Dashboard() {
       recentActivities: [...recentReports, ...recentSearches].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
       technologyFields,
       // Enhanced analytics data - API 응답 구조에 맞게 수정
-      searchTrends: {
-        userDaily: Array.isArray(apiData?.daily_searches) ? apiData.daily_searches : [],
-        marketDaily: Array.isArray(apiData?.market_daily_searches) ? apiData.market_daily_searches : []
-      },
-      reportTrends: {
-        userDaily: Array.isArray(apiData?.daily_reports) ? apiData.daily_reports : [],
-        marketDaily: Array.isArray(apiData?.market_daily_reports) ? apiData.market_daily_reports : []
-      },
+      searchTrends: (() => {
+        const userDaily = Array.isArray(apiData?.daily_searches) ? apiData.daily_searches : []
+        const marketDaily = Array.isArray(apiData?.market_daily_searches) ? apiData.market_daily_searches : []
+        console.log('🔍 [검색 트렌드] 사용자 일별 데이터:', userDaily)
+        console.log('🔍 [검색 트렌드] 시장 일별 데이터:', marketDaily)
+        return { userDaily, marketDaily }
+      })(),
+      reportTrends: (() => {
+        const userDaily = Array.isArray(apiData?.daily_reports) ? apiData.daily_reports : []
+        const marketDaily = Array.isArray(apiData?.market_daily_reports) ? apiData.market_daily_reports : []
+        console.log('🔍 [리포트 트렌드] 사용자 일별 데이터:', userDaily)
+        console.log('🔍 [리포트 트렌드] 시장 일별 데이터:', marketDaily)
+        return { userDaily, marketDaily }
+      })(),
       searchFields: {
         user: (() => {
           console.log('🔍 [검색 분야] 원본 데이터:', searchFields);
-          if (!Array.isArray(searchFields) || searchFields.length === 0) {
+          // 사용자 데이터가 없을 경우, 시장 데이터를 사용자 섹션에 폴백 표시하여 빈 화면을 방지
+          const source = (Array.isArray(searchFields) && searchFields.length > 0) ? searchFields : marketSearchFields
+          if (!Array.isArray(source) || source.length === 0) {
             console.log('⚠️ [검색 분야] 데이터가 없습니다');
             return [];
           }
-          const totalSearches = searchFields.reduce((sum: number, item: any) => sum + (item.search_count || item.count || 0), 0);
-          const result = searchFields.map((item: any) => ({
+          const totalSearches = source.reduce((sum: number, item: any) => sum + (item.search_count || item.count || 0), 0);
+          const result = source.map((item: any) => ({
             field: item.field || '기타',
             ipc_code: item.ipc_code || '',
             search_count: item.search_count || item.count || 0,
@@ -382,12 +419,14 @@ export default function Dashboard() {
       reportFields: {
         user: (() => {
           console.log('🔍 [리포트 분야] 원본 데이터:', reportFields);
-          if (!Array.isArray(reportFields) || reportFields.length === 0) {
+          // 사용자 데이터가 없을 경우, 시장 데이터를 사용자 섹션에 폴백 표시하여 빈 화면을 방지
+          const source = (Array.isArray(reportFields) && reportFields.length > 0) ? reportFields : marketReportFields
+          if (!Array.isArray(source) || source.length === 0) {
             console.log('⚠️ [리포트 분야] 데이터가 없습니다');
             return [];
           }
-          const totalReports = reportFields.reduce((sum: number, item: any) => sum + (item.report_count || item.count || 0), 0);
-          const result = reportFields.map((item: any) => ({
+          const totalReports = source.reduce((sum: number, item: any) => sum + (item.report_count || item.count || 0), 0);
+          const result = source.map((item: any) => ({
             field: item.field || '기타',
             ipc_code: item.ipc_code || '',
             report_count: item.report_count || item.count || 0,
@@ -558,7 +597,7 @@ export default function Dashboard() {
         }
 
         console.log('📡 [대시보드] API 호출 시작...')
-        const response = await getDashboardStats(userId, '90d')
+  const response = await getDashboardStats(userId, '100d')
         
         console.log('🔍 [대시보드] API 응답:', response)
         console.log('🔍 [대시보드] API 응답 데이터 상세:', JSON.stringify(response.data, null, 2))
@@ -594,7 +633,11 @@ export default function Dashboard() {
       }
     }
 
-    fetchDashboardStats()
+    // 초기 데이터 로딩을 안전하게 처리
+    const loadInitialData = async () => {
+      await fetchDashboardStats()
+    }
+    loadInitialData()
 
     // Listen for dashboard refresh events
     const handleDashboardRefresh = () => {
@@ -750,7 +793,8 @@ export default function Dashboard() {
           <Grid numItems={1} numItemsLg={2} className="gap-6">
             <TrendChart
               title="검색 추이"
-              description="최근 30일간 검색 활동"
+              description="최근 100일간 검색 활동
+검색 건수/시장 평균"
               data={stats?.searchTrends.userDaily || []}
               marketData={stats?.searchTrends.marketDaily || []}
               dataKey="count"
@@ -761,7 +805,8 @@ export default function Dashboard() {
             />
             <TrendChart
               title="리포트 추이"
-              description="최근 30일간 리포트 생성"
+              description="최근 100일간 리포트 생성
+리포트 건수/시장 평균"
               data={stats?.reportTrends.userDaily || []}
               marketData={stats?.reportTrends.marketDaily || []}
               dataKey="count"
@@ -802,10 +847,64 @@ export default function Dashboard() {
 
           {/* 6. Market Comparison - Report Count (요청에 따라 제거) */}
 
-          {/* 7. Recent Activity (Reports and Searches) */}
-          <RecentActivity
-            recentActivities={stats?.recentActivities || []}
-          />
+          {/* 7. 새로운 IPC/CPC 분석 섹션 */}
+          <Grid numItems={1} numItemsLg={2} className="gap-6">
+            <IPCAnalysisChart
+              title="검색 IPC/CPC 분석 (내 데이터)"
+              subtitle="개인 검색 데이터의 기술 분야별 분포"
+              data={stats?.technology_fields?.search_individual || []}
+              type="search"
+              category="field"
+              icon={MagnifyingGlassIcon}
+            />
+            <IPCAnalysisChart
+              title="검색 IPC/CPC 분석 (시장 데이터)"
+              subtitle="시장 전체 검색 데이터의 기술 분야별 분포"
+              data={stats?.technology_fields?.search_market || []}
+              type="search"
+              category="field"
+              icon={ChartBarIcon}
+            />
+          </Grid>
+
+          <Grid numItems={1} numItemsLg={2} className="gap-6">
+            <IPCAnalysisChart
+              title="리포트 IPC/CPC 분석 (내 데이터)"
+              subtitle="개인 리포트 데이터의 기술 분야별 분포"
+              data={stats?.technology_fields?.report_individual || []}
+              type="report"
+              category="field"
+              icon={DocumentTextIcon}
+            />
+            <IPCAnalysisChart
+              title="리포트 IPC/CPC 분석 (시장 데이터)"
+              subtitle="시장 전체 리포트 데이터의 기술 분야별 분포"
+              data={stats?.technology_fields?.report_market || []}
+              type="report"
+              category="field"
+              icon={ChartBarIcon}
+            />
+          </Grid>
+
+          {/* 8. 최근 활동 데이터 */}
+          <Grid numItems={1} numItemsLg={2} className="gap-6">
+            <RecentActivityList
+              title="최근 검색어"
+              subtitle="최근 검색한 키워드 10개"
+              data={stats?.recent_activities?.recent_searches || []}
+              type="search"
+              icon={MagnifyingGlassIcon}
+            />
+            <RecentActivityList
+              title="최근 리포트"
+              subtitle="최근 생성된 리포트 제목 10개"
+              data={stats?.recent_activities?.recent_reports || []}
+              type="report"
+              icon={DocumentTextIcon}
+            />
+          </Grid>
+
+          {/* 9. Recent Activity (Reports and Searches) */}
         </div>
       </div>
     </div>

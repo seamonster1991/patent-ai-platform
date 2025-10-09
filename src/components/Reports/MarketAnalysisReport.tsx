@@ -17,6 +17,7 @@ import ReportErrorState from './ReportErrorState'
 import { useAuthStore } from '../../store/authStore'
 import { useNavigate } from 'react-router-dom'
 import { handleReportGeneratedFromAPI } from '../../utils/eventUtils';
+import { getApiUrl } from '../../lib/api';
 
 interface MarketAnalysisReportProps {
   patent: KiprisPatentDetailItem
@@ -403,7 +404,10 @@ export default function MarketAnalysisReport({
     setError('')
 
     try {
-      const response = await fetch('http://localhost:3005/api/generate-report', {
+      const apiUrl = getApiUrl('/api/generate-report');
+      console.log('🔗 [MarketAnalysisReport] API URL:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ patentData: patent, reportType: 'market' }),

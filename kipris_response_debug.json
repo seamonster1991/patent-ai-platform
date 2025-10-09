@@ -6,7 +6,7 @@
           ""
         ],
         "responseTime": [
-          "2025-10-09 16:32:13.3213"
+          "2025-10-10 01:08:30.830"
         ],
         "responseMsgID": [
           ""
@@ -29,37 +29,37 @@
             "item": [
               {
                 "applicantName": [
-                  "최진권"
+                  "쿠팡 주식회사"
                 ],
                 "applicationDate": [
-                  "20250923"
+                  "20250915"
                 ],
                 "applicationNumber": [
-                  "1020250136799"
+                  "1020250131427"
                 ],
                 "astrtCont": [
-                  "화훼유통을 위한 디지털 플랫폼 서비스 제공 시스템이 제공되며, 적어도 하나의 품종, 종류 및 수량의 화훼상품을 발주하고, 화훼상품의 실시간 위치정보 및 온습도 정보를 모니터링하도록 출력하는 가맹점 단말 및 가맹점 단말로부터 적어도 하나의 품종, 종류 및 수량의 화훼상품의 발주를 접수하는 접수부, 화훼상품의 배송을 위한 배송 프로세스를 개시하도록 하는 개시부, 화훼상품의 상차가 완료된 경우 기사 단말의 실시간 위치정보 및 컨테이너의 온습도 정보를 업로드받는 모니터링부, 가맹점 단말로 실시간 위치정보 및 온습도 정보를 제공하는 안내부를 포함하는 플랫폼 서비스 제공 서버를 포함한다."
+                  "본 개시는 전자 상거래 서비스에 관한 데이터를 처리하는 기술에 관한 것이다. 본 개시의 일 실시예에 따른 방법은, 사용자 단말로부터 검색 결과 페이지의 호출 정보를 획득하는 단계 - 호출 정보는 검색어를 포함함 -, 검색어에 기초하여, 검색 결과로서의 상품 세트를 결정하는 단계, 검색어 또는 상품 세트에 기초하여, 검색 결과 페이지가 제1 배송 유형에 대한 필터를 포함하도록 할지 여부를 결정하는 단계, 검색 결과 페이지가 제1 배송 유형에 대한 필터를 포함하도록 하는 결정에 응답하여, 제1 배송 유형에 대한 필터를 포함하는 검색 결과 페이지를 생성하는 단계, 및 생성된 검색 결과 페이지를 사용자 단말에 제공하는 단계를 포함할 수 있다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d776c9acbce09a4a9e86d8acdd0f560422579fce83e2b292128360ba789be5c478eebf9e6a7a95c898f9da0a8c964748b6dfd1d9e875bfe5"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d776c9acbce09a4a9e86d8acdd0f56043df2c695b94c97091d21d4d7eed3d99d75100949ba93cca6e74f329e2357ccd7480c43d13ee72364"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf41278d8e0c9c5e5f11403e0577311c0123a5956aef6796e61e907c1a8c58bbd05f9bdcf5a681bdfaa5c43eaf95812eb7073ecb0b8aeae36f"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf41278d8e0c9c5e5f11403e0577311c01889efea898b66ef0ab2410ef78e6938233b8a02432f05c599cfc93ee7e895b0773f4f537445091db"
                 ],
                 "indexNo": [
                   "1"
                 ],
                 "inventionTitle": [
-                  "화훼유통을 위한 디지털 플랫폼 서비스 제공 시스템"
+                  "전자 상거래 서비스에 관한 데이터를 처리하는 방법, 장치 및 기록 매체"
                 ],
                 "ipcNumber": [
-                  "G06Q 10/0832|G06Q 50/10|G01D 21/02|G06Q 10/087|G06Q 10/0833|G06Q 10/083|G06Q 30/0601|G06Q 50/02|G16Y 10/40|G16Y 20/10|G16Y 40/10"
+                  "G06Q 30/0601|G06Q 10/083"
                 ],
                 "openDate": [
                   "20250930"
                 ],
                 "openNumber": [
-                  "1020250142280"
+                  "1020250142272"
                 ],
                 "publicationDate": [
                   ""
@@ -79,87 +79,37 @@
               },
               {
                 "applicantName": [
-                  "주식회사 엘로이랩"
+                  "삼성전자주식회사"
                 ],
                 "applicationDate": [
-                  "20250922"
+                  "20250904"
                 ],
                 "applicationNumber": [
-                  "1020250136250"
+                  "1020250125616"
                 ],
                 "astrtCont": [
-                  "대상물에 대한 리젝터 장치 및 이물 분리 시스템에 관해 개시되어 있다. 개시된 리젝터 장치는 대상물 그룹에서 이물 내지 결함물을 분리하여 제거하기 위한 장치로서, 제1 컨베이어 장치의 제1 컨베이어 벨트 위에 배치되는 것으로, 상기 제1 컨베이어 벨트에 의해 이송되는 상기 대상물 그룹에서 이물 내지 결함물을 블로우(blow) 방식으로 분리하기 위한 복수의 기체 분사 노즐을 포함하고, 상기 복수의 기체 분사 노즐은 상기 제1 컨베이어 벨트의 폭 방향으로 배열되고, 상기 복수의 기체 분사 노즐은 상기 이물 내지 결함물을 상기 제1 컨베이어 벨트의 후방측으로 블로우(blow)하도록 구성된 기체 분사부, 및 상기 제1 컨베이어 벨트의 후방에 배치되는 것으로, 상기 제1 컨베이어 벨트에 의해 이송되는 상기 대상물 그룹에서 상기 기체 분사부에 의해 분리된 상기 이물 내지 결함물이 배출되는 배출부를 포함할 수 있다."
+                  "본 발명에 따른 반도체 메모리 장치는 기판; 상기 기판 상에서 상기 기판의 상면과 평행하는 제1 방향을 따라 연장되는 비트라인; 상기 비트라인 상에서 상기 기판의 상기 상면과 수직한 제2 방향을 따라 연장되는 반도체 패턴; 및 상기 비트라인과 상기 반도체 패턴 사이에 배치되며 상기 반도체 패턴과 연결되는 제1 도전 콘택을 포함하되, 상기 반도체 패턴은: 제1 서브 반도체 패턴; 및 상기 제1 서브 반도체 패턴과 상기 제1 도전 콘택 사이의 제2 서브 반도체 패턴을 포함하고, 상기 제2 서브 반도체 패턴 내에서 제1 도펀트의 농도는 상기 제1 서브 반도체 패턴에 가까워질수록 감소하고, 염소의 농도는 상기 제1 서브 반도체 패턴보다 상기 제2 서브 반도체 패턴에서 더 높을 수 있다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c932de9b094ff4e017050ff36c347bc4bb897a31e0f564c26a2d64406334b7f846da6b84a9a51d651dae1e26464fb1e832e2baaa9001a81f43d"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c937cef927a07c26cf497b59f37054fbb2999c5472062e40846f9e4b97c9dd41320a9c666c28994b5ac82c6f867b69f87ed677228e257275361"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf35c9256aefb5185e67bb755dacb0de9e797e3ba4bee936bd6bf3b306dc986486a299583f65fa6b4052bd0548a2e3fe53a0f0ad5badb7b9dd"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfd1ab411270a03e3c1aa9757efabbe4e4dff49b3adf68425c4bea18b304baaafcfdbda30d63a0b88428d8935185fd03d0d21226f4e8134415"
                 ],
                 "indexNo": [
                   "2"
                 ],
                 "inventionTitle": [
-                  "대상물에 대한 리젝터 장치 및 이물 분리 시스템"
+                  "반도체 메모리 장치 및 이의 제조 방법"
                 ],
                 "ipcNumber": [
-                  "B03B 4/04|B03B 13/00|B03B 13/02|B07C 5/342|B65G 15/24|G06V 10/40"
+                  "H10B 12/00|H10B 61/00|H10B 63/10|H10B 63/00"
                 ],
                 "openDate": [
-                  "20250926"
+                  "20250923"
                 ],
                 "openNumber": [
-                  "1020250141120"
-                ],
-                "publicationDate": [
-                  ""
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  ""
-                ],
-                "registerNumber": [
-                  ""
-                ],
-                "registerStatus": [
-                  "공개"
-                ]
-              },
-              {
-                "applicantName": [
-                  "농업회사법인 만나씨이에이 주식회사"
-                ],
-                "applicationDate": [
-                  "20250901"
-                ],
-                "applicationNumber": [
-                  "1020250123467"
-                ],
-                "astrtCont": [
-                  "본 발명의 일 실시예에 따른 스마트팜의 하우징 내부에 배치되는 환경 제어 시스템은, 스마트팜의 내부 환경에 관한 데이터를 획득하는 적어도 하나의 센서를 포함하는, 복수의 센서부, 복수의 제어 모듈, 및 상기 복수의 제어 모듈 각각의 제어 신호에 기초하여 스마트팜의 환경을 조절하는, 적어도 하나의 공급 장치를 포함할 수 있다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c934bffba128b26514c65d09f1c14608d29fcc15c7d4cade102f30de1dd14216c8aa4ab7a5f73e16cfc6c8d3564f46f91436e241f62c28d188e"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf7007f57f61d1c48a9fed16beb8052129d212fde1f821e263a2f79d7e014692a231819d03dc791a10c1fde21ac260730cce36f3d9d85d4c82"
-                ],
-                "indexNo": [
-                  "3"
-                ],
-                "inventionTitle": [
-                  "메쉬 네트워크 기반의 환경 제어 시스템, 장치 및 방법"
-                ],
-                "ipcNumber": [
-                  "G06Q 50/02|G06Q 50/10|H04W 4/80|H04W 4/38|A01G 9/24"
-                ],
-                "openDate": [
-                  "20250908"
-                ],
-                "openNumber": [
-                  "1020250133640"
+                  "1020250139242"
                 ],
                 "publicationDate": [
                   ""
@@ -197,7 +147,7 @@
                   "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf71e156f1879efb96b1dae8af7e32a90c1cd9cd8668ca13f93db60d8a00b4cf7fd449eecdb27711dc40f84cd05e0f2805b548cce23a279cc9"
                 ],
                 "indexNo": [
-                  "4"
+                  "3"
                 ],
                 "inventionTitle": [
                   "에코근, 수지근, 탄소근, 보강근, 수지철근, 플라스틱근, FRP근, 보강섬유근, 보강섬유플라스틱근"
@@ -247,7 +197,7 @@
                   "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf1024b3b7123a61e9549872eed1afdcaebca98d3e3db564761771a4984ff61f684a9c66179166c048276a061d4525807eb4831f4015ebb6c0"
                 ],
                 "indexNo": [
-                  "5"
+                  "4"
                 ],
                 "inventionTitle": [
                   "모듈러 이동형 주택, 건물, 시설, 자재, 아파트, 구조물"
@@ -279,16 +229,16 @@
               },
               {
                 "applicantName": [
-                  "주식회사 한국산업기술원"
+                  "보로노이 주식회사"
                 ],
                 "applicationDate": [
-                  "20250801"
+                  "20250828"
                 ],
                 "applicationNumber": [
-                  "1020250105867"
+                  "1020250121400"
                 ],
                 "astrtCont": [
-                  "본 발명은 커피, 폐기물, 찌꺼기, 부산물, 커피 폐기물, 커피 찌꺼기, 커피 부산물의 수거, 운반, 처리, 활용, 재활용, 자원화, 리사이클링 등과 상기 수거 내지 리사이클링의 작업, 업무, 공정, 방법, 공법, 시설 등에 관한 것이다."
+                  "본 발명의 헤테로아릴 유도체 및 이의 용도에 관한 것으로서, 화학식 (I)로 표시되는 헤테로아릴 유도체 및 이를 포함하는 약학적 조성물은 HER2 활성을 효과적으로 억제하므로 HER2와 관련된 질환의 치료 또는 예방에 유용하다."
                 ],
                 "bigDrawing": [
                   ""
@@ -297,19 +247,19 @@
                   ""
                 ],
                 "indexNo": [
-                  "6"
+                  "5"
                 ],
                 "inventionTitle": [
-                  "커피, 폐기물, 찌꺼기, 부산물의 수집, 운반, 처리, 재활용, 자원화, 리사이클링 방법"
+                  "헤테로아릴 유도체 및 이의 용도"
                 ],
                 "ipcNumber": [
-                  "B09B 3/30|B09B 3/70|B09B 3/60|B09B 5/00"
+                  "A61K 31/517|A61K 31/4709|A61K 31/5383|A61K 31/5377|A61K 31/519|A61P 35/00"
                 ],
                 "openDate": [
-                  "20250818"
+                  "20250912"
                 ],
                 "openNumber": [
-                  "1020250123743"
+                  "1020250135141"
                 ],
                 "publicationDate": [
                   ""
@@ -329,37 +279,37 @@
               },
               {
                 "applicantName": [
-                  "주식회사 한국산업기술원"
+                  "주식회사 씨케이머티리얼즈랩"
                 ],
                 "applicationDate": [
-                  "20250801"
+                  "20250723"
                 ],
                 "applicationNumber": [
-                  "1020250105863"
+                  "1020250099409"
                 ],
                 "astrtCont": [
-                  "본 발명은 팩, 온팩, 냉팩, 커피, 커피찌꺼기, 기저귀, 불가사리, 폐기물, 폐자재, 부산물; 이들이 재활용되는 재료, 자재, 몰탈, 시멘트, 레미콘, 아스콘, 콘크리트; 상기가 이용되는 공사, 건설, 건축, 조경, 방법, 공법, 방안; 등에 관한 것이다."
+                  "본 발명은 입력 및 회전부하 모듈, 및 입력 장치에 관한 것이다. 본 발명에 따른 입력 및 회전부하 모듈은, 회전부하 장치에 입력 장치가 연결된 입력 및 회전부하 모듈로서, 상기 입력 장치는, 바디부; 및 상기 바디부 내에 배치되고 가압에 대해 복원력을 제공하는 탄성부;를 포함하고, 상기 회전부하 장치의 샤프트에 상기 입력 장치가 연결되어 회전가능하며, 상기 입력 장치의 상기 바디부를 가압하여 입력 신호를 생성할 수 있는 것을 특징으로 한다."
                 ],
                 "bigDrawing": [
-                  ""
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c9301e5fd02ecca54298a1e10f42a53c63f69c10f10cdfdb6a98dd857b40d9b0b5a1d7e6a6bef31d00023dcd269d81a88bf3750bbf6683c1097"
                 ],
                 "drawing": [
-                  ""
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfe8b26345af8682ec64eb382e37d67076bd62c804cce8c5df46bee1d13cc97f218679e45e408421e202eb1213f4aa4de37d4807adc6ed080a"
                 ],
                 "indexNo": [
-                  "7"
+                  "6"
                 ],
                 "inventionTitle": [
-                  "팩, 커피, 기저귀, 부산물, 불가사리가 이용되는 공사 재료, 자재, 방법"
+                  "입력 및 회전부하 모듈, 및 입력 장치"
                 ],
                 "ipcNumber": [
-                  "B09B 3/30|B09B 5/00|E04G 21/02"
+                  "H01H 25/06|H01H 19/28|H01H 19/08|H01H 36/00"
                 ],
                 "openDate": [
-                  "20250818"
+                  "20250807"
                 ],
                 "openNumber": [
-                  "1020250123742"
+                  "1020250119501"
                 ],
                 "publicationDate": [
                   ""
@@ -397,7 +347,7 @@
                   "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfafcbc342afaea4d579fa5122f6d4d05b386014e8a76df56e1a46d13c3b54d22d5342d89b3d088ee9453582923c5645f35f71903bd918519f"
                 ],
                 "indexNo": [
-                  "8"
+                  "7"
                 ],
                 "inventionTitle": [
                   "로봇, 공사로봇, 건설로봇, 작업로봇, 크리닝로봇"
@@ -410,6 +360,106 @@
                 ],
                 "openNumber": [
                   "1020250117335"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "쿠팡 주식회사"
+                ],
+                "applicationDate": [
+                  "20250630"
+                ],
+                "applicationNumber": [
+                  "1020250086687"
+                ],
+                "astrtCont": [
+                  "전자 장치의 아이템 추천 방법이 개시된다. 아이템 추천 방법은, 적어도 하나의 아이템을 포함하는 카트 페이지를 표시하는 단계; 상기 카트 페이지에 표시된 상기 적어도 하나의 아이템과 관련된 다른 적어도 하나의 아이템을 포함하는 복수의 위젯을 기 설정된 영역에 표시하는 추천 페이지를 표시하는 단계; 상기 카트 페이지 또는 상기 추천 페이지에서 사용자가 선택한 아이템에 대한 결제와 관련된 정보를 포함하는 결제 페이지를 표시하는 단계를 포함할 수 있다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c9366f162581ea5e2a3a15a2eebc96d6f6f9df195c76c69432a31e78bf31b334875126741f25253606f72a6f17a1eba8a87a2dfad36435f783a"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf10656c342785203d9066def9196b6c2cafe2f634c0df9e780c9918f2592f586434d53221e4bf0f1472f8212f060cf74947609627f3a1e04a"
+                ],
+                "indexNo": [
+                  "8"
+                ],
+                "inventionTitle": [
+                  "전자 장치 및 그의 아이템 추천 방법"
+                ],
+                "ipcNumber": [
+                  "G06Q 30/0601|G06F 3/0481"
+                ],
+                "openDate": [
+                  "20250715"
+                ],
+                "openNumber": [
+                  "1020250108562"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "가톨릭관동대학교산학협력단"
+                ],
+                "applicationDate": [
+                  "20250620"
+                ],
+                "applicationNumber": [
+                  "1020250081636"
+                ],
+                "astrtCont": [
+                  "본 발명은 굴피나무 추출물을 유효성분으로 포함하는 혈관 석회화의 예방 또는 치료용 약학적 조성물에 관한 것으로 상기 굴피나무 추출물은 세포 독성은 없으면서 혈관세포에 칼슘이 쌓이는 것을 억제하는 효과가 있으므로 상기 용도로 유용하게 사용될 수 있다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=348aaf18c46825cf02d6c2de1c78338e49576747ae5d87330ff13fd6c4376ed101ac95c0aa9cdfd17ba216e2cad5af6ac978b3dc4f2b08382c1defa60a1973640ea89f67cfc74ad8"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfd1decb79741282ebd010c37a30f5f0586fa93480d5de4c3f5e437f5af0f0bc11bc21775f633157e33b41b3a26d496c418799d908cbdb259f"
+                ],
+                "indexNo": [
+                  "9"
+                ],
+                "inventionTitle": [
+                  "굴피나무 추출물을 포함하는 혈관 석회화의 예방 또는 치료용 조성물"
+                ],
+                "ipcNumber": [
+                  "A61K 36/52|A61P 9/00|A61P 9/14|A23L 33/105"
+                ],
+                "openDate": [
+                  "20250703"
+                ],
+                "openNumber": [
+                  "1020250100596"
                 ],
                 "publicationDate": [
                   ""
@@ -447,7 +497,7 @@
                   "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfcb0f3c0a19724e93b2e2122234cfae2af6136bb0c5b1cf62ead9c8e2ccfb3ccc15ce6d3d29c153b34d186ba86bc5256225a4d16a47b225d0"
                 ],
                 "indexNo": [
-                  "9"
+                  "10"
                 ],
                 "inventionTitle": [
                   "다목적 건조기"
@@ -479,31 +529,31 @@
               },
               {
                 "applicantName": [
-                  "쎄네스테크놀로지(주)"
+                  "주식회사 씨씨피헬스 농업회사법인"
                 ],
                 "applicationDate": [
-                  "20250604"
+                  "20250610"
                 ],
                 "applicationNumber": [
-                  "1020250072566"
+                  "1020250075186"
                 ],
                 "astrtCont": [
-                  "본 발명은 스마트팜용 다목적 로봇 플랫폼 모빌리티 및 애커만 전륜 조향장치와 스키드 조향장치를 이용한 모빌리티의 경로 추종 및 조향 방법에 관한 것으로서, 과채류의 급수, 무인 방제, 무인 방범 및 수확 등을 수행하기 위해 GNSS_RTK를 이용하여 경로를 생성하여 이동하고, 리모트 컨트롤러에 의한 원격 주행 제어에 의한 이동시 설정 경로의 추종 운행과 코너링시 조향 반경의 최소 운행이 가능한 다목적 로봇 플랫폼 모빌리티를 제공하는 데 그 목적이 있다.  이를 위하여 본 발명에 따른 스마트팜용 다목적 로봇 플랫폼 모빌리티는, 위치 정보를 수신하기 위한 GNSS RTK 안테나(110)가 구비된 차체부(100); 독립적으로 회전되는 4개의 타이어(220)를 구비하며, 차체부(100)의 하부에 구비되는 4륜 독립 구동부(200); 차체부(100)를 회전시킬 수 있도록 4륜 독립 구동부(200)의 전륜측에 구비된 전륜조향부(300); 및 차체부(100)에 구비되어 GNSS RTK 안테나(110)에서 수신된 위치 정보를 기반으로 4륜 독립 구동부(200)와 전륜조향부(300)를 제어하는 제어부(400);를 포함하는 것을 특징으로 한다."
+                  "본 발명은 영양 보존력이 우수한 흑염소 진액 조성물 제조방법에 관한 발명으로서, 구체적으로는 흑염소 진액의 제조에 앞선 흑염소 지육의 전처리 과정에서 흑염소 지육의 누린내 또는 비린내는 효과적으로 제거하면서도 영양소의 소실을 최소화하여 품질이 현저히 향상된 흑염소 진액 조성물 제조방법에 관한 것이다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d776c9acbce09a4a9e86d8acdd0f560455084c16585c2c3c41b53e70628fbcff5a7eea6d78a9dc4cb1b0a4638faa6174c84bf1cd6c22442c"
+                  ""
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf41278d8e0c9c5e5f11403e0577311c01b6ca27b162a9b147f1e84c831a47ea7f84a70be27ae9bb74e87cf96f1ac0004f5fbe4aeb86649a79"
+                  ""
                 ],
                 "indexNo": [
-                  "10"
+                  "11"
                 ],
                 "inventionTitle": [
-                  "스마트팜용 다목적 로봇 플랫폼 모빌리티 및 애커만 전륜 조향장치와 스키드 조향장치를 이용한 모빌리티의 경로 추종 및 조향 방법"
+                  "영양 성분 보존력이 우수한 흑염소 진액 조성물 제조방법"
                 ],
                 "ipcNumber": [
-                  "A01B 69/00|B62D 5/04|B62D 63/02|G05D 1/248|G05D 1/43|G05D 107/20|G05D 109/10"
+                  "A23L 13/30|A23L 19/10|A23L 5/30|A23L 5/20|A23L 13/40|A23L 5/00"
                 ],
                 "openDate": [
                   ""
@@ -512,16 +562,166 @@
                   ""
                 ],
                 "publicationDate": [
-                  "20250930"
+                  "20250828"
                 ],
                 "publicationNumber": [
                   ""
                 ],
                 "registerDate": [
-                  "20250925"
+                  "20250825"
                 ],
                 "registerNumber": [
-                  "1028666910000"
+                  "1028518400000"
+                ],
+                "registerStatus": [
+                  "등록"
+                ]
+              },
+              {
+                "applicantName": [
+                  "부산대학교 산학협력단"
+                ],
+                "applicationDate": [
+                  "20250605"
+                ],
+                "applicationNumber": [
+                  "1020250073947"
+                ],
+                "astrtCont": [
+                  "본 발명은 당뇨병 자가 관리 향상을 위한 인공지능 코칭 시스템 및 방법에 관한 것으로, 본 발명에 따른 시스템은 사용자로부터 운동 정보, 식이 정보, 약물 복용 정보, 혈당 정보, 발 관리정보를 입력받는 사용자 입력부, 사용자로부터 입력받은 정보들을 기반하여 사용자의 목표를 설정하는 목표 설정부, 목표 설정부에서 설정한 목표의 달성 여부를 주기적으로 모니터링하는 모니터링부, 및 모니터링부가 모니터링한 결과를 바탕으로 사용자에게 피드백을 주는 피드백부를 포함한다. 따라서 본 발명의 시스템 및 방법에 따르면 당뇨병 자가 관리 향상을 위하여 맞춤형 목표를 제시하고 이를 성취하도록 하며, 혈당량 정보 이외에 운동 정보, 식이 정보, 약물 복용 정보, 발 관리 등을 매일 또는 주기적으로 모니터링하고 모니터링 한 결과를 분석하여 분석 결과를 사용자에게 피드백 함으로써 당뇨병을 체계적으로 자가 관리할 수 있다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93833953af3c1afa29802eaf5f81b751ef328c6b3761cb7063875565f037465fb5bdb525b1af56f61127cc6e2649c81cc6690a78772e40303c"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf418ef51f3dcb3ca2c3f1caee473d75b3ed5c31d05433be13ef3ad004c2a3e571160b696bbbd21c7c97f4086cef9bbbf613e56477eda50083"
+                ],
+                "indexNo": [
+                  "12"
+                ],
+                "inventionTitle": [
+                  "당뇨병 자가 관리 향상을 위한 인공지능 코칭 시스템 및 방법"
+                ],
+                "ipcNumber": [
+                  "G16H 20/30|G16H 20/60|G16H 10/20|G16H 10/60|G16H 20/10|G16H 50/20|G16H 50/70|G16H 50/30|A63B 24/00|A61B 5/00|A61B 5/145"
+                ],
+                "openDate": [
+                  "20250623"
+                ],
+                "openNumber": [
+                  "1020250092143"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "주식회사 윈정보기술"
+                ],
+                "applicationDate": [
+                  "20250602"
+                ],
+                "applicationNumber": [
+                  "1020250072087"
+                ],
+                "astrtCont": [
+                  "본 발명의 일 실시예에 따른, 설비 고장 진단 및 에너지 효율화를 위한 통합 관리 방법은, 공장 현장에 설치되고, 가동 상태를 포함하는 데이터를 전송하는 복수의 관제대상으로부터 데이터를 수신하는 단계와 수신된 데이터에 기반하여, 관제대상의 기능 정보를 추출하고, 상기 가능정보에 대응되는 상기 관제대상의 동작상태를 모니터링하는 단계와 상기 모니터링 결과, 상기 관제대상의 이상징후를 판단하고, 상기 이상징후를 기초로 고장발생 시기 정보를 예측하는 단계와 상기 예측된 고장발생 시기 정보 및 추출된 상기 관제대상에 대한 기능 정보를 기초로, 상기 관제대상을 포함하는 관제대상 그룹을 생성하는 단계와 미리 학습된 인공지능 모델을 이용하여, 상기 관제대상 그룹에 속한 관제대상에 대한 제어 프로세스를 생성하는 단계와 상기 생성된 제어 프로세스를 기초로 상기 관제대상 그룹에 속한 적어도 하나의 관제대상을 제어하는 단계를 포함할 수 있다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c934103e335b430701840401fd05c49c6d090d55444764ac2cd65e49981f78bfe8687191e93e5caec7ee308afbc632f7efe9e4b34f6e66dc598"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfc25226d5de4f95cd13501a67e0881eafd2ea9f132f16c2020b9c10514ccb85138bff9fc7584659a12066b8dd69a93de978bd0d661a07e4ba"
+                ],
+                "indexNo": [
+                  "13"
+                ],
+                "inventionTitle": [
+                  "미리 학습된 인공지능 모델을 이용한 관제대상에 대한 통합 관리 방법 및 장치"
+                ],
+                "ipcNumber": [
+                  "G06Q 50/10|G06Q 50/04|G05B 23/02|G06N 3/0475|G16Y 40/20|G16Y 40/30"
+                ],
+                "openDate": [
+                  "20250612"
+                ],
+                "openNumber": [
+                  "1020250085696"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "최문희"
+                ],
+                "applicationDate": [
+                  "20250602"
+                ],
+                "applicationNumber": [
+                  "1020250072382"
+                ],
+                "astrtCont": [
+                  "본 발명은 염색 및 탈색 효과가 우수한 모발 염색용 조성물에 관한 것이다.  본 발명의 기술적 사상의 일 실시예에 따른 염색 및 탈색 효과가 우수한 모발 염색용 조성물은 제 1제와, 상기 제 1제와 혼합되어 사용되는 제 2제로 이루어지고, 상기 제 1제 및 제 2제는 1:0.8~1.2의 중량 비율로 혼합되어 사용된다.  상기한 구성에 의해 본 발명의 기술적 사상의 다양한 실시예에 의한 염색 및 탈색 효과가 우수한 모발 염색용 조성물은, 손상된 모발의 내부 섬유조직을 강화하여 건강한 모발로 회복시키고 두피를 진정시키며 피부 염증을 완화하여 모발 및 두피 건강을 개선할 수 있다."
+                ],
+                "bigDrawing": [
+                  ""
+                ],
+                "drawing": [
+                  ""
+                ],
+                "indexNo": [
+                  "14"
+                ],
+                "inventionTitle": [
+                  "염색 및 탈색 효과가 우수한 모발 염색용 조성물"
+                ],
+                "ipcNumber": [
+                  "A61K 8/9789|A61K 8/9794|A61K 8/9711|A61K 8/65|A61K 8/73|A61K 8/92|A61Q 5/10|A61Q 5/08|A61Q 5/00"
+                ],
+                "openDate": [
+                  ""
+                ],
+                "openNumber": [
+                  ""
+                ],
+                "publicationDate": [
+                  "20250721"
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  "20250715"
+                ],
+                "registerNumber": [
+                  "1028360370000"
                 ],
                 "registerStatus": [
                   "등록"
@@ -547,7 +747,7 @@
                   "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf13625c5f0dd6e1aadb88e38b732e2788c82f62e72643bfd10a5041353ade97c0f143744b4b12150d8cd5a1d23612de3bda993f108446e5ad"
                 ],
                 "indexNo": [
-                  "11"
+                  "15"
                 ],
                 "inventionTitle": [
                   "드론, 로봇 이용 진단, 계측, 측량, 감리, 모니터링 방법"
@@ -597,7 +797,7 @@
                   "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf6566e77f042b631314f0ba2ce97303deee2a3b166ba4dbeab40f86f949b0e60a224635b9b6f6c094b316561287f574b57678c647338f538a"
                 ],
                 "indexNo": [
-                  "12"
+                  "16"
                 ],
                 "inventionTitle": [
                   "드론, 로봇 이용 제초, 예초, 잔디깎기 방법"
@@ -647,7 +847,7 @@
                   "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf13625c5f0dd6e1aadb88e38b732e2788c82f62e72643bfd10a5041353ade97c0789d4d8d376a378ebb4ba55ff0dc9b4b06298da4f85b6b58"
                 ],
                 "indexNo": [
-                  "13"
+                  "17"
                 ],
                 "inventionTitle": [
                   "드론, 로봇 이용 청소, 세척, 청정, 크리닝 방법"
@@ -697,7 +897,7 @@
                   "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf13625c5f0dd6e1aadb88e38b732e2788c82f62e72643bfd10a5041353ade97c06bff764d437f7b42f90ef3d6593230cf5cc30e59f0ba51c4"
                 ],
                 "indexNo": [
-                  "14"
+                  "18"
                 ],
                 "inventionTitle": [
                   "드론, 로봇이 이용되는 제설, 제빙, 융설 방법"
@@ -747,7 +947,7 @@
                   "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf13625c5f0dd6e1aadb88e38b732e2788c82f62e72643bfd10a5041353ade97c0f1d17cc5166373dc3fd69d0db3931122bc4514f9d9cd36e2"
                 ],
                 "indexNo": [
-                  "15"
+                  "19"
                 ],
                 "inventionTitle": [
                   "로봇, 드론이 이용되는 철근콘크리트공사 방법"
@@ -797,7 +997,7 @@
                   "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf0858ab838100205eca06fc8d3d91ac11cfcb74f8a2815afc91ef38aa038ee399838b7ded0f855539b0ef478a0c64206a1c7afc3c1915b747"
                 ],
                 "indexNo": [
-                  "16"
+                  "20"
                 ],
                 "inventionTitle": [
                   "드론, 로봇 이용 제설, 제빙, 융설 방법"
@@ -847,7 +1047,7 @@
                   "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cff3a2680d1840595990e57e90bd7f5ac83965ab4fa26b720c36c14699004dfef09c25e309f64ab5fa52b6b4c5712c273c25eea6ba686bd525"
                 ],
                 "indexNo": [
-                  "17"
+                  "21"
                 ],
                 "inventionTitle": [
                   "드론, 로봇이 이용되는 시설물 진단방법"
@@ -897,7 +1097,7 @@
                   "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cff3a2680d1840595990e57e90bd7f5ac83965ab4fa26b720c36c14699004dfef0b3a326aded4245443dd25decce8a25d2e637bf5e20eadfca"
                 ],
                 "indexNo": [
-                  "18"
+                  "22"
                 ],
                 "inventionTitle": [
                   "로봇, 드론, 무인 공사, 건설, 건축, 작업 방법"
@@ -947,7 +1147,7 @@
                   "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cff3a2680d1840595990e57e90bd7f5ac83965ab4fa26b720c36c14699004dfef098c615965f8bf354723a04436ffb9a55971557de7b2f0a28"
                 ],
                 "indexNo": [
-                  "19"
+                  "23"
                 ],
                 "inventionTitle": [
                   "드론, 로봇이 이용되는 사면, 절리, 주향, 경사의 진단, 측정 방법"
@@ -997,7 +1197,7 @@
                   "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cff3a2680d1840595990e57e90bd7f5ac83965ab4fa26b720c36c14699004dfef0dd626330d8b392d61c14de1cd5a1417df45dff2006faafb7"
                 ],
                 "indexNo": [
-                  "20"
+                  "24"
                 ],
                 "inventionTitle": [
                   "드론, 로봇 이용 제초, 예초, 벌초 방법"
@@ -1029,37 +1229,37 @@
               },
               {
                 "applicantName": [
-                  "주식회사 엘로이랩"
+                  "쿠팡 주식회사"
                 ],
                 "applicationDate": [
-                  "20250515"
+                  "20250519"
                 ],
                 "applicationNumber": [
-                  "1020250063377"
+                  "1020250064416"
                 ],
                 "astrtCont": [
-                  "대상물 이송 가이드 장치 및 이를 포함하는 대상물 이송 시스템에 관해 개시되어 있다. 개시된 대상물 이송 가이드 장치는 제1 컨베이어 벨트를 포함하는 제1 컨베이어 장치의 단부에 설치되는 것으로, 상기 제1 컨베이어 벨트에 의해 이송되는 대상물 그룹이 유입되는 유입구와 상기 대상물 그룹이 배출되는 배출구를 갖는 이송 가이드 본체부, 상기 제1 컨베이어 장치의 상부에서 상기 이송 가이드 본체부의 상기 유입구 내지 그와 인접한 상기 제1 컨베이어 벨트의 영역을 향하여 제1 기체를 분사하도록 구성된 제1 기체 분사부, 및 상기 제1 컨베이어 장치의 하부 내지 그와 인접한 영역에서 상기 제1 컨베이어 벨트와 상기 이송 가이드 본체부 사이의 공간으로 제2 기체를 분사하도록 구성된 제2 기체 분사부를 포함할 수 있다."
+                  "본 발명은 아이템에 대한 리뷰 정보를 제공하는 서비스 서버에서의 정보 제공 방법으로서, 제1 아이템에 대한 리뷰 데이터를 확인하는 단계; 상기 리뷰 데이터를 기반으로 상기 제1 아이템에 대한 대표 리뷰 정보를 결정하는 단계; 상기 대표 리뷰 정보 및 상기 제1 아이템의 상세 정보를 포함하는 제1 페이지를 제공하는 단계; 상기 제1 페이지에서 상기 대표 리뷰 정보에 대응하는 제1 사용자 입력을 획득하는 단계; 및 상기 제1 사용자 입력에 따라 상기 제1 아이템에 대한 리뷰 데이터를 포함하는 제2 페이지를 제공하는 단계를 포함하는, 정보 제공 방법에 관한 것이다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93a14cbc72e9fa62090325a9162c944f70c90a37214d55cb888ba832534e54e3dee092fbd887e017c7ed965bcc823dd9a61191605b24d9cd82"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c931792d097891e809ad96b46696fb54a6604b91d111abac9142aef6c38e904f9e31caafd8eabd8d0663f3ee3bae35e7b92775b83e59f7d1022"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cffdf99049287415e974cbb0db174de9a7209a8c6e8da2a9c0d15f987b165bd5f3a9a5abed2716b3d32376574e86ab8d337cf95ee5a062fa72"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfab33cdfc523979456f36b7dc31ddcc3140e02669bc60ff5a012bc5c55417802912735192ce7253977e31d70a03a0557fe43d9973f7094eca"
                 ],
                 "indexNo": [
-                  "21"
+                  "25"
                 ],
                 "inventionTitle": [
-                  "대상물 이송 가이드 장치 및 이를 포함하는 대상물 이송 시스템"
+                  "아이템에 대한 리뷰 정보를 제공하는 방법 및 장치"
                 ],
                 "ipcNumber": [
-                  "B65G 47/52|B05B 1/20"
+                  "G06Q 30/0282|G06Q 30/0201|G06Q 30/0202|G06F 40/30"
                 ],
                 "openDate": [
-                  "20250829"
+                  "20250529"
                 ],
                 "openNumber": [
-                  "1020250129594"
+                  "1020250076495"
                 ],
                 "publicationDate": [
                   ""
@@ -1075,6 +1275,56 @@
                 ],
                 "registerStatus": [
                   "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "주식회사 리스큐어바이오사이언시스"
+                ],
+                "applicationDate": [
+                  "20250516"
+                ],
+                "applicationNumber": [
+                  "1020250064028"
+                ],
+                "astrtCont": [
+                  "본 발명은 체내 요독물질 배출 또는 감소, 및 항염증 활성이 우수한 락토코커스 락티스 아종 호르드니아에 LB-P22 균주 및 이를 포함하는 만성신장질환 예방, 개선 또는 치료용 조성물에 관한 것으로, 요독물질의 흡수율이 우수하여 체내의 요독물질을 효과적으로 배출 또는 감소시킬 수 있을 뿐만 아니라, 신장 염증 및 섬유화 개선 효능이 우수하고 손상된 신장에 대하여 우수한 항산화 효과를 나타내므로, 요독물질, 특히 인독실 황산염 축적, 염증 및/또는 섬유화 증상을 동반하는 다양한 만성신장질환의 예방 또는 개선에 유용하게 활용될 수 있다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93ef07ad877c9124f5dc0d0f79dae781a4fd3129064b216acdc78ff0525736bf98df56e8e55676f68afaf5590d8d692a3fe1465afbd8353a66"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf93620285adc8d8bf658293a81502890a7d69d800ba7abfeec05c31f5603846ecf3854f8f454bd6661b8bebd441b8bb8127ee43c02b4edeeb"
+                ],
+                "indexNo": [
+                  "26"
+                ],
+                "inventionTitle": [
+                  "체내 요독물질 배출 또는 감소, 및 항염증 활성이 우수한 락토코커스 락티스 아종 호르드니아에 LB-P22 균주 및 이를 포함하는 만성신장질환 예방, 개선 또는 치료용 조성물"
+                ],
+                "ipcNumber": [
+                  "C12N 1/20|A23L 33/135|A61K 35/74|A23K 10/16|A61P 13/12|C12R 1/46"
+                ],
+                "openDate": [
+                  ""
+                ],
+                "openNumber": [
+                  ""
+                ],
+                "publicationDate": [
+                  "20250911"
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  "20250905"
+                ],
+                "registerNumber": [
+                  "1028578120000"
+                ],
+                "registerStatus": [
+                  "등록"
                 ]
               },
               {
@@ -1097,7 +1347,7 @@
                   "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf10add4f4d6d868b3ece15d38326421a3fd8ea08dd62366c09a249c7e2c667c87ea43fceb66886918f5bc4da11c82ab65947a0c492529ee85"
                 ],
                 "indexNo": [
-                  "22"
+                  "27"
                 ],
                 "inventionTitle": [
                   "AI·AR 기반 실시간 수산물 정보 시각화 시스템 및 방법"
@@ -1129,281 +1379,31 @@
               },
               {
                 "applicantName": [
-                  "주식회사 플랜터"
+                  "유유진"
                 ],
                 "applicationDate": [
-                  "20250501"
+                  "20250513"
                 ],
                 "applicationNumber": [
-                  "1020250057905"
+                  "1020250061738"
                 ],
                 "astrtCont": [
-                  "본 발명의 일 실시예에 따른 방법은, 금융 관리 서버는, (a) 사용자 단말의 설정 요청에 기초하여, 은행권 금액, 암호 화폐 금액, 보조 금액이 설정되는 단계, (b) 사용자 단말의 재설정 요청에 기초하여, 은행권 금액이 고정된 교환율로 보조 금액에 가감되거나, 암호 화폐 금액이 변동 교환율로 보조 금액에 가감되어, 은행권 금액, 암호 화폐 금액, 보조 금액 중 적어도 하나의 금액이 재설정되는 단계, (c) 재설정된 보조 금액을 블록체인 제n 노드 - 블록체인 네트워크와 연결되는 노드 중 적어도 하나를 의미함 - 에 제공하고 스테이킹 여부를 수신하는 단계, (c1) 금리와 재설정된 보조 금액에 기초한 이자 금액이 재설정된 보조 금액에 가산되거나, 스테이킹에 기초한 보상 금액이 블록체인 제n 노드로부터 수신되어 재설정된 보조 금액에 가산되는 단계, (c2) 가산된 보조 금액이, 사용자 단말의 이체 요청에 기초하여, 고정된 교환률로 이체나 출금 가능한 재설정된 은행권 금액에 가산되어 저장되는 단계, 를 더 포함하고, 스테이킹은, 재설정된 보조 금액에 기초하고, 고정 교환율에 따라 은행권으로 즉시 교환 가능한 보조 지분 스테이킹 및 암호 화폐 금액에 기초하되, 재설정된 보조 금액에 따라 총 지분율이 사용자 간에 상이할 수 있도록 반영된 본지분 스테이킹을 포함한다."
+                  "본 발명은 기초체온 증대 면역력 개선 효과가 우수한 흑염소 진액 조성물 및 그 제조방법에 관한 것으로서, 더욱 상세하게는 유효성분의 함량이 우수하고 특히 기초 체온의 증대 효과가 현저히 개선되어 종래 기술에 비하여 현저히 우수한 품질을 갖는 흑염소 진액 조성물 및 그 제조방법에 관한 것이다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93431a24b4618a3c869f7f95dd3d24dc667f7c75b9941c56b2de4c6f4773a26d888cd48002b39de2692ff90bcdbab0218b9429f5aef5e675de"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93bb0d2882b02f0f3dcaf6532558523174fb5b6453b879383a759c6e6981a92c3b9218754ee6408bd5ed89d3a06ae1f989a6ebd85dd1ef527d"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf2d1fbb3c52754cf565eb05afc17bbb75ed0449c2ffc664dcc96d13c6733da823c5e19954ba5cc50ea57a40990a4903155cf6c149a01aadfd"
-                ],
-                "indexNo": [
-                  "23"
-                ],
-                "inventionTitle": [
-                  "블록체인 기반 가상 화폐 이중 보상 제공 방법"
-                ],
-                "ipcNumber": [
-                  "G06Q 40/04|G06Q 40/02|G06Q 20/06|H04L 67/1097"
-                ],
-                "openDate": [
-                  "20250515"
-                ],
-                "openNumber": [
-                  "1020250067788"
-                ],
-                "publicationDate": [
-                  ""
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  ""
-                ],
-                "registerNumber": [
-                  ""
-                ],
-                "registerStatus": [
-                  "공개"
-                ]
-              },
-              {
-                "applicantName": [
-                  "다시마전복수산 영어조합법인"
-                ],
-                "applicationDate": [
-                  "20250417"
-                ],
-                "applicationNumber": [
-                  "1020250049894"
-                ],
-                "astrtCont": [
-                  "본 발명은 전복 해초 식해의 제조방법 및 그 전복 해초 식해에 관한 것으로, 더욱 상세하게는 전복을 탈각하고, 전복육과 전복 내장을 분리하는 단계와, 상기 분리된 전복육에 소금을 투입하여 염지한 후, 절단하는 단계와, 상기 분리된 전복 내장에 마늘을 포함하는 내장용 양념을 투입한 후, 가열하여 볶는 단계와, 상기 절단된 전복육에 무, 고춧가루, 액젓, 엿기름 및 메조밥을 포함하는 양념 재료를 혼합하고, 이에 상기 볶은 전복 내장을 혼합하는 단계와, 상기 혼합된 혼합물을 25~28℃에서 40~54시간 1차 발효하는 단계와, 상기 1차 발효된 발효물에 무, 해초류 및 추가 양념을 혼합하는 단계와, 상기 해초류가 혼합된 1차 발효물을 0~5℃에서 10~20일간 2차 발효하는 단계를 포함하는 것을 특징으로 한다. 본 발명에 의하면, 비린내가 전혀 없고, 풍미가 우수하며, 저장성 및 영양성이 개선된다는 장점이 있다. 아울러, 전복 내장 및 해초의 활용도를 높일 수 있다는 장점이 있다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c934b34252d898ad57cdbd874b1b392d3520959b98637990b254cc14309fd439e4b83ce4b273d7426a9aa2ec500fef76d7e59dbe797963c6031"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf71563c4f64df9002d8c31aded52d948b696bb24e6be0cd6cf9ea586a3b08a06e1b2c3e91f34b513f5e318b49b99b4829ae938bef0d5c67fb"
-                ],
-                "indexNo": [
-                  "24"
-                ],
-                "inventionTitle": [
-                  "전복 해초 식해의 제조방법 및 그 전복 해초 식해"
-                ],
-                "ipcNumber": [
-                  "A23L 17/50|A23L 17/60|A23L 27/00|A23L 2/38|A23L 17/00"
-                ],
-                "openDate": [
-                  ""
-                ],
-                "openNumber": [
-                  ""
-                ],
-                "publicationDate": [
-                  "20250522"
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  "20250514"
-                ],
-                "registerNumber": [
-                  "1028093600000"
-                ],
-                "registerStatus": [
-                  "등록"
-                ]
-              },
-              {
-                "applicantName": [
-                  "주식회사 한국산업기술원"
-                ],
-                "applicationDate": [
-                  "20250402"
-                ],
-                "applicationNumber": [
-                  "1020250042564"
-                ],
-                "astrtCont": [
-                  "본 발명은 a) 배터리, 폐배터리, ESS, 파워뱅크, 에너지저장시스템; b) 폐배터리가 이용되는 ESS, 파워뱅크; c) 이들이 이용되는 충전소, 충전기, 전기충전기; d) 이들에 전기를 공급하는 전지, 연료전지, 수소전지, 전해전지, 태양전지, 원전, 발전기, 에너지; e) 이중 하나가 이용되는 차량, 전기차, 수소차, 집, 주택, 건물, 시설, 구조물, 하우스, 아파트, 오피스텔, 주상복합; f) 이중 하나의 또는 이중 하나가 이용되는 공사, 건설, 건축, 정화, 청정, 주행, 작업, 재활용, 리사이클링; e) 상기 공사 내지 리사이클링의 방법; 등에 관한 것이다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=348aaf18c46825cf02d6c2de1c78338e546748557bac23f24c3282a7ba7357030e408e7c56dbb3dd54c7360b5cbdcb3996ae30da3c8c9f0fdc8970dba0bdf539e3ffa9d4b8012a01"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf8017d09227fd4e3940ce479bc2d7710d1be7fddbe1c5eeb59ceac1f1ecd21fb141e9156117cce5282c4693389d688b533d496134116f082d"
-                ],
-                "indexNo": [
-                  "25"
-                ],
-                "inventionTitle": [
-                  "펜트 주택, 하우스, 아파트, 오피스텔, 주상복합"
-                ],
-                "ipcNumber": [
-                  "G06Q 50/08|G06Q 50/10|A61L 9/00|G06Q 50/00|B64U 20/87|G16Y 10/80|B25J 11/00|G06T 19/00|G06Q 50/16|G06Q 20/06"
-                ],
-                "openDate": [
-                  "20250414"
-                ],
-                "openNumber": [
-                  "1020250050008"
-                ],
-                "publicationDate": [
-                  ""
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  ""
-                ],
-                "registerNumber": [
-                  ""
-                ],
-                "registerStatus": [
-                  "공개"
-                ]
-              },
-              {
-                "applicantName": [
-                  "주식회사 연프레시"
-                ],
-                "applicationDate": [
-                  "20250331"
-                ],
-                "applicationNumber": [
-                  "1020250041081"
-                ],
-                "astrtCont": [
-                  "본 발명은 전복의 조리 편의성을 개선한 손질 전복의 제조 방법에 관한 것으로, 생전복의 수확 및 세척, 내장과 껍질 분리, 전복육 가공 처리, 포장의 4단계 공정을 체계화하였다. 각 공정별로 최첨단 기술을 적용하여 전복의 신선도와 품질을 향상시켰으며, 특히 초음파 진동을 이용한 껍질 분리 기술, 정밀 워터젯을 활용한 균일 절단 기술, 효소 혼합물을 이용한 육질 연화 기술, 다층 기능성 필름과 혼합가스 충전을 활용한 포장 기술 등을 통해 제품의 품질과 유통기한을 크게 개선하였다. 본 발명을 통해 소비자는 별도의 복잡한 손질 과정 없이 즉석에서 다양한 전복 요리를 간편하게 조리할 수 있으며, 전복 특유의 풍미와 식감을 그대로 즐길 수 있게 되었다. 또한 AI 기반 품질 관리 시스템을 통해 제품의 안전성과 신뢰성을 확보하였으며, 친환경적인 생산 공정을 구축함으로써 지속가능한 발전에 기여할 수 있다."
-                ],
-                "bigDrawing": [
-                  ""
-                ],
-                "drawing": [
-                  ""
-                ],
-                "indexNo": [
-                  "26"
-                ],
-                "inventionTitle": [
-                  "조리 편의성을 개선한 손질 전복의 제조 공정 시스템"
-                ],
-                "ipcNumber": [
-                  "A23L 17/50|A23L 5/20|B65B 25/00|A23L 5/30|A23P 30/00"
-                ],
-                "openDate": [
-                  ""
-                ],
-                "openNumber": [
-                  ""
-                ],
-                "publicationDate": [
-                  "20250911"
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  "20250908"
-                ],
-                "registerNumber": [
-                  "1028584500000"
-                ],
-                "registerStatus": [
-                  "등록"
-                ]
-              },
-              {
-                "applicantName": [
-                  "대한민국(해양수산부 국립수산과학원장)"
-                ],
-                "applicationDate": [
-                  "20250312"
-                ],
-                "applicationNumber": [
-                  "1020250032202"
-                ],
-                "astrtCont": [
-                  "본 발명은 쏘가리 유전다양성 분석을 위한 마이크로새틀라이트 마커 및 이를 증폭하기 위한 다중 PCR 세트에 관한 것으로, 보다 상세하게는 쏘가리의 유전다양성 분석, 방류효과 조사, 유전학적 자원관리, 수산자원의 효율적인 관리, 우량 양식수산물 생산 등에 필요한 유전자 마커인 마이크로새틀라이트 DNA(microsatellite DNA; msDNA)를 증폭시켜 분석하기 위한 msDNA 분석용 프라이머 조성물, msDNA 분석용 진단키트 및 다중(multiplex) PCR용 프라이머 세트에 관한 것이다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93b71ad09f21cdd1549a4c4a3851caa1dc1ad279412790071207173f46907d4999bd8fb59a7c79b3dc8e4b51a39ddb16b095713c5d67f06557"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf34628d86499eb3578a897b0c6b800d8f37f5e79e73725cbadab824725ae83394d3b00e9b5da38b7f7d72d96fd71b59530fde733905e5aff1"
-                ],
-                "indexNo": [
-                  "27"
-                ],
-                "inventionTitle": [
-                  "쏘가리 유전다양성 분석을 위한 마이크로새틀라이트 마커 및 이를 증폭하기 위한 다중 PCR 세트"
-                ],
-                "ipcNumber": [
-                  "C12Q 1/6888"
-                ],
-                "openDate": [
-                  ""
-                ],
-                "openNumber": [
-                  ""
-                ],
-                "publicationDate": [
-                  "20250811"
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  "20250804"
-                ],
-                "registerNumber": [
-                  "1028437100000"
-                ],
-                "registerStatus": [
-                  "등록"
-                ]
-              },
-              {
-                "applicantName": [
-                  "주식회사 에어로썸"
-                ],
-                "applicationDate": [
-                  "20250304"
-                ],
-                "applicationNumber": [
-                  "1020250027334"
-                ],
-                "astrtCont": [
-                  "본 발명은 융복합 히트펌프시스템을 이용한 절전형 농산물 건조장치에 관련되며, 이는 건조장치의 사용 시 소비되는 전력량을 감소시키면서, 건조 환경 및 농산물의 건조 효율 향상 및 건조 용량을 확대할 수 있고, 특히, 융복합 히트펌프시스템에 의해 건조실 히팅 및 냉각을 복합적으로 실시하여 건조가 완료됨과 동시에 건조실을 냉각하여 잔류열에 의한 농작물의 추가 건조 진행을 차단하므로 건조도(함수율)를 고도로 정밀하게 제어할 수 있고, 또, 냉각된 공기에 의해 건조실이 신속하게 냉각되어, 건조완료 시점을 기준으로 단시간에 건조실 내에 농산물을 꺼내고 신규 농산물 투입작업을 수행함에 건조사이클 타임을 크게 단축할 수 있도록 융복합 히트펌프시스템(10), 건조부(20)를 포함하여 주요 구성으로 한다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c9372e4e9f57bb7e391dcceb40ecbc3d9c0e7583c090b609754cb2a534515347c3f11ee8e1eba61184d3c7c9ea0528e8a387b986590da0f487f"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfa194af4a512004490865a4cb9988b7c4a1021e1b7d3a82ff84e3335e03936433448859c3934e6d40e61a985a5a21ea21b85f01b41b2015bb"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf9be8e8790ba3fd7debb94c9db10ce0a7a35eeb56054945e203093dbff5e2cf8049bd7ceffbd396e9aa4ba3f997d21ac3f82f55ae8965f262"
                 ],
                 "indexNo": [
                   "28"
                 ],
                 "inventionTitle": [
-                  "융복합 히트펌프시스템을 이용한 절전형 농산물 건조장치"
+                  "기초체온 증대 및 면역력 개선 효과가 우수한 흑염소 진액 조성물 및 그 제조방법"
                 ],
                 "ipcNumber": [
-                  "A23B 7/02|A23B 4/03|F26B 13/20|F26B 21/08|F26B 23/00"
+                  "A23L 13/30|A23L 19/10|A23L 13/40|A23L 13/20|A23L 33/105"
                 ],
                 "openDate": [
                   ""
@@ -1412,16 +1412,16 @@
                   ""
                 ],
                 "publicationDate": [
-                  "20250821"
+                  "20250709"
                 ],
                 "publicationNumber": [
                   ""
                 ],
                 "registerDate": [
-                  "20250818"
+                  "20250707"
                 ],
                 "registerNumber": [
-                  "1028489450000"
+                  "1028325690000"
                 ],
                 "registerStatus": [
                   "등록"
@@ -1429,37 +1429,37 @@
               },
               {
                 "applicantName": [
-                  "주식회사 플랜터"
+                  "리벨리온 주식회사"
                 ],
                 "applicationDate": [
-                  "20250225"
+                  "20250502"
                 ],
                 "applicationNumber": [
-                  "1020250024684"
+                  "1020250058355"
                 ],
                 "astrtCont": [
-                  "지능형 반도체는 머신 러닝, 딥 러닝, 강화학습과 같은 인공지능 알고리즘을 하드웨어 레벨에서 지원하도록 최적화된다. 이를 통해 더욱 빠른 데이터 처리와 다양한 인공지능 알고리즘을 효율적으로 수행할 수 있다. 기존 지능형 반도체의 한계는 특정 종류의 데이터에 특화되어 있어 다양한 데이터를 처리하는 데 어려움이 있으며, 전체적인 성능 향상에도 제한이 있다.  상기 목적을 달성하기 위한 본 발명의 일 실시예에 따른 실제 및 가상 반도체 성능을 비교한 속도 향상 지능형 반도체 적용 제조 시스템은, 입력 데이터를 제1 및 제2 지능형 반도체에 전달하는 데이터 스위치, 제1 및 제2 지능형 반도체에서 입력 데이터의 처리된 데이터를 비교하여, 둘 중 우수한 지능형 반도체를 선택하는 비교 및 선택 모듈, 선택된 지능형 반도체보다 더 우월한 성능의 가상으로 설계된 지능형 반도체를 모의실험하는 시뮬레이션 모듈, 선택된 지능형 반도체 및 가상으로 설계된 지능형 반도체를 각각 유사 데이터의 실제 성능과 가상 성능에 기초하여 재현 여부를 검증하는 가상 검증 모듈,을 포함하고, 시뮬레이션 모듈은, 가상 검증 모듈에 의하여 검증된 가상 성능에 기초하여, 가상으로 설계된 지능형 반도체보다 더 우월한 제2 및 제3의 가상으로 설계되는 지능형 반도체을 더 설계하고, 멀티쓰레딩(multithreading)을 기초로 병렬처리하는 가상...(이하생략)"
+                  "본 개시는 대화 히스토리를 관리하는 방법 및 시스템에 관한 것이다. 대화 히스토리를 관리하는 방법은 적어도 하나의 프로세서에 의해 수행될 수 있다. 대화 히스토리를 관리하는 방법은, 복수의 쿼리 및 복수의 쿼리에 대응하는 복수의 응답을 포함하는 복수의 쿼리-응답 쌍을 획득하는 단계, 복수의 쿼리-응답 쌍에 기초하여, 복수의 쿼리 및 복수의 응답이 맥락별로 분류되어, 복수의 맥락 그룹을 포함하는 맥락 그룹 데이터를 획득하는 단계, 복수의 쿼리-응답 쌍 이후에 수신되는 제1 쿼리를 사용자 단말로부터 수신하는 단계, 수신된 제1 쿼리에 대응하는 제1 맥락 그룹을 맥락 그룹 데이터로부터 추출하는 단계 및 제1 쿼리 및 제1 맥락 그룹을 제1 대화형 인공지능 모델에 제공하는 단계를 포함한다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93e2460cc43c4912a91bf8685861b9c93331c52d00ac433e52f5e434dd7a58142813202ed123c50d7ff86326df85fec816fac81aa522e84127"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93191078e9070af38dd45f2bab12015fc17490f276316e0007c5df671f58134f9cd55da6f8f96bdb245955138ecbdbbfbc279f41d3e10d2743"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf1a92421762e336f972b6b319cf47634e53817644d29347f4127930f535b82b75de37023d63357baaf2232fb2b139504b67feb0ddf27a74f7"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf85c8c7fe54948709fa53d1f1b8cd78a1758f1107fa96f8c556a378a289e550ddbe8635be53adb233d07eff1294342d6ab4f93387d4e36967"
                 ],
                 "indexNo": [
                   "29"
                 ],
                 "inventionTitle": [
-                  "실제 및 가상 반도체 성능을 비교한 속도 향상 지능형 반도체 적용 제조 시스템"
+                  "대화 히스토리를 관리하는 방법 및 시스템"
                 ],
                 "ipcNumber": [
-                  "G06F 30/3308|G06F 30/27|G09B 9/00"
+                  "G06F 16/3349|G06F 16/3329|G06F 16/338|G06F 16/35|G06F 16/31|G06F 16/334|G06F 40/35|G06F 40/284|G06F 18/22|G06F 18/213|G06N 20/00"
                 ],
                 "openDate": [
-                  "20250305"
+                  "20250521"
                 ],
                 "openNumber": [
-                  "1020250029862"
+                  "1020250071216"
                 ],
                 "publicationDate": [
                   ""
@@ -1479,37 +1479,37 @@
               },
               {
                 "applicantName": [
-                  "주식회사 플랜터"
+                  "박홍조"
                 ],
                 "applicationDate": [
-                  "20250225"
+                  "20250428"
                 ],
                 "applicationNumber": [
-                  "1020250024682"
+                  "1020250055120"
                 ],
                 "astrtCont": [
-                  "지능형 반도체는 머신 러닝, 딥 러닝, 강화학습과 같은 인공지능 알고리즘을 하드웨어 레벨에서 지원하도록 최적화된다. 이를 통해 더욱 빠른 데이터 처리와 다양한 인공지능 알고리즘을 효율적으로 수행할 수 있다. 기존 지능형 반도체의 한계는 특정 종류의 데이터에 특화되어 있어 다양한 데이터를 처리하는 데 어려움이 있으며, 전체적인 성능 향상에도 제한이 있다.  상기 목적을 달성하기 위한 본 발명의 일 실시예에 따른 가중치 기반 스위칭 알고리즘을 적용한 속도 개선 다목적 지능형 반도체를 포함하는 스마트 홈 시스템은, 입력 데이터를 제1 및 제2 지능형 반도체에 전달하는 데이터 스위치, 제1 및 제2 지능형 반도체에서 입력 데이터의 처리된 데이터를 비교하여, 둘 중 우수한 지능형 반도체를 선택하는 비교 및 선택 모듈, 선택된 지능형 반도체보다 더 우월한 성능의 가상으로 설계된 지능형 반도체를 모의실험하는 시뮬레이션 모듈, 선택된 지능형 반도체 및 가상으로 설계된 지능형 반도체를 각각 유사 데이터의 실제 성능과 가상 성능에 기초하여 재현 여부를 검증하는 가상 검증 모듈,을 포함하고, 시뮬레이션 모듈은, 가상 검증 모듈에 의하여 검증된 가상 성능에 기초하여, 가상으로 설계된 지능형 반도체보다 더 우월한 제2 및 제3의 가상으로 설계되는 지능형 반도체을 더 설계하고, 멀티쓰레딩(multithreading)을 기초...(이하생략)"
+                  "본 발명은 정육 조리방법에 관한 것으로, 지방이 없어 구이용으로 사용되지 않는 정육을 자동으로 얇게 썰어 구이용으로 사용할 수 있도록 하는 정육 조리방법에 관한 것이다.  이러한 본 발명은, 촙커터기 및 육절기 중 하나 이상을 포함하는 절단기 측으로 정육을 운반하는 운반단계(S1); 및 상기 절단기를 이용하여 상기 정육을 0.8 내지 3 mm 두께를 갖는 슬라이스로 절단하는 절단단계(S2);를 포함하되, 상기 절단단계(S2)는, 상기 촙커터기의 절단칼보다 전방에 배치되는 적재부 상부에 상기 정육을 배치하는 단계(S211), 상기 정육의 전방에 배치되는 이동부를 이용하여 상기 정육을 기 설정된 거리만큼 후방으로 이동시키고, 기 설정된 시간만큼 정지시키는 이동 및 정지단계(S212) 및 상기 정지단계에서 상기 절단칼을 이동시켜 상기 정육을 절단하는 단계(S213)를 포함한다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93e2460cc43c4912a91bf8685861b9c93331c52d00ac433e52f5e434dd7a581428da1b959806a5ee19f47ec6b2d7274f4a95ad1ddddff4a4ea"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93fd389e8834c6e75a57cb65babf803926fd91593631fe56c4f1f12a3b4df690df3c02f0e4af7479a95991d770cd7676a1939ab496376103e3"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf1a92421762e336f972b6b319cf47634e53817644d29347f4127930f535b82b7537017b9ced7737792d5e9f103e67289db602321d20bfe1f1"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf445854bf8f322c62178f451d6d9941679af218f76dad18f415469a1593453f9e72f64c559b8b335f7ffe8bf112f7decd58e40c0824e91f78"
                 ],
                 "indexNo": [
                   "30"
                 ],
                 "inventionTitle": [
-                  "가중치 기반 스위칭 알고리즘을 적용한 속도 개선 다목적 지능형 반도체를 포함하는 스마트 홈 시스템"
+                  "정육 조리방법"
                 ],
                 "ipcNumber": [
-                  "G06F 30/3308|G06F 30/27|G09B 9/00"
+                  "B26D 1/08|B26D 7/06|B26D 7/01|B26D 3/28|B26D 11/00|A22C 17/00|A22C 17/02"
                 ],
                 "openDate": [
-                  "20250305"
+                  "20250514"
                 ],
                 "openNumber": [
-                  "1020250029861"
+                  "1020250067106"
                 ],
                 "publicationDate": [
                   ""
@@ -1541,7 +1541,7 @@
           "1"
         ],
         "totalCount": [
-          "8388"
+          "25855"
         ]
       }
     ]

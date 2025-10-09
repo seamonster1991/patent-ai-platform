@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { 
   ChartBarIcon, 
@@ -30,6 +30,7 @@ import {
 } from '@tremor/react'
 import { useAuthStore } from '../../store/authStore'
 import { toast } from 'sonner'
+import { getUserActivityStats } from '../../lib/api'
 
 // Types
 interface ActivityStats {
@@ -43,11 +44,13 @@ interface ActivityStats {
     hour: number
     count: number
   }>
+  // Supports both detailed and aggregate daily trend
   dailyTrend: Array<{
     date: string
-    searches: number
-    reports: number
-    views: number
+    count?: number
+    searches?: number
+    reports?: number
+    views?: number
   }>
   weeklyPattern: Array<{
     day: string
@@ -66,69 +69,75 @@ export default function ActivityAnalysis() {
   const [stats, setStats] = useState<ActivityStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedPeriod, setSelectedPeriod] = useState('30d')
+  const [selectedPeriod, setSelectedPeriod] = useState('100d')
   const [dateRange, setDateRange] = useState<DateRangePickerValue>({
     from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
     to: new Date()
   })
 
-  // Mock data for development
-  const mockStats: ActivityStats = {
-    totalActivities: 156,
-    activityTypes: [
-      { activity_type: 'search', count: 45, percentage: 28.8 },
-      { activity_type: 'patent_view', count: 38, percentage: 24.4 },
-      { activity_type: 'report_generation', count: 23, percentage: 14.7 },
-      { activity_type: 'bookmark', count: 18, percentage: 11.5 },
-      { activity_type: 'login', count: 15, percentage: 9.6 },
-      { activity_type: 'page_navigation', count: 17, percentage: 10.9 }
-    ],
-    hourlyPattern: Array.from({ length: 24 }, (_, i) => ({
-      hour: i,
-      count: Math.floor(Math.random() * 20) + 1
-    })),
-    dailyTrend: Array.from({ length: 30 }, (_, i) => {
-      const date = new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000)
-      return {
-        date: date.toISOString().split('T')[0],
-        searches: Math.floor(Math.random() * 10) + 1,
-        reports: Math.floor(Math.random() * 5) + 1,
-        views: Math.floor(Math.random() * 15) + 1
-      }
-    }),
-    weeklyPattern: [
-      { day: '월', count: 25 },
-      { day: '화', count: 32 },
-      { day: '수', count: 28 },
-      { day: '목', count: 35 },
-      { day: '금', count: 30 },
-      { day: '토', count: 15 },
-      { day: '일', count: 12 }
-    ],
-    efficiencyMetrics: {
-      searchToReportConversion: 51.1,
-      viewToReportConversion: 60.5,
-      averageSessionDuration: 24.5,
-      peakActivityHour: 14
-    }
-  }
+  // Derived helpers
+  const weekdayLabels = ['일', '월', '화', '수', '목', '금', '토']
 
   useEffect(() => {
     const fetchActivityStats = async () => {
-      if (!user?.id) return
+      if (!user?.id) {
+        setError('로그인이 필요합니다. 먼저 로그인해주세요.')
+        setLoading(false)
+        return
+      }
 
       try {
         setLoading(true)
         setError(null)
 
-        // In a real app, this would be an API call
-        // const response = await fetch(`/api/dashboard/activity-stats?user_id=${user.id}&period=${selectedPeriod}`)
-        
-        // For now, use mock data
-        setTimeout(() => {
-          setStats(mockStats)
-          setLoading(false)
-        }, 1000)
+        const response = await getUserActivityStats({ userId: user.id })
+
+        if (!response.success || !response.data) {
+          throw new Error(response.error || '활동 데이터를 가져오지 못했습니다')
+        }
+
+        const data = response.data as any
+
+        // Transform API -> UI shape
+        const hourlyPattern = (data.hourlyActivityPattern || []).map((h: any) => ({
+          hour: h.hour,
+          count: h.count
+        }))
+
+        // Weekly aggregation from daily trend
+        const weeklyMap: Record<string, number> = {}
+        ;(data.dailyActivityTrend || []).forEach((d: any) => {
+          const dayIdx = new Date(d.date).getDay()
+          const dayLabel = weekdayLabels[dayIdx]
+          weeklyMap[dayLabel] = (weeklyMap[dayLabel] || 0) + (d.count || 0)
+        })
+        const weeklyPattern = weekdayLabels.map(label => ({ day: label, count: weeklyMap[label] || 0 }))
+
+        // Efficiency metrics from activity type counts
+        const typeCounts: Record<string, number> = {}
+        (data.activityTypes || []).forEach((t: any) => { typeCounts[t.activity_type] = t.count })
+        const searches = typeCounts['search'] || 0
+        const views = typeCounts['patent_view'] || 0
+        const reports = typeCounts['report_generation'] || 0
+        const efficiencyMetrics = {
+          searchToReportConversion: searches > 0 ? (reports / searches) * 100 : 0,
+          viewToReportConversion: views > 0 ? (reports / views) * 100 : 0,
+          averageSessionDuration: 0, // 서버에 세션 시간 데이터가 없으므로 0 처리
+          peakActivityHour: hourlyPattern.reduce((maxHour, cur) => cur.count > (hourlyPattern.find(h => h.hour === maxHour)?.count || 0) ? cur.hour : maxHour, 0)
+        }
+
+        const transformed: ActivityStats = {
+          totalActivities: data.totalActivities || 0,
+          activityTypes: data.activityTypes || [],
+          hourlyPattern,
+          // Use aggregate daily trend (count) when per-type data is unavailable
+          dailyTrend: (data.dailyActivityTrend || []).map((d: any) => ({ date: d.date, count: d.count })),
+          weeklyPattern,
+          efficiencyMetrics
+        }
+
+        setStats(transformed)
+        setLoading(false)
 
       } catch (error) {
         console.error('Activity stats fetch error:', error)
@@ -259,16 +268,24 @@ export default function ActivityAnalysis() {
         {/* Activity Trend Chart */}
         <Card className="mb-8 p-6">
           <Title className="text-gray-800 mb-2">일별 활동 추이</Title>
-          <Text className="text-gray-600 mb-6">검색, 리포트 생성, 특허 조회 활동 패턴</Text>
-          
-          <AreaChart
-            data={stats?.dailyTrend || []}
-            index="date"
-            categories={["searches", "reports", "views"]}
-            colors={["blue", "emerald", "orange"]}
-            yAxisWidth={40}
-            className="h-80"
-          />
+          <Text className="text-gray-600 mb-6">검색/조회/리포트 생성 또는 전체 활동 추이</Text>
+
+          {(() => {
+            const dailyData = stats?.dailyTrend || []
+            const hasDetailed = dailyData.some(d => (d.searches ?? 0) + (d.reports ?? 0) + (d.views ?? 0) > 0)
+            const categories = hasDetailed ? ["searches", "reports", "views"] : ["count"]
+            const colors = hasDetailed ? ["blue", "emerald", "orange"] : ["blue"]
+            return (
+              <AreaChart
+                data={dailyData}
+                index="date"
+                categories={categories}
+                colors={colors}
+                yAxisWidth={40}
+                className="h-80"
+              />
+            )
+          })()}
         </Card>
 
         {/* Activity Patterns */}
@@ -289,7 +306,7 @@ export default function ActivityAnalysis() {
             
             <div className="mt-4 p-3 bg-blue-50 rounded-lg">
               <Text className="text-blue-800 font-medium">
-                피크 시간: {stats?.efficiencyMetrics.peakActivityHour}시
+                피크 시간: {stats?.efficiencyMetrics.peakActivityHour ?? '-'}시
               </Text>
             </div>
           </Card>
@@ -353,7 +370,7 @@ export default function ActivityAnalysis() {
             <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
               <h4 className="font-semibold text-emerald-800 mb-2">🎯 효율성 개선 포인트</h4>
               <Text className="text-emerald-700 mb-2">
-                검색 후 리포트 생성률이 51.1%로 양호합니다. 
+                검색 후 리포트 생성률이 {stats?.efficiencyMetrics.searchToReportConversion?.toFixed(1) ?? '-'}%로 양호합니다. 
               </Text>
               <Text className="text-emerald-700">
                 특허 조회 후 리포트 생성률을 높이면 더 효율적인 분석이 가능합니다.
@@ -363,7 +380,7 @@ export default function ActivityAnalysis() {
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <h4 className="font-semibold text-blue-800 mb-2">⏰ 최적 활동 시간</h4>
               <Text className="text-blue-700 mb-2">
-                오후 2시경에 가장 활발한 활동을 보입니다.
+                오후 {stats?.efficiencyMetrics.peakActivityHour ?? '-'}시경에 가장 활발한 활동을 보입니다.
               </Text>
               <Text className="text-blue-700">
                 이 시간대에 중요한 분석 작업을 집중하는 것을 추천합니다.
@@ -383,7 +400,7 @@ export default function ActivityAnalysis() {
             <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
               <h4 className="font-semibold text-orange-800 mb-2">🚀 성장 기회</h4>
               <Text className="text-orange-700 mb-2">
-                세션 시간이 24.5분으로 적절합니다.
+                세션 시간이 {stats?.efficiencyMetrics.averageSessionDuration?.toFixed(1) ?? '-'}분으로 적절합니다.
               </Text>
               <Text className="text-orange-700">
                 북마크 기능을 더 활용하여 관심 특허를 체계적으로 관리해보세요.

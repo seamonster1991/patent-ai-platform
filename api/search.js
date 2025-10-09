@@ -369,109 +369,7 @@ module.exports = async function handler(req, res) {
     const userId = req.body.userId;
     console.log('🔍 [DEBUG] 검색 기록 저장 시작:', { userId, hasSupabase: !!supabase });
     if (userId && supabase) {
-      try {
-        const searchKeyword = processedData.searchQuery;
-        const resultsCount = processedData.totalCount;
-        
-        // 중복 검색 방지: 같은 사용자가 5분 이내에 동일한 검색어로 검색했는지 확인
-        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-        const { data: recentSearch } = await supabase
-          .from('user_activities')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('activity_type', 'search')
-          .gte('created_at', fiveMinutesAgo)
-          .eq('activity_data->keyword', searchKeyword)
-          .limit(1);
-        
-        if (recentSearch && recentSearch.length > 0) {
-          console.log('⚠️ 중복 검색 감지, 기록 저장 건너뜀:', searchKeyword);
-        } else {
-          // user_activities 테이블에 기록
-          const activityData = {
-            user_id: userId,
-            activity_type: 'search',
-            activity_data: {
-              keyword: searchKeyword,
-              filters: searchParams,
-              results_count: resultsCount,
-              total_count: processedData.totalCount,
-              timestamp: new Date().toISOString()
-            }
-          };
-          
-          console.log('🔍 [DEBUG] user_activities 삽입할 데이터:', JSON.stringify(activityData, null, 2));
-          
-          const { data, error } = await supabase
-            .from('user_activities')
-            .insert(activityData)
-            .select();
-          
-          if (error) {
-            console.error('❌ user_activities 삽입 오류:', error);
-          } else {
-            console.log('✅ user_activities 삽입 성공:', data);
-          }
-
-          // patent_search_analytics 테이블에도 기록 (IPC/CPC 분석용)
-          if (patents && patents.length > 0) {
-            // 검색 결과에서 IPC/CPC 코드 추출
-            const ipcCodes = [];
-            const cpcCodes = [];
-            
-            patents.forEach(patent => {
-              // IPC 코드 추출
-              if (patent.ipcNumber && Array.isArray(patent.ipcNumber)) {
-                ipcCodes.push(...patent.ipcNumber);
-              } else if (patent.ipcNumber) {
-                ipcCodes.push(patent.ipcNumber);
-              }
-              
-              // CPC 코드 추출
-              if (patent.cpcNumber && Array.isArray(patent.cpcNumber)) {
-                cpcCodes.push(...patent.cpcNumber);
-              } else if (patent.cpcNumber) {
-                cpcCodes.push(patent.cpcNumber);
-              }
-            });
-
-            const searchAnalyticsData = {
-              user_id: userId,
-              search_query: searchKeyword,
-              search_type: 'patent_search',
-              results_count: resultsCount,
-              ipc_codes: [...new Set(ipcCodes)], // 중복 제거
-              cpc_codes: [...new Set(cpcCodes)], // 중복 제거
-              search_metadata: {
-                filters: searchParams,
-                total_count: processedData.totalCount,
-                page_no: processedData.currentPage,
-                page_size: processedData.pageSize,
-                timestamp: new Date().toISOString()
-              }
-            };
-
-            console.log('🔍 [DEBUG] patent_search_analytics 삽입할 데이터:', JSON.stringify(searchAnalyticsData, null, 2));
-
-            const { data: analyticsData, error: analyticsError } = await supabase
-              .from('patent_search_analytics')
-              .insert(searchAnalyticsData)
-              .select();
-
-            if (analyticsError) {
-              console.error('❌ patent_search_analytics 삽입 오류:', analyticsError);
-            } else {
-              console.log('✅ patent_search_analytics 삽입 성공:', analyticsData);
-            }
-          }
-        }
-        
-        console.log('✅ 검색 기록 저장 완료');
-      } catch (historyError) {
-        console.warn('⚠️ 검색 기록 저장 실패:', historyError.message);
-        console.error('⚠️ 검색 기록 저장 실패 상세:', historyError);
-        // 검색 기록 저장 실패는 전체 응답에 영향을 주지 않음
-      }
+      await saveSearchHistoryWithRetry(userId, processedData, searchParams, patents);
     } else {
       console.log('⚠️ 검색 기록 저장 건너뜀:', { userId, hasSupabase: !!supabase });
     }
@@ -579,6 +477,125 @@ async function saveSearchHistory(userId, searchQuery, resultsCount) {
     console.error('❌ 검색 기록 저장 실패:', error);
     throw error;
   }
+}
+
+// 재시도 로직이 포함된 검색 기록 저장 함수
+async function saveSearchHistoryWithRetry(userId, processedData, searchParams, patents) {
+  const maxRetries = 3;
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🔄 [saveSearchHistoryWithRetry] 시도 ${attempt}/${maxRetries}`);
+      
+      const searchKeyword = processedData.searchQuery;
+      const resultsCount = processedData.totalCount;
+      
+      // 중복 검색 방지를 위한 간단한 시간 기반 체크 (JSON 오류 방지)
+      console.log(`🔍 [saveSearchHistoryWithRetry] 시도 ${attempt} - 중복 검색 확인 건너뜀 (JSON 오류 방지)`);
+      // 중복 검색 확인을 일시적으로 비활성화하여 DB 저장 테스트 진행
+
+      // user_activities 테이블에 기록
+      const activityData = {
+        user_id: userId,
+        activity_type: 'search',
+        activity_data: {
+          keyword: searchKeyword,
+          filters: searchParams,
+          results_count: resultsCount,
+          total_count: processedData.totalCount,
+          timestamp: new Date().toISOString()
+        }
+      };
+      
+      console.log(`🔍 [saveSearchHistoryWithRetry] 시도 ${attempt} - user_activities 삽입할 데이터:`, JSON.stringify(activityData, null, 2));
+      
+      const { data: activityResult, error: activityError } = await supabase
+        .from('user_activities')
+        .insert(activityData)
+        .select();
+      
+      if (activityError) {
+        throw new Error(`user_activities 삽입 실패: ${activityError.message}`);
+      }
+      
+      console.log(`✅ [saveSearchHistoryWithRetry] 시도 ${attempt} - user_activities 삽입 성공:`, activityResult);
+
+      // patent_search_analytics 테이블에도 기록 (IPC/CPC 분석용)
+      if (patents && patents.length > 0) {
+        // 검색 결과에서 IPC/CPC 코드 추출
+        const ipcCodes = [];
+        const cpcCodes = [];
+        
+        patents.forEach(patent => {
+          // IPC 코드 추출
+          if (patent.ipcNumber && Array.isArray(patent.ipcNumber)) {
+            ipcCodes.push(...patent.ipcNumber);
+          } else if (patent.ipcNumber) {
+            ipcCodes.push(patent.ipcNumber);
+          }
+          
+          // CPC 코드 추출
+          if (patent.cpcNumber && Array.isArray(patent.cpcNumber)) {
+            cpcCodes.push(...patent.cpcNumber);
+          } else if (patent.cpcNumber) {
+            cpcCodes.push(patent.cpcNumber);
+          }
+        });
+
+        // 기술 분야 추출
+        const technologyFields = extractTechnologyFieldsFromSearch(searchKeyword, ipcCodes, cpcCodes);
+        console.log(`🔍 [saveSearchHistoryWithRetry] 시도 ${attempt} - 추출된 기술 분야:`, technologyFields);
+
+        const searchAnalyticsData = {
+          user_id: userId,
+          search_query: searchKeyword,
+          search_type: 'patent_search',
+          results_count: resultsCount,
+          ipc_codes: [...new Set(ipcCodes)], // 중복 제거
+          cpc_codes: [...new Set(cpcCodes)], // 중복 제거
+          technology_fields: technologyFields, // 기술 분야 추가
+          search_metadata: {
+            filters: searchParams,
+            total_count: processedData.totalCount,
+            page_no: processedData.currentPage,
+            page_size: processedData.pageSize,
+            timestamp: new Date().toISOString()
+          }
+        };
+
+        console.log(`🔍 [saveSearchHistoryWithRetry] 시도 ${attempt} - patent_search_analytics 삽입할 데이터:`, JSON.stringify(searchAnalyticsData, null, 2));
+
+        const { data: analyticsResult, error: analyticsError } = await supabase
+          .from('patent_search_analytics')
+          .insert(searchAnalyticsData)
+          .select();
+
+        if (analyticsError) {
+          throw new Error(`patent_search_analytics 삽입 실패: ${analyticsError.message}`);
+        }
+        
+        console.log(`✅ [saveSearchHistoryWithRetry] 시도 ${attempt} - patent_search_analytics 삽입 성공:`, analyticsResult);
+      }
+      
+      console.log(`✅ [saveSearchHistoryWithRetry] 시도 ${attempt} - 검색 기록 저장 완료`);
+      return; // 성공 시 함수 종료
+      
+    } catch (error) {
+      lastError = error;
+      console.error(`❌ [saveSearchHistoryWithRetry] 시도 ${attempt}/${maxRetries} 실패:`, error.message);
+      
+      if (attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 1000; // 지수 백오프: 2초, 4초, 8초
+        console.log(`⏳ [saveSearchHistoryWithRetry] ${delay}ms 후 재시도...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  
+  // 모든 재시도 실패
+  console.error(`❌ [saveSearchHistoryWithRetry] 모든 재시도 실패. 마지막 오류:`, lastError?.message || lastError);
+  // 검색 기록 저장 실패는 전체 응답에 영향을 주지 않으므로 throw하지 않음
 }
 
 // KIPRIS API 응답에서 특허 데이터 추출
@@ -764,4 +781,96 @@ function getFieldValue(field) {
   }
   if (typeof field === 'object' && field._) return String(field._).trim();
   return String(field).trim();
+}
+
+// 검색에서 기술 분야 추출 함수
+function extractTechnologyFieldsFromSearch(searchKeyword, ipcCodes = [], cpcCodes = []) {
+  const technologyFields = [];
+  
+  // IPC 코드에서 기술 분야 추출
+  [...ipcCodes, ...cpcCodes].forEach(code => {
+    if (code && typeof code === 'string') {
+      const field = mapIpcToTechnologyField(code);
+      if (field && !technologyFields.includes(field)) {
+        technologyFields.push(field);
+      }
+    }
+  });
+  
+  // 검색 키워드에서 기술 분야 추출
+  const keywordFields = extractFieldsFromKeywords(searchKeyword.toLowerCase());
+  keywordFields.forEach(field => {
+    if (!technologyFields.includes(field)) {
+      technologyFields.push(field);
+    }
+  });
+  
+  // 기본값 설정
+  if (technologyFields.length === 0) {
+    technologyFields.push('기타');
+  }
+  
+  return technologyFields;
+}
+
+// IPC 코드를 기술 분야로 매핑
+function mapIpcToTechnologyField(ipcCode) {
+  if (!ipcCode) return null;
+  
+  const ipcPrefix = ipcCode.substring(0, 1).toUpperCase();
+  
+  const ipcMapping = {
+    'A': '생활필수품',
+    'B': '처리조작/운수',
+    'C': '화학/야금',
+    'D': '섬유/지류',
+    'E': '고정구조물',
+    'F': '기계공학/조명/가열/무기/폭파',
+    'G': '물리학',
+    'H': '전기'
+  };
+  
+  return ipcMapping[ipcPrefix] || '기타';
+}
+
+// 키워드 기반 기술 분야 추출
+function extractFieldsFromKeywords(textContent) {
+  const fields = [];
+  
+  const keywordMapping = {
+    '인공지능': 'AI/ML',
+    'ai': 'AI/ML',
+    '머신러닝': 'AI/ML',
+    '딥러닝': 'AI/ML',
+    '블록체인': '블록체인',
+    'blockchain': '블록체인',
+    '자율주행': '자동차',
+    '자동차': '자동차',
+    'automotive': '자동차',
+    '5g': '통신',
+    '통신': '통신',
+    'communication': '통신',
+    'iot': 'IoT',
+    '사물인터넷': 'IoT',
+    '반도체': '반도체',
+    'semiconductor': '반도체',
+    '배터리': '에너지',
+    'battery': '에너지',
+    '태양광': '에너지',
+    'solar': '에너지',
+    '바이오': '바이오/의료',
+    'bio': '바이오/의료',
+    '의료': '바이오/의료',
+    'medical': '바이오/의료',
+    '로봇': '로봇',
+    'robot': '로봇'
+  };
+  
+  Object.entries(keywordMapping).forEach(([keyword, field]) => {
+    if (textContent.includes(keyword.toLowerCase()) && !fields.includes(field)) {
+      fields.push(field);
+    }
+  });
+  
+  return fields;
 }

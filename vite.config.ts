@@ -32,7 +32,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3005',
+        // Dev proxy: forward API calls to the backend server
+        // Updated to match backend port (3001)
+        target: 'http://localhost:3001',
         changeOrigin: true,
         secure: false,
         configure: (proxy, _options) => {

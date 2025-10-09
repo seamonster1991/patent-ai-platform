@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API URL 수정 테스트</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { margin: 5px; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>API URL 수정 테스트</h1>
+    <p>VITE_API_BASE_URL: <span id="apiBaseUrl"></span></p>
+    
+    <button onclick="testHealthCheck()">Health Check 테스트</button>
+    <button onclick="testSearchAPI()">Search API 테스트</button>
+    <button onclick="testDashboardAPI()">Dashboard API 테스트</button>
+    
+    <div id="results"></div>
+
+    <script type="module">
+        // API 모듈 import
+        import { getApiUrl, apiGet, apiPost } from './src/lib/api.ts';
+        
+        // 전역 함수로 설정
+        window.getApiUrl = getApiUrl;
+        window.apiGet = apiGet;
+        window.apiPost = apiPost;
+        
+        // 환경변수 표시
+        document.getElementById('apiBaseUrl').textContent = import.meta.env.VITE_API_BASE_URL || '설정되지 않음';
+        
+        // 테스트 함수들을 전역으로 설정
+        window.testHealthCheck = async function() {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'result';
+            
+            try {
+                const url = getApiUrl('/api/health');
+                console.log('🔗 Health Check URL:', url);
+                resultDiv.innerHTML = `<strong>Health Check URL:</strong> ${url}<br>`;
+                
+                const response = await apiGet('/api/health');
+                console.log('✅ Health Check 응답:', response);
+                
+                resultDiv.innerHTML += `<strong>응답:</strong> ${JSON.stringify(response, null, 2)}`;
+                resultDiv.className += ' success';
+            } catch (error) {
+                console.error('❌ Health Check 실패:', error);
+                resultDiv.innerHTML += `<strong>오류:</strong> ${error.message}`;
+                resultDiv.className += ' error';
+            }
+            
+            resultsDiv.appendChild(resultDiv);
+        };
+        
+        window.testSearchAPI = async function() {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'result';
+            
+            try {
+                const url = getApiUrl('/api/search');
+                console.log('🔗 Search API URL:', url);
+                resultDiv.innerHTML = `<strong>Search API URL:</strong> ${url}<br>`;
+                
+                const response = await apiPost('/api/search', { query: 'test' });
+                console.log('✅ Search API 응답:', response);
+                
+                resultDiv.innerHTML += `<strong>응답:</strong> ${JSON.stringify(response, null, 2)}`;
+                resultDiv.className += ' success';
+            } catch (error) {
+                console.error('❌ Search API 실패:', error);
+                resultDiv.innerHTML += `<strong>오류:</strong> ${error.message}`;
+                resultDiv.className += ' error';
+            }
+            
+            resultsDiv.appendChild(resultDiv);
+        };
+        
+        window.testDashboardAPI = async function() {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'result';
+            
+            try {
+                const url = getApiUrl('/api/dashboard-stats');
+                console.log('🔗 Dashboard API URL:', url);
+                resultDiv.innerHTML = `<strong>Dashboard API URL:</strong> ${url}<br>`;
+                
+                const response = await apiGet('/api/dashboard-stats?test_user_id=51c66d4c-4a2f-4079-9173-a3d92b9702ed&period=90d');
+                console.log('✅ Dashboard API 응답:', response);
+                
+                resultDiv.innerHTML += `<strong>응답:</strong> ${JSON.stringify(response, null, 2)}`;
+                resultDiv.className += ' success';
+            } catch (error) {
+                console.error('❌ Dashboard API 실패:', error);
+                resultDiv.innerHTML += `<strong>오류:</strong> ${error.message}`;
+                resultDiv.className += ' error';
+            }
+            
+            resultsDiv.appendChild(resultDiv);
+        };
+    </script>

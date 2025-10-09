@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useRef } from 'react';
 import { Toaster } from 'sonner';
 import { toast } from 'sonner';
 import Navbar from './Navbar';
@@ -11,9 +11,18 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user } = useAuthStore();
+  const toastQueueRef = useRef<Array<() => void>>([]);
   
   // 페이지 네비게이션 추적 활성화
   usePageTracking();
+
+  // 토스트를 안전하게 처리하는 함수
+  const safeToast = useCallback((toastFn: () => void) => {
+    // 다음 렌더링 사이클에서 실행
+    requestAnimationFrame(() => {
+      toastFn();
+    });
+  }, []);
 
   // 이벤트 핸들러를 useCallback으로 메모이제이션
   const handleReportGenerated = useCallback((event: CustomEvent) => {
@@ -38,13 +47,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           eventTimestamp: event.detail.timestamp
         });
         
-        // 안전한 toast 호출 - setTimeout 사용
-        setTimeout(() => {
+        // 안전한 toast 호출 - requestAnimationFrame 사용
+        safeToast(() => {
           toast.success(`${event.detail.reportType} 리포트가 생성되었습니다!`, {
             description: `특허: ${event.detail.patentNumber}`,
             duration: 5000,
           });
-        }, 0);
+        });
         
         // 항상 dashboardRefresh 이벤트 발생 (현재 페이지와 관계없이)
         console.log('🌐 [Layout] dashboardRefresh 이벤트 발생 준비...');
@@ -54,15 +63,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           timestamp: new Date().toISOString()
         });
         
-        const dashboardRefreshEvent = new CustomEvent('dashboardRefresh', {
-          detail: event.detail,
-          bubbles: true,
-          cancelable: true
+        // 이벤트 디스패치도 안전하게 처리
+        requestAnimationFrame(() => {
+          const dashboardRefreshEvent = new CustomEvent('dashboardRefresh', {
+            detail: event.detail,
+            bubbles: true,
+            cancelable: true
+          });
+          
+          console.log('🌐 [Layout] dashboardRefresh 이벤트 디스패치 중...');
+          const dispatched = window.dispatchEvent(dashboardRefreshEvent);
+          console.log('🌐 [Layout] dashboardRefresh 이벤트 디스패치 결과:', dispatched);
         });
-        
-        console.log('🌐 [Layout] dashboardRefresh 이벤트 디스패치 중...');
-        const dispatched = window.dispatchEvent(dashboardRefreshEvent);
-        console.log('🌐 [Layout] dashboardRefresh 이벤트 디스패치 결과:', dispatched);
         
         // 대시보드 페이지에서는 이벤트 기반 업데이트만 사용 (페이지 새로고침 제거)
         if (window.location.pathname === '/dashboard') {
@@ -71,7 +83,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       } else {
         console.warn('⚠️ [Layout] 이벤트 detail이 없습니다:', event);
       }
-    }, [user?.id]);
+    }, [user?.id, safeToast]);
 
     const handleBookmarkAdded = useCallback((event: CustomEvent) => {
       console.log('🚨 [Layout] ===== 전역 북마크 추가 이벤트 감지 =====');
@@ -82,24 +94,27 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         windowLocation: window.location.pathname
       });
       
-      // 안전한 toast 호출 - setTimeout 사용
-      setTimeout(() => {
+      // 안전한 toast 호출 - requestAnimationFrame 사용
+      safeToast(() => {
         toast.success('북마크가 추가되었습니다!');
-      }, 0);
+      });
       
       // 항상 dashboardRefresh 이벤트 발생 (현재 페이지와 관계없이)
       console.log('🌐 [Layout] dashboardRefresh 이벤트 발생 준비 (북마크)...');
       
-      const dashboardRefreshEvent = new CustomEvent('dashboardRefresh', {
-        detail: event.detail,
-        bubbles: true,
-        cancelable: true
+      // 이벤트 디스패치도 안전하게 처리
+      requestAnimationFrame(() => {
+        const dashboardRefreshEvent = new CustomEvent('dashboardRefresh', {
+          detail: event.detail,
+          bubbles: true,
+          cancelable: true
+        });
+        
+        console.log('🌐 [Layout] dashboardRefresh 이벤트 디스패치 중 (북마크)...');
+        const dispatched = window.dispatchEvent(dashboardRefreshEvent);
+        console.log('🌐 [Layout] dashboardRefresh 이벤트 디스패치 결과 (북마크):', dispatched);
       });
-      
-      console.log('🌐 [Layout] dashboardRefresh 이벤트 디스패치 중 (북마크)...');
-      const dispatched = window.dispatchEvent(dashboardRefreshEvent);
-      console.log('🌐 [Layout] dashboardRefresh 이벤트 디스패치 결과 (북마크):', dispatched);
-    }, []);
+    }, [safeToast]);
 
     // 전역 이벤트 리스너 등록
     useEffect(() => {

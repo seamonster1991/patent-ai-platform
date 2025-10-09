@@ -244,9 +244,10 @@ module.exports = async function handler(req, res) {
       try {
         console.log(`Attempt ${attempt}/${maxRetries} - Calling Gemini API (timeout: ${TIMEOUT_MS/1000}s)...`);
         
-        // Gemini API 초기화 - 사용 가능한 최신 모델 사용
+        // Gemini API 초기화 - 모델을 환경변수로 설정 가능 (기본: gemini-2.5-flash)
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+        const model = genAI.getGenerativeModel({ model: modelName });
         
         const analysisPromise = model.generateContent({
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -275,7 +276,8 @@ module.exports = async function handler(req, res) {
           length: analysisText?.length || 0,
           preview: analysisText?.substring(0, 200) + '...',
           reportType: reportType,
-          attempt: attempt
+          attempt: attempt,
+          modelUsed: modelName
         });
         
         // 🔍 DEBUG: AI 응답이 올바른 특허 정보를 사용하는지 확인
@@ -480,18 +482,49 @@ module.exports = async function handler(req, res) {
             existingReportName: existingReport.report_name
           });
           
-          return res.status(409).json({
-            success: false,
-            error: 'Duplicate report',
-            message: `이미 동일한 특허(${patentInfo.applicationNumber})에 대한 ${reportType} 분석 리포트가 존재합니다.`,
-            data: {
-              existingReportId: existingReport.id,
-              existingReportName: existingReport.report_name,
-              createdAt: existingReport.created_at,
-              applicationNumber: patentInfo.applicationNumber,
-              reportType: reportType
+          // 개발/테스트 환경에서는 기존 리포트를 삭제하고 새로 생성
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔄 개발 환경 - 기존 리포트 삭제 후 새로 생성');
+            
+            // 기존 리포트 삭제
+            const { error: deleteError } = await supabase
+              .from('ai_analysis_reports')
+              .delete()
+              .eq('id', existingReport.id);
+            
+            if (deleteError) {
+              console.error('❌ 기존 리포트 삭제 실패:', deleteError);
+            } else {
+              console.log('✅ 기존 리포트 삭제 성공');
             }
-          });
+            
+            // 관련 활동 기록도 삭제
+            const { error: activityDeleteError } = await supabase
+              .from('user_activities')
+              .delete()
+              .eq('activity_type', 'report_generate')
+              .eq('activity_data->>report_id', existingReport.id);
+            
+            if (activityDeleteError) {
+              console.warn('⚠️ 관련 활동 기록 삭제 실패:', activityDeleteError);
+            } else {
+              console.log('✅ 관련 활동 기록 삭제 성공');
+            }
+          } else {
+            // 프로덕션 환경에서는 중복 오류 반환
+            return res.status(409).json({
+              success: false,
+              error: 'Duplicate report',
+              message: `이미 동일한 특허(${patentInfo.applicationNumber})에 대한 ${reportType} 분석 리포트가 존재합니다.`,
+              data: {
+                existingReportId: existingReport.id,
+                existingReportName: existingReport.report_name,
+                createdAt: existingReport.created_at,
+                applicationNumber: patentInfo.applicationNumber,
+                reportType: reportType
+              }
+            });
+          }
         }
         
         console.log('✅ 중복 체크 통과 - 새 리포트 생성 진행');
@@ -500,15 +533,14 @@ module.exports = async function handler(req, res) {
         const technologyFields = extractTechnologyFields(patentInfo);
         console.log('🔍 [DEBUG] 추출된 기술 분야:', technologyFields);
         
-        // 리포트 타입에 따른 데이터 구조 분기
+        // 리포트 타입에 따른 데이터 구조 분기 (실제 DB 스키마에 맞게 수정)
         let insertData = {
           user_id: userId,
           application_number: patentInfo.applicationNumber,
           invention_title: patentInfo.inventionTitle, // DB 스키마에 맞는 필드명 사용
           analysis_type: reportType,
           report_name: reportName,
-          technology_fields: technologyFields, // 기술 분야 정보 추가
-          created_at: new Date().toISOString()
+          technology_fields: technologyFields // 기술 분야 추가
         };
         
         console.log('🔍 [DEBUG] 저장할 데이터 필드 확인:', {
@@ -535,65 +567,10 @@ module.exports = async function handler(req, res) {
         
         console.log('📝 저장할 데이터 (리포트 타입별 매핑 완료):', JSON.stringify(insertData, null, 2));
         
-        // 🔍 DEBUG: 저장 시도 전 로그
-        console.log('🔍 [DEBUG] ai_analysis_reports 저장 시도 시작 - 시간:', new Date().toISOString());
-        console.log('🔍 [DEBUG] 저장 데이터 요약:', {
-          user_id: insertData.user_id,
-          application_number: insertData.application_number,
-          analysis_type: insertData.analysis_type,
-          report_name: insertData.report_name
-        });
-        
-        const { data: reportRecord, error: reportError } = await supabase
-          .from('ai_analysis_reports')
-          .insert(insertData)
-          .select()
-          .single();
-        
-        // 🔍 DEBUG: 저장 시도 후 로그
-        console.log('🔍 [DEBUG] ai_analysis_reports 저장 시도 완료 - 시간:', new Date().toISOString());
-        console.log('🔍 [DEBUG] 저장 결과:', {
-          success: !reportError,
-          recordId: reportRecord?.id,
-          error: reportError?.message
-        });
-
-        if (reportError) {
-          console.error('❌ 보고서 저장 실패:', reportError);
-          console.error('❌ 보고서 저장 에러 상세:', JSON.stringify(reportError, null, 2));
-          console.error('❌ 저장 시도한 데이터:', JSON.stringify(insertData, null, 2));
-        } else {
-          savedReportId = reportRecord?.id;
-          console.log('✅ 보고서 저장 성공:', savedReportId);
-          
-          // 리포트 히스토리는 ai_analysis_reports 테이블로 통합됨
-          console.log('📋 리포트 히스토리는 ai_analysis_reports 테이블에 통합 저장됨');
-          
-          // 보고서 생성 활동 추적
-          console.log('📝 보고서 생성 활동 추적 중...');
-          const { error: reportActivityError } = await supabase
-            .from('user_activities')
-            .insert({
-              user_id: userId,
-              activity_type: 'report_generate',
-              activity_data: {
-                report_id: reportRecord.id,
-                report_type: reportType,
-                application_number: patentInfo.applicationNumber,
-                title: patentInfo.inventionTitle,
-                timestamp: new Date().toISOString()
-              }
-            });
-
-          if (reportActivityError) {
-            console.error('❌ 보고서 생성 활동 추적 실패:', reportActivityError);
-          } else {
-            console.log('✅ 보고서 생성 활동 추적 성공');
-          }
-
-          // users 테이블의 total_reports는 report_history 테이블 트리거에 의해 자동 증가됨
-          console.log('📊 users 테이블 total_reports는 트리거에 의해 자동 증가됩니다.');
-        }
+        // 재시도 로직이 포함된 DB 저장 함수 호출
+        console.log('🔄 saveReportWithRetry 함수 호출 시작...');
+        savedReportId = await saveReportWithRetry(insertData, userId, patentInfo, reportType);
+        console.log('🔍 [DEBUG] saveReportWithRetry 함수 완료 - 반환된 savedReportId:', savedReportId);
 
       } catch (trackingError) {
         console.error('❌ 데이터베이스 저장 중 오류:', trackingError);
@@ -1303,16 +1280,25 @@ function createFallbackResult(originalText, reportType, reason) {
 
 // 리포트 이름 생성 함수를 추가
 function generateReportName(patentInfo, reportType) {
-  const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD 형식
+  // 현재 날짜시간을 YYYYMMDD_HHMMSS 형식으로 생성
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  const dateTime = `${year}${month}${day}_${hours}${minutes}${seconds}`;
   
   console.log('🔍 [generateReportName] 입력 데이터:', {
     patentInfo: patentInfo,
     inventionTitle: patentInfo?.inventionTitle,
     applicationNumber: patentInfo?.applicationNumber,
-    reportType: reportType
+    reportType: reportType,
+    dateTime: dateTime
   });
   
-  // 특허 제목 정리 (특수문자 제거, 길이 제한)
+  // 특허 제목 정리 (특수문자 제거, 공백을 언더스코어로 변경, 길이 제한)
   let cleanTitle = patentInfo?.inventionTitle || '특허분석';
   
   // undefined나 null 체크
@@ -1320,17 +1306,22 @@ function generateReportName(patentInfo, reportType) {
     cleanTitle = '특허분석';
   }
   
-  cleanTitle = String(cleanTitle).replace(/[^\w\s가-힣]/g, '').trim(); // 특수문자 제거
-  if (cleanTitle.length > 30) {
-    cleanTitle = cleanTitle.substring(0, 30) + '...';
+  // 특수문자 제거하고 공백을 언더스코어로 변경
+  cleanTitle = String(cleanTitle)
+    .replace(/[^\w\s가-힣]/g, '') // 특수문자 제거
+    .replace(/\s+/g, '_') // 공백을 언더스코어로 변경
+    .trim();
+  
+  if (cleanTitle.length > 20) {
+    cleanTitle = cleanTitle.substring(0, 20);
   }
   
-  // 분석 타입 한글 변환
+  // 분석 타입 영문 변환 (요구사항에 맞게)
   const analysisTypeMap = {
-    'market': '시장분석',
-    'business': '비즈니스 인사이트'
+    'market': 'market_analysis',
+    'business': 'business_insight'
   };
-  const analysisType = analysisTypeMap[reportType] || '분석';
+  const analysisType = analysisTypeMap[reportType] || 'analysis';
   
   // 특허번호 정리
   let patentNumber = patentInfo?.applicationNumber || 'Unknown';
@@ -1338,8 +1329,8 @@ function generateReportName(patentInfo, reportType) {
     patentNumber = 'Unknown';
   }
   
-  // 형식: "특허제목 / 특허번호 / 시장분석(또는 비즈니스 인사이트) / 날짜"
-  const reportName = `${cleanTitle} / ${patentNumber} / ${analysisType} / ${currentDate}`;
+  // 새로운 형식: "(특허명)_(특허번호)_market_analysis_datetime" 또는 "(특허명)_(특허번호)_business_insight_datetime"
+  const reportName = `${cleanTitle}_${patentNumber}_${analysisType}_${dateTime}`;
   
   console.log('🔍 [generateReportName] 생성된 리포트명:', reportName);
   
@@ -1445,4 +1436,84 @@ function extractFieldsFromKeywords(textContent) {
   });
   
   return fields;
+}
+
+// 재시도 로직이 포함된 리포트 저장 함수
+async function saveReportWithRetry(insertData, userId, patentInfo, reportType) {
+  const maxRetries = 3;
+  let lastError = null;
+  let savedReportId = null;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🔄 [saveReportWithRetry] 시도 ${attempt}/${maxRetries}`);
+      
+      // 🔍 DEBUG: 저장 시도 전 로그
+      console.log(`🔍 [saveReportWithRetry] 시도 ${attempt} - ai_analysis_reports 저장 시도 시작:`, new Date().toISOString());
+      console.log(`🔍 [saveReportWithRetry] 시도 ${attempt} - 저장 데이터 요약:`, {
+        user_id: insertData.user_id,
+        application_number: insertData.application_number,
+        analysis_type: insertData.analysis_type,
+        report_name: insertData.report_name
+      });
+      
+      const { data: reportRecord, error: reportError } = await supabase
+        .from('ai_analysis_reports')
+        .insert(insertData)
+        .select()
+        .single();
+      
+      if (reportError) {
+        throw new Error(`ai_analysis_reports 삽입 실패: ${reportError.message}`);
+      }
+      
+      savedReportId = reportRecord?.id;
+      console.log(`✅ [saveReportWithRetry] 시도 ${attempt} - 보고서 저장 성공:`, savedReportId);
+      
+      // 리포트 히스토리는 ai_analysis_reports 테이블로 통합됨
+      console.log(`📋 [saveReportWithRetry] 시도 ${attempt} - 리포트 히스토리는 ai_analysis_reports 테이블에 통합 저장됨`);
+      
+      // 보고서 생성 활동 추적
+      console.log(`📝 [saveReportWithRetry] 시도 ${attempt} - 보고서 생성 활동 추적 중...`);
+      const { error: reportActivityError } = await supabase
+        .from('user_activities')
+        .insert({
+          user_id: userId,
+          activity_type: 'report_generate',
+          activity_data: {
+            report_id: reportRecord.id,
+            report_type: reportType,
+            application_number: patentInfo.applicationNumber,
+            title: patentInfo.inventionTitle,
+            timestamp: new Date().toISOString()
+          }
+        });
+
+      if (reportActivityError) {
+        throw new Error(`user_activities 삽입 실패: ${reportActivityError.message}`);
+      }
+      
+      console.log(`✅ [saveReportWithRetry] 시도 ${attempt} - 보고서 생성 활동 추적 성공`);
+      console.log(`📊 [saveReportWithRetry] 시도 ${attempt} - users 테이블 total_reports는 트리거에 의해 자동 증가됩니다.`);
+      
+      return savedReportId; // 성공 시 함수 종료
+      
+    } catch (error) {
+      lastError = error;
+      console.error(`❌ [saveReportWithRetry] 시도 ${attempt}/${maxRetries} 실패:`, error.message);
+      
+      if (attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 1000; // 지수 백오프: 2초, 4초, 8초
+        console.log(`⏳ [saveReportWithRetry] ${delay}ms 후 재시도...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  
+  // 모든 재시도 실패
+  console.error(`❌ [saveReportWithRetry] 모든 재시도 실패. 마지막 오류:`, lastError?.message || lastError);
+  console.error(`❌ [saveReportWithRetry] 저장 시도한 데이터:`, JSON.stringify(insertData, null, 2));
+  
+  // 리포트 저장 실패 시에도 리포트 생성은 계속 진행 (사용자에게 결과 제공)
+  return null;
 }

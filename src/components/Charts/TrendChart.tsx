@@ -33,18 +33,41 @@ const TrendChart: React.FC<TrendChartProps> = ({
   height = 300
 }) => {
   // Combine user and market data by date
-  const combinedData = data.map(userItem => {
-    const marketItem = marketData?.find(m => m.date === userItem.date);
+  // If user data is empty but market data exists, use market data as base
+  const baseData = data.length > 0 ? data : (marketData || []);
+  const combinedData = baseData.map(baseItem => {
+    const userItem = data.find(u => u.date === baseItem.date);
+    const marketItem = marketData?.find(m => m.date === baseItem.date);
     return {
-      date: userItem.date,
-      user: userItem[dataKey as keyof DailyData],
+      date: baseItem.date,
+      user: userItem ? userItem[dataKey as keyof DailyData] : 0,
       market: marketItem ? marketItem[dataKey as keyof DailyData] : 0,
-      formattedDate: new Date(userItem.date).toLocaleDateString('ko-KR', {
+      formattedDate: new Date(baseItem.date).toLocaleDateString('ko-KR', {
         month: 'short',
         day: 'numeric'
       })
     };
   });
+
+  // Show empty state if no data at all
+  if (combinedData.length === 0) {
+    return (
+      <Card className="p-6">
+        <div className="mb-4">
+          <Title className="text-lg font-semibold text-gray-900">{title}</Title>
+          {description && (
+            <Text className="text-sm text-gray-600 mt-1">{description}</Text>
+          )}
+        </div>
+        <div className="flex items-center justify-center h-64 text-gray-500">
+          <div className="text-center">
+            <Text className="text-sm">표시할 데이터가 없습니다</Text>
+            <Text className="text-xs mt-1">활동을 시작하면 트렌드가 표시됩니다</Text>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-6">
@@ -52,6 +75,11 @@ const TrendChart: React.FC<TrendChartProps> = ({
         <Title className="text-lg font-semibold text-gray-900">{title}</Title>
         {description && (
           <Text className="text-sm text-gray-600 mt-1">{description}</Text>
+        )}
+        {data.length === 0 && marketData && marketData.length > 0 && (
+          <Text className="text-xs text-amber-600 mt-1">
+            ⚠️ 개인 활동 데이터가 없어 시장 평균만 표시됩니다
+          </Text>
         )}
       </div>
       

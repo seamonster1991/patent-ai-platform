@@ -81,7 +81,7 @@ export default function BillingManagement() {
   const [usageCosts, setUsageCosts] = useState<UsageCost[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedPeriod, setSelectedPeriod] = useState('30d')
+  const [selectedPeriod, setSelectedPeriod] = useState('100d')
   const [processingPayment, setProcessingPayment] = useState<string | null>(null)
 
   // Mock data for development

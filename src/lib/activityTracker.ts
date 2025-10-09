@@ -23,6 +23,11 @@ export class ActivityTracker {
 
   private constructor() {}
 
+  private isRlsError(err: any) {
+    const msg = (err?.message || err?.toString() || '').toLowerCase()
+    return msg.includes('row-level security') || msg.includes('rls') || msg.includes('violates row-level security')
+  }
+
   public static getInstance(): ActivityTracker {
     if (!ActivityTracker.instance) {
       ActivityTracker.instance = new ActivityTracker()
@@ -100,8 +105,33 @@ export class ActivityTracker {
 
       if (error) {
         console.error('Failed to batch insert activities:', error)
-        // 실패한 경우 다시 큐에 추가
-        this.batchQueue.unshift(...activities)
+        if (this.isRlsError(error)) {
+          // RLS로 실패 시 RPC로 개별 삽입 시도
+          const failures: UserActivity[] = []
+          for (const act of activities) {
+            try {
+              const { error: rpcError } = await supabase.rpc('record_user_activity', {
+                p_user_id: act.user_id,
+                p_activity_type: act.activity_type,
+                p_activity_data: act.activity_data
+              })
+              if (rpcError) {
+                console.error('RPC record_user_activity failed:', rpcError)
+                failures.push(act)
+              }
+            } catch (rpcEx) {
+              console.error('RPC exception in record_user_activity:', rpcEx)
+              failures.push(act)
+            }
+          }
+          if (failures.length) {
+            // 실패한 경우 다시 큐에 추가
+            this.batchQueue.unshift(...failures)
+          }
+        } else {
+          // 기타 오류: 다시 큐에 추가
+          this.batchQueue.unshift(...activities)
+        }
       }
     } catch (error) {
       console.error('Batch activity tracking error:', error)
@@ -112,12 +142,21 @@ export class ActivityTracker {
 
   private async insertActivity(activity: UserActivity) {
     try {
-      const { error } = await supabase
-        .from('user_activities')
-        .insert(activity)
-
-      if (error) {
-        console.error('Failed to track activity:', error)
+      // 먼저 RPC로 시도 (RLS 환경에서 더 안전)
+      const { error: rpcError } = await supabase.rpc('record_user_activity', {
+        p_user_id: activity.user_id,
+        p_activity_type: activity.activity_type,
+        p_activity_data: activity.activity_data
+      })
+      if (rpcError) {
+        console.warn('RPC record_user_activity failed, fallback to direct insert:', rpcError)
+        // RPC 실패 시 직접 삽입 시도
+        const { error } = await supabase
+          .from('user_activities')
+          .insert(activity)
+        if (error) {
+          console.error('Failed to track activity:', error)
+        }
       }
     } catch (error) {
       console.error('Activity tracking error:', error)

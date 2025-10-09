@@ -17,16 +17,12 @@ app.use((req, res, next) => {
   next()
 })
 
-// API 라우트 등록
-// ES Module 기반 라우터는 CommonJS 래퍼를 통해 마운트합니다
-app.use('/api/users', require('./api/users-wrapper.js'))
-app.use('/api/admin', require('./api/admin-wrapper.js'))
-
-// CommonJS 핸들러/라우터
+// API 라우트 등록 - CommonJS 핸들러/라우터만 사용
 app.use('/api/search', require('./api/search.js'))
 app.use('/api/detail', require('./api/detail.js'))
 app.use('/api/ai-analysis', require('./api/ai-analysis.js'))
 app.use('/api/dashboard-stats', require('./api/dashboard-stats.js'))
+app.use('/api/generate-report', require('./api/generate-report.js'))
 
 // 헬스 체크 엔드포인트
 app.get('/api/health', (req, res) => {

@@ -18,6 +18,7 @@ import {
 import { useAuthStore } from '../store/authStore'
 import { activityTracker } from '../lib/activityTracker'
 import { cn } from '../lib/utils'
+import { getApiUrl } from '../lib/api'
 
 interface Report {
   id: string
@@ -93,7 +94,8 @@ export default function Reports() {
         ...(filters.endDate && { endDate: filters.endDate })
       })
 
-      const response = await fetch(`http://localhost:3005/api/users/reports?${params}`, {
+      const apiUrl = getApiUrl(`/api/users/reports?${params}`);
+      const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

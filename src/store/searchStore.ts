@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { PatentSearchResult, SearchHistory, Report } from '../lib/supabase'
 import { useAuthStore } from './authStore'
 import { ActivityTracker } from '../lib/activityTracker'
-import { searchPatents as apiSearchPatents } from '../lib/api'
+import { searchPatents as apiSearchPatents, getApiUrl } from '../lib/api'
 
 interface SearchFilters {
   // 기본 검색 필드
@@ -483,7 +483,8 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       const { user } = useAuthStore.getState()
       if (!user) return
 
-      const response = await fetch(`http://localhost:3005/api/users/search-history/${user.id}`)
+      const apiUrl = getApiUrl(`/api/users/search-history/${user.id}`);
+      const response = await fetch(apiUrl)
       const data = await response.json()
 
       if (data.success) {
@@ -501,7 +502,8 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
       const { filters } = get()
       
-      await fetch('http://localhost:3005/api/users/search-history', {
+      const apiUrl = getApiUrl('/api/users/search-history');
+      await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -525,7 +527,8 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
   generateReport: async (patentId: string, type: 'market' | 'business') => {
     try {
-      const response = await fetch('http://localhost:3005/api/reports/generate', {
+      const apiUrl = getApiUrl('/api/reports/generate');
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -567,7 +570,8 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       const { user } = useAuthStore.getState()
       if (!user) return
 
-      const response = await fetch(`http://localhost:3005/api/users/reports/${user.id}`)
+      const apiUrl = getApiUrl(`/api/users/reports/${user.id}`);
+      const response = await fetch(apiUrl)
       const data = await response.json()
 
       if (data.success) {
