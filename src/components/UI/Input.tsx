@@ -30,7 +30,6 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       'block w-full rounded-md border transition-colors duration-200',
       'focus:outline-none focus:ring-2 focus:ring-ms-olive focus:border-ms-olive',
       'disabled:opacity-50 disabled:cursor-not-allowed',
-      'direction-ltr',
       fullWidth ? 'w-full' : ''
     )
 
@@ -83,6 +82,12 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             sizeClasses[size],
             className
           )}
+          style={{
+            direction: 'ltr',
+            textAlign: 'left',
+            unicodeBidi: 'normal',
+            ...props.style
+          }}
           aria-invalid={error ? 'true' : 'false'}
           aria-describedby={[
             error ? errorId : null,

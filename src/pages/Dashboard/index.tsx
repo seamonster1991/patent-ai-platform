@@ -195,33 +195,33 @@ export default function Dashboard() {
     
     const quota = apiData?.quota_status || {}
     const eff = apiData?.efficiency_metrics || {}
-    const recentActivitiesArray = Array.isArray(apiData?.recentActivities) ? apiData.recentActivities : []
+    // API에서 recent_activities는 {reports: [], searches: []} 형태로 반환됨
+    const recentActivitiesData = apiData?.recent_activities || {}
+    const reportsArray = Array.isArray(recentActivitiesData.reports) ? recentActivitiesData.reports : []
+    const searchesArray = Array.isArray(recentActivitiesData.searches) ? recentActivitiesData.searches : []
 
-    // recentActivities에서 리포트와 검색 분리
-    const recentReports = recentActivitiesArray
-      .filter((item: any) => item.type === 'report')
-      .map((r: any, idx: number) => ({
-        id: r.id || `report-${idx}`,
-        type: 'report' as const,
-        title: r.title || r.report_name || r.invention_title || '리포트',
-        description: r.invention_title || r.description || undefined,
-        timestamp: r.timestamp || r.created_at || new Date().toISOString(),
-        metadata: { reportType: r.analysis_type || undefined }
-      }))
+    // 리포트 데이터 처리
+    const recentReports = reportsArray.map((r: any, idx: number) => ({
+      id: r.id || `report-${idx}`,
+      type: 'report' as const,
+      title: r.title || r.invention_title || '리포트',
+      description: r.invention_title || r.description || undefined,
+      timestamp: r.timestamp || r.created_at || new Date().toISOString(),
+      metadata: { reportType: r.analysis_type || undefined }
+    }))
 
-    let recentSearches = recentActivitiesArray
-      .filter((item: any) => item.type === 'search')
-      .map((s: any, idx: number) => {
-        const searchQuery = s.title || s.query || s.keyword || '검색'
-        return {
-          id: s.id || `search-${idx}`,
-          type: 'search' as const,
-          title: searchQuery,
-          description: `검색어: ${searchQuery}`,
-          timestamp: s.timestamp || s.created_at || new Date().toISOString(),
-          metadata: { searchQuery }
-        }
-      })
+    // 검색 데이터 처리
+    let recentSearches = searchesArray.map((s: any, idx: number) => {
+      const searchQuery = s.query || s.keyword || '검색'
+      return {
+        id: s.id || `search-${idx}`,
+        type: 'search' as const,
+        title: searchQuery,
+        description: `검색어: ${searchQuery}`,
+        timestamp: s.timestamp || s.created_at || new Date().toISOString(),
+        metadata: { searchQuery }
+      }
+    })
 
     // 동일 검색어 중복 제거 및 최대 5개로 제한
     if (recentSearches.length > 0) {
@@ -238,13 +238,16 @@ export default function Dashboard() {
     const searchFields = Array.isArray(apiData?.search_fields_top10) ? apiData.search_fields_top10 : []
     const reportFields = Array.isArray(apiData?.report_fields_top10) ? apiData.report_fields_top10 : []
     
+    console.log('🔍 [API 데이터] search_fields_top10:', searchFields)
+    console.log('🔍 [API 데이터] report_fields_top10:', reportFields)
+    
     // 검색 분야와 리포트 분야를 합쳐서 기술 분야 생성
     const combinedFields = [...searchFields, ...reportFields]
     const fieldMap = new Map()
     
     combinedFields.forEach((item: any) => {
       const field = item.field || item.name || '기타'
-      const count = item.count || 0
+      const count = item.search_count || item.report_count || item.count || 0
       if (fieldMap.has(field)) {
         fieldMap.set(field, fieldMap.get(field) + count)
       } else {
@@ -334,28 +337,7 @@ export default function Dashboard() {
         }
       })(),
       subscriptionPlan: quota?.subscription_plan || '정기 구독',
-      recentActivities: [
-        ...recentReports.map(report => ({
-          id: report.id,
-          type: 'report' as const,
-          title: report.title,
-          description: `${report.report_type} - ${report.status}`,
-          timestamp: report.created_at,
-          metadata: {
-            reportType: report.report_type
-          }
-        })),
-        ...recentSearches.map(search => ({
-          id: search.keyword,
-          type: 'search' as const,
-          title: search.keyword,
-          description: `검색 횟수: ${search.search_count}회`,
-          timestamp: search.last_searched,
-          metadata: {
-            searchQuery: search.keyword
-          }
-        }))
-      ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
+      recentActivities: [...recentReports, ...recentSearches].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
       technologyFields,
       // Enhanced analytics data - API 응답 구조에 맞게 수정
       searchTrends: {
@@ -373,12 +355,12 @@ export default function Dashboard() {
             console.log('⚠️ [검색 분야] 데이터가 없습니다');
             return [];
           }
-          const totalSearches = searchFields.reduce((sum: number, item: any) => sum + (item.count || 0), 0);
+          const totalSearches = searchFields.reduce((sum: number, item: any) => sum + (item.search_count || item.count || 0), 0);
           const result = searchFields.map((item: any) => ({
             field: item.field || '기타',
             ipc_code: item.ipc_code || '',
-            search_count: item.count || 0,
-            percentage: totalSearches > 0 ? Math.round((item.count || 0) / totalSearches * 100) : 0
+            search_count: item.search_count || item.count || 0,
+            percentage: item.percentage || (totalSearches > 0 ? Math.round((item.search_count || item.count || 0) / totalSearches * 100) : 0)
           }));
           console.log('✅ [검색 분야] 처리된 데이터:', result);
           return result;
@@ -404,12 +386,12 @@ export default function Dashboard() {
             console.log('⚠️ [리포트 분야] 데이터가 없습니다');
             return [];
           }
-          const totalReports = reportFields.reduce((sum: number, item: any) => sum + (item.count || 0), 0);
+          const totalReports = reportFields.reduce((sum: number, item: any) => sum + (item.report_count || item.count || 0), 0);
           const result = reportFields.map((item: any) => ({
             field: item.field || '기타',
             ipc_code: item.ipc_code || '',
-            report_count: item.count || 0,
-            percentage: totalReports > 0 ? Math.round((item.count || 0) / totalReports * 100) : 0
+            report_count: item.report_count || item.count || 0,
+            percentage: item.percentage || (totalReports > 0 ? Math.round((item.report_count || item.count || 0) / totalReports * 100) : 0)
           }));
           console.log('✅ [리포트 분야] 처리된 데이터:', result);
           return result;

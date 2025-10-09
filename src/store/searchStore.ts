@@ -333,6 +333,14 @@ export const useSearchStore = create<SearchState>((set, get) => ({
         // 활동 추적 실패는 검색 기능에 영향을 주지 않음
       }
 
+      // 검색 완료 후 대시보드 새로고침 이벤트 발생
+      try {
+        window.dispatchEvent(new CustomEvent('dashboardRefresh'))
+        console.log('🔄 [SearchStore] 대시보드 새로고침 이벤트 발생')
+      } catch (error) {
+        console.error('대시보드 새로고침 이벤트 발생 오류:', error)
+      }
+
       return { error: null }
     } catch (error) {
       console.error('🔍 [SearchStore] 검색 오류:', error)
@@ -538,6 +546,15 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       set((state) => ({
         reports: [data.data, ...state.reports]
       }))
+
+      // 리포트 생성 완료 후 대시보드 새로고침 이벤트 발생
+      try {
+        window.dispatchEvent(new CustomEvent('reportGenerated'))
+        window.dispatchEvent(new CustomEvent('dashboardRefresh'))
+        console.log('🔄 [SearchStore] 리포트 생성 완료 - 대시보드 새로고침 이벤트 발생')
+      } catch (error) {
+        console.error('대시보드 새로고침 이벤트 발생 오류:', error)
+      }
 
       return { report: data.data }
     } catch (error) {

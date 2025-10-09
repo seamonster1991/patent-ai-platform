@@ -23,26 +23,37 @@ const RecentActivity: React.FC<RecentActivityProps> = ({
 }) => {
   const [showAll, setShowAll] = useState(false);
 
-  const recentReports = recentActivities.filter(activity => activity.type === 'report');
-  const recentSearches = recentActivities.filter(activity => activity.type === 'search');
+  // Add safety checks for undefined/null recentActivities
+  const safeRecentActivities = recentActivities || [];
+  
+  const recentReports = safeRecentActivities.filter(activity => activity && activity.type === 'report');
+  const recentSearches = safeRecentActivities.filter(activity => activity && activity.type === 'search');
   const displayedReports = showAll ? recentReports : recentReports.slice(0, 5);
   const displayedSearches = showAll ? recentSearches : recentSearches.slice(0, 5);
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (!dateString) return '날짜 없음';
     
-    if (diffDays === 1) return '오늘';
-    if (diffDays === 2) return '어제';
-    if (diffDays <= 7) return `${diffDays - 1}일 전`;
-    
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '잘못된 날짜';
+      
+      const now = new Date();
+      const diffTime = Math.abs(now.getTime() - date.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 1) return '오늘';
+      if (diffDays === 2) return '어제';
+      if (diffDays <= 7) return `${diffDays - 1}일 전`;
+      
+      return date.toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return '날짜 오류';
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -96,24 +107,24 @@ const RecentActivity: React.FC<RecentActivityProps> = ({
           {displayedReports.length > 0 ? (
             displayedReports.map((report, index) => (
               <div 
-                key={report.id || index}
+                key={report?.id || `report-${index}`}
                 className="border border-gray-200 rounded-lg p-4"
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1 min-w-0">
                     <Text className="font-medium text-gray-900 truncate">
-                      {report.title || `리포트 #${index + 1}`}
+                      {report?.title || `리포트 #${index + 1}`}
                     </Text>
                     <div className="mt-1 text-xs text-gray-700">
-                      {report.description && `설명: ${report.description}`}
-                      {report.metadata?.reportType && ` · 분석 종류: ${getReportTypeText(report.metadata.reportType)}`}
+                      {report?.description && `설명: ${report.description}`}
+                      {report?.metadata?.reportType && ` · 분석 종류: ${getReportTypeText(report.metadata.reportType)}`}
                     </div>
                   </div>
                 </div>
                 
                 <div className="flex items-center text-xs text-gray-500">
                   <CalendarIcon className="h-3 w-3 mr-1" />
-                  {formatDate(report.timestamp)}
+                  {formatDate(report?.timestamp)}
                 </div>
               </div>
             ))
@@ -149,23 +160,23 @@ const RecentActivity: React.FC<RecentActivityProps> = ({
           {displayedSearches.length > 0 ? (
             displayedSearches.map((search, index) => (
               <div 
-                key={index}
+                key={search?.id || `search-${index}`}
                 className="border border-gray-200 rounded-lg p-4"
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1 min-w-0">
                     <Text className="font-medium text-gray-900">
-                      {search.title}
+                      {search?.title || '검색 기록'}
                     </Text>
                     <div className="mt-1 text-xs text-gray-700">
-                      {search.description}
+                      {search?.description || '설명 없음'}
                     </div>
                   </div>
                 </div>
                 
                 <div className="flex items-center text-xs text-gray-500">
                   <CalendarIcon className="h-3 w-3 mr-1" />
-                  {formatDate(search.timestamp)}
+                  {formatDate(search?.timestamp)}
                 </div>
               </div>
             ))

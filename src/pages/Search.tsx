@@ -426,23 +426,23 @@ export default function Search() {
                         <div>
                           <label className="block text-sm font-medium text-slate-300 mb-2">초록</label>
                           <textarea
-                            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent direction-ltr"
+                            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             placeholder="초록 내용을 입력하세요"
                             rows={3}
                             value={filters.astrtCont || ''}
                             onChange={(e) => handleFilterChange('astrtCont', e.target.value)}
-                            style={{ direction: 'ltr', textAlign: 'left' }}
+                            style={{ direction: 'ltr', textAlign: 'left', unicodeBidi: 'normal' }}
                           />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-slate-300 mb-2">청구범위</label>
                           <textarea
-                            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent direction-ltr"
+                            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             placeholder="청구범위 내용을 입력하세요"
                             rows={3}
                             value={filters.claimScope || ''}
                             onChange={(e) => handleFilterChange('claimScope', e.target.value)}
-                            style={{ direction: 'ltr', textAlign: 'left' }}
+                            style={{ direction: 'ltr', textAlign: 'left', unicodeBidi: 'normal' }}
                           />
                         </div>
                       </div>

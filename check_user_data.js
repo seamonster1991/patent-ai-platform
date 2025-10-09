@@ -44,14 +44,14 @@ async function checkUserData() {
       console.log(`총 검색 수: ${searches?.length || 0}`);
       if (searches && searches.length > 0) {
         searches.forEach((search, index) => {
-          console.log(`${index + 1}. ${search.search_query} (${search.created_at})`);
+          console.log(`${index + 1}. ${search.keyword} (${search.created_at})`);
         });
       }
     }
     
     // 3. 사용자의 리포트 확인
     const { data: reports, error: reportError } = await supabase
-      .from('reports')
+      .from('ai_analysis_reports')
       .select('*')
       .eq('user_id', testUser.id)
       .order('created_at', { ascending: false })
@@ -64,14 +64,14 @@ async function checkUserData() {
       console.log(`총 리포트 수: ${reports?.length || 0}`);
       if (reports && reports.length > 0) {
         reports.forEach((report, index) => {
-          console.log(`${index + 1}. ${report.title} (${report.created_at})`);
+          console.log(`${index + 1}. ${report.invention_title} (${report.created_at})`);
         });
       }
     }
     
     // 4. 사용자의 로그인 기록 확인
     const { data: logins, error: loginError } = await supabase
-      .from('user_activity_logs')
+      .from('user_activities')
       .select('*')
       .eq('user_id', testUser.id)
       .eq('activity_type', 'login')

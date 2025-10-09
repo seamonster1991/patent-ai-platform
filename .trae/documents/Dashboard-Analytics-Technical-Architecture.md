@@ -39,39 +39,46 @@ graph TD
 
 ## 2. Technology Description
 
-- **Frontend**: React@18 + TypeScript + Tremor UI + React Query + Tailwind CSS
-- **Backend**: Node.js + Express.js
-- **Database**: Supabase (PostgreSQL) + Custom Functions
-- **Charts**: Tremor UI Chart Components
-- **State Management**: React Query for server state, Zustand for client state
+* **Frontend**: React\@18 + TypeScript + Tremor UI + React Query + Tailwind CSS
+
+* **Backend**: Node.js + Express.js
+
+* **Database**: Supabase (PostgreSQL) + Custom Functions
+
+* **Charts**: Tremor UI Chart Components
+
+* **State Management**: React Query for server state, Zustand for client state
 
 ## 3. Route Definitions
 
-| Route | Purpose |
-|-------|---------|
-| /dashboard | 메인 대시보드 페이지, 모든 분석 차트와 지표 표시 |
-| /dashboard/analytics | 상세 분석 페이지 (향후 확장용) |
-| /api/dashboard-stats | 대시보드 통계 데이터 API 엔드포인트 |
+| Route                | Purpose                      |
+| -------------------- | ---------------------------- |
+| /dashboard           | 메인 대시보드 페이지, 모든 분석 차트와 지표 표시 |
+| /dashboard/analytics | 상세 분석 페이지 (향후 확장용)           |
+| /api/dashboard-stats | 대시보드 통계 데이터 API 엔드포인트        |
 
 ## 4. API Definitions
 
 ### 4.1 Core API
 
 대시보드 통계 조회
+
 ```
 GET /api/dashboard-stats?period={period}
 ```
 
 Request Parameters:
-| Param Name | Param Type | isRequired | Description |
-|------------|------------|------------|-------------|
-| period | string | false | 조회 기간 ('7d', '30d', '90d'), 기본값: '30d' |
+
+| Param Name | Param Type | isRequired | Description                            |
+| ---------- | ---------- | ---------- | -------------------------------------- |
+| period     | string     | false      | 조회 기간 ('7d', '30d', '90d'), 기본값: '30d' |
 
 Response:
-| Param Name | Param Type | Description |
-|------------|------------|-------------|
-| success | boolean | API 호출 성공 여부 |
-| data | DashboardStatsData | 대시보드 통계 데이터 |
+
+| Param Name | Param Type         | Description  |
+| ---------- | ------------------ | ------------ |
+| success    | boolean            | API 호출 성공 여부 |
+| data       | DashboardStatsData | 대시보드 통계 데이터  |
 
 ### 4.2 Data Types
 
@@ -133,6 +140,7 @@ interface SearchData {
 ```
 
 Example Response:
+
 ```json
 {
   "success": true,
@@ -260,6 +268,7 @@ erDiagram
 ### 6.2 Data Definition Language
 
 Enhanced Dashboard Stats Function
+
 ```sql
 -- 개선된 대시보드 통계 함수
 CREATE OR REPLACE FUNCTION get_enhanced_dashboard_stats(
@@ -303,6 +312,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 ```
 
 Indexes for Performance
+
 ```sql
 -- 성능 최적화를 위한 인덱스
 CREATE INDEX IF NOT EXISTS idx_user_activities_user_type_date 
@@ -321,6 +331,7 @@ ON search_keyword_analytics(user_id, technology_field, last_searched_at DESC);
 ## 7. Frontend Component Architecture
 
 ### 7.1 Component Hierarchy
+
 ```
 Dashboard/
 ├── index.tsx (메인 대시보드 페이지)
@@ -352,6 +363,7 @@ Dashboard/
 ```
 
 ### 7.2 Key Hooks Implementation
+
 ```typescript
 // useDashboardStats.ts
 export const useDashboardStats = (period: Period) => {
@@ -377,31 +389,48 @@ export const useChartData = (rawData: DashboardStatsData) => {
 ## 8. Performance Optimization
 
 ### 8.1 Database Optimization
-- 복합 인덱스를 통한 쿼리 성능 향상
-- CTE(Common Table Expression) 활용으로 복잡한 집계 쿼리 최적화
-- 함수 레벨 캐싱 및 SECURITY DEFINER 권한 설정
+
+* 복합 인덱스를 통한 쿼리 성능 향상
+
+* CTE(Common Table Expression) 활용으로 복잡한 집계 쿼리 최적화
+
+* 함수 레벨 캐싱 및 SECURITY DEFINER 권한 설정
 
 ### 8.2 Frontend Optimization
-- React Query를 통한 서버 상태 캐싱
-- 차트 데이터 메모이제이션
-- 컴포넌트 레벨 코드 스플리팅
-- Tremor UI의 최적화된 차트 컴포넌트 활용
+
+* React Query를 통한 서버 상태 캐싱
+
+* 차트 데이터 메모이제이션
+
+* 컴포넌트 레벨 코드 스플리팅
+
+* Tremor UI의 최적화된 차트 컴포넌트 활용
 
 ### 8.3 API Optimization
-- 응답 데이터 압축
-- 적절한 HTTP 캐시 헤더 설정
-- 에러 처리 및 폴백 데이터 제공
+
+* 응답 데이터 압축
+
+* 적절한 HTTP 캐시 헤더 설정
+
+* 에러 처리 및 폴백 데이터 제공
 
 ## 9. Security Considerations
 
 ### 9.1 Authentication
-- JWT 토큰 기반 사용자 인증
-- Supabase Auth를 통한 안전한 사용자 세션 관리
+
+* JWT 토큰 기반 사용자 인증
+
+* Supabase Auth를 통한 안전한 사용자 세션 관리
 
 ### 9.2 Authorization
-- 사용자별 데이터 접근 제한 (RLS 정책)
-- 함수 레벨 보안 (SECURITY DEFINER)
+
+* 사용자별 데이터 접근 제한 (RLS 정책)
+
+* 함수 레벨 보안 (SECURITY DEFINER)
 
 ### 9.3 Data Privacy
-- 개인 데이터와 집계 데이터 분리
-- 민감한 정보 마스킹 처리
+
+* 개인 데이터와 집계 데이터 분리
+
+* 민감한 정보 마스킹 처리
+

@@ -22,7 +22,43 @@ interface EfficiencyMetricsProps {
 const EfficiencyMetrics: React.FC<EfficiencyMetricsProps> = ({ 
   efficiencyMetrics
 }) => {
+  // Add safety checks for undefined efficiencyMetrics
+  if (!efficiencyMetrics) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="p-6">
+          <div className="text-center py-8 text-gray-500">
+            <Text>효율성 데이터를 불러오는 중...</Text>
+          </div>
+        </Card>
+        <Card className="p-6">
+          <div className="text-center py-8 text-gray-500">
+            <Text>효율성 데이터를 불러오는 중...</Text>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   const { loginEfficiency, searchConversion } = efficiencyMetrics;
+
+  // Add safety checks for individual metrics
+  if (!loginEfficiency || !searchConversion) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="p-6">
+          <div className="text-center py-8 text-gray-500">
+            <Text>효율성 데이터가 없습니다</Text>
+          </div>
+        </Card>
+        <Card className="p-6">
+          <div className="text-center py-8 text-gray-500">
+            <Text>효율성 데이터가 없습니다</Text>
+          </div>
+        </Card>
+      </div>
+    );
+  }
   const getEfficiencyColor = (rate: number) => {
     if (rate >= 30) return 'emerald';
     if (rate >= 15) return 'yellow';
@@ -53,7 +89,7 @@ const EfficiencyMetrics: React.FC<EfficiencyMetricsProps> = ({
             </Text>
           </div>
           <div className="flex items-center space-x-2">
-            {React.createElement(getEfficiencyIcon(loginEfficiency.value), {
+            {React.createElement(getEfficiencyIcon(loginEfficiency.value || 0), {
               className: `h-6 w-6 ${
                 loginEfficiency.status === 'excellent' || loginEfficiency.status === 'good' ? 'text-emerald-600' : 'text-red-600'
               }`
@@ -65,7 +101,7 @@ const EfficiencyMetrics: React.FC<EfficiencyMetricsProps> = ({
           <div>
             <div className="flex items-baseline space-x-2">
               <Metric className="text-2xl font-bold">
-                {loginEfficiency.value.toFixed(1)}%
+                {(loginEfficiency.value || 0).toFixed(1)}%
               </Metric>
               <Text className={`text-sm font-medium ${
                 loginEfficiency.status === 'excellent' || loginEfficiency.status === 'good' ? 'text-emerald-600' : 'text-red-600'
@@ -75,8 +111,8 @@ const EfficiencyMetrics: React.FC<EfficiencyMetricsProps> = ({
               </Text>
             </div>
             <ProgressBar 
-              value={Math.min(loginEfficiency.value, 100)} 
-              color={getEfficiencyColor(loginEfficiency.value)}
+              value={Math.min(loginEfficiency.value || 0, 100)} 
+              color={getEfficiencyColor(loginEfficiency.value || 0)}
               className="mt-2"
             />
           </div>
@@ -87,7 +123,7 @@ const EfficiencyMetrics: React.FC<EfficiencyMetricsProps> = ({
                 총 로그인
               </Text>
               <Text className="text-lg font-semibold text-gray-900">
-                {loginEfficiency.totalLogins.toLocaleString('ko-KR')}
+                {(loginEfficiency.totalLogins || 0).toLocaleString('ko-KR')}
               </Text>
             </div>
             <div>
@@ -95,7 +131,7 @@ const EfficiencyMetrics: React.FC<EfficiencyMetricsProps> = ({
                 생성된 리포트
               </Text>
               <Text className="text-lg font-semibold text-gray-900">
-                {loginEfficiency.reportsGenerated.toLocaleString('ko-KR')}
+                {(loginEfficiency.reportsGenerated || 0).toLocaleString('ko-KR')}
               </Text>
             </div>
           </div>
@@ -114,7 +150,7 @@ const EfficiencyMetrics: React.FC<EfficiencyMetricsProps> = ({
             </Text>
           </div>
           <div className="flex items-center space-x-2">
-            {React.createElement(getEfficiencyIcon(searchConversion.value), {
+            {React.createElement(getEfficiencyIcon(searchConversion.value || 0), {
               className: `h-6 w-6 ${
                 searchConversion.status === 'excellent' || searchConversion.status === 'good' ? 'text-emerald-600' : 'text-red-600'
               }`
@@ -126,7 +162,7 @@ const EfficiencyMetrics: React.FC<EfficiencyMetricsProps> = ({
           <div>
             <div className="flex items-baseline space-x-2">
               <Metric className="text-2xl font-bold">
-                {searchConversion.value.toFixed(1)}%
+                {(searchConversion.value || 0).toFixed(1)}%
               </Metric>
               <Text className={`text-sm font-medium ${
                 searchConversion.status === 'excellent' || searchConversion.status === 'good' ? 'text-emerald-600' : 'text-red-600'
@@ -136,8 +172,8 @@ const EfficiencyMetrics: React.FC<EfficiencyMetricsProps> = ({
               </Text>
             </div>
             <ProgressBar 
-              value={Math.min(searchConversion.value, 100)} 
-              color={getEfficiencyColor(searchConversion.value)}
+              value={Math.min(searchConversion.value || 0, 100)} 
+              color={getEfficiencyColor(searchConversion.value || 0)}
               className="mt-2"
             />
           </div>
@@ -148,7 +184,7 @@ const EfficiencyMetrics: React.FC<EfficiencyMetricsProps> = ({
                 총 검색
               </Text>
               <Text className="text-lg font-semibold text-gray-900">
-                {searchConversion.totalSearches.toLocaleString('ko-KR')}
+                {(searchConversion.totalSearches || 0).toLocaleString('ko-KR')}
               </Text>
             </div>
             <div>
@@ -156,7 +192,7 @@ const EfficiencyMetrics: React.FC<EfficiencyMetricsProps> = ({
                 생성된 리포트
               </Text>
               <Text className="text-lg font-semibold text-gray-900">
-                {searchConversion.reportsGenerated.toLocaleString('ko-KR')}
+                {(searchConversion.reportsGenerated || 0).toLocaleString('ko-KR')}
               </Text>
             </div>
           </div>
