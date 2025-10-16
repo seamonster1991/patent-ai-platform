@@ -1,8 +1,9 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { createClient } = require('@supabase/supabase-js');
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
 
 // 환경변수 로드
-require('dotenv').config();
+dotenv.config();
 
 // 간단한 메모리 캐시 (서버리스 환경에서는 제한적이지만 동일 요청 내에서는 유효)// 캐시 관리
 const analysisCache = new Map();
@@ -24,7 +25,7 @@ if (supabaseUrl && supabaseServiceKey) {
 }
 
 // 캐시 초기화 (디버깅용) - 제거됨
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   // CORS 헤더 설정
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -64,10 +65,44 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    console.log('🔍 Step 1: API 키 확인 시작');
+    console.log('🔍 Step 1: 사용자 인증 확인');
+    // Authorization 헤더에서 JWT 토큰 추출
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        error: 'Unauthorized',
+        message: 'Authorization token is required'
+      });
+    }
+
+    const token = authHeader.split(' ')[1];
+    
+    // Supabase로 사용자 인증 확인
+    if (!supabase) {
+      return res.status(500).json({
+        success: false,
+        error: 'Server configuration error',
+        message: 'Database connection not available'
+      });
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      console.error('❌ 사용자 인증 실패:', authError);
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid token',
+        message: 'Authentication failed'
+      });
+    }
+
+    console.log('✅ 사용자 인증 성공:', user.id);
+
+    console.log('🔍 Step 2: API 키 확인 시작');
     const geminiApiKey = process.env.GEMINI_API_KEY;
     
-    console.log('🔍 Step 2: 요청 데이터 파싱 시작');
+    console.log('🔍 Step 3: 요청 데이터 파싱 시작');
     const { patentData, analysisType = 'comprehensive' } = req.body;
     
     // 🔍 DEBUG: 받은 데이터 구조 상세 로깅
@@ -106,8 +141,84 @@ module.exports = async function handler(req, res) {
     console.log('- abstract 길이:', patentInfo.abstract?.length || 0);
     console.log('- claims 길이:', patentInfo.claims?.length || 0);
 
+    // 🔍 Step 4: 포인트 차감 처리
+    console.log('💰 포인트 차감 처리 시작');
+    
+    // 분석 타입에 따른 포인트 차감량 결정
+    let reportType;
+    let pointsRequired;
+    
+    if (analysisType === 'market_analysis' || analysisType === 'market') {
+      reportType = 'market_analysis';
+      pointsRequired = 400;
+    } else if (analysisType === 'business_insight' || analysisType === 'business' || analysisType === 'comprehensive') {
+      reportType = 'business_insight';
+      pointsRequired = 600;
+    } else {
+      // 기본값은 business_insight
+      reportType = 'business_insight';
+      pointsRequired = 600;
+    }
+
+    console.log(`💰 리포트 타입: ${reportType}, 필요 포인트: ${pointsRequired}`);
+
+    // 중복 요청 방지를 위한 요청 ID 생성
+    const requestId = `${user.id}_${patentInfo.applicationNumber}_${reportType}_${Date.now()}`;
+    
+    try {
+      // FEFO 포인트 차감 실행
+      const { data: deductResult, error: deductError } = await supabase
+        .rpc('deduct_points_fefo', {
+          p_user_id: user.id,
+          p_points: pointsRequired,
+          p_report_type: reportType,
+          p_request_id: requestId
+        });
+
+      if (deductError) {
+        console.error('❌ 포인트 차감 실패:', deductError);
+        
+        // 잔액 부족 오류 처리
+        if (deductError.message?.includes('insufficient') || deductError.message?.includes('부족')) {
+          return res.status(400).json({
+            success: false,
+            error: 'Insufficient points',
+            message: `포인트가 부족합니다. ${reportType === 'market_analysis' ? '시장 분석' : '비즈니스 인사이트'} 리포트 생성에는 ${pointsRequired} 포인트가 필요합니다.`,
+            requiredPoints: pointsRequired,
+            reportType: reportType
+          });
+        }
+        
+        // 중복 요청 오류 처리
+        if (deductError.message?.includes('duplicate') || deductError.message?.includes('중복')) {
+          return res.status(409).json({
+            success: false,
+            error: 'Duplicate request',
+            message: '동일한 요청이 이미 처리 중입니다. 잠시 후 다시 시도해주세요.'
+          });
+        }
+        
+        // 기타 오류
+        return res.status(500).json({
+          success: false,
+          error: 'Point deduction failed',
+          message: '포인트 차감 중 오류가 발생했습니다.'
+        });
+      }
+
+      console.log('✅ 포인트 차감 성공:', deductResult);
+      
+    } catch (error) {
+      console.error('❌ 포인트 차감 처리 중 예외 발생:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Point deduction error',
+        message: '포인트 차감 처리 중 오류가 발생했습니다.'
+      });
+    }
+
     // 🔧 DEBUGGING: 캐시 비활성화 및 Gemini API 강제 사용
-    console.log('🔧 DEBUG: Gemini API 키 상태 확인');
+    console.log('🔍 Step 5: Gemini API 키 상태 확인');
     console.log('- API 키 존재:', !!geminiApiKey);
     console.log('- API 키 길이:', geminiApiKey?.length || 0);
     console.log('- API 키 시작 부분:', geminiApiKey?.substring(0, 10) || 'N/A');
@@ -192,16 +303,21 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    console.log('🔍 Step 3: GoogleGenerativeAI 초기화 시작');
+    console.log('🔍 Step 6: GoogleGenerativeAI 초기화 시작');
     const genAI = new GoogleGenerativeAI(geminiApiKey);
     
     // JSON 출력을 위해 사용 가능한 최신 모델 사용
     // 모델 호환성 개선: 검증된 모델로 통일
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash"
+    // ⚠️ 중요: gemini-2.5-flash 모델 하드코딩 - 절대 변경 금지
+    // 이 모델은 성능과 안정성이 검증되었으므로 다른 모델로 변경하지 마세요
+    // 환경변수나 설정으로 변경할 수 없도록 완전히 하드코딩됨
+    const HARDCODED_MODEL_NAME = 'gemini-2.5-flash'; // 하드코딩된 모델명 - 변경 금지
+    
+    const model = genAI.getGenerativeModel({
+      model: HARDCODED_MODEL_NAME
     });
 
-    console.log('🔍 Step 4: 특허 정보 추출 시작');
+    console.log('🔍 Step 7: 특허 정보 추출 시작');
     // 위에서 이미 추출되었음 (키 없는 경우에도 사용하기 위해)
     // const patentInfo = extractPatentInfo(patentData);
     
@@ -727,7 +843,14 @@ function generateAnalysisPrompt(patentInfo, analysisType) {
 ${baseInfo}
 
 ## 분석 요구사항
-각 섹션은 **최소 150-200자**로 작성하고, **구체적 수치와 정량적 데이터**를 포함해야 합니다.
+각 섹션은 **최소 250-350자**로 작성하고, **구체적 수치와 정량적 데이터**를 포함해야 합니다.
+
+**⚠️ 심도있는 완전한 리포트 작성 필수:**
+- 모든 주요 섹션을 상세하게 분석하여 포함
+- 각 섹션마다 구체적인 데이터와 수치 제시
+- 실무진이 바로 활용할 수 있는 구체적 액션 아이템 포함
+- 반드시 결론 섹션까지 완성하여 완전한 분석 제공
+- 업계 벤치마크와 비교 분석 포함
 
 ### 기술 혁신 및 경쟁 우위
 #### 핵심 기술 특징
@@ -763,7 +886,7 @@ ${baseInfo}
 ${baseInfo}
 
 ## 분석 요구사항
-각 섹션은 **최소 150-200자**로 작성하고, **구체적 수치와 정량적 데이터**를 포함해야 합니다.
+각 섹션은 **최소 250-350자**로 작성하고, **구체적 수치와 정량적 데이터**를 포함해야 합니다.
 
 ### 신사업 기회
 #### 구체적인 사업 제안 (최소 2개)
@@ -818,9 +941,10 @@ ${baseInfo}
 3. **실행 가능성:** 모든 권고사항은 구체적 실행 계획과 예상 성과를 포함해야 합니다.
 
 ### 필수 출력 요구사항
-- **각 섹션 최소 300-400자:** 표면적 분석이 아닌 심층적 인사이트 제공
+- **각 섹션 최소 200-300자:** 표면적 분석이 아닌 심층적 인사이트 제공
 - **구체적 수치 포함:** 시장 규모, 성장률, 수익 전망 등 정량적 데이터 필수
 - **비교 분석:** 경쟁사, 대체 기술, 유사 사례와의 체계적 비교
+- **⚠️ 토큰 제한 내 완전한 리포트 작성:** 모든 섹션을 포함하되 간결하게 구성하여 결론까지 완성
 
 ## 기술 혁신 및 경쟁 우위 분석
 
@@ -860,6 +984,9 @@ ${baseInfo}
 - **각 섹션 최소 300-400자:** 표면적 분석이 아닌 심층적 인사이트 제공
 - **구체적 수치 포함:** 시장 규모, 성장률, 수익 전망 등 정량적 데이터 필수
 - **시나리오 모델링:** 보수적/기본/낙관적 시나리오별 분석
+- **실무 활용 가능한 액션 아이템:** 각 섹션마다 구체적 실행 방안 포함
+- **업계 벤치마크 비교:** 동종 업계 성공 사례와 비교 분석
+- **⚠️ 심도있는 완전한 리포트 작성:** 모든 섹션을 상세하게 분석하여 결론까지 완성
 
 ## 신사업 기회 발굴 및 전략 수립
 

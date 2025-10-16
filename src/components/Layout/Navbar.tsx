@@ -3,13 +3,14 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, User, LogOut, Settings, Sun, Moon, Search, FileText, CreditCard } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
+import PointBalance from '../PointBalance';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, signOut } = useAuthStore();
+  const { user, profile, signOut } = useAuthStore();
   const { isDark, toggleTheme } = useThemeStore();
 
   const handleLogout = () => {
@@ -24,7 +25,16 @@ const Navbar: React.FC = () => {
     { path: '/', label: '홈', icon: null },
     { path: '/search', label: '특허 검색', icon: Search },
     { path: '/dashboard', label: '대시보드', icon: null, requireAuth: false },
+    ...(user ? [{ path: '/billing', label: '결제정보', icon: CreditCard, requireAuth: true }] : []),
   ];
+
+  // 사용자 표시명 결정 (이름이 있으면 이름, 없으면 이메일)
+  const getUserDisplayName = () => {
+    if (profile?.name) {
+      return profile.name;
+    }
+    return user?.email || '';
+  };
 
   return (
     <nav className="bg-ms-white border-b border-ms-line sticky top-0 z-50 backdrop-blur-sm bg-opacity-95">
@@ -69,6 +79,11 @@ const Navbar: React.FC = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-2 flex-shrink-0">
+            {/* Point Balance (로그인한 사용자만) */}
+            {user && (
+              <PointBalance showDetails={false} className="mr-2" />
+            )}
+
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
@@ -86,24 +101,15 @@ const Navbar: React.FC = () => {
                   className="flex items-center space-x-2 p-2 rounded-md text-ms-secondary hover:text-ms-olive hover:bg-ms-soft transition-all duration-200"
                 >
                   <User className="w-5 h-5" />
-                  <span className="text-sm font-medium">{user.email}</span>
+                  <span className="text-sm font-medium">{getUserDisplayName()}</span>
                 </button>
 
                 {isProfileOpen && (
                   <div className="absolute right-0 mt-2 w-56 bg-ms-white border border-ms-line rounded-lg shadow-ms-lg py-2 z-50">
                     <div className="px-4 py-2 border-b border-ms-soft">
-                      <p className="text-sm font-medium text-ms-primary">{user.email}</p>
+                      <p className="text-sm font-medium text-ms-primary">{getUserDisplayName()}</p>
                       <p className="text-xs text-ms-muted">사용자</p>
                     </div>
-                    
-                    <Link
-                      to="/billing"
-                      className="flex items-center space-x-2 px-4 py-2 text-sm text-ms-secondary hover:text-ms-olive hover:bg-ms-soft transition-colors"
-                      onClick={() => setIsProfileOpen(false)}
-                    >
-                      <CreditCard className="w-4 h-4" />
-                      <span>결제정보</span>
-                    </Link>
                     
                     <Link
                       to="/profile"
@@ -193,18 +199,9 @@ const Navbar: React.FC = () => {
                 /* Mobile User Menu */
                 <div className="border-t border-ms-soft pt-4 mt-4">
                   <div className="px-4 py-2 mb-2">
-                    <p className="text-sm font-medium text-ms-primary">{user.email}</p>
+                    <p className="text-sm font-medium text-ms-primary">{getUserDisplayName()}</p>
                     <p className="text-xs text-ms-muted">사용자</p>
                   </div>
-                  
-                  <Link
-                    to="/billing"
-                    className="flex items-center space-x-3 px-4 py-3 rounded-md text-sm font-medium text-ms-secondary hover:text-ms-olive hover:bg-ms-soft transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <CreditCard className="w-4 h-4" />
-                    <span>결제정보</span>
-                  </Link>
                   
                   <Link
                     to="/profile"

@@ -489,8 +489,20 @@ export default function PatentDetail() {
       } else {
         console.error('[ERROR] AI 분석 전체 오류:', err)
         const errorMessage = err.message || 'AI 분석 생성 중 오류가 발생했습니다.'
-        setAiError(`${errorMessage}\n\n해결 방법:\n• 페이지를 새로고침 후 재시도\n• 브라우저 캐시를 삭제해보세요\n• 다른 브라우저에서 시도해보세요\n• 문제가 지속되면 관리자에게 문의하세요`)
-        toast.error(`AI 분석 생성에 실패했습니다: ${errorMessage}`)
+        
+        // 포인트 부족 에러 처리
+        if (errorMessage.includes('포인트가 부족') || errorMessage.includes('Insufficient points')) {
+          setAiError('포인트가 부족합니다. AI 분석 리포트 생성에는 600 포인트가 필요합니다.')
+          toast.error('포인트가 부족합니다. 포인트를 충전한 후 다시 시도해주세요.', {
+            action: {
+              label: '포인트 충전',
+              onClick: () => navigate('/payment')
+            }
+          })
+        } else {
+          setAiError(`${errorMessage}\n\n해결 방법:\n• 페이지를 새로고침 후 재시도\n• 브라우저 캐시를 삭제해보세요\n• 다른 브라우저에서 시도해보세요\n• 문제가 지속되면 관리자에게 문의하세요`)
+          toast.error(`AI 분석 생성에 실패했습니다: ${errorMessage}`)
+        }
       }
     } finally {
       // 로딩 해제
@@ -790,12 +802,12 @@ export default function PatentDetail() {
                     }}
                     className={`flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm whitespace-nowrap transition-all duration-200 ${
                       activeTab === tab.id
-                        ? 'border-ms-burgundy text-ms-burgundy bg-ms-burgundy/5'
-                        : 'border-transparent text-ms-text-muted hover:text-ms-text hover:border-ms-line hover:bg-ms-soft'
-                    } ${
-                      isSpecialTab
-                        ? 'border-2 border-ms-olive/30 rounded-lg px-4 py-2 bg-ms-olive/5 hover:bg-ms-olive/10 text-ms-olive'
-                        : ''
+                        ? isSpecialTab 
+                          ? 'border-2 border-red-900 text-white bg-gradient-to-r from-red-900 to-red-800 rounded-lg shadow-lg hover:shadow-xl'
+                          : 'border-ms-burgundy text-ms-burgundy bg-ms-burgundy/5'
+                        : isSpecialTab
+                          ? 'border-2 border-red-800/40 rounded-lg px-4 py-2 bg-gradient-to-r from-red-50 to-red-100 hover:from-red-100 hover:to-red-200 text-red-900 shadow-md hover:shadow-lg'
+                          : 'border-transparent text-ms-text-muted hover:text-ms-text hover:border-ms-line hover:bg-ms-soft'
                     }`}
                   >
                     <Icon className="w-4 h-4" />

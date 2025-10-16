@@ -1,9 +1,11 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './lib/chartSetup'
 import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(
-  // StrictMode 비활성화
-  <App />
+  <StrictMode>
+    <App />
+  </StrictMode>
 )

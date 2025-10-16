@@ -62,6 +62,8 @@ async function getAuthToken(): Promise<string | null> {
   }
 }
 
+
+
 /**
  * 토큰 만료 처리
  */
@@ -91,11 +93,18 @@ async function handleTokenExpiration(): Promise<void> {
   }
 }
 
+
+
 /**
- * 환경 감지 함수
+ * 환경 감지 함수 (Vercel 환경 최적화)
  */
 function detectEnvironment(): 'development' | 'production' {
   const currentHost = window.location.host;
+  
+  // Vercel 배포 환경 감지
+  if (currentHost.includes('vercel.app') || import.meta.env.VITE_APP_ENV === 'production') {
+    return 'production';
+  }
   
   // 로컬 개발 환경 감지
   if (currentHost.includes('localhost') || currentHost.includes('127.0.0.1')) {
@@ -204,7 +213,16 @@ export async function apiRequest<T = any>(
   // 인증이 필요한 요청인 경우 토큰 추가
   let authHeaders = {};
   if (requireAuth) {
-    const token = await getAuthToken();
+    // 관리자 API 요청인지 확인
+    const isAdminRequest = url.includes('/api/admin/') || url.includes('/admin/');
+    
+    let token;
+    if (isAdminRequest) {
+      token = await getAuthToken();
+    } else {
+      token = await getAuthToken();
+    }
+    
     if (!token) {
       clearTimeout(timeoutId);
       return {
@@ -238,7 +256,9 @@ export async function apiRequest<T = any>(
       if (!response.ok) {
         // 401 Unauthorized - 토큰 만료 또는 인증 실패
         if (response.status === 401 && requireAuth) {
-          console.warn('🔒 [API] 인증 실패 (401), 토큰 만료 처리');
+          console.warn('🔒 [API] 인증 실패 (401), 토큰 갱신 시도');
+          
+          // 일반 사용자 토큰 만료 처리
           await handleTokenExpiration();
           return {
             success: false,
@@ -339,7 +359,16 @@ export async function apiPut<T = any>(
 export async function searchPatents(searchParams: any): Promise<ApiResponse> {
   console.log('🔍 [API] 특허 검색 요청:', searchParams);
   
-  return apiPost(getApiUrl('/api/search'), searchParams, {
+  // userId가 searchParams에 있는지 확인하고 POST body에 포함
+  const requestBody = {
+    ...searchParams,
+    // userId가 있으면 명시적으로 포함
+    ...(searchParams.userId && { userId: searchParams.userId })
+  };
+  
+  console.log('🔍 [API] 검색 요청 body:', requestBody);
+  
+  return apiPost(getApiUrl('/api/search'), requestBody, {
     timeout: 45000, // 검색은 시간이 오래 걸릴 수 있음
     retries: 2,
     retryDelay: 2000,
@@ -830,26 +859,18 @@ export async function getCreditPackages(): Promise<ApiResponse> {
 
 export async function chargeCredits(amount: number, payment_method: 'card' | 'bank_transfer' | 'kakao_pay' = 'card'): Promise<ApiResponse> {
   try {
-    const { primary, fallback } = getApiUrlWithFallback('/api/dashboard-charge-credits');
-    try {
-      return await apiRequest(primary, {
-        method: 'POST',
-        body: JSON.stringify({ amount, payment_method }),
-        requireAuth: true,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    } catch (e) {
-      if (fallback) {
-        return await apiRequest(fallback, {
-          method: 'POST',
-          body: JSON.stringify({ amount, payment_method }),
-          requireAuth: true,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      }
-      throw e;
-    }
+    const response = await apiPost('/api/billing', {
+      amount,
+      payment_method,
+      type: 'credit_purchase'
+    });
+
+    return response;
   } catch (error) {
-    return { success: false, error: '크레딧 충전에 실패했습니다.' };
+    console.error('크레딧 충전 실패:', error);
+    return {
+      success: false,
+      error: '크레딧 충전에 실패했습니다.'
+    };
   }
 }

@@ -7,7 +7,7 @@ interface TabsContextType {
 
 const TabsContext = createContext<TabsContextType | undefined>(undefined);
 
-interface TabsProps {
+export interface TabsProps {
   children: React.ReactNode;
   defaultValue: string;
   className?: string;

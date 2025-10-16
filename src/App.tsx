@@ -1,46 +1,49 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
-import { Toaster } from "sonner";
+import { toast } from "sonner";
 import Layout from "@/components/Layout/Layout";
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
-import Search from "@/pages/Search";
-import PatentDetail from "@/pages/PatentDetail";
-import Dashboard from "@/pages/Dashboard/index";
-import DashboardActivity from "@/pages/Dashboard/Activity";
-import DashboardBilling from "@/pages/Dashboard/Billing";
-import Profile from "@/pages/Profile";
-import Billing from "@/pages/Billing";
-import AuthCallback from "@/pages/AuthCallback";
-import ProtectedRoute from "@/components/Auth/ProtectedRoute";
-import AdminRoute from "@/components/Auth/AdminRoute";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
-import PasswordReset from "@/pages/PasswordReset";
-import TestReportGeneration from "@/components/TestReportGeneration";
-import Reports from "@/pages/Reports";
-import TestLogin from "@/pages/TestLogin";
-import AdminLayout from "@/components/Layout/AdminLayout";
-import AdminHome from "@/pages/Admin/AdminHome";
-import AdminStatistics from "@/pages/Admin/AdminStatistics";
-import AdminUsers from "@/pages/Admin/AdminUsers";
-import AdminBilling from "@/pages/Admin/AdminBilling";
+import Dashboard from "@/pages/Dashboard/index";
+import Search from "@/pages/Search";
+import PatentDetail from "@/pages/PatentDetail";
+import Profile from "@/pages/Profile";
+import PaymentPage from "@/pages/PaymentPage";
+import PaymentSuccess from "@/pages/Payment/PaymentSuccess";
+import PaymentFailure from "@/pages/Payment/PaymentFailure";
+import PaymentHistory from "@/pages/Payment/PaymentHistory";
+import PointTest from "@/pages/PointTest";
+import AuthCallback from "@/pages/AuthCallback";
+import ProtectedRoute from "@/components/Auth/ProtectedRoute";
 import { useAuthStore } from "@/store/authStore";
 import { useThemeStore } from "@/store/themeStore";
 
-
+// Admin Pages
+import AdminProtectedRoute from "@/components/Auth/AdminProtectedRoute";
+import AdminLogin from "@/pages/AdminLogin";
+import AdminDashboard from "@/pages/AdminDashboard";
+import UserManagement from "@/pages/UserManagement";
+import PaymentManagement from "@/pages/PaymentManagement";
+import SystemMonitoring from "@/pages/SystemMonitoring";
+import Analytics from "@/pages/Analytics";
+import AdminSettings from "@/pages/AdminSettings";
 
 export default function App() {
-  const { initialize } = useAuthStore();
-  const { isDark } = useThemeStore();
+  // Zustand store hooks를 안전하게 호출
+  const authStore = useAuthStore();
+  const themeStore = useThemeStore();
+  
+  const { initialize } = authStore;
+  const { isDark } = themeStore;
 
   useEffect(() => {
     initialize();
   }, [initialize]);
 
   useEffect(() => {
-    // Initialize theme on app load
     if (isDark) {
       document.documentElement.classList.add('dark');
     } else {
@@ -48,85 +51,140 @@ export default function App() {
     }
   }, [isDark]);
 
+  // 월간 무료 포인트 지급 알림 처리
+  useEffect(() => {
+    const handleMonthlyPointsGranted = (event: CustomEvent) => {
+      const { points, message } = event.detail;
+      toast.success(message, {
+        description: `${points}P가 계정에 추가되었습니다.`,
+        duration: 5000,
+      });
+    };
+
+    window.addEventListener('monthlyPointsGranted', handleMonthlyPointsGranted as EventListener);
+    
+    return () => {
+      window.removeEventListener('monthlyPointsGranted', handleMonthlyPointsGranted as EventListener);
+    };
+  }, []);
+
   return (
-    <Router>
-      <Routes>
-        {/* Admin Routes - With AdminRoute protection and AdminLayout wrapper */}
-        <Route path="/admin/*" element={
-          <AdminRoute>
-            <AdminLayout>
-              <Routes>
-                <Route path="/" element={<AdminHome />} />
-                <Route path="/statistics" element={<AdminStatistics />} />
-                <Route path="/users" element={<AdminUsers />} />
-                <Route path="/billing" element={<AdminBilling />} />
-              </Routes>
-            </AdminLayout>
-          </AdminRoute>
-        } />
-        
-        {/* Regular Routes - With Layout wrapper */}
-        <Route path="/*" element={
-          <Layout>
-            <Routes>
-              <Route path="/" element={
-                <ProtectedRoute>
-                  <Home />
-                </ProtectedRoute>
-              } />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/password-reset" element={<PasswordReset />} />
-              <Route path="/auth/callback" element={<AuthCallback />} />
-              <Route path="/search" element={
-                <ProtectedRoute>
-                  <Search />
-                </ProtectedRoute>
-              } />
-              <Route path="/patent/:applicationNumber" element={
-                <ProtectedRoute>
-                  <PatentDetail />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard/activity" element={
-                <ProtectedRoute>
-                  <DashboardActivity />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard/billing" element={
-                <ProtectedRoute>
-                  <DashboardBilling />
-                </ProtectedRoute>
-              } />
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              } />
-              <Route path="/billing" element={
-                <ProtectedRoute>
-                  <Billing />
-                </ProtectedRoute>
-              } />
-              <Route path="/reports" element={
-                <ProtectedRoute>
-                  <Reports />
-                </ProtectedRoute>
-              } />
-              <Route path="/test-report" element={<TestReportGeneration />} />
-              <Route path="/test-login" element={<TestLogin />} />
-            </Routes>
-          </Layout>
-        } />
-      </Routes>
-      <Toaster position="top-right" richColors />
-    </Router>
+    <div>
+      <Router>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Layout><Home /></Layout>} />
+          <Route path="/login" element={<Layout><Login /></Layout>} />
+          <Route path="/register" element={<Layout><Register /></Layout>} />
+          <Route path="/forgot-password" element={<Layout><ForgotPassword /></Layout>} />
+          <Route path="/reset-password" element={<Layout><ResetPassword /></Layout>} />
+          <Route path="/auth/callback" element={<Layout><AuthCallback /></Layout>} />
+          
+          {/* Protected Routes */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Layout>
+                <Dashboard />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/search" element={
+            <ProtectedRoute>
+              <Layout>
+                <Search />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/patent/:applicationNumber" element={
+            <ProtectedRoute>
+              <Layout>
+                <PatentDetail />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <Layout>
+                <Profile />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/billing" element={
+            <ProtectedRoute>
+              <Layout>
+                <PaymentPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/payment/success" element={
+            <ProtectedRoute>
+              <Layout>
+                <PaymentSuccess />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/payment/failure" element={
+            <ProtectedRoute>
+              <Layout>
+                <PaymentFailure />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/payment/history" element={
+            <ProtectedRoute>
+              <Layout>
+                <PaymentHistory />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/point-test" element={
+            <ProtectedRoute>
+              <Layout>
+                <PointTest />
+              </Layout>
+            </ProtectedRoute>
+          } />
+
+          {/* Admin Routes */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={
+            <AdminProtectedRoute>
+              <AdminDashboard />
+            </AdminProtectedRoute>
+          } />
+          <Route path="/admin/dashboard" element={
+            <AdminProtectedRoute>
+              <AdminDashboard />
+            </AdminProtectedRoute>
+          } />
+          <Route path="/admin/users" element={
+            <AdminProtectedRoute>
+              <UserManagement />
+            </AdminProtectedRoute>
+          } />
+          <Route path="/admin/payments" element={
+            <AdminProtectedRoute>
+              <PaymentManagement />
+            </AdminProtectedRoute>
+          } />
+          <Route path="/admin/monitoring" element={
+            <AdminProtectedRoute>
+              <SystemMonitoring />
+            </AdminProtectedRoute>
+          } />
+          <Route path="/admin/analytics" element={
+            <AdminProtectedRoute>
+              <Analytics />
+            </AdminProtectedRoute>
+          } />
+          <Route path="/admin/settings" element={
+            <AdminProtectedRoute>
+              <AdminSettings />
+            </AdminProtectedRoute>
+          } />
+
+        </Routes>
+      </Router>
+    </div>
   );
 }

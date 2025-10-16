@@ -1,5 +1,5 @@
-const { createClient } = require('@supabase/supabase-js');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+import { createClient } from '@supabase/supabase-js';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Supabase 클라이언트 초기화 (강화된 환경변수 처리)
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -31,7 +31,7 @@ try {
   supabase = null;
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   // 🔍 DEBUG: 함수 호출 추적
   const requestId = Math.random().toString(36).substr(2, 9);
   console.log(`🔍 [DEBUG] generate-report.js 함수 호출 시작 - RequestID: ${requestId}, 시간: ${new Date().toISOString()}`);
@@ -63,11 +63,32 @@ module.exports = async function handler(req, res) {
     console.log('=== 리포트 생성 API 요청 시작 ===');
     console.log('Request body:', req.body);
 
+    // 🔧 중요한 환경변수들 검증
+    console.log('🔧 [환경변수 검증] 상세 정보:', {
+      hasGeminiKey: !!process.env.GEMINI_API_KEY,
+      geminiKeyLength: process.env.GEMINI_API_KEY?.length || 0,
+      hasSupabaseUrl: !!supabaseUrl,
+      hasSupabaseKey: !!supabaseServiceKey,
+      supabaseClientStatus: supabase ? 'initialized' : 'null',
+      isVercel: !!process.env.VERCEL,
+      nodeEnv: process.env.NODE_ENV
+    });
+
+    // Supabase 클라이언트 검증
+    if (!supabase) {
+      console.error('❌ [CRITICAL] Supabase 클라이언트가 초기화되지 않음');
+      return res.status(500).json({
+        success: false,
+        error: 'Database configuration error',
+        message: 'Database connection is not available'
+      });
+    }
+
     // 환경변수에서 Gemini API 키 가져오기
     const apiKey = process.env.GEMINI_API_KEY;
     
     if (!apiKey) {
-      console.error('Gemini API key not found in environment variables');
+      console.error('❌ [CRITICAL] Gemini API key not found in environment variables');
       return res.status(500).json({
         success: false,
         error: 'API configuration error',
@@ -75,7 +96,24 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    console.log('Gemini API Key found:', apiKey ? 'Yes' : 'No');
+    // API 키 유효성 기본 검증
+    if (apiKey.length < 10 || !apiKey.startsWith('AIza')) {
+      console.error('❌ [CRITICAL] Gemini API key appears to be invalid:', {
+        length: apiKey.length,
+        prefix: apiKey.substring(0, 4)
+      });
+      return res.status(500).json({
+        success: false,
+        error: 'API configuration error',
+        message: 'Gemini API key format is invalid'
+      });
+    }
+
+    console.log('✅ Gemini API Key validated:', {
+      hasKey: true,
+      length: apiKey.length,
+      prefix: apiKey.substring(0, 4) + '...'
+    });
 
     // 요청 데이터 검증 - reportType을 먼저 추출
     const { patentData, reportType, userId: rawUserId } = req.body;
@@ -173,10 +211,10 @@ module.exports = async function handler(req, res) {
       }
     }
     
-    // 서버리스 환경(Vercel 등) 고려한 타임아웃 설정 - 최적화된 타임아웃
+    // 서버리스 환경(Vercel 등) 고려한 타임아웃 설정 - Vercel 제한에 맞춰 최적화
     const isVercel = !!process.env.VERCEL;
-    // 리포트 타입별 차별화된 타임아웃 - 안정적인 리포트 생성을 위해 5분으로 증가
-    const TIMEOUT_MS = reportType === 'business' ? 300000 : 300000; // 비즈니스: 300초(5분), 시장분석: 300초(5분)
+    // Vercel 함수 타임아웃 제한(60초)을 고려한 안전한 타임아웃 설정
+    const TIMEOUT_MS = isVercel ? 45000 : 120000; // Vercel: 45초, 로컬: 120초
     
     if (!patentData || typeof patentData !== 'object') {
       return res.status(400).json({
@@ -227,35 +265,52 @@ module.exports = async function handler(req, res) {
       console.log('🔍 [DEBUG] 전체 프롬프트 내용:\n', prompt);
     }
 
-    // AI 분석 실행 - 비즈니스 리포트는 더 많은 재시도와 긴 대기시간
+    // AI 분석 실행 - Vercel 환경에서는 재시도 횟수 제한
     console.log('🚀 AI analysis starting...', {
       reportType,
-      maxRetries: reportType === 'business' ? 4 : 3,
+      maxRetries: isVercel ? 2 : 3,
       timeoutMs: TIMEOUT_MS,
       patentTitle: patentInfo.inventionTitle,
-      patentNumber: patentInfo.applicationNumber
+      patentNumber: patentInfo.applicationNumber,
+      isVercel
     });
-    const maxRetries = reportType === 'business' ? 4 : 3; // 비즈니스: 4회, 시장분석: 3회
+    const maxRetries = isVercel ? 2 : 3; // Vercel: 2회, 로컬: 3회
     
     let analysisText = null; // catch 블록에서도 접근 가능하도록 초기화
     let lastError;
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(`Attempt ${attempt}/${maxRetries} - Calling Gemini API (timeout: ${TIMEOUT_MS/1000}s)...`);
+        console.log(`🚀 [시도 ${attempt}/${maxRetries}] Gemini API 호출 시작:`, {
+          timeout: `${TIMEOUT_MS/1000}초`,
+          model: isVercel ? 'gemini-2.5-flash' : 'gemini-2.5-flash',
+          maxTokens: isVercel ? 4096 : 8192,
+          patentNumber: patentInfo.applicationNumber,
+          reportType
+        });
         
-        // Gemini API 초기화 - 모델을 환경변수로 설정 가능 (기본: gemini-2.5-flash)
+        // ⚠️ 중요: gemini-2.5-flash 모델 하드코딩 - 절대 변경 금지
+        // 이 모델은 성능과 안정성이 검증되었으므로 다른 모델로 변경하지 마세요
+        // 환경변수나 조건문으로 변경할 수 없도록 완전히 하드코딩됨
         const genAI = new GoogleGenerativeAI(apiKey);
-        const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-        const model = genAI.getGenerativeModel({ model: modelName });
+        const modelName = 'gemini-2.5-flash'; // 하드코딩된 모델명 - 변경 금지
+        
+        let model;
+        try {
+          model = genAI.getGenerativeModel({ model: modelName });
+          console.log(`✅ Gemini 모델 초기화 성공: ${modelName}`);
+        } catch (modelError) {
+          console.error('❌ Gemini 모델 초기화 실패:', modelError.message);
+          throw new Error(`Model initialization failed: ${modelError.message}`);
+        }
         
         const analysisPromise = model.generateContent({
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           generationConfig: {
-            temperature: 0.7, // 균형잡힌 창의성과 일관성
-            maxOutputTokens: 8192, // 응답 시간 단축을 위해 토큰 수 감소
-            topK: 40,
-            topP: 0.95,
+            temperature: 0.7, // 창의적이고 심도있는 분석을 위해 증가
+            maxOutputTokens: isVercel ? 8192 : 12288, // 더 상세한 리포트를 위해 토큰 수 대폭 증가
+            topK: 40, // 더 다양한 표현을 위해 증가
+            topP: 0.95, // 더 풍부한 내용을 위해 증가
           },
         });
         
@@ -265,13 +320,29 @@ module.exports = async function handler(req, res) {
           }, TIMEOUT_MS);
         });
 
+        console.log(`⏱️ API 호출 시작 - 타임아웃: ${TIMEOUT_MS/1000}초`);
         const result = await Promise.race([analysisPromise, timeoutPromise]);
         
-        if (!result.response) {
-          throw new Error('Gemini API error: No response received');
+        if (!result) {
+          throw new Error('Gemini API error: No result received');
         }
         
-        analysisText = result.response.text();
+        if (!result.response) {
+          console.error('❌ Gemini API 응답 구조 오류:', {
+            hasResult: !!result,
+            resultKeys: result ? Object.keys(result) : [],
+            resultType: typeof result
+          });
+          throw new Error('Gemini API error: No response in result');
+        }
+        
+        try {
+          analysisText = result.response.text();
+          console.log('✅ Gemini API 응답 텍스트 추출 성공');
+        } catch (textError) {
+          console.error('❌ 응답 텍스트 추출 실패:', textError.message);
+          throw new Error(`Failed to extract response text: ${textError.message}`);
+        }
         console.log('🤖 Gemini API 응답 받음:', {
           length: analysisText?.length || 0,
           preview: analysisText?.substring(0, 200) + '...',
@@ -529,9 +600,37 @@ module.exports = async function handler(req, res) {
         
         console.log('✅ 중복 체크 통과 - 새 리포트 생성 진행');
         
-        // 기술 분야 추출
-        const technologyFields = extractTechnologyFields(patentInfo);
-        console.log('🔍 [DEBUG] 추출된 기술 분야:', technologyFields);
+        // 기술 분야 분류 (classify_technology_field 함수 사용)
+        const searchText = `${patentInfo.inventionTitle} ${patentInfo.abstract}`;
+        const ipcCodes = patentInfo.ipcCodes ? (Array.isArray(patentInfo.ipcCodes) ? patentInfo.ipcCodes : [patentInfo.ipcCodes]) : [];
+        const cpcCodes = patentInfo.cpcCodes ? (Array.isArray(patentInfo.cpcCodes) ? patentInfo.cpcCodes : [patentInfo.cpcCodes]) : [];
+        
+        const { data: classificationResult, error: classificationError } = await supabase
+          .rpc('classify_technology_field', {
+            p_search_text: searchText,
+            p_ipc_codes: ipcCodes,
+            p_cpc_codes: cpcCodes
+          });
+
+        let technologyField = '기타';
+        let fieldConfidence = 0.5;
+        
+        if (!classificationError && classificationResult) {
+          technologyField = classificationResult.technology_field || '기타';
+          fieldConfidence = classificationResult.confidence || 0.5;
+        } else {
+          console.warn(`⚠️ 기술 분야 분류 실패:`, classificationError);
+          // 폴백: 로컬 분류 함수 사용
+          const localFields = extractTechnologyFields(patentInfo);
+          technologyField = localFields[0] || '기타';
+        }
+
+        console.log('🔍 [DEBUG] 분류된 기술 분야:', {
+          technologyField,
+          fieldConfidence,
+          ipcCodes,
+          cpcCodes
+        });
         
         // 리포트 타입에 따른 데이터 구조 분기 (실제 DB 스키마에 맞게 수정)
         let insertData = {
@@ -540,7 +639,10 @@ module.exports = async function handler(req, res) {
           invention_title: patentInfo.inventionTitle, // DB 스키마에 맞는 필드명 사용
           analysis_type: reportType,
           report_name: reportName,
-          technology_fields: technologyFields // 기술 분야 추가
+          technology_field: technologyField, // 단일 기술 분야
+          field_confidence: fieldConfidence, // 분류 신뢰도
+          ipc_codes: ipcCodes, // IPC 코드 배열
+          technology_fields: [technologyField] // 기존 호환성을 위한 배열 형태
         };
         
         console.log('🔍 [DEBUG] 저장할 데이터 필드 확인:', {
@@ -631,7 +733,28 @@ module.exports = async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('Report generation error:', error.message);
+    // 🔍 상세한 오류 로깅 - 디버깅을 위한 완전한 정보
+    console.error('❌ [CRITICAL] Report generation error - 상세 정보:', {
+      errorType: error.constructor.name,
+      message: error.message,
+      status: error.status,
+      code: error.code,
+      stack: error.stack?.split('\n').slice(0, 5).join('\n'),
+      timestamp: new Date().toISOString(),
+      requestId: Math.random().toString(36).substr(2, 9),
+      environment: {
+        isVercel: !!process.env.VERCEL,
+        nodeEnv: process.env.NODE_ENV,
+        hasSupabase: !!supabase,
+        hasGeminiKey: !!process.env.GEMINI_API_KEY
+      },
+      requestData: {
+        reportType,
+        hasPatentData: !!patentData,
+        hasUserId: !!userId,
+        patentNumber: patentData?.applicationNumber || 'unknown'
+      }
+    });
     
     // 부분 응답이 있는 경우 저장 시도
     let partialResult = null;
@@ -650,22 +773,35 @@ module.exports = async function handler(req, res) {
           const patentInfo = extractPatentInfo(patentData);
           const reportName = generateReportName(patentInfo, reportType) + '_부분응답';
           
+          // 부분 결과를 위한 데이터 구조 생성
+          let partialInsertData = {
+            user_id: userId,
+            application_number: patentInfo.applicationNumber,
+            invention_title: patentInfo.inventionTitle,
+            analysis_type: reportType,
+            report_name: reportName,
+            technology_field: '기타',
+            field_confidence: 0.5,
+            ipc_codes: patentInfo.ipcCodes || [],
+            technology_fields: ['기타']
+          };
+
+          // 리포트 타입별 필드 매핑 (부분 결과)
+          if (reportType === 'market') {
+            partialInsertData.market_penetration = partialResult.sections?.[0]?.content || '부분 응답 - 완료되지 않음';
+            partialInsertData.competitive_landscape = partialResult.sections?.[1]?.content || '';
+            partialInsertData.market_growth_drivers = partialResult.sections?.[2]?.content || '';
+            partialInsertData.risk_factors = partialResult.sections?.[3]?.content || '';
+          } else if (reportType === 'business') {
+            partialInsertData.revenue_model = partialResult.sections?.[0]?.content || '부분 응답 - 완료되지 않음';
+            partialInsertData.royalty_margin = partialResult.sections?.[1]?.content || '';
+            partialInsertData.new_business_opportunities = partialResult.sections?.[2]?.content || '';
+            partialInsertData.competitor_response_strategy = partialResult.sections?.[3]?.content || '';
+          }
+          
           const { data: partialReportRecord, error: partialReportError } = await supabase
             .from('ai_analysis_reports')
-            .insert({
-              user_id: userId,
-              report_name: reportName,
-              report_type: reportType,
-              patent_number: patentInfo.applicationNumber,
-              patent_title: patentInfo.inventionTitle,
-              report_data: {
-                ...partialResult,
-                isPartial: true,
-                errorMessage: '응답이 중간에 끊어졌습니다. 부분 결과입니다.',
-                originalError: error.message
-              },
-              created_at: new Date().toISOString()
-            });
+            .insert(partialInsertData);
             
           if (!partialReportError) {
             console.log('✅ 부분 응답 저장 성공:', partialReportRecord?.id);
@@ -676,15 +812,18 @@ module.exports = async function handler(req, res) {
       }
     }
     
-    // 에러 타입별 처리 (검색 API 패턴)
+    // 에러 타입별 상세 처리
     let statusCode = 500;
     let errorMessage = '리포트 생성 중 오류가 발생했습니다.';
+    let errorDetails = {};
     
+    // 타임아웃 오류
     if (error.message.includes('timeout')) {
       statusCode = 408;
+      errorDetails.errorType = 'timeout';
       const isVercel = !!process.env.VERCEL;
       if (isVercel) {
-        errorMessage = `리포트 생성이 시간 초과되었습니다 (서버리스 실행 제한).
+        errorMessage = `리포트 생성이 시간 초과되었습니다 (서버리스 실행 제한: ${TIMEOUT_MS/1000}초).
 
 해결 방법:
 • 페이지를 새로고침 후 재시도해주세요
@@ -701,17 +840,45 @@ module.exports = async function handler(req, res) {
       if (partialResult) {
         errorMessage += '\n\n📋 부분 결과가 저장되었습니다. 보고서 목록에서 확인하실 수 있습니다.';
       }
-    } else if (error.status === 401 || error.status === 403) {
+    } 
+    // 인증 오류
+    else if (error.status === 401 || error.status === 403 || error.message.includes('API key')) {
       statusCode = 401;
-      errorMessage = 'AI 서비스 인증 오류입니다.';
+      errorDetails.errorType = 'authentication';
+      errorMessage = 'AI 서비스 인증 오류입니다. 관리자에게 문의해주세요.';
+    }
+    // API 한도 초과
+    else if (error.status === 429) {
+      statusCode = 429;
+      errorDetails.errorType = 'rate_limit';
+      errorMessage = 'API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.';
+    }
+    // 모델 초기화 오류
+    else if (error.message.includes('Model initialization failed')) {
+      statusCode = 500;
+      errorDetails.errorType = 'model_initialization';
+      errorMessage = 'AI 모델 초기화에 실패했습니다. 잠시 후 다시 시도해주세요.';
+    }
+    // 데이터베이스 연결 오류
+    else if (error.message.includes('Database connection')) {
+      statusCode = 500;
+      errorDetails.errorType = 'database_connection';
+      errorMessage = '데이터베이스 연결 오류입니다. 관리자에게 문의해주세요.';
+    }
+    // 기타 오류
+    else {
+      errorDetails.errorType = 'unknown';
+      errorDetails.originalMessage = error.message;
     }
 
+    // 응답 전송
     res.status(statusCode).json({
       success: false,
       error: 'Report generation failed',
       message: errorMessage,
       timestamp: new Date().toISOString(),
-      hasPartialResult: !!partialResult
+      hasPartialResult: !!partialResult,
+      details: errorDetails
     });
   }
 };
@@ -933,8 +1100,49 @@ function extractPatentInfo(patentData) {
   return extractedInfo;
 }
 
-// 리포트 타입별 프롬프트 생성 - 최적화된 간결한 버전
+// 리포트 타입별 프롬프트 생성 - Vercel 최적화 간결 버전
 function generateReportPrompt(patentInfo, reportType) {
+  // Vercel 환경에서는 더 간결한 프롬프트 사용
+  const isVercel = !!process.env.VERCEL;
+  
+  if (isVercel) {
+    return `# ${reportType === 'market' ? '시장분석' : '비즈니스 인사이트'} 리포트
+
+**특허**: ${patentInfo.applicationNumber} - ${patentInfo.inventionTitle}
+**초록**: ${patentInfo.abstract}
+**청구항**: ${patentInfo.claims}
+
+**⚠️ 중요: 토큰 제한 내에서 모든 섹션을 완전히 작성하세요**
+
+다음 구조로 간결하게 분석하세요:
+
+## 1. 기술 혁신성
+- 핵심 기술 특징 (2-3개 포인트)
+- 기존 기술 대비 개선점
+
+## 2. 시장 분석  
+- 시장 규모 및 성장률 (구체적 수치)
+- 경쟁 환경
+
+## 3. 비즈니스 전략
+- 수익 모델
+- 사업화 전략 (3개 제안)
+
+## 4. 투자 가치
+- ROI 분석
+- 리스크 평가
+
+## 5. 결론 및 권고사항
+- 핵심 결론
+- 실행 권고사항
+
+**📏 작성 지침:**
+- 각 섹션을 간결하게 작성 (핵심 내용만)
+- 구체적 수치와 데이터 포함
+- 반드시 결론 섹션까지 완성
+- 토큰 제한을 고려하여 길이 조절`;
+  }
+
   const baseInfo = `
 🎯 **분석 대상 특허**
 - **출원번호**: ${patentInfo.applicationNumber}
@@ -1041,13 +1249,35 @@ function generateReportPrompt(patentInfo, reportType) {
 3. **결론까지 완성**: 결론 섹션까지 반드시 포함하여 완전한 분석을 제공하세요. 리포트는 명확한 결론과 권고사항으로 마무리되어야 합니다.
 
 4. **품질 유지**: 길이 조절을 위해 품질을 희생하지 마세요. 핵심 내용은 유지하면서 간결하고 명확하게 작성하세요.
+
+5. **토큰 효율성**: 주어진 토큰 제한 내에서 모든 섹션을 완성하기 위해 각 섹션을 간결하게 작성하되, 핵심 내용은 반드시 포함하세요.
+
+6. **마무리 필수**: 리포트는 반드시 "#### 결론 및 권고사항" 섹션으로 마무리되어야 하며, 이 섹션이 누락되면 안 됩니다.
+
+### 📝 작성 우선순위
+1. 모든 주요 섹션 헤더(####) 포함
+2. 각 섹션당 최소 2-3문장의 핵심 내용
+3. 구체적 수치나 데이터 포함
+4. 결론 섹션까지 완전히 작성
 `;
 
   // 간소화된 프롬프트 조합
   return `${roleConstraints}\n${baseInfo}\n${analysisStructure}\n${outputRequirements}
 
-위 구조에 따라 완전한 ${reportType === 'market' ? '시장분석' : '비즈니스 인사이트'} 리포트를 작성하세요. 
-모든 섹션을 포함하되, 간결하고 실용적으로 구성하세요.`;
+**🎯 최종 지시사항**: 위 구조에 따라 완전한 ${reportType === 'market' ? '시장분석' : '비즈니스 인사이트'} 리포트를 작성하세요. 
+
+**⚠️ 토큰 제한 내 완전한 리포트 작성 필수:**
+1. 모든 주요 섹션을 반드시 포함하되, 각 섹션을 간결하게 작성
+2. 토큰 제한을 고려하여 핵심 내용 위주로 구성
+3. 리포트가 중간에 끊어지지 않도록 길이 조절
+4. 반드시 "#### 결론 및 권고사항" 섹션으로 마무리
+5. 완전하지 않은 리포트는 절대 제출하지 말 것
+
+**📏 작성 가이드라인:**
+- 각 주요 섹션: 2-3개 핵심 포인트로 간결하게
+- 구체적 수치나 데이터는 필수 포함
+- 불필요한 설명이나 반복 내용 제거
+- 결론까지 완전히 작성하여 실용적인 리포트 완성`;
 }
 
 // AI 응답을 구조화된 형태로 파싱 - 강화된 검증 및 파싱

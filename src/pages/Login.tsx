@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Eye, EyeOff, Search } from 'lucide-react'
+import { Eye, EyeOff, Search, Shield, FileText } from 'lucide-react'
 import Button from '../components/UI/Button'
 import Input from '../components/UI/Input'
 import Card, { CardContent, CardHeader, CardTitle } from '../components/UI/Card'
@@ -27,6 +27,17 @@ export default function Login() {
   const location = useLocation()
 
   const handleSuccessfulLoginRedirect = () => {
+    // 현재 상태를 다시 확인 (프로필이 로드된 후의 최신 상태)
+    const currentState = useAuthStore.getState();
+    const currentIsAdmin = currentState.isAdmin;
+    const currentProfile = currentState.profile;
+    
+    console.log('[Login] 리다이렉트 시점의 상태:', { 
+      currentIsAdmin, 
+      profileRole: currentProfile?.role,
+      email: currentProfile?.email 
+    });
+    
     // 이전 페이지(from)가 있으면 우선 이동, 없으면 관리자 여부에 따라 기본 경로로 이동
     const fromPath = (location.state as any)?.from?.pathname as string | undefined;
     let targetPath = '/';
@@ -34,7 +45,7 @@ export default function Login() {
     if (fromPath) {
       targetPath = fromPath;
       console.log('[Login] 이전 페이지로 이동:', fromPath);
-    } else if (isAdmin) {
+    } else if (currentIsAdmin) {
       targetPath = '/admin';
       console.log('[Login] 관리자 권한 확인되어 /admin 이동');
     } else {
@@ -69,12 +80,18 @@ export default function Login() {
     if (initialized && !authLoading && user) {
       console.log('[Login] 페이지 로드 시 로그인된 사용자 감지, 리다이렉트:', user.email);
 
+      // 현재 상태를 다시 확인
+      const currentState = useAuthStore.getState();
+      const currentIsAdmin = currentState.isAdmin;
+      
+      console.log('[Login] useEffect에서의 관리자 상태:', { currentIsAdmin, profileRole: currentState.profile?.role });
+
       let targetPath = '/';
       
       if (fromPath) {
         targetPath = fromPath;
         console.log('[Login] 이전 페이지로 이동:', fromPath);
-      } else if (isAdmin) {
+      } else if (currentIsAdmin) {
         targetPath = '/admin';
       }
 
@@ -192,56 +209,65 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          {/* Logo and Title */}
-          <div className="text-center">
-            <div className="flex justify-center">
-        <div className="w-12 h-12 bg-ms-olive rounded-lg flex items-center justify-center">
-                <Search className="w-7 h-7 text-white" />
-              </div>
-            </div>
-            <h2 className="mt-6 text-3xl font-bold text-white">
-              P-AI에 로그인
-            </h2>
-            <p className="mt-2 text-sm text-slate-400">
-              AI 기반 특허 분석 서비스를 이용하세요
-            </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 flex items-center justify-center p-8">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-olive-600 rounded-2xl mb-4">
+            <Shield className="w-8 h-8 text-white" />
           </div>
+          <h1 className="text-2xl font-bold text-gray-900">Patent-AI</h1>
+          <p className="text-gray-600 mt-2">AI 기반 특허 분석 서비스</p>
+        </div>
 
           {/* Login Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle>로그인</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <Input
-                  label="이메일"
+          <div className="bg-white rounded-2xl shadow-xl p-8">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">로그인</h2>
+              <p className="text-gray-600">계정에 로그인하여 서비스를 이용하세요</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  이메일
+                </label>
+                <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  error={errors.email}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-olive-500 focus:border-olive-500 transition-colors ${
+                    errors.email ? 'border-red-300' : 'border-gray-300'
+                  }`}
                   placeholder="your@email.com"
                   autoComplete="email"
                 />
+                {errors.email && (
+                  <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                )}
+              </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  비밀번호
+                </label>
                 <div className="relative">
-                  <Input
-                    label="비밀번호"
+                  <input
                     type={showPassword ? 'text' : 'password'}
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    error={errors.password}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-olive-500 focus:border-olive-500 transition-colors pr-12 ${
+                      errors.password ? 'border-red-300' : 'border-gray-300'
+                    }`}
                     placeholder="비밀번호를 입력하세요"
                     autoComplete="current-password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-8 text-slate-400 hover:text-slate-300"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
                     {showPassword ? (
                       <EyeOff className="w-5 h-5" />
@@ -250,55 +276,63 @@ export default function Login() {
                     )}
                   </button>
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                    className="w-4 h-4 text-ms-olive bg-slate-700 border-slate-600 rounded focus:ring-ms-olive focus:ring-2"
-                    />
-                    <span className="ml-2 text-sm text-slate-300">로그인 상태 유지</span>
-                  </label>
-                  <Link
-                    to="/password-reset"
-                    className="text-sm text-ms-olive font-bold hover:text-ms-olive"
-                  >
-                    비밀번호 찾기
-                  </Link>
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full"
-                  loading={loading}
-                  disabled={loading}
-                >
-                  로그인
-                </Button>
-              </form>
-
-              <div className="mt-6 text-center">
-                <p className="text-sm text-slate-400">
-                  계정이 없으신가요?{' '}
-                  <Link
-                    to="/register"
-                    className="font-bold text-ms-olive hover:text-ms-olive"
-                  >
-                    회원가입
-                  </Link>
-                </p>
+                {errors.password && (
+                  <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                )}
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Profile Update Modal */}
-          <ProfileUpdateModal
-            isOpen={showProfileModal}
-            onClose={handleProfileUpdateClose}
-            onComplete={handleProfileUpdateComplete}
-          />
+              <div className="flex items-center justify-between">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 text-olive-600 bg-gray-100 border-gray-300 rounded focus:ring-olive-500 focus:ring-2"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">로그인 상태 유지</span>
+                </label>
+                <Link
+                  to="/password-reset"
+                  className="text-sm text-olive-600 hover:text-olive-700 font-medium"
+                >
+                  비밀번호 찾기
+                </Link>
+              </div>
 
-        </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-olive-600 hover:bg-olive-700 text-white font-medium py-3 px-4 rounded-lg transition-colors focus:ring-2 focus:ring-olive-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    로그인 중...
+                  </div>
+                ) : (
+                  '로그인'
+                )}
+              </button>
+            </form>
+
+            <div className="mt-8 text-center">
+              <p className="text-gray-600">
+                계정이 없으신가요?{' '}
+                <Link
+                  to="/register"
+                  className="text-olive-600 hover:text-olive-700 font-medium"
+                >
+                  회원가입
+                </Link>
+              </p>
+            </div>
+          </div>
+
+        {/* Profile Update Modal */}
+        <ProfileUpdateModal
+          isOpen={showProfileModal}
+          onClose={handleProfileUpdateClose}
+          onComplete={handleProfileUpdateComplete}
+        />
       </div>
+    </div>
   )
 }

@@ -189,14 +189,132 @@ export default function BillingManagement() {
         setLoading(true)
         setError(null)
 
-        // In a real app, these would be API calls
-        setTimeout(() => {
-          setSubscriptionInfo(mockSubscriptionInfo)
-          setCreditPackages(mockCreditPackages)
-          setBillingHistory(mockBillingHistory)
-          setUsageCosts(mockUsageCosts)
-          setLoading(false)
-        }, 1000)
+        // 실제 API 호출로 변경
+        const [subscriptionResponse, paymentsResponse, usageResponse] = await Promise.all([
+          // 구독 정보 조회
+          fetch('/api/billing?action=subscription-info', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          }),
+          // 결제 내역 조회
+          fetch('/api/payment/history', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          }),
+          // 사용량 조회
+          fetch('/api/points?action=usage-history', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          })
+        ])
+
+        // 구독 정보 처리
+        if (subscriptionResponse.ok) {
+          const subscriptionData = await subscriptionResponse.json()
+          setSubscriptionInfo({
+            plan: subscriptionData.plan || 'Free',
+            status: subscriptionData.status || 'active',
+            credits: subscriptionData.credits || 0,
+            maxCredits: subscriptionData.maxCredits || 1000,
+            nextBillingDate: subscriptionData.nextBillingDate || '2024-02-15',
+            monthlyUsage: subscriptionData.monthlyUsage || 0,
+            features: subscriptionData.features || [
+              '월 1,000 크레딧',
+              '무제한 검색',
+              '고급 분석 리포트',
+              '우선 고객 지원',
+              'API 액세스'
+            ]
+          })
+        } else {
+          // 기본값 설정
+          setSubscriptionInfo({
+            plan: 'Free',
+            status: 'active',
+            credits: 0,
+            maxCredits: 100,
+            nextBillingDate: '2024-02-15',
+            monthlyUsage: 0,
+            features: ['월 100 크레딧', '기본 검색']
+          })
+        }
+
+        // 결제 내역 처리
+        if (paymentsResponse.ok) {
+          const paymentsData = await paymentsResponse.json()
+          setBillingHistory(paymentsData.payments || [])
+        } else {
+          setBillingHistory([])
+        }
+
+        // 사용량 처리
+        if (usageResponse.ok) {
+          const usageData = await usageResponse.json()
+          setUsageCosts(usageData.usage || [])
+        } else {
+          // 기본 사용량 데이터
+          setUsageCosts(Array.from({ length: 30 }, (_, i) => {
+            const date = new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000)
+            return {
+              date: date.toISOString().split('T')[0],
+              searchCost: 0,
+              reportCost: 0,
+              viewCost: 0,
+              total: 0
+            }
+          }))
+        }
+
+        // 크레딧 패키지는 정적 데이터로 유지
+        setCreditPackages([
+          {
+            id: 'starter',
+            name: '스타터 팩',
+            credits: 100,
+            bonusCredits: 10,
+            price: 9900,
+            popular: false,
+            description: '소규모 프로젝트에 적합'
+          },
+          {
+            id: 'professional',
+            name: '프로페셔널 팩',
+            credits: 500,
+            bonusCredits: 75,
+            price: 39900,
+            popular: true,
+            description: '중간 규모 연구에 최적'
+          },
+          {
+            id: 'enterprise',
+            name: '엔터프라이즈 팩',
+            credits: 1000,
+            bonusCredits: 200,
+            price: 69900,
+            popular: false,
+            description: '대규모 분석 프로젝트용'
+          },
+          {
+            id: 'unlimited',
+            name: '언리미티드 팩',
+            credits: 2500,
+            bonusCredits: 500,
+            price: 149900,
+            popular: false,
+            description: '무제한 사용을 위한 최고 패키지'
+          }
+        ])
+
+        setLoading(false)
 
       } catch (error) {
         console.error('Billing data fetch error:', error)
@@ -213,11 +331,34 @@ export default function BillingManagement() {
     try {
       setProcessingPayment(packageId)
       
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
       const selectedPackage = creditPackages.find(pkg => pkg.id === packageId)
-      if (selectedPackage && subscriptionInfo) {
+      if (!selectedPackage) {
+        throw new Error('선택한 패키지를 찾을 수 없습니다.')
+      }
+
+      // 실제 결제 API 호출
+      const response = await fetch('/api/billing', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          action: 'charge-points',
+          amount_krw: selectedPackage.price,
+          payment_type: 'addon',
+          payment_id: `pkg_${packageId}_${Date.now()}`,
+          package_id: packageId
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('결제 처리에 실패했습니다.')
+      }
+
+      const result = await response.json()
+      
+      if (result.success && subscriptionInfo) {
         const totalCredits = selectedPackage.credits + selectedPackage.bonusCredits
         setSubscriptionInfo({
           ...subscriptionInfo,
@@ -225,10 +366,13 @@ export default function BillingManagement() {
         })
         
         toast.success(`${selectedPackage.name} 구매가 완료되었습니다! ${totalCredits} 크레딧이 추가되었습니다.`)
+      } else {
+        throw new Error(result.error || '결제 처리에 실패했습니다.')
       }
       
     } catch (error) {
-      toast.error('결제 처리 중 오류가 발생했습니다.')
+      console.error('Payment error:', error)
+      toast.error(error instanceof Error ? error.message : '결제 처리 중 오류가 발생했습니다.')
     } finally {
       setProcessingPayment(null)
     }

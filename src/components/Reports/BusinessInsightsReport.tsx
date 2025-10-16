@@ -10,7 +10,9 @@ import {
   Target,
   DollarSign,
   Users,
-  Lightbulb
+  Lightbulb,
+  Coins,
+  AlertCircle
 } from 'lucide-react'
 import Button from '../UI/Button'
 import Card, { CardContent, CardHeader, CardTitle } from '../UI/Card'
@@ -451,11 +453,15 @@ export default function BusinessInsightsReport({
   }, [analysis])
 
   const generateReport = async () => {
-    if (!patent || !user) {
-      // 안전한 toast 호출 - setTimeout 사용
-      setTimeout(() => {
-        toast.error('특허 정보 또는 사용자 정보가 없습니다.')
-      }, 0)
+    if (!patent) {
+      setError('특허 정보가 없습니다.')
+      return
+    }
+
+    // 사용자 인증 확인
+    if (!user) {
+      setError('로그인이 필요합니다.')
+      navigate('/login')
       return
     }
 
@@ -469,7 +475,11 @@ export default function BusinessInsightsReport({
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ patentData: patent, reportType: 'business' }),
+        body: JSON.stringify({ 
+          patentData: patent, 
+          reportType: 'business',
+          userId: user.id // 사용자 ID 추가
+        }),
       })
 
       if (!response.ok) {
@@ -504,6 +514,19 @@ export default function BusinessInsightsReport({
               case 'MODEL_ERROR':
                 errorMessage = 'AI 모델 설정에 문제가 있습니다.'
                 errorDetails = '관리자에게 문의해주세요.'
+                break
+              case 'Insufficient points':
+                errorMessage = '포인트가 부족합니다.'
+                errorDetails = '비즈니스 인사이트 리포트 생성에는 600 포인트가 필요합니다. 포인트를 충전한 후 다시 시도해주세요.'
+                // 포인트 충전 페이지로 안내
+                setTimeout(() => {
+                  toast.error('포인트가 부족합니다. 포인트를 충전한 후 다시 시도해주세요.', {
+                    action: {
+                      label: '포인트 충전',
+                      onClick: () => navigate('/payment')
+                    }
+                  })
+                }, 0)
                 break
             }
           }
@@ -763,16 +786,23 @@ export default function BusinessInsightsReport({
             <h3 className="text-xl font-semibold text-ms-text mb-2">
               전문적인 비즈니스 분석을 시작하세요
             </h3>
-            <p className="text-gray-600 text-center max-w-2xl mb-8 leading-relaxed">
+            <p className="text-gray-600 text-center max-w-2xl mb-6 leading-relaxed">
               AI가 이 특허의 비즈니스 가치, 시장성, 경쟁력을 종합적으로 분석하여 
               전략적 인사이트가 담긴 전문 리포트를 생성합니다.
             </p>
+            
+            {/* 포인트 차감 안내 */}
+            <div className="flex items-center justify-center gap-2 text-sm text-amber-700 bg-amber-50 px-4 py-2 rounded-lg border border-amber-200 mb-6">
+              <Coins className="w-4 h-4" />
+              <span>비즈니스 인사이트 리포트 생성 시 <strong>600 포인트</strong>가 차감됩니다</span>
+            </div>
+            
             <Button 
               onClick={generateReport}
-              className="inline-flex items-center gap-2 px-5 py-2.5 border border-ms-line text-ms-text hover:bg-white/60 bg-white"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-900 to-red-800 hover:from-red-800 hover:to-red-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
             >
-              <Brain className="w-4 h-4" />
-              리포트 생성하기
+              <Brain className="w-5 h-5" />
+              AI 비즈니스 인사이트 시작하기
             </Button>
           </CardContent>
         </Card>

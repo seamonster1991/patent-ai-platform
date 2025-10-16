@@ -1,6 +1,6 @@
-const { createClient } = require('@supabase/supabase-js');
-const axios = require('axios');
-const { parseStringPromise } = require('xml2js');
+import { createClient } from '@supabase/supabase-js';
+import axios from 'axios';
+import { parseStringPromise } from 'xml2js';
 
 // Supabase 클라이언트 초기화
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -19,7 +19,7 @@ try {
   supabase = null;
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   // CORS 헤더 설정
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');

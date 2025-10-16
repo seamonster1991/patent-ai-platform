@@ -1,5 +1,5 @@
 import React from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card, Title, Text } from '@tremor/react';
 
 interface DailyData {
@@ -84,7 +84,7 @@ const TrendChart: React.FC<TrendChartProps> = ({
       </div>
       
       <ResponsiveContainer width="100%" height={height}>
-        <LineChart data={combinedData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+        <ComposedChart data={combinedData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
           <XAxis 
             dataKey="formattedDate" 
@@ -106,30 +106,38 @@ const TrendChart: React.FC<TrendChartProps> = ({
               boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
             }}
             labelFormatter={(label) => `날짜: ${label}`}
+            formatter={(value, name) => [
+              typeof value === 'number' ? value.toLocaleString() : value,
+              name === `${dataLabel} (막대)` ? `${dataLabel} (막대)` : 
+              name === `${marketLabel} (선)` ? `${marketLabel} (선)` : name
+            ]}
           />
-          <Legend />
-          <Line 
-            type="monotone" 
+          <Legend 
+            formatter={(value) => 
+              value === 'user' ? `${dataLabel} (막대)` : 
+              value === 'market' ? `${marketLabel} (선)` : value
+            }
+          />
+          <Bar 
             dataKey="user" 
-            stroke={color}
-            strokeWidth={2}
-            dot={{ fill: color, strokeWidth: 2, r: 4 }}
-            activeDot={{ r: 6, stroke: color, strokeWidth: 2 }}
-            name={dataLabel}
+            fill={color}
+            fillOpacity={0.8}
+            name="user"
+            radius={[2, 2, 0, 0]}
           />
-          {marketData && (
+          {marketData && marketData.length > 0 && (
             <Line 
               type="monotone" 
               dataKey="market" 
               stroke={marketColor}
-              strokeWidth={2}
+              strokeWidth={3}
               strokeDasharray="5 5"
               dot={{ fill: marketColor, strokeWidth: 2, r: 4 }}
               activeDot={{ r: 6, stroke: marketColor, strokeWidth: 2 }}
-              name={marketLabel}
+              name="market"
             />
           )}
-        </LineChart>
+        </ComposedChart>
       </ResponsiveContainer>
     </Card>
   );

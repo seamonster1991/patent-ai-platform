@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { User, Mail, Building, Calendar, Shield, Bell, Download, Trash2, Save } from 'lucide-react'
+import { User, Mail, Building, Calendar, Shield, Bell, Download, Trash2, Save, Eye, EyeOff, Lock, Coins, CreditCard } from 'lucide-react'
 import Button from '../components/UI/Button'
 import Input from '../components/UI/Input'
 import Card, { CardContent, CardHeader, CardTitle } from '../components/UI/Card'
@@ -7,15 +7,28 @@ import { useAuthStore } from '../store/authStore'
 import { formatDate } from '../lib/utils'
 import { toast } from 'sonner'
 import { activityTracker } from '../lib/activityTracker'
+import { supabase } from '../lib/supabase'
+import PointBalance from '../components/PointBalance'
 
 export default function Profile() {
   const { user, profile, updateProfile } = useAuthStore()
   const [loading, setLoading] = useState(false)
+  const [passwordLoading, setPasswordLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: profile?.name || '',
     company: profile?.company || '',
     phone: profile?.phone || '',
     bio: profile?.bio || ''
+  })
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false
   })
   const [notifications, setNotifications] = useState({
     email: true,
@@ -82,6 +95,31 @@ export default function Profile() {
     // 소개 검증 (선택사항이지만 입력된 경우 검증)
     if (formData.bio.trim() && formData.bio.trim().length > 500) {
       errors.push('소개는 500글자를 초과할 수 없습니다.')
+    }
+    
+    return errors
+  }
+
+  // 비밀번호 유효성 검사
+  const validatePassword = () => {
+    const errors: string[] = []
+    
+    if (!passwordData.currentPassword) {
+      errors.push('현재 비밀번호를 입력해주세요.')
+    }
+    
+    if (!passwordData.newPassword) {
+      errors.push('새 비밀번호를 입력해주세요.')
+    } else if (passwordData.newPassword.length < 6) {
+      errors.push('새 비밀번호는 최소 6자 이상이어야 합니다.')
+    }
+    
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      errors.push('새 비밀번호와 확인 비밀번호가 일치하지 않습니다.')
+    }
+    
+    if (passwordData.currentPassword === passwordData.newPassword) {
+      errors.push('새 비밀번호는 현재 비밀번호와 달라야 합니다.')
     }
     
     return errors
@@ -157,9 +195,6 @@ export default function Profile() {
             bio: result.profile.bio
           })
         }
-        
-        // 페이지 새로고침 없이 프로필 정보 다시 로드
-        window.location.reload()
       } else {
         console.warn('[WARN] [Profile] 프로필 업데이트 결과가 예상과 다름:', result)
         // 안전한 toast 호출 - 렌더 사이클 외부에서 실행
@@ -188,6 +223,61 @@ export default function Profile() {
     }
   }
 
+  // 비밀번호 변경 처리
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    const validationErrors = validatePassword()
+    if (validationErrors.length > 0) {
+      setTimeout(() => {
+        toast.error(validationErrors[0])
+      }, 0)
+      return
+    }
+    
+    setPasswordLoading(true)
+    
+    try {
+      // Supabase를 통한 비밀번호 변경
+      const { error } = await supabase.auth.updateUser({
+        password: passwordData.newPassword
+      })
+      
+      if (error) {
+        console.error('[ERROR] [Profile] 비밀번호 변경 오류:', error)
+        setTimeout(() => {
+          toast.error('비밀번호 변경에 실패했습니다: ' + error.message)
+        }, 0)
+        return
+      }
+      
+      // 성공 처리
+      setTimeout(() => {
+        toast.success('비밀번호가 성공적으로 변경되었습니다.')
+      }, 0)
+      
+      // 폼 초기화
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      })
+      
+      // 비밀번호 변경 활동 추적
+      if (user?.id) {
+        activityTracker.trackSettingsChange('password', false, true)
+      }
+      
+    } catch (error: any) {
+      console.error('[ERROR] [Profile] 비밀번호 변경 예외:', error)
+      setTimeout(() => {
+        toast.error('비밀번호 변경 중 오류가 발생했습니다.')
+      }, 0)
+    } finally {
+      setPasswordLoading(false)
+    }
+  }
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     if (name === 'phone') {
@@ -196,6 +286,15 @@ export default function Profile() {
       return
     }
     setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handlePasswordInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setPasswordData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm') => {
+    setShowPasswords(prev => ({ ...prev, [field]: !prev[field] }))
   }
 
   const handleNotificationChange = (key: string, value: boolean) => {
@@ -297,6 +396,112 @@ export default function Profile() {
                     <Button type="submit" loading={loading}>
                       <Save className="w-4 h-4 mr-2" />
                       저장하기
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Point Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Coins className="w-5 h-5 mr-2 text-yellow-400" />
+                  포인트 정보
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PointBalance showDetails={true} />
+                <div className="mt-4 pt-4 border-t border-slate-700">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-white font-medium">포인트 충전</h4>
+                      <p className="text-sm text-slate-400">
+                        추가 포인트를 구매하여 더 많은 리포트를 생성하세요
+                      </p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => window.location.href = '/billing'}
+                    >
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      충전하기
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Password Change */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Lock className="w-5 h-5 mr-2 text-yellow-400" />
+                  비밀번호 변경
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handlePasswordChange} className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <Input
+                        label="현재 비밀번호"
+                        type={showPasswords.current ? "text" : "password"}
+                        name="currentPassword"
+                        value={passwordData.currentPassword}
+                        onChange={handlePasswordInputChange}
+                        placeholder="현재 비밀번호를 입력하세요"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => togglePasswordVisibility('current')}
+                        className="absolute right-3 top-8 text-slate-400 hover:text-white"
+                      >
+                        {showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    
+                    <div className="relative">
+                      <Input
+                        label="새 비밀번호"
+                        type={showPasswords.new ? "text" : "password"}
+                        name="newPassword"
+                        value={passwordData.newPassword}
+                        onChange={handlePasswordInputChange}
+                        placeholder="새 비밀번호를 입력하세요 (최소 6자)"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => togglePasswordVisibility('new')}
+                        className="absolute right-3 top-8 text-slate-400 hover:text-white"
+                      >
+                        {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    
+                    <div className="relative">
+                      <Input
+                        label="새 비밀번호 확인"
+                        type={showPasswords.confirm ? "text" : "password"}
+                        name="confirmPassword"
+                        value={passwordData.confirmPassword}
+                        onChange={handlePasswordInputChange}
+                        placeholder="새 비밀번호를 다시 입력하세요"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => togglePasswordVisibility('confirm')}
+                        className="absolute right-3 top-8 text-slate-400 hover:text-white"
+                      >
+                        {showPasswords.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button type="submit" loading={passwordLoading}>
+                      <Lock className="w-4 h-4 mr-2" />
+                      비밀번호 변경
                     </Button>
                   </div>
                 </form>
@@ -447,6 +652,14 @@ export default function Profile() {
                         <Building className="w-4 h-4 mr-2 text-slate-400" />
                         <span className="text-slate-400">회사:</span>
                         <span className="ml-2 text-white">{profile.company}</span>
+                      </div>
+                    )}
+
+                    {profile?.phone && (
+                      <div className="flex items-center text-sm">
+                        <User className="w-4 h-4 mr-2 text-slate-400" />
+                        <span className="text-slate-400">전화번호:</span>
+                        <span className="ml-2 text-white">{profile.phone}</span>
                       </div>
                     )}
                     

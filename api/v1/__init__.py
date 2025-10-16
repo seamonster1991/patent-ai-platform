@@ -1,0 +1,1 @@
+# Vercel Serverless Functions for Patent AI Admin Dashboard

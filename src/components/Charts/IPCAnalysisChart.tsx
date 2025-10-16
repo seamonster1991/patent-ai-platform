@@ -12,9 +12,9 @@ interface IPCAnalysisChartProps {
   title: string;
   subtitle: string;
   data: TechnologyField[];
-  type: 'individual' | 'market';
-  category: 'search' | 'report';
-  icon?: React.ReactNode;
+  type: 'search' | 'report';
+  category: 'field';
+  icon?: React.ComponentType<{ className?: string }>;
 }
 
 const IPCAnalysisChart: React.FC<IPCAnalysisChartProps> = ({
@@ -45,21 +45,24 @@ const IPCAnalysisChart: React.FC<IPCAnalysisChartProps> = ({
   // 상위 3개 기술 분야
   const topFields = data.slice(0, 3);
 
+  // 아이콘 컴포넌트 렌더링
+  const IconComponent = icon || ChartBarIcon;
+
   return (
     <Card className="h-full">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
-          {icon || (type === 'individual' ? <ChartBarIcon className="h-5 w-5 text-blue-500" /> : <GlobeAltIcon className="h-5 w-5 text-emerald-500" />)}
+          <IconComponent className={`h-5 w-5 ${type === 'search' ? 'text-blue-500' : 'text-emerald-500'}`} />
           <div>
             <Title className="text-lg font-semibold">{title}</Title>
             <Text className="text-sm text-gray-600">{subtitle}</Text>
           </div>
         </div>
         <Badge 
-          color={type === 'individual' ? 'blue' : 'emerald'}
+          color={type === 'search' ? 'blue' : 'emerald'}
           size="sm"
         >
-          {type === 'individual' ? '내 데이터' : '시장 데이터'}
+          {type === 'search' ? '검색 데이터' : '리포트 데이터'}
         </Badge>
       </div>
 
@@ -69,7 +72,7 @@ const IPCAnalysisChart: React.FC<IPCAnalysisChartProps> = ({
           <div className="text-center">
             <Text className="text-2xl font-bold text-gray-900">{totalCount.toLocaleString()}</Text>
             <Text className="text-sm text-gray-600">
-              총 {category === 'search' ? '검색' : '리포트'} 수
+              총 {type === 'search' ? '검색' : '리포트'} 수
             </Text>
           </div>
 
@@ -119,7 +122,7 @@ const IPCAnalysisChart: React.FC<IPCAnalysisChartProps> = ({
           <ChartBarIcon className="h-12 w-12 mb-2" />
           <Text>분석할 데이터가 없습니다</Text>
           <Text className="text-sm">
-            {category === 'search' ? '검색' : '리포트'} 활동을 시작해보세요
+            {type === 'search' ? '검색' : '리포트'} 활동을 시작해보세요
           </Text>
         </div>
       )}

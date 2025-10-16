@@ -7,7 +7,7 @@ interface LoadingProps {
   className?: string
 }
 
-export default function Loading({ size = 'md', text, className }: LoadingProps) {
+function Loading({ size = 'md', text, className }: LoadingProps) {
   const sizeClasses = {
     sm: 'w-4 h-4',
     md: 'w-6 h-6',
@@ -40,3 +40,7 @@ export function LoadingSpinner({ className }: { className?: string }) {
     <Loader2 className={cn('animate-spin text-ms-olive w-5 h-5', className)} />
   )
 }
+
+export { Loading };
+export default Loading;
+export type { LoadingProps };

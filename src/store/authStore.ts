@@ -17,32 +17,86 @@ interface AuthState {
   updateProfile: (updates: Partial<User>) => Promise<{ error?: string; success?: boolean; profile?: User }>
 }
 
-// 로그인 추적을 위한 헬퍼 함수
-const trackLoginActivity = async (userId: string) => {
+// 로그인 활동 추적 헬퍼 함수 (새로운 RPC 함수 사용)
+const trackLoginActivity = async (userId: string, success: boolean = true, loginMethod: string = 'email') => {
   try {
+    console.log('[AuthStore] 로그인 활동 기록 시작:', { userId, success, loginMethod });
+    
+    // 세션 ID 생성 (더 강력한 형식)
+    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${userId.substr(0, 8)}`;
+    
+    // 클라이언트 정보 수집
     const userAgent = navigator.userAgent;
-    const ipAddress = null; // 클라이언트에서는 IP를 직접 얻을 수 없음
+    const timestamp = new Date().toISOString();
     
-    const { data, error } = await supabase.rpc('track_login_activity', {
+    // 브라우저 정보 추출
+    const getBrowserInfo = () => {
+      const ua = navigator.userAgent;
+      if (ua.includes('Chrome')) return 'Chrome';
+      if (ua.includes('Firefox')) return 'Firefox';
+      if (ua.includes('Safari')) return 'Safari';
+      if (ua.includes('Edge')) return 'Edge';
+      return 'Other';
+    };
+    
+    // 디바이스 정보 추출
+    const getDeviceInfo = () => {
+      const ua = navigator.userAgent;
+      if (/Mobile|Android|iPhone|iPad/.test(ua)) return 'mobile';
+      if (/Tablet|iPad/.test(ua)) return 'tablet';
+      return 'desktop';
+    };
+    
+    // 새로운 record_user_login RPC 함수 호출
+    const { data, error } = await supabase.rpc('record_user_login', {
       p_user_id: userId,
-      p_ip_address: ipAddress,
+      p_ip_address: null, // 클라이언트에서는 IP 주소를 직접 얻기 어려움
       p_user_agent: userAgent,
-      p_login_method: 'email'
+      p_session_id: sessionId,
+      p_login_method: loginMethod,
+      p_login_success: success,
+      p_metadata: {
+        timestamp,
+        client_type: 'web',
+        browser: getBrowserInfo(),
+        device_type: getDeviceInfo(),
+        screen_resolution: `${screen.width}x${screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        language: navigator.language,
+        platform: navigator.platform,
+        login_source: 'auth_store'
+      }
     });
-    
+
     if (error) {
-      console.error('[AuthStore] 로그인 활동 추적 실패:', error);
-    } else {
-      console.log('[AuthStore] 로그인 활동 추적 성공:', data);
+      console.error('[AuthStore] 로그인 기록 RPC 오류:', error);
+      // RPC 오류가 발생해도 로그인 프로세스는 계속 진행
+      return { success: false, error: error.message };
     }
+
+    console.log('[AuthStore] 로그인 활동이 성공적으로 기록되었습니다:', data);
+    
+    // 성공한 로그인인 경우 세션 정보를 로컬 스토리지에 저장
+    if (success && data?.login_record_id) {
+      localStorage.setItem('session_id', sessionId);
+      localStorage.setItem('login_record_id', data.login_record_id);
+      localStorage.setItem('login_timestamp', timestamp);
+      
+      // ActivityTracker에 세션 ID 설정
+      const activityTracker = ActivityTracker.getInstance();
+      activityTracker.setSessionId(sessionId);
+    }
+    
+    return { success: true, data };
   } catch (error) {
-    console.error('[AuthStore] 로그인 추적 중 오류:', error);
+    console.error('[AuthStore] 로그인 기록 중 예상치 못한 오류:', error);
+    return { success: false, error: error instanceof Error ? error.message : '알 수 없는 오류' };
   }
 };
 
-// onAuthStateChange 리스너 중복 등록 방지를 위한 플래그
-let authListenerInitialized = false;
+// 단순화된 인증 상태 관리
 let authSubscription: any = null;
+let isInitializing = false;
 
 // 사용자 세션 처리 헬퍼 함수
 const handleUserSession = async (user: SupabaseUser, set: any) => {
@@ -131,6 +185,38 @@ const handleUserSession = async (user: SupabaseUser, set: any) => {
     // 관리자 권한 확인 (프로필의 role만 신뢰)
     const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin';
     
+    // 월간 무료 포인트 지급 시도 (비동기로 처리하여 로그인 속도에 영향 없음)
+    if (profile) {
+      try {
+        console.log('[AuthStore] 월간 무료 포인트 지급 확인 중...');
+        const response = await fetch('/api/points/monthly-free', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: user.id }),
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.granted) {
+            console.log('[AuthStore] 월간 무료 포인트 지급 성공:', result.message);
+            // 토스트 알림은 UI에서 처리하도록 이벤트 발생
+            window.dispatchEvent(new CustomEvent('monthlyPointsGranted', { 
+              detail: { points: result.points, message: result.message } 
+            }));
+          } else {
+            console.log('[AuthStore] 월간 무료 포인트:', result.message);
+          }
+        } else {
+          console.warn('[AuthStore] 월간 무료 포인트 API 호출 실패:', response.status);
+        }
+      } catch (error) {
+        console.error('[AuthStore] 월간 무료 포인트 지급 중 오류:', error);
+        // 오류가 발생해도 로그인 프로세스는 계속 진행
+      }
+    }
+    
     console.log('[AuthStore] 사용자 세션 처리 완료:', { 
       userId: user.id, 
       hasProfile: !!profile, 
@@ -172,6 +258,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       if (error) {
         console.error('[AuthStore] 로그인 오류:', error);
+        
+        // 실패한 로그인 시도도 기록 (사용자 ID가 없으므로 이메일로 사용자 찾기)
+        try {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('id')
+            .eq('email', email)
+            .single();
+          
+          if (userData?.id) {
+            await trackLoginActivity(userData.id, false);
+          }
+        } catch (trackError) {
+          console.error('[AuthStore] 실패한 로그인 추적 오류:', trackError);
+        }
+        
         authGuard.finishLogin(false);
         set({ loading: false })
         return { error: error.message }
@@ -209,12 +311,43 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         authGuard.finishLogin(true);
         return {}
       } else {
+        // 로그인 실패 기록
+        try {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('id')
+            .eq('email', email)
+            .single();
+          
+          if (userData?.id) {
+            await trackLoginActivity(userData.id, false);
+          }
+        } catch (trackError) {
+          console.error('[AuthStore] 실패한 로그인 추적 오류:', trackError);
+        }
+        
         authGuard.finishLogin(false);
         set({ loading: false })
         return { error: '로그인에 실패했습니다.' }
       }
     } catch (error) {
       console.error('[AuthStore] 로그인 예외:', error);
+      
+      // 예외 발생 시에도 실패 기록
+      try {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', email)
+          .single();
+        
+        if (userData?.id) {
+          await trackLoginActivity(userData.id, false);
+        }
+      } catch (trackError) {
+        console.error('[AuthStore] 예외 상황 로그인 추적 오류:', trackError);
+      }
+      
       authGuard.finishLogin(false);
       set({ loading: false })
       return { error: '로그인 중 오류가 발생했습니다.' }
@@ -277,6 +410,33 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           }
           
           profile = insertData;
+          
+          // 회원가입 시 5,000포인트 지급 (한달 만료)
+          try {
+            const response = await fetch('/api/signup-bonus', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                userId: data.user.id,
+                action: 'signup-bonus'
+              })
+            });
+            
+            if (response.ok) {
+              const result = await response.json();
+              if (result.success && result.granted) {
+                console.log('[AuthStore] 회원가입 축하 포인트 지급 완료:', result.points + 'P');
+              } else {
+                console.log('[AuthStore] 회원가입 축하 포인트:', result.message);
+              }
+            } else {
+              console.error('[AuthStore] 회원가입 축하 포인트 지급 실패');
+            }
+          } catch (pointError) {
+            console.error('[AuthStore] 회원가입 축하 포인트 지급 중 오류:', pointError);
+          }
         } else if (existingProfile) {
           // Profile exists, update ID if needed
           if (existingProfile.id !== data.user.id) {
@@ -367,130 +527,40 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initialize: async () => {
     const currentState = get();
     
-    // 이미 초기화되었다면 중복 실행 방지
-    if (currentState.initialized) {
+    // 중복 초기화 방지
+    if (currentState.initialized || isInitializing) {
       return;
     }
     
+    isInitializing = true;
     set({ loading: true });
     
     try {
-      // Supabase 연결 테스트 (타임아웃 증가 및 재시도 로직 추가)
-      let sessionData = null;
-      let sessionError = null;
+      // 현재 세션 확인 (단순화)
+      const { data: { session }, error } = await supabase.auth.getSession();
       
-      try {
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Supabase connection timeout')), 5000) // 5초로 단축
-        );
-        
-        const sessionPromise = supabase.auth.getSession();
-        
-        const result = await Promise.race([
-          sessionPromise,
-          timeoutPromise
-        ]) as any;
-        
-        sessionData = result.data;
-        sessionError = result.error;
-      } catch (timeoutError) {
-        console.warn('[AuthStore] Supabase 연결 타임아웃, 오프라인 모드로 진행');
-        sessionData = { session: null };
-        sessionError = null;
-      }
-      
-      // onAuthStateChange 리스너를 한 번만 등록
-      if (!authListenerInitialized) {
-        // 기존 구독이 있다면 해제
-        if (authSubscription) {
-          authSubscription.unsubscribe();
-        }
-        
-        authSubscription = supabase.auth.onAuthStateChange(async (event, session) => {
-          console.log('[AuthStore] 인증 상태 변경:', event, session?.user?.email);
-          
-          // 초기화가 완료된 후에만 상태 변경 처리
-          const currentState = get();
-          if (!currentState.initialized) {
-            console.log('[AuthStore] 초기화 미완료로 인증 상태 변경 무시');
-            return;
-          }
-          
-          // INITIAL_SESSION 이벤트는 무시 (초기화 시에만 발생)
-          if (event === 'INITIAL_SESSION') {
-            console.log('[AuthStore] INITIAL_SESSION 이벤트 무시');
-            return;
-          }
-          
-          // 중복 처리 방지 - 현재 사용자와 동일한 경우 무시
-          if (event === 'SIGNED_IN' && session?.user && currentState.user?.id === session.user.id) {
-            console.log('[AuthStore] 동일한 사용자 SIGNED_IN 이벤트 무시');
-            return;
-          }
-          
-          // 로그인 진행 중인 경우 이벤트 무시 (무한루프 방지)
-          if (event === 'SIGNED_IN' && authGuard.getStatus().isLoginInProgress) {
-            console.log('[AuthStore] 로그인 진행 중 SIGNED_IN 이벤트 무시');
-            return;
-          }
-          
-          // SIGNED_OUT 이벤트나 세션이 없는 경우에만 로딩 상태 설정
-          if (event === 'SIGNED_OUT' || !session?.user) {
-            console.log('[AuthStore] 로그아웃 처리');
-            authGuard.reset(); // AuthGuard 상태 리셋
-            set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true });
-            return;
-          }
-          
-          // SIGNED_IN 이벤트 처리
-          if (event === 'SIGNED_IN' && session?.user) {
-            console.log('[AuthStore] 로그인 이벤트 처리 시작');
-            try {
-              // 중복 처리 방지를 위한 추가 체크
-              if (currentState.user?.id === session.user.id && currentState.user?.email === session.user.email) {
-                console.log('[AuthStore] 이미 동일한 사용자로 로그인됨, 이벤트 무시');
-                return;
-              }
-              
-              await handleUserSession(session.user, set);
-              console.log('[AuthStore] 로그인 이벤트 처리 완료');
-            } catch (error) {
-              console.error('[AuthStore] 로그인 이벤트 처리 오류:', error);
-              set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true });
-            }
-          }
-        });
-        authListenerInitialized = true;
-      }
-      
-      // 현재 세션 확인
-      const { session } = sessionData || { session: null };
-      
-      if (sessionError) {
-        console.error('[AuthStore] 세션 가져오기 오류:', sessionError);
+      if (error) {
+        console.error('[AuthStore] 세션 가져오기 오류:', error);
         set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true });
         return;
       }
       
       if (session?.user) {
-        console.log('[AuthStore] 기존 세션 발견, 사용자 정보 로드:', session.user.email);
-        
-        // JWT 토큰을 localStorage에 저장
+        // JWT 토큰 저장 (단순화)
         if (session.access_token) {
           localStorage.setItem('token', session.access_token);
-          console.log('[AuthStore] 기존 세션 JWT 토큰 저장 완료');
         }
         
         await handleUserSession(session.user, set);
       } else {
-        console.log('[AuthStore] 세션 없음, 로그아웃 상태로 초기화');
         set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true });
       }
       
     } catch (error) {
       console.error('[AuthStore] 초기화 실패:', error);
-      // 초기화 실패해도 앱이 동작하도록 기본 상태로 설정
       set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true });
+    } finally {
+      isInitializing = false;
     }
   },
 

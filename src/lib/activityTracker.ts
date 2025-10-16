@@ -16,6 +16,7 @@ export interface UserActivity {
 export class ActivityTracker {
   private static instance: ActivityTracker
   private userId: string | null = null
+  private sessionId: string | null = null
   private batchQueue: UserActivity[] = []
   private batchTimer: NodeJS.Timeout | null = null
   private readonly BATCH_SIZE = 10
@@ -37,6 +38,27 @@ export class ActivityTracker {
 
   public setUserId(userId: string | null) {
     this.userId = userId
+  }
+
+  public setSessionId(sessionId: string | null) {
+    this.sessionId = sessionId
+  }
+
+  public getSessionId(): string {
+    if (this.sessionId) return this.sessionId
+    
+    // 로컬 스토리지에서 세션 ID 가져오기
+    const storedSessionId = localStorage.getItem('session_id')
+    if (storedSessionId) {
+      this.sessionId = storedSessionId
+      return storedSessionId
+    }
+    
+    // 새 세션 ID 생성
+    const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    this.sessionId = newSessionId
+    localStorage.setItem('session_id', newSessionId)
+    return newSessionId
   }
 
   private getClientInfo() {
@@ -106,21 +128,31 @@ export class ActivityTracker {
       if (error) {
         console.error('Failed to batch insert activities:', error)
         if (this.isRlsError(error)) {
-          // RLS로 실패 시 RPC로 개별 삽입 시도
+          // RLS로 실패 시 개별 삽입 시도
           const failures: UserActivity[] = []
           for (const act of activities) {
             try {
-              const { error: rpcError } = await supabase.rpc('record_user_activity', {
-                p_user_id: act.user_id,
-                p_activity_type: act.activity_type,
-                p_activity_data: act.activity_data
-              })
-              if (rpcError) {
-                console.error('RPC record_user_activity failed:', rpcError)
+              const sessionId = this.getSessionId()
+              const { error: insertError } = await supabase
+                .from('user_activities')
+                .insert({
+                  ...act,
+                  session_id: sessionId,
+                  ip_address: null,
+                  user_agent: act.user_agent || navigator.userAgent,
+                  metadata: {
+                    timestamp: new Date().toISOString(),
+                    source: 'batch_processor',
+                    version: '2.0'
+                  }
+                })
+              
+              if (insertError) {
+                console.error('[ActivityTracker] 배치 개별 삽입 실패:', insertError)
                 failures.push(act)
               }
-            } catch (rpcEx) {
-              console.error('RPC exception in record_user_activity:', rpcEx)
+            } catch (insertEx) {
+              console.error('[ActivityTracker] 배치 개별 삽입 예외:', insertEx)
               failures.push(act)
             }
           }
@@ -142,24 +174,55 @@ export class ActivityTracker {
 
   private async insertActivity(activity: UserActivity) {
     try {
-      // 먼저 RPC로 시도 (RLS 환경에서 더 안전)
-      const { error: rpcError } = await supabase.rpc('record_user_activity', {
-        p_user_id: activity.user_id,
-        p_activity_type: activity.activity_type,
-        p_activity_data: activity.activity_data
-      })
-      if (rpcError) {
-        console.warn('RPC record_user_activity failed, fallback to direct insert:', rpcError)
-        // RPC 실패 시 직접 삽입 시도
-        const { error } = await supabase
-          .from('user_activities')
-          .insert(activity)
-        if (error) {
-          console.error('Failed to track activity:', error)
-        }
+      // 세션 ID 가져오기
+      const sessionId = this.getSessionId();
+      
+      // 브라우저 정보 추출
+      const getBrowserInfo = () => {
+        const ua = navigator.userAgent;
+        if (ua.includes('Chrome')) return 'Chrome';
+        if (ua.includes('Firefox')) return 'Firefox';
+        if (ua.includes('Safari')) return 'Safari';
+        if (ua.includes('Edge')) return 'Edge';
+        return 'Other';
+      };
+      
+      // 디바이스 정보 추출
+      const getDeviceInfo = () => {
+        const ua = navigator.userAgent;
+        if (/Mobile|Android|iPhone|iPad/.test(ua)) return 'mobile';
+        if (/Tablet|iPad/.test(ua)) return 'tablet';
+        return 'desktop';
+      };
+      
+      // RPC 함수 대신 직접 테이블에 삽입
+      const { error } = await supabase
+        .from('user_activities')
+        .insert({
+          ...activity,
+          session_id: sessionId,
+          ip_address: null, // 클라이언트에서는 IP를 직접 얻을 수 없음
+          user_agent: activity.user_agent || navigator.userAgent,
+          metadata: {
+            timestamp: new Date().toISOString(),
+            browser: getBrowserInfo(),
+            device_type: getDeviceInfo(),
+            platform: navigator.platform,
+            language: navigator.language,
+            screen_resolution: `${screen.width}x${screen.height}`,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            source: 'activity_tracker',
+            version: '2.0'
+          }
+        })
+      
+      if (error) {
+        console.error('[ActivityTracker] 활동 기록 실패:', error)
+      } else {
+        console.log('[ActivityTracker] 활동이 성공적으로 기록되었습니다')
       }
     } catch (error) {
-      console.error('Activity tracking error:', error)
+      console.error('[ActivityTracker] 활동 기록 중 예상치 못한 오류:', error)
     }
   }
 
@@ -206,10 +269,14 @@ export class ActivityTracker {
     })
   }
 
-  // 로그인 추적
-  public async trackLogin(data: Record<string, any> = {}) {
+  // 로그인 추적 - user_activities 테이블만 사용
+  public async trackLogin(data: Record<string, any> = {}, success: boolean = true) {
+    // user_activities 테이블에 로그인 활동 기록
     await this.trackActivity('login', {
       login_method: data.method || 'email',
+      success: success,
+      ip_address: data.ip_address || '127.0.0.1',
+      user_agent: data.user_agent || navigator.userAgent,
       ...data
     }, true) // 즉시 처리
   }
@@ -353,6 +420,25 @@ export class ActivityTracker {
     await this.trackActivity('session_end', {
       session_duration: sessionDuration
     }, true) // 즉시 처리
+  }
+
+  // 로그인 통계 조회 - 새로운 RPC 함수 사용
+  public async getUserLoginStats(userId: string) {
+    try {
+      const { data, error } = await supabase.rpc('get_user_login_stats', {
+        p_user_id: userId
+      })
+      
+      if (error) {
+        console.error('Failed to get user login stats via RPC:', error)
+        return null
+      }
+      
+      return data
+    } catch (error) {
+      console.error('Error calling get_user_login_stats RPC:', error)
+      return null
+    }
   }
 
   // 사용자 활동 통계 조회

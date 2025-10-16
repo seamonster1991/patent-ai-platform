@@ -90,7 +90,7 @@ export default function ActivityAnalysis() {
         setLoading(true)
         setError(null)
 
-        const response = await getUserActivityStats({ userId: user.id })
+        const response = await getUserActivityStats(user.id)
 
         if (!response.success || !response.data) {
           throw new Error(response.error || '활동 데이터를 가져오지 못했습니다')
@@ -114,8 +114,8 @@ export default function ActivityAnalysis() {
         const weeklyPattern = weekdayLabels.map(label => ({ day: label, count: weeklyMap[label] || 0 }))
 
         // Efficiency metrics from activity type counts
-        const typeCounts: Record<string, number> = {}
-        (data.activityTypes || []).forEach((t: any) => { typeCounts[t.activity_type] = t.count })
+        const typeCounts: Record<string, number> = {};
+        (data.activityTypes || []).forEach((t: any) => { typeCounts[t.activity_type] = t.count });
         const searches = typeCounts['search'] || 0
         const views = typeCounts['patent_view'] || 0
         const reports = typeCounts['report_generation'] || 0

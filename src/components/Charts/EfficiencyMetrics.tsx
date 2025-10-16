@@ -17,10 +17,18 @@ interface EfficiencyMetricsProps {
       reportsGenerated: number;
     };
   };
+  dashboardStatistics?: {
+    total_logins: number;
+    personal_searches: number;
+    personal_reports: number;
+    market_search_average: number;
+    market_report_average: number;
+  };
 }
 
 const EfficiencyMetrics: React.FC<EfficiencyMetricsProps> = ({ 
-  efficiencyMetrics
+  efficiencyMetrics,
+  dashboardStatistics
 }) => {
   // Add safety checks for undefined efficiencyMetrics
   if (!efficiencyMetrics) {
@@ -123,7 +131,7 @@ const EfficiencyMetrics: React.FC<EfficiencyMetricsProps> = ({
                 총 로그인
               </Text>
               <Text className="text-lg font-semibold text-gray-900">
-                {(loginEfficiency.totalLogins || 0).toLocaleString('ko-KR')}
+                {(dashboardStatistics?.total_logins || loginEfficiency.totalLogins || 0).toLocaleString('ko-KR')}
               </Text>
             </div>
             <div>
@@ -181,10 +189,10 @@ const EfficiencyMetrics: React.FC<EfficiencyMetricsProps> = ({
           <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
             <div>
               <Text className="text-xs text-gray-500 uppercase tracking-wide">
-                총 검색
+                총 검색수
               </Text>
               <Text className="text-lg font-semibold text-gray-900">
-                {(searchConversion.totalSearches || 0).toLocaleString('ko-KR')}
+                {(dashboardStatistics?.personal_searches || searchConversion.totalSearches || 0).toLocaleString('ko-KR')}
               </Text>
             </div>
             <div>
@@ -192,7 +200,7 @@ const EfficiencyMetrics: React.FC<EfficiencyMetricsProps> = ({
                 생성된 리포트
               </Text>
               <Text className="text-lg font-semibold text-gray-900">
-                {(searchConversion.reportsGenerated || 0).toLocaleString('ko-KR')}
+                {(dashboardStatistics?.personal_reports || searchConversion.reportsGenerated || 0).toLocaleString('ko-KR')}
               </Text>
             </div>
           </div>

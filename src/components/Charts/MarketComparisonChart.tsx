@@ -84,7 +84,7 @@ const MarketComparisonChart: React.FC<MarketComparisonProps> = ({
   );
 
   const getComparisonColor = (percentage: number) => {
-    if (percentage >= 100) return 'emerald';
+    if (percentage >= 100) return 'green';
     if (percentage >= 50) return 'yellow';
     return 'red';
   };

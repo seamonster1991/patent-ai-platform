@@ -319,7 +319,7 @@ export default function Search() {
                         }
                         value={(filters[searchField] as string) || ''}
                         onChange={(e) => handleFilterChange(searchField, e.target.value)}
-                        size="lg"
+                        className="text-xl py-3 px-6 min-h-[50px] w-full font-medium"
                       />
                     </div>
                   </div>
@@ -820,7 +820,6 @@ export default function Search() {
                         )}
                         <Button
                           size="sm"
-                          variant="outline"
                           asChild
                           onClick={() => {
                             // 특허 상세보기 클릭 활동 추적
@@ -831,8 +830,9 @@ export default function Search() {
                               })
                             }
                           }}
+                          className="bg-gradient-to-r from-[#722F37] to-[#8B1538] hover:from-[#8B1538] hover:to-[#A0153E] text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 border-0"
                         >
-                          <Link to={`/patent/${patent.applicationNumber}`}>
+                          <Link to={`/patent/${patent.applicationNumber}`} className="flex items-center">
                             <FileText className="w-4 h-4 mr-1" />
                             상세보기
                           </Link>

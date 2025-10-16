@@ -39,9 +39,22 @@ const RecentActivityList: React.FC<RecentActivityListProps> = ({
   const displayData = data.slice(0, maxItems);
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return '날짜 정보 없음';
+    
     const date = new Date(dateString);
+    
+    // 유효하지 않은 날짜인 경우
+    if (isNaN(date.getTime())) {
+      return '날짜 정보 없음';
+    }
+    
     const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    
+    if (diffInMs < 0) {
+      return '방금 전'; // 미래 날짜인 경우
+    }
     
     if (diffInHours < 1) {
       return '방금 전';

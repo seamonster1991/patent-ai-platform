@@ -1,6 +1,13 @@
-const axios = require('axios');
-const { parseStringPromise } = require('xml2js');
-const { createClient } = require('@supabase/supabase-js');
+import axios from 'axios';
+import { parseStringPromise } from 'xml2js';
+import { createClient } from '@supabase/supabase-js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Supabase 클라이언트 초기화 (서버 환경 변수 우선 사용, 프론트 빌드 변수는 폴백)
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -20,7 +27,7 @@ try {
   supabase = null;
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   // CORS 헤더 설정
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -60,6 +67,46 @@ module.exports = async function handler(req, res) {
     
     const searchParams = req.body || {};
     
+    // 검색 파라미터 추출
+    const {
+      word,
+      keyword, // 프론트엔드에서 keyword 필드도 지원
+      inventionTitle,
+      astrtCont,
+      claimScope,
+      ipcNumber,
+      cpcNumber,
+      applicationNumber,
+      openNumber,
+      publicationNumber,
+      registerNumber,
+      priorityApplicationNumber,
+      internationalApplicationNumber,
+      internationOpenNumber,
+      applicationDate,
+      openDate,
+      publicationDate,
+      registerDate,
+      priorityApplicationDate,
+      internationalApplicationDate,
+      internationOpenDate,
+      applicant,
+      inventors,
+      agent,
+      rightHoler,
+      patent,
+      utility,
+      lastvalue,
+      pageNo = 1,
+      numOfRows = 10,
+      sortSpec,
+      descSort,
+      userId
+    } = req.body;
+
+    // word와 keyword 필드 통합 처리
+    const searchWord = word || keyword;
+    
     // 서버리스 환경(Vercel 등) 고려한 타임아웃 설정
     const isVercel = !!process.env.VERCEL;
     const TIMEOUT_MS = Number(process.env.KIPRIS_TIMEOUT_MS) || (isVercel ? 8000 : 30000);
@@ -74,24 +121,23 @@ module.exports = async function handler(req, res) {
     params.append('ServiceKey', kiprisApiKey);
     
     // 검색 조건 검증 - 최소 하나의 검색 필드가 있어야 함
-    const hasSearchTerm = searchParams.word?.trim() || 
-                         searchParams.inventionTitle?.trim() || 
-                         searchParams.astrtCont?.trim() || 
-                         searchParams.claimScope?.trim() || 
-                         searchParams.ipcNumber?.trim() ||
-                         searchParams.cpcNumber?.trim() ||
-                         searchParams.applicationNumber?.trim() ||
-                         searchParams.openNumber?.trim() ||
-                         searchParams.publicationNumber?.trim() ||
-                         searchParams.registerNumber?.trim() ||
-                         searchParams.priorityApplicationNumber?.trim() ||
-                         searchParams.internationalApplicationNumber?.trim() ||
-                         searchParams.internationOpenNumber?.trim() ||
-                         searchParams.applicant?.trim() ||
-                         searchParams.inventors?.trim() ||
-                         searchParams.agent?.trim() ||
-                         searchParams.rightHoler?.trim() ||
-                         searchParams.keyword?.trim(); // 기존 호환성
+    const hasSearchTerm = searchWord?.trim() || 
+                         inventionTitle?.trim() || 
+                         astrtCont?.trim() || 
+                         claimScope?.trim() || 
+                         ipcNumber?.trim() ||
+                         cpcNumber?.trim() ||
+                         applicationNumber?.trim() ||
+                         openNumber?.trim() ||
+                         publicationNumber?.trim() ||
+                         registerNumber?.trim() ||
+                         priorityApplicationNumber?.trim() ||
+                         internationalApplicationNumber?.trim() ||
+                         internationOpenNumber?.trim() ||
+                         applicant?.trim() ||
+                         inventors?.trim() ||
+                         agent?.trim() ||
+                         rightHoler?.trim();
 
     if (!hasSearchTerm) {
       return res.status(400).json({
@@ -110,168 +156,168 @@ module.exports = async function handler(req, res) {
     let hasSpecificField = false;
     
     // 2. 발명의명칭 (inventionTitle) - 가장 정확한 검색
-    if (searchParams.inventionTitle?.trim()) {
-      params.append('inventionTitle', searchParams.inventionTitle.trim());
+    if (inventionTitle?.trim()) {
+      params.append('inventionTitle', inventionTitle.trim());
       hasSpecificField = true;
-      console.log('🎯 발명의명칭 검색:', searchParams.inventionTitle.trim());
+      console.log('🎯 발명의명칭 검색:', inventionTitle.trim());
     }
     
     // 3. 초록 (astrtCont)
-    if (searchParams.astrtCont?.trim()) {
-      params.append('astrtCont', searchParams.astrtCont.trim());
+    if (astrtCont?.trim()) {
+      params.append('astrtCont', astrtCont.trim());
       hasSpecificField = true;
-      console.log('🎯 초록 검색:', searchParams.astrtCont.trim());
+      console.log('🎯 초록 검색:', astrtCont.trim());
     }
     
     // 4. 청구범위 (claimScope)
-    if (searchParams.claimScope?.trim()) {
-      params.append('claimScope', searchParams.claimScope.trim());
+    if (claimScope?.trim()) {
+      params.append('claimScope', claimScope.trim());
       hasSpecificField = true;
-      console.log('🎯 청구범위 검색:', searchParams.claimScope.trim());
+      console.log('🎯 청구범위 검색:', claimScope.trim());
     }
     
     // 5. IPC코드 (ipcNumber)
-    if (searchParams.ipcNumber?.trim()) {
-      params.append('ipcNumber', searchParams.ipcNumber.trim());
+    if (ipcNumber?.trim()) {
+      params.append('ipcNumber', ipcNumber.trim());
       hasSpecificField = true;
-      console.log('🎯 IPC코드 검색:', searchParams.ipcNumber.trim());
+      console.log('🎯 IPC코드 검색:', ipcNumber.trim());
     }
     
     // CPC 분류코드
-    if (searchParams.cpcNumber?.trim()) {
-      params.append('cpcNumber', searchParams.cpcNumber.trim());
+    if (cpcNumber?.trim()) {
+      params.append('cpcNumber', cpcNumber.trim());
       hasSpecificField = true;
-      console.log('🎯 CPC코드 검색:', searchParams.cpcNumber.trim());
+      console.log('🎯 CPC코드 검색:', cpcNumber.trim());
     }
     
     // 1. 전체검색/자유검색 (word) - 특정 필드가 없을 때만 사용
-    if (searchParams.word?.trim() && !hasSpecificField) {
-      params.append('word', searchParams.word.trim());
-      console.log('🔍 전체검색:', searchParams.word.trim());
-    } else if (searchParams.word?.trim() && hasSpecificField) {
+    if (searchWord?.trim() && !hasSpecificField) {
+      params.append('word', searchWord.trim());
+      console.log('🔍 전체검색:', searchWord.trim());
+    } else if (searchWord?.trim() && hasSpecificField) {
       console.log('⚠️ 특정 필드가 지정되어 전체검색(word)은 제외됨');
     }
     
     // 번호 검색 필드들 (정확한 매칭이 필요한 필드들)
     // 6. 출원번호 (applicationNumber)
-    if (searchParams.applicationNumber?.trim()) {
-      params.append('applicationNumber', searchParams.applicationNumber.trim());
+    if (applicationNumber?.trim()) {
+      params.append('applicationNumber', applicationNumber.trim());
       hasSpecificField = true;
-      console.log('🎯 출원번호 검색:', searchParams.applicationNumber.trim());
+      console.log('🎯 출원번호 검색:', applicationNumber.trim());
     }
     
     // 7. 공개번호 (openNumber)
-    if (searchParams.openNumber?.trim()) {
-      params.append('openNumber', searchParams.openNumber.trim());
+    if (openNumber?.trim()) {
+      params.append('openNumber', openNumber.trim());
       hasSpecificField = true;
-      console.log('🎯 공개번호 검색:', searchParams.openNumber.trim());
+      console.log('🎯 공개번호 검색:', openNumber.trim());
     }
     
     // 8. 공고번호 (publicationNumber)
-    if (searchParams.publicationNumber?.trim()) {
-      params.append('publicationNumber', searchParams.publicationNumber.trim());
+    if (publicationNumber?.trim()) {
+      params.append('publicationNumber', publicationNumber.trim());
       hasSpecificField = true;
-      console.log('🎯 공고번호 검색:', searchParams.publicationNumber.trim());
+      console.log('🎯 공고번호 검색:', publicationNumber.trim());
     }
     
     // 9. 등록번호 (registerNumber)
-    if (searchParams.registerNumber?.trim()) {
-      params.append('registerNumber', searchParams.registerNumber.trim());
+    if (registerNumber?.trim()) {
+      params.append('registerNumber', registerNumber.trim());
       hasSpecificField = true;
-      console.log('🎯 등록번호 검색:', searchParams.registerNumber.trim());
+      console.log('🎯 등록번호 검색:', registerNumber.trim());
     }
     
     // 10. 우선권주장번호 (priorityApplicationNumber)
-    if (searchParams.priorityApplicationNumber?.trim()) {
-      params.append('priorityApplicationNumber', searchParams.priorityApplicationNumber.trim());
+    if (priorityApplicationNumber?.trim()) {
+      params.append('priorityApplicationNumber', priorityApplicationNumber.trim());
       hasSpecificField = true;
-      console.log('🎯 우선권주장번호 검색:', searchParams.priorityApplicationNumber.trim());
+      console.log('🎯 우선권주장번호 검색:', priorityApplicationNumber.trim());
     }
     
     // 11. 국제출원번호 (internationalApplicationNumber)
-    if (searchParams.internationalApplicationNumber?.trim()) {
-      params.append('internationalApplicationNumber', searchParams.internationalApplicationNumber.trim());
+    if (internationalApplicationNumber?.trim()) {
+      params.append('internationalApplicationNumber', internationalApplicationNumber.trim());
       hasSpecificField = true;
-      console.log('🎯 국제출원번호 검색:', searchParams.internationalApplicationNumber.trim());
+      console.log('🎯 국제출원번호 검색:', internationalApplicationNumber.trim());
     }
     
     // 12. 국제공개번호 (internationOpenNumber)
-    if (searchParams.internationOpenNumber?.trim()) {
-      params.append('internationOpenNumber', searchParams.internationOpenNumber.trim());
+    if (internationOpenNumber?.trim()) {
+      params.append('internationOpenNumber', internationOpenNumber.trim());
       hasSpecificField = true;
-      console.log('🎯 국제공개번호 검색:', searchParams.internationOpenNumber.trim());
+      console.log('🎯 국제공개번호 검색:', internationOpenNumber.trim());
     }
     
     // 13-19. 날짜 필드들
-    if (searchParams.applicationDate?.trim()) {
-      params.append('applicationDate', searchParams.applicationDate.trim());
+    if (applicationDate?.trim()) {
+      params.append('applicationDate', applicationDate.trim());
     }
-    if (searchParams.openDate?.trim()) {
-      params.append('openDate', searchParams.openDate.trim());
+    if (openDate?.trim()) {
+      params.append('openDate', openDate.trim());
     }
-    if (searchParams.publicationDate?.trim()) {
-      params.append('publicationDate', searchParams.publicationDate.trim());
+    if (publicationDate?.trim()) {
+      params.append('publicationDate', publicationDate.trim());
     }
-    if (searchParams.registerDate?.trim()) {
-      params.append('registerDate', searchParams.registerDate.trim());
+    if (registerDate?.trim()) {
+      params.append('registerDate', registerDate.trim());
     }
-    if (searchParams.priorityApplicationDate?.trim()) {
-      params.append('priorityApplicationDate', searchParams.priorityApplicationDate.trim());
+    if (priorityApplicationDate?.trim()) {
+      params.append('priorityApplicationDate', priorityApplicationDate.trim());
     }
-    if (searchParams.internationalApplicationDate?.trim()) {
-      params.append('internationalApplicationDate', searchParams.internationalApplicationDate.trim());
+    if (internationalApplicationDate?.trim()) {
+      params.append('internationalApplicationDate', internationalApplicationDate.trim());
     }
-    if (searchParams.internationOpenDate?.trim()) {
-      params.append('internationOpenDate', searchParams.internationOpenDate.trim());
+    if (internationOpenDate?.trim()) {
+      params.append('internationOpenDate', internationOpenDate.trim());
     }
     
     // 인명 정보 필드들
-    if (searchParams.applicant?.trim()) {
-      params.append('applicant', searchParams.applicant.trim());
+    if (applicant?.trim()) {
+      params.append('applicant', applicant.trim());
       hasSpecificField = true;
-      console.log('🎯 출원인 검색:', searchParams.applicant.trim());
+      console.log('🎯 출원인 검색:', applicant.trim());
     }
-    if (searchParams.inventors?.trim()) {
-      params.append('inventors', searchParams.inventors.trim());
+    if (inventors?.trim()) {
+      params.append('inventors', inventors.trim());
       hasSpecificField = true;
-      console.log('🎯 발명자 검색:', searchParams.inventors.trim());
+      console.log('🎯 발명자 검색:', inventors.trim());
     }
-    if (searchParams.agent?.trim()) {
-      params.append('agent', searchParams.agent.trim());
+    if (agent?.trim()) {
+      params.append('agent', agent.trim());
       hasSpecificField = true;
-      console.log('🎯 대리인 검색:', searchParams.agent.trim());
+      console.log('🎯 대리인 검색:', agent.trim());
     }
-    if (searchParams.rightHoler?.trim()) {
-      params.append('rightHoler', searchParams.rightHoler.trim());
+    if (rightHoler?.trim()) {
+      params.append('rightHoler', rightHoler.trim());
       hasSpecificField = true;
-      console.log('🎯 등록권자 검색:', searchParams.rightHoler.trim());
+      console.log('🎯 등록권자 검색:', rightHoler.trim());
     }
     
     // 24-25. 특허/실용신안 구분
-    if (searchParams.patent !== undefined) {
-      params.append('patent', searchParams.patent.toString());
+    if (patent !== undefined) {
+      params.append('patent', patent.toString());
     }
-    if (searchParams.utility !== undefined) {
-      params.append('utility', searchParams.utility.toString());
+    if (utility !== undefined) {
+      params.append('utility', utility.toString());
     }
     
     // 행정처분 상태 (lastvalue)
-    if (searchParams.lastvalue?.trim()) {
-      params.append('lastvalue', searchParams.lastvalue.trim());
+    if (lastvalue?.trim()) {
+      params.append('lastvalue', lastvalue.trim());
     }
     
     // 페이지네이션 파라미터
-    const requestPageNo = Math.max(1, parseInt(searchParams.pageNo) || 1);
-    const requestNumOfRows = Math.min(500, Math.max(1, parseInt(searchParams.numOfRows) || 30));
+    const requestPageNo = Math.max(1, parseInt(pageNo) || 1);
+    const requestNumOfRows = Math.min(500, Math.max(1, parseInt(numOfRows) || 30));
     params.append('pageNo', requestPageNo.toString());
     params.append('numOfRows', requestNumOfRows.toString());
     
     // 정렬 파라미터
-    if (searchParams.sortSpec?.trim()) {
-      params.append('sortSpec', searchParams.sortSpec.trim());
+    if (sortSpec?.trim()) {
+      params.append('sortSpec', sortSpec.trim());
     }
-    if (searchParams.descSort !== undefined) {
-      params.append('descSort', searchParams.descSort.toString());
+    if (descSort !== undefined) {
+      params.append('descSort', descSort.toString());
     }
     
     const fullUrl = `${kiprisApiUrl}?${params.toString()}`;
@@ -298,8 +344,6 @@ module.exports = async function handler(req, res) {
       console.log('📊 파싱된 KIPRIS 응답:', JSON.stringify(kiprisResponse, null, 2).substring(0, 1000));
       
       // 응답을 파일로 저장하여 구조 분석
-      const fs = require('fs');
-      const path = require('path');
       try {
         const responseFilePath = path.join(__dirname, '..', 'kipris_response_debug.json');
         fs.writeFileSync(responseFilePath, JSON.stringify(kiprisResponse, null, 2));
@@ -355,7 +399,7 @@ module.exports = async function handler(req, res) {
     const processedData = {
       totalCount,
       patents,
-      searchQuery: searchParams.word || searchParams.keyword || '',
+      searchQuery: searchWord || '',
       searchTime: new Date().toISOString(),
       source: 'kipris_api',
       currentPage: requestPageNo,
@@ -366,10 +410,9 @@ module.exports = async function handler(req, res) {
     console.log('🔍 [DEBUG] processedData:', JSON.stringify(processedData, null, 2));
     
     // 검색 기록 저장 (중복 방지 로직 포함)
-    const userId = req.body.userId;
     console.log('🔍 [DEBUG] 검색 기록 저장 시작:', { userId, hasSupabase: !!supabase });
     if (userId && supabase) {
-      await saveSearchHistoryWithRetry(userId, processedData, searchParams, patents);
+      await saveSearchHistoryWithRetry(userId, processedData, req.body, patents);
     } else {
       console.log('⚠️ 검색 기록 저장 건너뜀:', { userId, hasSupabase: !!supabase });
     }
@@ -521,7 +564,7 @@ async function saveSearchHistoryWithRetry(userId, processedData, searchParams, p
       
       console.log(`✅ [saveSearchHistoryWithRetry] 시도 ${attempt} - user_activities 삽입 성공:`, activityResult);
 
-      // patent_search_analytics 테이블에도 기록 (IPC/CPC 분석용)
+      // search_history 테이블에 기록 (IPC/CPC 분석용)
       if (patents && patents.length > 0) {
         // 검색 결과에서 IPC/CPC 코드 추출
         const ipcCodes = [];
@@ -543,39 +586,57 @@ async function saveSearchHistoryWithRetry(userId, processedData, searchParams, p
           }
         });
 
-        // 기술 분야 추출
-        const technologyFields = extractTechnologyFieldsFromSearch(searchKeyword, ipcCodes, cpcCodes);
-        console.log(`🔍 [saveSearchHistoryWithRetry] 시도 ${attempt} - 추출된 기술 분야:`, technologyFields);
+        // 기술 분야 분류 (classify_technology_field 함수 사용)
+        const { data: classificationResult, error: classificationError } = await supabase
+          .rpc('classify_technology_field', {
+            p_search_text: searchKeyword,
+            p_ipc_codes: [...new Set(ipcCodes)], // 중복 제거
+            p_cpc_codes: [...new Set(cpcCodes)]  // 중복 제거
+          });
 
-        const searchAnalyticsData = {
+        let technologyField = '기타';
+        let fieldConfidence = 0.5;
+        
+        if (!classificationError && classificationResult) {
+          technologyField = classificationResult.technology_field || '기타';
+          fieldConfidence = classificationResult.confidence || 0.5;
+        } else {
+          console.warn(`⚠️ [saveSearchHistoryWithRetry] 기술 분야 분류 실패:`, classificationError);
+          // 폴백: 로컬 분류 함수 사용
+          const localFields = extractTechnologyFieldsFromSearch(searchKeyword, ipcCodes, cpcCodes);
+          technologyField = localFields[0] || '기타';
+        }
+
+        console.log(`🔍 [saveSearchHistoryWithRetry] 시도 ${attempt} - 분류된 기술 분야:`, {
+          technologyField,
+          fieldConfidence,
+          ipcCodes: [...new Set(ipcCodes)],
+          cpcCodes: [...new Set(cpcCodes)]
+        });
+
+        const searchHistoryData = {
           user_id: userId,
-          search_query: searchKeyword,
-          search_type: 'patent_search',
+          keyword: searchKeyword,
           results_count: resultsCount,
+          technology_field: technologyField,
+          field_confidence: fieldConfidence,
           ipc_codes: [...new Set(ipcCodes)], // 중복 제거
-          cpc_codes: [...new Set(cpcCodes)], // 중복 제거
-          technology_fields: technologyFields, // 기술 분야 추가
-          search_metadata: {
-            filters: searchParams,
-            total_count: processedData.totalCount,
-            page_no: processedData.currentPage,
-            page_size: processedData.pageSize,
-            timestamp: new Date().toISOString()
-          }
+          search_filters: searchParams,
+          created_at: new Date().toISOString()
         };
 
-        console.log(`🔍 [saveSearchHistoryWithRetry] 시도 ${attempt} - patent_search_analytics 삽입할 데이터:`, JSON.stringify(searchAnalyticsData, null, 2));
+        console.log(`🔍 [saveSearchHistoryWithRetry] 시도 ${attempt} - search_history 삽입할 데이터:`, JSON.stringify(searchHistoryData, null, 2));
 
-        const { data: analyticsResult, error: analyticsError } = await supabase
-          .from('patent_search_analytics')
-          .insert(searchAnalyticsData)
+        const { data: searchResult, error: searchError } = await supabase
+          .from('search_history')
+          .insert(searchHistoryData)
           .select();
 
-        if (analyticsError) {
-          throw new Error(`patent_search_analytics 삽입 실패: ${analyticsError.message}`);
+        if (searchError) {
+          throw new Error(`search_history 삽입 실패: ${searchError.message}`);
         }
         
-        console.log(`✅ [saveSearchHistoryWithRetry] 시도 ${attempt} - patent_search_analytics 삽입 성공:`, analyticsResult);
+        console.log(`✅ [saveSearchHistoryWithRetry] 시도 ${attempt} - search_history 삽입 성공:`, searchResult);
       }
       
       console.log(`✅ [saveSearchHistoryWithRetry] 시도 ${attempt} - 검색 기록 저장 완료`);

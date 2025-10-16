@@ -1,6 +1,6 @@
 import React from 'react';
 import { AlertCircle, RefreshCw, Wifi, WifiOff } from 'lucide-react';
-import Button from './Button';
+import { Button } from './Button';
 
 interface ErrorMessageProps {
   title?: string;
@@ -11,7 +11,7 @@ interface ErrorMessageProps {
   className?: string;
 }
 
-export default function ErrorMessage({
+function ErrorMessage({
   title = '오류가 발생했습니다',
   message,
   errorCode,
@@ -92,6 +92,10 @@ export default function ErrorMessage({
     </div>
   );
 }
+
+export { ErrorMessage };
+export default ErrorMessage;
+export type { ErrorMessageProps };
 
 // 네트워크 상태 표시 컴포넌트
 export function NetworkStatus({ isOnline }: { isOnline: boolean }) {

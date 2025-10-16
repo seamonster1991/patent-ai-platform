@@ -1,32 +1,48 @@
 import React from 'react';
+import { cn } from '../../lib/utils';
 
-interface BadgeProps {
+interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+  variant?: 'default' | 'success' | 'warning' | 'danger' | 'info';
+  size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
-  variant?: 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning';
-  className?: string;
 }
 
-export const Badge: React.FC<BadgeProps> = ({ 
-  children, 
-  variant = 'default', 
-  className = '' 
-}) => {
-  const baseClasses = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium';
-  
-  const variantClasses = {
-    default: 'bg-primary text-primary-foreground',
-    secondary: 'bg-secondary text-secondary-foreground',
-    destructive: 'bg-destructive text-destructive-foreground',
-    outline: 'border border-input bg-background text-foreground',
-    success: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-    warning: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
-  };
+const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
+  ({ className, variant = 'default', size = 'md', children, ...props }, ref) => {
+    const baseStyles = "inline-flex items-center font-medium rounded-full";
+    
+    const variants = {
+      default: "bg-secondary-100 text-secondary-800",
+      success: "bg-success-100 text-success-800",
+      warning: "bg-warning-100 text-warning-800",
+      danger: "bg-danger-100 text-danger-800",
+      info: "bg-primary-100 text-primary-800"
+    };
+    
+    const sizes = {
+      sm: "px-2 py-0.5 text-xs",
+      md: "px-2.5 py-1 text-sm",
+      lg: "px-3 py-1.5 text-base"
+    };
 
-  return (
-    <div className={`${baseClasses} ${variantClasses[variant]} ${className}`}>
-      {children}
-    </div>
-  );
-};
+    return (
+      <span
+        className={cn(
+          baseStyles,
+          variants[variant],
+          sizes[size],
+          className
+        )}
+        ref={ref}
+        {...props}
+      >
+        {children}
+      </span>
+    );
+  }
+);
 
-export default Badge;
+Badge.displayName = "Badge";
+
+export { Badge };
+export type { BadgeProps };

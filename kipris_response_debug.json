@@ -6,7 +6,7 @@
           ""
         ],
         "responseTime": [
-          "2025-10-10 01:08:30.830"
+          "2025-10-15 17:16:28.1628"
         ],
         "responseMsgID": [
           ""
@@ -29,37 +29,37 @@
             "item": [
               {
                 "applicantName": [
-                  "쿠팡 주식회사"
+                  "주식회사 하명"
                 ],
                 "applicationDate": [
-                  "20250915"
+                  "20250924"
                 ],
                 "applicationNumber": [
-                  "1020250131427"
+                  "1020250138405"
                 ],
                 "astrtCont": [
-                  "본 개시는 전자 상거래 서비스에 관한 데이터를 처리하는 기술에 관한 것이다. 본 개시의 일 실시예에 따른 방법은, 사용자 단말로부터 검색 결과 페이지의 호출 정보를 획득하는 단계 - 호출 정보는 검색어를 포함함 -, 검색어에 기초하여, 검색 결과로서의 상품 세트를 결정하는 단계, 검색어 또는 상품 세트에 기초하여, 검색 결과 페이지가 제1 배송 유형에 대한 필터를 포함하도록 할지 여부를 결정하는 단계, 검색 결과 페이지가 제1 배송 유형에 대한 필터를 포함하도록 하는 결정에 응답하여, 제1 배송 유형에 대한 필터를 포함하는 검색 결과 페이지를 생성하는 단계, 및 생성된 검색 결과 페이지를 사용자 단말에 제공하는 단계를 포함할 수 있다."
+                  "본 발명의 일 측면은, 개인화된 건강 맞춤형 식품 추천 플랫폼 운영 서버를 제공한다. 개인화된 건강 맞춤형 식품 추천 플랫폼 운영 서버는, 적어도 하나의 프로세서(processor) 및 적어도 하나의 프로세서가 적어도 하나의 동작을 수행하도록 지시하는 명령어들(instructions)을 저장하는 메모리(memory)를 포함할 수 있다. 적어도 하나의 동작은, 외부 서버로부터 개인 건강 정보를 수신하는 동작, 수신한 개인 건강 정보를 적어도 하나의 카테고리로 분류하는 동작, 적어도 하나의 카테고리로 분류된 개인 건강 정보를 결합하여 개인 건강 정보 점수를 산출하는 동작, 외부 서버로부터 식품 선호 정보를 수신하는 동작, 수신한 식품 선호 정보를 적어도 하나의 카테고리로 분류하는 동작, 적어도 하나의 카테고리로 분류된 식품 선호 정보를 결합하여 식품 선호 정보 점수를 산출하는 동작, 산출된 개인 건강 정보 점수 및 식품 선호 정보 점수의 가중합으로부터 식품 추천 점수를 산출하는 동작, 산출된 식품 추천 점수를 내림차순으로 정렬하여 식품 추천 목록을 생성하는 동작을 포함할 수 있다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d776c9acbce09a4a9e86d8acdd0f56043df2c695b94c97091d21d4d7eed3d99d75100949ba93cca6e74f329e2357ccd7480c43d13ee72364"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c938a75e82334deae942806b8805ccd310c41441e02ee26fa03a8ca87789042c9aeb8965d30848b3148fc5d700a44d54e044a185dc68610bcd6"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf41278d8e0c9c5e5f11403e0577311c01889efea898b66ef0ab2410ef78e6938233b8a02432f05c599cfc93ee7e895b0773f4f537445091db"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfa28b2376f0be496266c710c2f1842a4ba9dceeab9787734290d1eaf82aa76e81ee8c17fa6cb5e53ca1136222fe9e921df8ebdfa939e1fb93"
                 ],
                 "indexNo": [
                   "1"
                 ],
                 "inventionTitle": [
-                  "전자 상거래 서비스에 관한 데이터를 처리하는 방법, 장치 및 기록 매체"
+                  "개인화된 건강 맞춤형 식품 추천 플랫폼 운영 서버 및 방법"
                 ],
                 "ipcNumber": [
-                  "G06Q 30/0601|G06Q 10/083"
+                  "G16H 20/60|G16H 10/60|G16H 50/30|G16H 10/20|G06Q 30/0601|A61B 5/00|A61B 5/021|A61B 5/145|A61B 5/01|G06Q 10/083|G06Q 10/087"
                 ],
                 "openDate": [
-                  "20250930"
+                  "20251014"
                 ],
                 "openNumber": [
-                  "1020250142272"
+                  "1020250148541"
                 ],
                 "publicationDate": [
                   ""
@@ -79,37 +79,37 @@
               },
               {
                 "applicantName": [
-                  "삼성전자주식회사"
+                  "주식회사 하명"
                 ],
                 "applicationDate": [
-                  "20250904"
+                  "20250924"
                 ],
                 "applicationNumber": [
-                  "1020250125616"
+                  "1020250138404"
                 ],
                 "astrtCont": [
-                  "본 발명에 따른 반도체 메모리 장치는 기판; 상기 기판 상에서 상기 기판의 상면과 평행하는 제1 방향을 따라 연장되는 비트라인; 상기 비트라인 상에서 상기 기판의 상기 상면과 수직한 제2 방향을 따라 연장되는 반도체 패턴; 및 상기 비트라인과 상기 반도체 패턴 사이에 배치되며 상기 반도체 패턴과 연결되는 제1 도전 콘택을 포함하되, 상기 반도체 패턴은: 제1 서브 반도체 패턴; 및 상기 제1 서브 반도체 패턴과 상기 제1 도전 콘택 사이의 제2 서브 반도체 패턴을 포함하고, 상기 제2 서브 반도체 패턴 내에서 제1 도펀트의 농도는 상기 제1 서브 반도체 패턴에 가까워질수록 감소하고, 염소의 농도는 상기 제1 서브 반도체 패턴보다 상기 제2 서브 반도체 패턴에서 더 높을 수 있다."
+                  "본 발명의 일 측면은, 개인화된 건강 맞춤형 식품 추천 플랫폼 운영 서버를 제공한다. 개인화된 건강 맞춤형 식품 추천 플랫폼 운영 서버는, 적어도 하나의 프로세서(processor) 및 적어도 하나의 프로세서가 적어도 하나의 동작을 수행하도록 지시하는 명령어들(instructions)을 저장하는 메모리(memory)를 포함할 수 있다. 적어도 하나의 동작은, 외부 서버로부터 개인 건강 정보를 수신하는 동작, 수신한 개인 건강 정보를 적어도 하나의 카테고리로 분류하는 동작, 적어도 하나의 카테고리로 분류된 개인 건강 정보를 결합하여 개인 건강 정보 점수를 산출하는 동작, 외부 서버로부터 식품 선호 정보를 수신하는 동작, 수신한 식품 선호 정보를 적어도 하나의 카테고리로 분류하는 동작, 적어도 하나의 카테고리로 분류된 식품 선호 정보를 결합하여 식품 선호 정보 점수를 산출하는 동작, 산출된 개인 건강 정보 점수 및 식품 선호 정보 점수의 가중합으로부터 식품 추천 점수를 산출하는 동작, 산출된 식품 추천 점수를 내림차순으로 정렬하여 식품 추천 목록을 생성하는 동작을 포함할 수 있다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c937cef927a07c26cf497b59f37054fbb2999c5472062e40846f9e4b97c9dd41320a9c666c28994b5ac82c6f867b69f87ed677228e257275361"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c938a75e82334deae942806b8805ccd310c41441e02ee26fa03a8ca87789042c9aeb57521da0ac670d4db309b06214ef6f43f2b27d03bd0e2d0"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfd1ab411270a03e3c1aa9757efabbe4e4dff49b3adf68425c4bea18b304baaafcfdbda30d63a0b88428d8935185fd03d0d21226f4e8134415"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfa28b2376f0be496266c710c2f1842a4ba9dceeab9787734290d1eaf82aa76e8187e98897e2526e93c8b527548a5f410f24e68b02287cf182"
                 ],
                 "indexNo": [
                   "2"
                 ],
                 "inventionTitle": [
-                  "반도체 메모리 장치 및 이의 제조 방법"
+                  "개인화된 건강 맞춤형 식품 추천 플랫폼 운영 서버 및 방법"
                 ],
                 "ipcNumber": [
-                  "H10B 12/00|H10B 61/00|H10B 63/10|H10B 63/00"
+                  "G16H 20/60|G16H 10/60|G16H 50/30|G16H 10/20|G06Q 30/0601|A61B 5/021|A61B 5/00|A61B 5/145|A61B 5/01|G06Q 10/083|G06Q 10/087"
                 ],
                 "openDate": [
-                  "20250923"
+                  "20251014"
                 ],
                 "openNumber": [
-                  "1020250139242"
+                  "1020250148540"
                 ],
                 "publicationDate": [
                   ""
@@ -129,37 +129,37 @@
               },
               {
                 "applicantName": [
-                  "주식회사 한국산업기술원"
+                  "난춘 주식회사"
                 ],
                 "applicationDate": [
-                  "20250829"
+                  "20250924"
                 ],
                 "applicationNumber": [
-                  "1020250122291"
+                  "1020250138131"
                 ],
                 "astrtCont": [
-                  "본 발명은 에코, 나노, 미니, 비비, 그린, 청정, 정화, 살균, 소독, 디톡, 처리, 내진, 방진, 배달, 택배, 자동, 수동, 로봇, 자화, 진동, 가진, 오존, 기능, 기능성, 미생물, 바이오, 음이온, 친환경, 스마트, 디지털, 가상, 사이버, 아바타, 황토, 피톤, 편백, 저탄소, 녹색성장, 마이크로, 메타버스, 하이브리드, 인텔리전트 등의 장치, 장비, 자재, 재료, 물품, 물체, 물질, 일, 작업, 업무, 제조, 공사, 정화, 청정, 처리, 공정, 방법, 공법, 시설, 건물, 구조물, 드론, 킥보드, 시스템, 모빌리티, 3D프린터 등에 관한 것이다."
+                  "실시예들은 닫힌 세계의 과업을 위한 증강 데이터 세트를 구축하고 강화 학습 기반 언어 모델 에이전트를 개발하기 위한 장치 및 방법을 제시한다. 일 실시예에 따른 상기 방법은, 상기 인공지능 에이전트에서 사용되는 API(application programming interface)와 관련된 정보를 획득하고, 상기 API와 관련된 정보는 입력 텍스트 및 프롬프트를 포함하는 API 정보 및 상기 언어 모델에 대한 정보를 포함하고, 상기 입력 텍스트는, 상기 인공지능 에이전트에서 사용되는 복수의 태스크 각각에 대한 복수의 원본 텍스트 데이터와 상기 복수의 원본 텍스트 데이터의 일부 원본 텍스트 데이터에 해당 태스크의 API 호출과 관련된 주석이 삽입된 샘플 보강 데이터를 포함하고, 상기 프롬프트는, 상기 복수의 태스크 각각에 대해, API가 호출되는 동작을 설명한 자연어 문장을 포함하고, 상기 입력 텍스트, 상기 프롬프트 및 상기 언어 모델에 대한 정보를 기반으로 상기 복수의 원본 텍스트 데이터의 나머지 원본 텍스트 데이터에 대한 API 호출 위치를 상기 복수의 태스크 각각에 대해 결정하고, 상기 나머지 원본 텍스트 데이터에 대한 API 호출 위치는 원본 텍스트 데이터를 구성하는 복수의 토큰 중에서 API 호출을 시작할 확률이 제1 임계 값을 초과하는 토큰의 위치로 결정되고, 상기 나머지 원본 텍스트 데이...(이하생략)"
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c932c822fdd36411db276a46f4ff5d292127b148948c822bc115ea5b20cc4ae85f019820d8d8f0ca07e36fa3ebf3c4d08cf2db75363550a3f3c"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93522e59d419c828eb0259cdb6d95ca9a59fb01978c7ee397865e415b81c8680babeab8b0028297badd58c1d1cbb665fa6fe1ae604bad60670"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf71e156f1879efb96b1dae8af7e32a90c1cd9cd8668ca13f93db60d8a00b4cf7fd449eecdb27711dc40f84cd05e0f2805b548cce23a279cc9"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cff65f6b5fe7a7ae05a236cde04e984eaf2df70068d33d18f22c3af24ad73ffc4ea8301f6732ecef0a3702ac34ea3612622913e82442590476"
                 ],
                 "indexNo": [
                   "3"
                 ],
                 "inventionTitle": [
-                  "에코근, 수지근, 탄소근, 보강근, 수지철근, 플라스틱근, FRP근, 보강섬유근, 보강섬유플라스틱근"
+                  "닫힌 세계의 과업을 위한 증강 데이터 세트를 구축하고 강화 학습 기반 언어 모델 에이전트를 개발하기 위한 방법 및 장치"
                 ],
                 "ipcNumber": [
-                  "E04C 5/01"
+                  "G06N 3/092|G06N 3/096|G06N 3/047|G06F 40/20"
                 ],
                 "openDate": [
-                  "20250915"
+                  "20251013"
                 ],
                 "openNumber": [
-                  "1020250135753"
+                  "1020250147653"
                 ],
                 "publicationDate": [
                   ""
@@ -179,37 +179,37 @@
               },
               {
                 "applicantName": [
-                  "주식회사 한국산업기술원"
+                  "최진권"
                 ],
                 "applicationDate": [
-                  "20250829"
+                  "20250923"
                 ],
                 "applicationNumber": [
-                  "1020250122288"
+                  "1020250136799"
                 ],
                 "astrtCont": [
-                  "본 발명은 에코, 나노, 미니, 비비, 그린, 청정, 정화, 살균, 소독, 디톡, 처리, 내진, 방진, 배달, 택배, 자동, 수동, 로봇, 자화, 진동, 가진, 오존, 기능, 기능성, 미생물, 바이오, 음이온, 친환경, 스마트, 디지털, 가상, 사이버, 아바타, 황토, 피톤, 편백, 저탄소, 녹색성장, 마이크로, 메타버스, 하이브리드, 인텔리전트 등의 장치, 장비, 자재, 재료, 물품, 물체, 물질, 일, 작업, 업무, 제조, 공사, 정화, 청정, 처리, 공정, 방법, 공법, 시설, 건물, 구조물, 드론, 킥보드, 시스템, 모빌리티, 3D프린터 등에 관한 것이다."
+                  "화훼유통을 위한 디지털 플랫폼 서비스 제공 시스템이 제공되며, 적어도 하나의 품종, 종류 및 수량의 화훼상품을 발주하고, 화훼상품의 실시간 위치정보 및 온습도 정보를 모니터링하도록 출력하는 가맹점 단말 및 가맹점 단말로부터 적어도 하나의 품종, 종류 및 수량의 화훼상품의 발주를 접수하는 접수부, 화훼상품의 배송을 위한 배송 프로세스를 개시하도록 하는 개시부, 화훼상품의 상차가 완료된 경우 기사 단말의 실시간 위치정보 및 컨테이너의 온습도 정보를 업로드받는 모니터링부, 가맹점 단말로 실시간 위치정보 및 온습도 정보를 제공하는 안내부를 포함하는 플랫폼 서비스 제공 서버를 포함한다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c939bc80d05dbf27d03bbd3325a7d9c7ef5fd8081ec5ed6de9b55598fead736a59cda90fa2e7e1e12549dace1265a4b8a8d34499d0fd59ebae8"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d776c9acbce09a4a9e86d8acdd0f560422579fce83e2b292128360ba789be5c478eebf9e6a7a95c898f9da0a8c964748b6dfd1d9e875bfe5"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf1024b3b7123a61e9549872eed1afdcaebca98d3e3db564761771a4984ff61f684a9c66179166c048276a061d4525807eb4831f4015ebb6c0"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf41278d8e0c9c5e5f11403e0577311c0123a5956aef6796e61e907c1a8c58bbd05f9bdcf5a681bdfaa5c43eaf95812eb7073ecb0b8aeae36f"
                 ],
                 "indexNo": [
                   "4"
                 ],
                 "inventionTitle": [
-                  "모듈러 이동형 주택, 건물, 시설, 자재, 아파트, 구조물"
+                  "화훼유통을 위한 디지털 플랫폼 서비스 제공 시스템"
                 ],
                 "ipcNumber": [
-                  "G06Q 50/08|G06Q 50/04|G06Q 10/083|G16Y 10/80"
+                  "G06Q 10/0832|G06Q 50/10|G01D 21/02|G06Q 10/087|G06Q 10/0833|G06Q 10/083|G06Q 30/0601|G06Q 50/02|G16Y 10/40|G16Y 20/10|G16Y 40/10"
                 ],
                 "openDate": [
-                  "20250912"
+                  "20250930"
                 ],
                 "openNumber": [
-                  "1020250135154"
+                  "1020250142280"
                 ],
                 "publicationDate": [
                   ""
@@ -229,37 +229,37 @@
               },
               {
                 "applicantName": [
-                  "보로노이 주식회사"
+                  "쿠팡 주식회사"
                 ],
                 "applicationDate": [
-                  "20250828"
+                  "20250923"
                 ],
                 "applicationNumber": [
-                  "1020250121400"
+                  "1020250137311"
                 ],
                 "astrtCont": [
-                  "본 발명의 헤테로아릴 유도체 및 이의 용도에 관한 것으로서, 화학식 (I)로 표시되는 헤테로아릴 유도체 및 이를 포함하는 약학적 조성물은 HER2 활성을 효과적으로 억제하므로 HER2와 관련된 질환의 치료 또는 예방에 유용하다."
+                  "본 개시에 따르면, 전자 장치가 광고 메시지를 제공하는 방법에 있어서, 상기 전자 장치를 통해 제공되는 서비스에 대한 사용자의 식별 정보, 상기 서비스에 대한 상기 사용자의 활동 내역 정보를 확인하는 단계; 상기 식별 정보 및 상기 활동 내역 정보에 기반하여, 상기 사용자를 위한 하나 이상의 광고 카테고리에 대한 정보를 확인하는 단계; 상기 활동 내역 정보에 기반하여, 상기 하나 이상의 광고 카테고리의 우선순위에 따라 결정된 하나의 광고 카테고리를 위한 광고 컨텐츠를 판단하는 단계; 및 상기 광고 컨텐츠를 포함한 제1 광고 메시지를 제공하는 단계를 포함하는 방법이 개시된다."
                 ],
                 "bigDrawing": [
-                  ""
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d776c9acbce09a4a9e86d8acdd0f560408879d9d33e1636c94fb10260773161236e976b0b361a5501bac73081b9aced2448d53895080c108"
                 ],
                 "drawing": [
-                  ""
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf41278d8e0c9c5e5f11403e0577311c01e0193de2e478393c009a9e5fa75c1612ace9d579ad73fa16e9ac53c719ca88b294e2923d998d4948"
                 ],
                 "indexNo": [
                   "5"
                 ],
                 "inventionTitle": [
-                  "헤테로아릴 유도체 및 이의 용도"
+                  "광고 메시지 제공을 위한 전자 장치의 동작 방법 및 이를 지원하는 전자 장치"
                 ],
                 "ipcNumber": [
-                  "A61K 31/517|A61K 31/4709|A61K 31/5383|A61K 31/5377|A61K 31/519|A61P 35/00"
+                  "G06Q 30/0251|G06Q 30/0201|G06Q 30/0241|G06F 16/903"
                 ],
                 "openDate": [
-                  "20250912"
+                  "20250930"
                 ],
                 "openNumber": [
-                  "1020250135141"
+                  "1020250142283"
                 ],
                 "publicationDate": [
                   ""
@@ -279,37 +279,37 @@
               },
               {
                 "applicantName": [
-                  "주식회사 씨케이머티리얼즈랩"
+                  "강성운"
                 ],
                 "applicationDate": [
-                  "20250723"
+                  "20250922"
                 ],
                 "applicationNumber": [
-                  "1020250099409"
+                  "1020250136491"
                 ],
                 "astrtCont": [
-                  "본 발명은 입력 및 회전부하 모듈, 및 입력 장치에 관한 것이다. 본 발명에 따른 입력 및 회전부하 모듈은, 회전부하 장치에 입력 장치가 연결된 입력 및 회전부하 모듈로서, 상기 입력 장치는, 바디부; 및 상기 바디부 내에 배치되고 가압에 대해 복원력을 제공하는 탄성부;를 포함하고, 상기 회전부하 장치의 샤프트에 상기 입력 장치가 연결되어 회전가능하며, 상기 입력 장치의 상기 바디부를 가압하여 입력 신호를 생성할 수 있는 것을 특징으로 한다."
+                  "본 발명은 Q-Block 구조를 이용하여 슈퍼컴퓨터 수준의 시계열 예측을 실시간 또는 준실시간으로 구현하는 연산 시스템 및 방법에 관한 것이다. 구체적으로, 입력된 시계열 데이터는 단위 시간(TSU, 122) 단위로 단위큐브(110)에 매핑되어 적층되며, 각 단위큐브에는 위상(φ) 및 변화량(Δ) 메타데이터가 기록된다. 전이 모듈(150)은 중심 단위큐브(121) 간의 anchor-to-anchor 전이 조건을 산출하고, 예측 모듈(160)은 이를 기반으로 미래 TSU 시점의 상태를 산출한다. 강화학습 모듈(170)은 예측 결과와 실제 데이터를 비교하여 파라미터를 자동 갱신함으로써, 환경 변화나 데이터 분포의 변동에 적응할 수 있도록 한다. 본 발명은 기상, 에너지, 금융 등 대규모 시뮬레이션 환경에 적용 가능하며, 종래 슈퍼컴퓨터 기반 수치예측 대비 연산량을 대폭 절감한다. 또한 GPU 기반 병렬 아키텍처뿐만 아니라 NPU・VPU・FPGA 등 엣지 전용 하드웨어와도 자연스럽게 결합되어, 클라우드・데이터센터뿐 아니라 스마트폰, 차량용 단말, 드론 모듈 등 모바일・엣지 환경에서도 저전력 고효율 예측을 실현함으로써 비용 절감과 응답 속도의 향상을 동시에 제공한다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c9301e5fd02ecca54298a1e10f42a53c63f69c10f10cdfdb6a98dd857b40d9b0b5a1d7e6a6bef31d00023dcd269d81a88bf3750bbf6683c1097"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c938a75e82334deae942806b8805ccd310c10a7bcfd8a9795adfadee21660a4348e5314db1ea192d75679a9414ccb6ee1906d430efc96411ec1"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfe8b26345af8682ec64eb382e37d67076bd62c804cce8c5df46bee1d13cc97f218679e45e408421e202eb1213f4aa4de37d4807adc6ed080a"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfa28b2376f0be496266c710c2f1842a4baf84fe152d29a787eb0ade7fea12e5400d66cda32356cb42bd8067682181a2b52a1cb881543e4183"
                 ],
                 "indexNo": [
                   "6"
                 ],
                 "inventionTitle": [
-                  "입력 및 회전부하 모듈, 및 입력 장치"
+                  "Q-Predictor HTC™: Q-Block 기반 고속 시계열 예측 연산 시스템 및 방법"
                 ],
                 "ipcNumber": [
-                  "H01H 25/06|H01H 19/28|H01H 19/08|H01H 36/00"
+                  "G06N 3/063|G06N 3/092|G06N 3/049"
                 ],
                 "openDate": [
-                  "20250807"
+                  "20251014"
                 ],
                 "openNumber": [
-                  "1020250119501"
+                  "1020250148695"
                 ],
                 "publicationDate": [
                   ""
@@ -329,37 +329,37 @@
               },
               {
                 "applicantName": [
-                  "주식회사 한국산업기술원"
+                  "캐논 가부시끼가이샤"
                 ],
                 "applicationDate": [
-                  "20250721"
+                  "20250922"
                 ],
                 "applicationNumber": [
-                  "1020250098404"
+                  "1020250135906"
                 ],
                 "astrtCont": [
-                  "본 발명은 에코, 퓨리, 친환경, 스마트, 인터넷, 디지탈, 가상, 사이버,저탄소, 녹색성장, 메타버스, 하이브리드, 인텔리전트 등의 AI, IT, AR, IoT, ICT, LTE, App, 장치, 장비, 머신, 시설, 로봇, 공사로봇, 건설로봇, 작업로봇, 크리닝로봇, 수단, 자재, 재료, 물질, 물품, 물체, 드론, 통신, 전기, 전자, 작업, 공사, 정화, 청정, 공법, 방법, 인터넷, 배터리, 시스템, 플랫폼, 메타버스 등에 관한 것이다."
+                  "사용자가 모바일 단말기로부터 스캔된 화상 데이터를 사용자에게 송신하는 처리를 수행하도록 화상 형성 장치에 지시할 경우, 사용자는 모바일 단말기 상에서 사용자의 이메일 어드레스를 입력할 필요가 있고, 이는 불편한 조작을 포함한다. 모바일 단말기로부터, 사용자는 화상 형성 장치에 미리 등록된 사용자의 이메일 어드레스에 데이터를 송신하도록 화상 형성 장치에 지시한다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93fe118eaf6a2d9404e392904d8c74cf40be746c3ba82320ae6f893e41edbda197d76177ef06bea1a930764896b90a223705eb7231e7322494"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d776c9acbce09a4a9e86d8acdd0f5604daa02e982d705851b1cca4159ccfdd7981713242eefd57df0c4e6173570ae09b595d1190f25863e4"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfafcbc342afaea4d579fa5122f6d4d05b386014e8a76df56e1a46d13c3b54d22d5342d89b3d088ee9453582923c5645f35f71903bd918519f"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf41278d8e0c9c5e5f11403e0577311c01bfa4f88bb17cea7aa9ec91b103b253f3ae42ff694fe179d2632f92bdef37f89d2de14bcc2f072ca3"
                 ],
                 "indexNo": [
                   "7"
                 ],
                 "inventionTitle": [
-                  "로봇, 공사로봇, 건설로봇, 작업로봇, 크리닝로봇"
+                  "정보 처리 디바이스, 화상 형성 장치, 그 제어 방법 및 저장 매체"
                 ],
                 "ipcNumber": [
-                  "A61L 2/23|A61L 2/18|A61L 2/20|A61L 9/015|B25J 11/00|A61L 101/34|A61L 101/16"
+                  "H04N 1/00|H04N 1/32"
                 ],
                 "openDate": [
-                  "20250804"
+                  "20250930"
                 ],
                 "openNumber": [
-                  "1020250117335"
+                  "1020250142829"
                 ],
                 "publicationDate": [
                   ""
@@ -382,34 +382,34 @@
                   "쿠팡 주식회사"
                 ],
                 "applicationDate": [
-                  "20250630"
+                  "20250919"
                 ],
                 "applicationNumber": [
-                  "1020250086687"
+                  "1020250135082"
                 ],
                 "astrtCont": [
-                  "전자 장치의 아이템 추천 방법이 개시된다. 아이템 추천 방법은, 적어도 하나의 아이템을 포함하는 카트 페이지를 표시하는 단계; 상기 카트 페이지에 표시된 상기 적어도 하나의 아이템과 관련된 다른 적어도 하나의 아이템을 포함하는 복수의 위젯을 기 설정된 영역에 표시하는 추천 페이지를 표시하는 단계; 상기 카트 페이지 또는 상기 추천 페이지에서 사용자가 선택한 아이템에 대한 결제와 관련된 정보를 포함하는 결제 페이지를 표시하는 단계를 포함할 수 있다."
+                  "본 개시는 전자 장치에서 수행되는 방법, 장치 및 기록매체에 관한 것이다. 본 개시의 일 실시예에 따른 방법은, 사용자 단말로부터 아이템의 주문 요청과 관련된 제1 페이지에서 하나 이상의 아이템에 대한 주문 요청을 수신하는 단계; 상기 사용자 단말에 주문 관련 정보를 표시하는 결제 페이지를 제공하는 단계-상기 주문 관련 정보는 상기 주문 요청에 대응하는 결제 예정 정보 및 배송 예정 정보 가운데 적어도 일부를 포함함-; 상기 사용자 단말에 대응하는 사용자의 식별 정보에 기반하여 멤버십 가입 여부를 확인하는 단계; 상기 사용자가 멤버십에 가입하지 않은 것으로 확인되는 것에 응답하여, 상기 사용자가 멤버십에 가입하는 경우에 상기 주문에 대하여 적용 가능한 적어도 하나의 혜택을 결정하는 단계; 및 상기 결제 페이지의 적어도 일부 영역에, 상기 적어도 하나의 혜택의 적용을 선택하기 위한 제1 사용자 인터페이스를 제공하는 단계; 및 상기 제1 사용자 인터페이스에 대한 입력에 기반하여 상기 주문 관련 정보를 변경하는 단계를 포함할 수 있다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c9366f162581ea5e2a3a15a2eebc96d6f6f9df195c76c69432a31e78bf31b334875126741f25253606f72a6f17a1eba8a87a2dfad36435f783a"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c938a75e82334deae942806b8805ccd310ca912081b115c0db3f69297493685075bc195015d0f568484ddbcd1fa332ca0f38fb370bc3031f95b"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf10656c342785203d9066def9196b6c2cafe2f634c0df9e780c9918f2592f586434d53221e4bf0f1472f8212f060cf74947609627f3a1e04a"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfa28b2376f0be496266c710c2f1842a4ba56f05cf69eeb0c479c5b306868f220da36cb47cfe4ddc27df0951d36ae29abdf671519b31adb34a"
                 ],
                 "indexNo": [
                   "8"
                 ],
                 "inventionTitle": [
-                  "전자 장치 및 그의 아이템 추천 방법"
+                  "주문 요청에 대한 결제를 처리하는 방법, 장치 및 기록매체"
                 ],
                 "ipcNumber": [
-                  "G06Q 30/0601|G06F 3/0481"
+                  "G06Q 30/0241|G06Q 30/0251|G06Q 30/0207|G06Q 30/0601|G06Q 20/40|G06Q 20/12|G06Q 20/14|G06Q 20/38"
                 ],
                 "openDate": [
-                  "20250715"
+                  "20251014"
                 ],
                 "openNumber": [
-                  "1020250108562"
+                  "1020250148690"
                 ],
                 "publicationDate": [
                   ""
@@ -429,37 +429,37 @@
               },
               {
                 "applicantName": [
-                  "가톨릭관동대학교산학협력단"
+                  "강성운"
                 ],
                 "applicationDate": [
-                  "20250620"
+                  "20250919"
                 ],
                 "applicationNumber": [
-                  "1020250081636"
+                  "1020250134900"
                 ],
                 "astrtCont": [
-                  "본 발명은 굴피나무 추출물을 유효성분으로 포함하는 혈관 석회화의 예방 또는 치료용 약학적 조성물에 관한 것으로 상기 굴피나무 추출물은 세포 독성은 없으면서 혈관세포에 칼슘이 쌓이는 것을 억제하는 효과가 있으므로 상기 용도로 유용하게 사용될 수 있다."
+                  "본 발명은 시간 특이점(Time Singularity, TS) 및 단위 시간(Time Singularity Unit, TSU) 기반으로 적층되는 단위큐브와 Q-Block 구조를 이용하여 개인정보 유출과 해킹을 저장 단계에서 구조적으로 차단하는 시스템에 관한 것이다. 본 시스템은 큐브 단위 무결성을 검증하는 Intra-Block 모듈과 블록 간 앵커 교차검증을 수행하는 Inter-Block 모듈을 포함하며, 이를 통해 국소 변조・지연・재사용 공격을 즉시 탐지한다. 이상 발생 시 TSU-1 및 인접값을 참조하여 자동 복원을 시도하고, 복원 실패가 누적될 경우 해당 블록만을 격리한다. 또한 민감정보는 정책 게이트를 통해 평문 저장이 원천적으로 차단되고, 토큰화 또는 비식별화된 값만 허용된다. 모든 탐지・복원・격리 이벤트는 JSON 포맷으로 구조화되어 해시 및 전자서명 처리 후 블록체인에 증거화되며, 허니큐브와 강화학습 정책을 활용하여 탐지・대응을 고도화함으로써 서비스 연속성과 법적 증거력을 동시에 확보한다"
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=348aaf18c46825cf02d6c2de1c78338e49576747ae5d87330ff13fd6c4376ed101ac95c0aa9cdfd17ba216e2cad5af6ac978b3dc4f2b08382c1defa60a1973640ea89f67cfc74ad8"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c938a75e82334deae942806b8805ccd310c593f022375cc794cd11f8d2a9a55514f6b7a959da94493d97d7df68bf03f96f1aa62f4e526ab3db3"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfd1decb79741282ebd010c37a30f5f0586fa93480d5de4c3f5e437f5af0f0bc11bc21775f633157e33b41b3a26d496c418799d908cbdb259f"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfa28b2376f0be496266c710c2f1842a4be5126c584886c5bf7e9dd0e619c01cd4a67044b92cc91efaae2376707197dffee5b020114fdff2ab"
                 ],
                 "indexNo": [
                   "9"
                 ],
                 "inventionTitle": [
-                  "굴피나무 추출물을 포함하는 혈관 석회화의 예방 또는 치료용 조성물"
+                  "Q-Guardian Prevent™: 단위큐브 기반 개인정보 유출 원천 차단 및 해킹 방어 시스템"
                 ],
                 "ipcNumber": [
-                  "A61K 36/52|A61P 9/00|A61P 9/14|A23L 33/105"
+                  "H04L 9/32|H04L 9/00|H04L 9/40|G06N 3/092"
                 ],
                 "openDate": [
-                  "20250703"
+                  "20251014"
                 ],
                 "openNumber": [
-                  "1020250100596"
+                  "1020250148532"
                 ],
                 "publicationDate": [
                   ""
@@ -479,137 +479,87 @@
               },
               {
                 "applicantName": [
-                  "건국건조기 주식회사"
+                  "가톨릭대학교 산학협력단"
                 ],
                 "applicationDate": [
-                  "20250613"
+                  "20250919"
                 ],
                 "applicationNumber": [
-                  "1020250077820"
+                  "1020250135476"
                 ],
                 "astrtCont": [
-                  "본 발명은 다목적 건조기에 관한 것으로서, 더욱 상세하게는 농수산물이나 임산물, 각종 식품 등을 빠르고 균일하게 건조할 수 있는 다목적 건조기에 관한 것이다.  본 발명의 다목적 건조기는 내부에 건조실이 마련된 본체부와; 상기 본체부에 설치되어 상기 건조실을 개폐하기 위한 도어와; 상기 건조실의 상부에 설치되어 상기 건조실과 구획된 외기유입실을 형성하기 위한 상부격판과; 상기 건조실의 좌우 양측에 각각 설치되어 상기 건조실과 구획된 측면유로를 형성하며 다수의 측면분사홀들이 마련된 측면격판들과; 상기 건조실의 공기를 순환시키기 위한 공기순환부와; 상기 건조실을 가열하기 위한 히팅수단;을 구비한다."
+                  "본 발명의 일 면에 따른 파라핀 블록 인식 장치는, 파라핀 블록을 촬영하여 제1 파라핀 블록 이미지를 생성하는 제1 카메라 및 제1 파라핀 블록 이미지를 처리하는 컴퓨팅 장치를 포함하고, 컴퓨팅 장치는 하나 이상의 코어를 포함하는 프로세서 및 전처리 모듈과 라벨링 모듈을 저장하는 메모리를 포함하고, 프로세서는 전처리 모듈을 이용하여 제1 파라핀 블록 이미지를 전처리함으로써 전처리 이미지를 생성하고, 라벨링 모듈을 이용하여 전처리 이미지에 포함된 문자를 인식함으로써 라벨링 데이터를 생성하는 것을 특징으로 한다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d0d5d272aeaf525af9d9b70737cc9311c6802a56a8d8d4601fe416eec1ed15bedf70e7b183f44df267a1e06bcb8ea3c09a7e6b8b1dbe2982"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c933104015e29aa5af8fad863a592e2ba2393f920cd6b3ef99373e10a03f6ea6ecec2b5b07c4f298b23b96ea787bb0d9569c14b3037505c2a68"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfcb0f3c0a19724e93b2e2122234cfae2af6136bb0c5b1cf62ead9c8e2ccfb3ccc15ce6d3d29c153b34d186ba86bc5256225a4d16a47b225d0"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf103729edc42411609948871101fce82f3de38a9f029662503890fe0abd0de1cc176046a5dab91a7bc82b4a637dbdddf361b604734ddc6e4c"
                 ],
                 "indexNo": [
                   "10"
                 ],
                 "inventionTitle": [
-                  "다목적 건조기"
+                  "검체 번호 추출 장치 및 방법"
                 ],
                 "ipcNumber": [
-                  "F26B 3/04|F26B 21/02|F26B 25/18|F26B 21/00|F26B 3/30"
+                  "G06V 20/69|G06V 20/70|G06V 10/14|G06V 10/20|G06V 30/10|G06V 10/82|G16H 10/60|G01N 1/36"
                 ],
                 "openDate": [
-                  ""
+                  "20251010"
                 ],
                 "openNumber": [
-                  ""
+                  "1020250144352"
                 ],
                 "publicationDate": [
-                  "20250822"
+                  ""
                 ],
                 "publicationNumber": [
                   ""
                 ],
                 "registerDate": [
-                  "20250819"
+                  ""
                 ],
                 "registerNumber": [
-                  "1028496530000"
+                  ""
                 ],
                 "registerStatus": [
-                  "등록"
+                  "공개"
                 ]
               },
               {
                 "applicantName": [
-                  "주식회사 씨씨피헬스 농업회사법인"
+                  "(주)브이엠에스 솔루션스"
                 ],
                 "applicationDate": [
-                  "20250610"
+                  "20250919"
                 ],
                 "applicationNumber": [
-                  "1020250075186"
+                  "1020250134930"
                 ],
                 "astrtCont": [
-                  "본 발명은 영양 보존력이 우수한 흑염소 진액 조성물 제조방법에 관한 발명으로서, 구체적으로는 흑염소 진액의 제조에 앞선 흑염소 지육의 전처리 과정에서 흑염소 지육의 누린내 또는 비린내는 효과적으로 제거하면서도 영양소의 소실을 최소화하여 품질이 현저히 향상된 흑염소 진액 조성물 제조방법에 관한 것이다."
+                  "본 발명의 일 실시예에 따른 리드타임 예측 모델의 생성 방법은, 사용자로부터 특정 시점의 하나 이상의 구성 부품의 가격 데이터를 수신하는 단계 - 상기 하나 이상의 구성 부품은 최종 부품을 구성함 -; 상기 하나 이상의 구성 부품 각각에 대하여, 과거 가격 데이터 및 과거 리드타임 데이터를 적어도 포함하는 제1 데이터를 획득하는 단계; 상기 제1 데이터에 대해 전처리를 수행하여 신규 특징인 제3 데이터를 생성하는 단계; 및 상기 제3 데이터를 학습 데이터 세트로 하여 학습을 수행함으로써 상기 최종 부품에 대한 예측 리드타임을 생성하기 위한 모델을 생성하는 단계를 포함한다."
                 ],
                 "bigDrawing": [
-                  ""
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93613bf347a40b894aef6a438be2110a7e8e30e4e70e8a5c2aea63d7a196552eb2283746ceccab0ccb31c9104a4db8e9385e2d2f5895f54714"
                 ],
                 "drawing": [
-                  ""
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf966aa17855841d97371379af2f4e6e45da06997d48665d191dd1c173b0c8bd99820e04c50c4736eef8f1ec1376bdb015f7d0923e4821c1ac"
                 ],
                 "indexNo": [
                   "11"
                 ],
                 "inventionTitle": [
-                  "영양 성분 보존력이 우수한 흑염소 진액 조성물 제조방법"
+                  "부품의 공급 리드타임 예측 모델의 생성 방법"
                 ],
                 "ipcNumber": [
-                  "A23L 13/30|A23L 19/10|A23L 5/30|A23L 5/20|A23L 13/40|A23L 5/00"
+                  "G06Q 10/0637|G06Q 10/08|G06Q 10/04|G06F 16/901|G06F 16/951|G06F 17/18|G06N 3/09"
                 ],
                 "openDate": [
-                  ""
+                  "20250929"
                 ],
                 "openNumber": [
-                  ""
-                ],
-                "publicationDate": [
-                  "20250828"
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  "20250825"
-                ],
-                "registerNumber": [
-                  "1028518400000"
-                ],
-                "registerStatus": [
-                  "등록"
-                ]
-              },
-              {
-                "applicantName": [
-                  "부산대학교 산학협력단"
-                ],
-                "applicationDate": [
-                  "20250605"
-                ],
-                "applicationNumber": [
-                  "1020250073947"
-                ],
-                "astrtCont": [
-                  "본 발명은 당뇨병 자가 관리 향상을 위한 인공지능 코칭 시스템 및 방법에 관한 것으로, 본 발명에 따른 시스템은 사용자로부터 운동 정보, 식이 정보, 약물 복용 정보, 혈당 정보, 발 관리정보를 입력받는 사용자 입력부, 사용자로부터 입력받은 정보들을 기반하여 사용자의 목표를 설정하는 목표 설정부, 목표 설정부에서 설정한 목표의 달성 여부를 주기적으로 모니터링하는 모니터링부, 및 모니터링부가 모니터링한 결과를 바탕으로 사용자에게 피드백을 주는 피드백부를 포함한다. 따라서 본 발명의 시스템 및 방법에 따르면 당뇨병 자가 관리 향상을 위하여 맞춤형 목표를 제시하고 이를 성취하도록 하며, 혈당량 정보 이외에 운동 정보, 식이 정보, 약물 복용 정보, 발 관리 등을 매일 또는 주기적으로 모니터링하고 모니터링 한 결과를 분석하여 분석 결과를 사용자에게 피드백 함으로써 당뇨병을 체계적으로 자가 관리할 수 있다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93833953af3c1afa29802eaf5f81b751ef328c6b3761cb7063875565f037465fb5bdb525b1af56f61127cc6e2649c81cc6690a78772e40303c"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf418ef51f3dcb3ca2c3f1caee473d75b3ed5c31d05433be13ef3ad004c2a3e571160b696bbbd21c7c97f4086cef9bbbf613e56477eda50083"
-                ],
-                "indexNo": [
-                  "12"
-                ],
-                "inventionTitle": [
-                  "당뇨병 자가 관리 향상을 위한 인공지능 코칭 시스템 및 방법"
-                ],
-                "ipcNumber": [
-                  "G16H 20/30|G16H 20/60|G16H 10/20|G16H 10/60|G16H 20/10|G16H 50/20|G16H 50/70|G16H 50/30|A63B 24/00|A61B 5/00|A61B 5/145"
-                ],
-                "openDate": [
-                  "20250623"
-                ],
-                "openNumber": [
-                  "1020250092143"
+                  "1020250141674"
                 ],
                 "publicationDate": [
                   ""
@@ -625,806 +575,6 @@
                 ],
                 "registerStatus": [
                   "공개"
-                ]
-              },
-              {
-                "applicantName": [
-                  "주식회사 윈정보기술"
-                ],
-                "applicationDate": [
-                  "20250602"
-                ],
-                "applicationNumber": [
-                  "1020250072087"
-                ],
-                "astrtCont": [
-                  "본 발명의 일 실시예에 따른, 설비 고장 진단 및 에너지 효율화를 위한 통합 관리 방법은, 공장 현장에 설치되고, 가동 상태를 포함하는 데이터를 전송하는 복수의 관제대상으로부터 데이터를 수신하는 단계와 수신된 데이터에 기반하여, 관제대상의 기능 정보를 추출하고, 상기 가능정보에 대응되는 상기 관제대상의 동작상태를 모니터링하는 단계와 상기 모니터링 결과, 상기 관제대상의 이상징후를 판단하고, 상기 이상징후를 기초로 고장발생 시기 정보를 예측하는 단계와 상기 예측된 고장발생 시기 정보 및 추출된 상기 관제대상에 대한 기능 정보를 기초로, 상기 관제대상을 포함하는 관제대상 그룹을 생성하는 단계와 미리 학습된 인공지능 모델을 이용하여, 상기 관제대상 그룹에 속한 관제대상에 대한 제어 프로세스를 생성하는 단계와 상기 생성된 제어 프로세스를 기초로 상기 관제대상 그룹에 속한 적어도 하나의 관제대상을 제어하는 단계를 포함할 수 있다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c934103e335b430701840401fd05c49c6d090d55444764ac2cd65e49981f78bfe8687191e93e5caec7ee308afbc632f7efe9e4b34f6e66dc598"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfc25226d5de4f95cd13501a67e0881eafd2ea9f132f16c2020b9c10514ccb85138bff9fc7584659a12066b8dd69a93de978bd0d661a07e4ba"
-                ],
-                "indexNo": [
-                  "13"
-                ],
-                "inventionTitle": [
-                  "미리 학습된 인공지능 모델을 이용한 관제대상에 대한 통합 관리 방법 및 장치"
-                ],
-                "ipcNumber": [
-                  "G06Q 50/10|G06Q 50/04|G05B 23/02|G06N 3/0475|G16Y 40/20|G16Y 40/30"
-                ],
-                "openDate": [
-                  "20250612"
-                ],
-                "openNumber": [
-                  "1020250085696"
-                ],
-                "publicationDate": [
-                  ""
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  ""
-                ],
-                "registerNumber": [
-                  ""
-                ],
-                "registerStatus": [
-                  "공개"
-                ]
-              },
-              {
-                "applicantName": [
-                  "최문희"
-                ],
-                "applicationDate": [
-                  "20250602"
-                ],
-                "applicationNumber": [
-                  "1020250072382"
-                ],
-                "astrtCont": [
-                  "본 발명은 염색 및 탈색 효과가 우수한 모발 염색용 조성물에 관한 것이다.  본 발명의 기술적 사상의 일 실시예에 따른 염색 및 탈색 효과가 우수한 모발 염색용 조성물은 제 1제와, 상기 제 1제와 혼합되어 사용되는 제 2제로 이루어지고, 상기 제 1제 및 제 2제는 1:0.8~1.2의 중량 비율로 혼합되어 사용된다.  상기한 구성에 의해 본 발명의 기술적 사상의 다양한 실시예에 의한 염색 및 탈색 효과가 우수한 모발 염색용 조성물은, 손상된 모발의 내부 섬유조직을 강화하여 건강한 모발로 회복시키고 두피를 진정시키며 피부 염증을 완화하여 모발 및 두피 건강을 개선할 수 있다."
-                ],
-                "bigDrawing": [
-                  ""
-                ],
-                "drawing": [
-                  ""
-                ],
-                "indexNo": [
-                  "14"
-                ],
-                "inventionTitle": [
-                  "염색 및 탈색 효과가 우수한 모발 염색용 조성물"
-                ],
-                "ipcNumber": [
-                  "A61K 8/9789|A61K 8/9794|A61K 8/9711|A61K 8/65|A61K 8/73|A61K 8/92|A61Q 5/10|A61Q 5/08|A61Q 5/00"
-                ],
-                "openDate": [
-                  ""
-                ],
-                "openNumber": [
-                  ""
-                ],
-                "publicationDate": [
-                  "20250721"
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  "20250715"
-                ],
-                "registerNumber": [
-                  "1028360370000"
-                ],
-                "registerStatus": [
-                  "등록"
-                ]
-              },
-              {
-                "applicantName": [
-                  "주식회사 한국산업기술원"
-                ],
-                "applicationDate": [
-                  "20250527"
-                ],
-                "applicationNumber": [
-                  "1020250069366"
-                ],
-                "astrtCont": [
-                  "본 발명은 에코, 친환경, 스마트, 인터넷, 디지탈, 가상, 사이버,저탄소, 녹색성장, 메타버스, 하이브리드, 인텔리전트 등의 AI, IT, AR, IoT, ICT, LTE, App, 장치, 장비, 머신, 시설, 로봇, 수단, 자재, 재료, 물질, 물품, 물체, 드론, 통신, 전기, 전자, 작업, 공사, 청정, 인터넷, 배터리, 시스템, 플랫폼, 메타버스 등에 관한 것이다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93e4cfc6b23ee32e8d2cf5f30ed79c68508cee19644d52f50fe2dea2f2b66e1b13a8640c7b2c4903568074fdc25a4e08d5e14711de7135e4ef"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf13625c5f0dd6e1aadb88e38b732e2788c82f62e72643bfd10a5041353ade97c0f143744b4b12150d8cd5a1d23612de3bda993f108446e5ad"
-                ],
-                "indexNo": [
-                  "15"
-                ],
-                "inventionTitle": [
-                  "드론, 로봇 이용 진단, 계측, 측량, 감리, 모니터링 방법"
-                ],
-                "ipcNumber": [
-                  "G06Q 50/10|B64U 50/30|B25J 11/00|B64U 101/26"
-                ],
-                "openDate": [
-                  "20250617"
-                ],
-                "openNumber": [
-                  "1020250088430"
-                ],
-                "publicationDate": [
-                  ""
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  ""
-                ],
-                "registerNumber": [
-                  ""
-                ],
-                "registerStatus": [
-                  "공개"
-                ]
-              },
-              {
-                "applicantName": [
-                  "주식회사 한국산업기술원"
-                ],
-                "applicationDate": [
-                  "20250527"
-                ],
-                "applicationNumber": [
-                  "1020250069365"
-                ],
-                "astrtCont": [
-                  "본 발명은 에코, 친환경, 스마트, 인터넷, 디지탈, 가상, 사이버,저탄소, 녹색성장, 메타버스, 하이브리드, 인텔리전트 등의 AI, IT, AR, IoT, ICT, LTE, App, 장치, 장비, 머신, 시설, 로봇, 수단, 자재, 재료, 물질, 물품, 물체, 드론, 통신, 전기, 전자, 작업, 공사, 청정, 인터넷, 배터리, 시스템, 플랫폼, 메타버스 등에 관한 것이다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c938dd2baf34792ff86940cc9b0345252cf68a502c47206604bb276943472000bb8c420f99394de7eea1e4e47a843a4f52bb299ab0a964355bb"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf6566e77f042b631314f0ba2ce97303deee2a3b166ba4dbeab40f86f949b0e60a224635b9b6f6c094b316561287f574b57678c647338f538a"
-                ],
-                "indexNo": [
-                  "16"
-                ],
-                "inventionTitle": [
-                  "드론, 로봇 이용 제초, 예초, 잔디깎기 방법"
-                ],
-                "ipcNumber": [
-                  "G06Q 50/10|G06Q 50/02|B25J 11/00|B64U 101/25"
-                ],
-                "openDate": [
-                  "20250618"
-                ],
-                "openNumber": [
-                  "1020250089472"
-                ],
-                "publicationDate": [
-                  ""
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  ""
-                ],
-                "registerNumber": [
-                  ""
-                ],
-                "registerStatus": [
-                  "공개"
-                ]
-              },
-              {
-                "applicantName": [
-                  "주식회사 한국산업기술원"
-                ],
-                "applicationDate": [
-                  "20250527"
-                ],
-                "applicationNumber": [
-                  "1020250069368"
-                ],
-                "astrtCont": [
-                  "본 발명은 드론, 로봇, AI, IT, AR, IoT, ICT, LTE, App 등이 이용되는 청소, 세척, 청정, 크리닝 방법에 관한 것이다. 본 발명은 에코, 친환경, 스마트, 인터넷, 디지탈, 가상, 사이버,저탄소, 녹색성장, 메타버스, 하이브리드, 인텔리전트 등의 AI, IT, AR, IoT, ICT, LTE, App, 장치, 장비, 머신, 시설, 로봇, 수단, 자재, 재료, 물질, 물품, 물체, 드론, 통신, 전기, 전자, 작업, 공사, 청정, 인터넷, 배터리, 시스템, 플랫폼, 메타버스 등에 관한 것이다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93e4cfc6b23ee32e8d2cf5f30ed79c68508cee19644d52f50fe2dea2f2b66e1b13073e701d4872f0e3e0023c039d54ab07861edd12a8d8650f"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf13625c5f0dd6e1aadb88e38b732e2788c82f62e72643bfd10a5041353ade97c0789d4d8d376a378ebb4ba55ff0dc9b4b06298da4f85b6b58"
-                ],
-                "indexNo": [
-                  "17"
-                ],
-                "inventionTitle": [
-                  "드론, 로봇 이용 청소, 세척, 청정, 크리닝 방법"
-                ],
-                "ipcNumber": [
-                  "G06Q 50/10|B64U 50/30|B25J 11/00|B64U 101/29|B64U 101/30"
-                ],
-                "openDate": [
-                  "20250617"
-                ],
-                "openNumber": [
-                  "1020250088431"
-                ],
-                "publicationDate": [
-                  ""
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  ""
-                ],
-                "registerNumber": [
-                  ""
-                ],
-                "registerStatus": [
-                  "공개"
-                ]
-              },
-              {
-                "applicantName": [
-                  "주식회사 한국산업기술원"
-                ],
-                "applicationDate": [
-                  "20250527"
-                ],
-                "applicationNumber": [
-                  "1020250069364"
-                ],
-                "astrtCont": [
-                  "본 발명은 에코, 친환경, 스마트, 인터넷, 디지탈, 가상, 사이버,저탄소, 녹색성장, 메타버스, 하이브리드, 인텔리전트 등의 AI, IT, AR, IoT, ICT, LTE, App, 장치, 장비, 머신, 시설, 로봇, 수단, 자재, 재료, 물질, 물품, 물체, 드론, 통신, 전기, 전자, 작업, 공사, 청정, 인터넷, 배터리, 시스템, 플랫폼, 메타버스 등에 관한 것이다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93e4cfc6b23ee32e8d2cf5f30ed79c68508cee19644d52f50fe2dea2f2b66e1b13463e866906a048e492c65282ef6b7e35548a1feb23f6795e"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf13625c5f0dd6e1aadb88e38b732e2788c82f62e72643bfd10a5041353ade97c06bff764d437f7b42f90ef3d6593230cf5cc30e59f0ba51c4"
-                ],
-                "indexNo": [
-                  "18"
-                ],
-                "inventionTitle": [
-                  "드론, 로봇이 이용되는 제설, 제빙, 융설 방법"
-                ],
-                "ipcNumber": [
-                  "G06Q 50/26|B25J 11/00|B64U 101/45"
-                ],
-                "openDate": [
-                  "20250617"
-                ],
-                "openNumber": [
-                  "1020250088429"
-                ],
-                "publicationDate": [
-                  ""
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  ""
-                ],
-                "registerNumber": [
-                  ""
-                ],
-                "registerStatus": [
-                  "공개"
-                ]
-              },
-              {
-                "applicantName": [
-                  "주식회사 한국산업기술원"
-                ],
-                "applicationDate": [
-                  "20250527"
-                ],
-                "applicationNumber": [
-                  "1020250069363"
-                ],
-                "astrtCont": [
-                  "본 발명은 에코, 친환경, 스마트, 인터넷, 디지탈, 가상, 사이버,저탄소, 녹색성장, 메타버스, 하이브리드, 인텔리전트 등의 AI, IT, AR, IoT, ICT, LTE, App, 장치, 장비, 머신, 시설, 로봇, 수단, 자재, 재료, 물질, 물품, 물체, 드론, 통신, 전기, 전자, 작업, 공사, 청정, 인터넷, 배터리, 시스템, 플랫폼, 메타버스 등에 관한 것이다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93e4cfc6b23ee32e8d2cf5f30ed79c68508cee19644d52f50fe2dea2f2b66e1b13cc767e7825419aa5c9c814dc43a9f294df1299f01af2af3f"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf13625c5f0dd6e1aadb88e38b732e2788c82f62e72643bfd10a5041353ade97c0f1d17cc5166373dc3fd69d0db3931122bc4514f9d9cd36e2"
-                ],
-                "indexNo": [
-                  "19"
-                ],
-                "inventionTitle": [
-                  "로봇, 드론이 이용되는 철근콘크리트공사 방법"
-                ],
-                "ipcNumber": [
-                  "G06Q 50/08|B25J 11/00|B25J 13/08|B64U 101/60|B64U 101/25"
-                ],
-                "openDate": [
-                  "20250617"
-                ],
-                "openNumber": [
-                  "1020250088428"
-                ],
-                "publicationDate": [
-                  ""
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  ""
-                ],
-                "registerNumber": [
-                  ""
-                ],
-                "registerStatus": [
-                  "공개"
-                ]
-              },
-              {
-                "applicantName": [
-                  "주식회사 한국산업기술원"
-                ],
-                "applicationDate": [
-                  "20250519"
-                ],
-                "applicationNumber": [
-                  "1020250064767"
-                ],
-                "astrtCont": [
-                  "본 발명은 a) IT, AI, ICT, IoT, IoE, ESG, 수단, 장치, 장비, 딥러닝, 빅데이터, 클라우드, 웨어러블, 메타버스; b) 이중 하나가 이용되는 일, 작업, 업무, 경영, 제조, 생산, 공사, 건설, 건축, 시공, 분양, 제설, 제빙, 융설, 청정, 정화, 퓨리, 청소, 방역, 소독, 살균, 크리닝; c) 상기 IT 내지 크리닝 중 하나에 관련되는 방법, 방안, 공법, 대책, 대안, 시설, 시스템; 등에 관한 것이다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c9304efce1a7c3df1c65df2beba59ccdb124a6c13a7dc131fa39561d72120d9bf3ba8e00ebc7acd2cc115bc7e84f06cb6252384620781728270"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf0858ab838100205eca06fc8d3d91ac11cfcb74f8a2815afc91ef38aa038ee399838b7ded0f855539b0ef478a0c64206a1c7afc3c1915b747"
-                ],
-                "indexNo": [
-                  "20"
-                ],
-                "inventionTitle": [
-                  "드론, 로봇 이용 제설, 제빙, 융설 방법"
-                ],
-                "ipcNumber": [
-                  "G06Q 50/26|H04N 7/18|B25J 11/00|B25J 13/08|B25J 19/02|B08B 7/00|B08B 1/12|B64U 101/29|B64U 101/45|B64U 101/30"
-                ],
-                "openDate": [
-                  "20250605"
-                ],
-                "openNumber": [
-                  "1020250081834"
-                ],
-                "publicationDate": [
-                  ""
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  ""
-                ],
-                "registerNumber": [
-                  ""
-                ],
-                "registerStatus": [
-                  "공개"
-                ]
-              },
-              {
-                "applicantName": [
-                  "주식회사 한국산업기술원"
-                ],
-                "applicationDate": [
-                  "20250519"
-                ],
-                "applicationNumber": [
-                  "1020250064774"
-                ],
-                "astrtCont": [
-                  "본 발명은 a) IT, AI, ICT, IoT, IoE, ESG, 수단, 장치, 장비, 딥러닝, 빅데이터, 클라우드, 웨어러블, 메타버스; b) 이중 하나가 이용되는 일, 작업, 업무, 경영, 제조, 생산, 공사, 건설, 건축, 시공, 분양, 진단, 시설진단, 안전진단, 청정, 정화, 퓨리, 청소, 방역, 소독, 살균, 크리닝; c) 상기 IT 내지 크리닝 중 하나에 관련되는 방법, 방안, 공법, 대책, 대안, 시설, 시스템; 등에 관한 것이다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c9351e454fd4c7cb381b1c0734e4eecc6066a1d32316e0e32bcbf13ac00822a28e9a49c6acba90ae94dbe54e2154e294e274a842e2fad501f44"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cff3a2680d1840595990e57e90bd7f5ac83965ab4fa26b720c36c14699004dfef09c25e309f64ab5fa52b6b4c5712c273c25eea6ba686bd525"
-                ],
-                "indexNo": [
-                  "21"
-                ],
-                "inventionTitle": [
-                  "드론, 로봇이 이용되는 시설물 진단방법"
-                ],
-                "ipcNumber": [
-                  "G06Q 50/10|G06F 1/16|G01D 21/02|B25J 11/00|B25J 13/08|B25J 19/02|B64U 101/26"
-                ],
-                "openDate": [
-                  "20250604"
-                ],
-                "openNumber": [
-                  "1020250078844"
-                ],
-                "publicationDate": [
-                  ""
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  ""
-                ],
-                "registerNumber": [
-                  ""
-                ],
-                "registerStatus": [
-                  "공개"
-                ]
-              },
-              {
-                "applicantName": [
-                  "주식회사 한국산업기술원"
-                ],
-                "applicationDate": [
-                  "20250519"
-                ],
-                "applicationNumber": [
-                  "1020250064764"
-                ],
-                "astrtCont": [
-                  "본 발명은 a) IT, AI, ICT, IoT, IoE, ESG, 수단, 장치, 장비, 로봇, 드론, 딥러닝, 빅데이터, 클라우드, 웨어러블, 메타버스; b) 이중 하나가 이용되는 일, 작업, 업무, 경영, 제조, 생산, 공사, 건설, 건축, 시공, 분양, 청정, 정화, 퓨리, 청소, 방역, 소독, 살균, 크리닝; c) 상기 IT 내지 크리닝 중 하나에 관련되는 방법, 방안, 공법, 대책, 대안, 시설, 시스템; 등에 관한 것이다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c9351e454fd4c7cb381b1c0734e4eecc6066a1d32316e0e32bcbf13ac00822a28e904827a82460ee2326898ed78779643988f0d38a2a60220bc"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cff3a2680d1840595990e57e90bd7f5ac83965ab4fa26b720c36c14699004dfef0b3a326aded4245443dd25decce8a25d2e637bf5e20eadfca"
-                ],
-                "indexNo": [
-                  "22"
-                ],
-                "inventionTitle": [
-                  "로봇, 드론, 무인 공사, 건설, 건축, 작업 방법"
-                ],
-                "ipcNumber": [
-                  "G06Q 50/08|H04N 7/18|B25J 11/00|B25J 13/08|B25J 19/02|B64U 101/25|B64U 101/45|B64U 101/30"
-                ],
-                "openDate": [
-                  "20250604"
-                ],
-                "openNumber": [
-                  "1020250078841"
-                ],
-                "publicationDate": [
-                  ""
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  ""
-                ],
-                "registerNumber": [
-                  ""
-                ],
-                "registerStatus": [
-                  "공개"
-                ]
-              },
-              {
-                "applicantName": [
-                  "주식회사 한국산업기술원"
-                ],
-                "applicationDate": [
-                  "20250519"
-                ],
-                "applicationNumber": [
-                  "1020250064772"
-                ],
-                "astrtCont": [
-                  "본 발명은 a) IT, AI, ICT, IoT, IoE, ESG, 수단, 장치, 장비, 딥러닝, 빅데이터, 클라우드, 웨어러블, 메타버스; b) 이중 하나가 이용되는 일, 작업, 업무, 경영, 제조, 생산, 공사, 건설, 건축, 시공, 분양, 사면진단, 절리진단, 주향진단, 경사진단, 사면측정, 절리측정, 주향측정, 경사측정, 청정, 정화, 퓨리, 청소, 방역, 소독, 살균, 크리닝; c) 상기 IT 내지 크리닝 중 하나에 관련되는 방법, 방안, 공법, 대책, 대안, 시설, 시스템; 등에 관한 것이다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c9351e454fd4c7cb381b1c0734e4eecc6066a1d32316e0e32bcbf13ac00822a28e93797b9af765d6833eb79ed861934b9d8cd2913de4b2fcbbe"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cff3a2680d1840595990e57e90bd7f5ac83965ab4fa26b720c36c14699004dfef098c615965f8bf354723a04436ffb9a55971557de7b2f0a28"
-                ],
-                "indexNo": [
-                  "23"
-                ],
-                "inventionTitle": [
-                  "드론, 로봇이 이용되는 사면, 절리, 주향, 경사의 진단, 측정 방법"
-                ],
-                "ipcNumber": [
-                  "G06Q 50/10|B64U 10/80|B64U 20/87|G01C 9/04|H04N 21/2187|B64U 101/30"
-                ],
-                "openDate": [
-                  "20250604"
-                ],
-                "openNumber": [
-                  "1020250078843"
-                ],
-                "publicationDate": [
-                  ""
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  ""
-                ],
-                "registerNumber": [
-                  ""
-                ],
-                "registerStatus": [
-                  "공개"
-                ]
-              },
-              {
-                "applicantName": [
-                  "주식회사 한국산업기술원"
-                ],
-                "applicationDate": [
-                  "20250519"
-                ],
-                "applicationNumber": [
-                  "1020250064770"
-                ],
-                "astrtCont": [
-                  "본 발명은 a) IT, AI, ICT, IoT, IoE, ESG, 수단, 장치, 장비, 딥러닝, 빅데이터, 클라우드, 웨어러블, 메타버스; b) 이중 하나가 이용되는 일, 작업, 업무, 경영, 제조, 생산, 공사, 건설, 건축, 시공, 분양, 제초, 예초, 벌초, 청정, 정화, 퓨리, 청소, 방역, 소독, 살균, 크리닝; c) 상기 IT 내지 크리닝 중 하나에 관련되는 방법, 방안, 공법, 대책, 대안, 시설, 시스템; 등에 관한 것이다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c9351e454fd4c7cb381b1c0734e4eecc6066a1d32316e0e32bcbf13ac00822a28e9af9ba1678d8e5ba5a7ac3659289674ae942e1f8194497d37"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cff3a2680d1840595990e57e90bd7f5ac83965ab4fa26b720c36c14699004dfef0dd626330d8b392d61c14de1cd5a1417df45dff2006faafb7"
-                ],
-                "indexNo": [
-                  "24"
-                ],
-                "inventionTitle": [
-                  "드론, 로봇 이용 제초, 예초, 벌초 방법"
-                ],
-                "ipcNumber": [
-                  "G06Q 50/10|G06Q 50/02|H04N 21/2187|B64U 10/80|B64U 20/87|B64U 101/30|B64U 101/40"
-                ],
-                "openDate": [
-                  "20250604"
-                ],
-                "openNumber": [
-                  "1020250078842"
-                ],
-                "publicationDate": [
-                  ""
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  ""
-                ],
-                "registerNumber": [
-                  ""
-                ],
-                "registerStatus": [
-                  "공개"
-                ]
-              },
-              {
-                "applicantName": [
-                  "쿠팡 주식회사"
-                ],
-                "applicationDate": [
-                  "20250519"
-                ],
-                "applicationNumber": [
-                  "1020250064416"
-                ],
-                "astrtCont": [
-                  "본 발명은 아이템에 대한 리뷰 정보를 제공하는 서비스 서버에서의 정보 제공 방법으로서, 제1 아이템에 대한 리뷰 데이터를 확인하는 단계; 상기 리뷰 데이터를 기반으로 상기 제1 아이템에 대한 대표 리뷰 정보를 결정하는 단계; 상기 대표 리뷰 정보 및 상기 제1 아이템의 상세 정보를 포함하는 제1 페이지를 제공하는 단계; 상기 제1 페이지에서 상기 대표 리뷰 정보에 대응하는 제1 사용자 입력을 획득하는 단계; 및 상기 제1 사용자 입력에 따라 상기 제1 아이템에 대한 리뷰 데이터를 포함하는 제2 페이지를 제공하는 단계를 포함하는, 정보 제공 방법에 관한 것이다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c931792d097891e809ad96b46696fb54a6604b91d111abac9142aef6c38e904f9e31caafd8eabd8d0663f3ee3bae35e7b92775b83e59f7d1022"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfab33cdfc523979456f36b7dc31ddcc3140e02669bc60ff5a012bc5c55417802912735192ce7253977e31d70a03a0557fe43d9973f7094eca"
-                ],
-                "indexNo": [
-                  "25"
-                ],
-                "inventionTitle": [
-                  "아이템에 대한 리뷰 정보를 제공하는 방법 및 장치"
-                ],
-                "ipcNumber": [
-                  "G06Q 30/0282|G06Q 30/0201|G06Q 30/0202|G06F 40/30"
-                ],
-                "openDate": [
-                  "20250529"
-                ],
-                "openNumber": [
-                  "1020250076495"
-                ],
-                "publicationDate": [
-                  ""
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  ""
-                ],
-                "registerNumber": [
-                  ""
-                ],
-                "registerStatus": [
-                  "공개"
-                ]
-              },
-              {
-                "applicantName": [
-                  "주식회사 리스큐어바이오사이언시스"
-                ],
-                "applicationDate": [
-                  "20250516"
-                ],
-                "applicationNumber": [
-                  "1020250064028"
-                ],
-                "astrtCont": [
-                  "본 발명은 체내 요독물질 배출 또는 감소, 및 항염증 활성이 우수한 락토코커스 락티스 아종 호르드니아에 LB-P22 균주 및 이를 포함하는 만성신장질환 예방, 개선 또는 치료용 조성물에 관한 것으로, 요독물질의 흡수율이 우수하여 체내의 요독물질을 효과적으로 배출 또는 감소시킬 수 있을 뿐만 아니라, 신장 염증 및 섬유화 개선 효능이 우수하고 손상된 신장에 대하여 우수한 항산화 효과를 나타내므로, 요독물질, 특히 인독실 황산염 축적, 염증 및/또는 섬유화 증상을 동반하는 다양한 만성신장질환의 예방 또는 개선에 유용하게 활용될 수 있다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93ef07ad877c9124f5dc0d0f79dae781a4fd3129064b216acdc78ff0525736bf98df56e8e55676f68afaf5590d8d692a3fe1465afbd8353a66"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf93620285adc8d8bf658293a81502890a7d69d800ba7abfeec05c31f5603846ecf3854f8f454bd6661b8bebd441b8bb8127ee43c02b4edeeb"
-                ],
-                "indexNo": [
-                  "26"
-                ],
-                "inventionTitle": [
-                  "체내 요독물질 배출 또는 감소, 및 항염증 활성이 우수한 락토코커스 락티스 아종 호르드니아에 LB-P22 균주 및 이를 포함하는 만성신장질환 예방, 개선 또는 치료용 조성물"
-                ],
-                "ipcNumber": [
-                  "C12N 1/20|A23L 33/135|A61K 35/74|A23K 10/16|A61P 13/12|C12R 1/46"
-                ],
-                "openDate": [
-                  ""
-                ],
-                "openNumber": [
-                  ""
-                ],
-                "publicationDate": [
-                  "20250911"
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  "20250905"
-                ],
-                "registerNumber": [
-                  "1028578120000"
-                ],
-                "registerStatus": [
-                  "등록"
-                ]
-              },
-              {
-                "applicantName": [
-                  "주식회사에이아이메이킹스"
-                ],
-                "applicationDate": [
-                  "20250514"
-                ],
-                "applicationNumber": [
-                  "1020250062867"
-                ],
-                "astrtCont": [
-                  "본 발명은 카메라 영상에 포함된 수산물을 AI로 분석하여 품종ㅇ무게ㅇ신선도ㅇ가격을 예측하고, 증강현실로 시각화하며, 데이터베이스와 연동해 산지ㅇ유통ㅇ조리 정보를 통합 제공하는 시스템 및방법에 관한 것이다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c936e4618879a672b2f8ca53e7759762f545497b1ac3b210b5563ec836f2f299ce5fbdf96fdd0573b765eb4f2744f0e789a61f19ec0eb0f843e"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf10add4f4d6d868b3ece15d38326421a3fd8ea08dd62366c09a249c7e2c667c87ea43fceb66886918f5bc4da11c82ab65947a0c492529ee85"
-                ],
-                "indexNo": [
-                  "27"
-                ],
-                "inventionTitle": [
-                  "AI·AR 기반 실시간 수산물 정보 시각화 시스템 및 방법"
-                ],
-                "ipcNumber": [
-                  "G06Q 30/0601|G06Q 50/02|G06V 10/42|G06T 19/00|G06Q 30/02"
-                ],
-                "openDate": [
-                  "20250602"
-                ],
-                "openNumber": [
-                  "1020250078388"
-                ],
-                "publicationDate": [
-                  ""
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  ""
-                ],
-                "registerNumber": [
-                  ""
-                ],
-                "registerStatus": [
-                  "공개"
-                ]
-              },
-              {
-                "applicantName": [
-                  "유유진"
-                ],
-                "applicationDate": [
-                  "20250513"
-                ],
-                "applicationNumber": [
-                  "1020250061738"
-                ],
-                "astrtCont": [
-                  "본 발명은 기초체온 증대 면역력 개선 효과가 우수한 흑염소 진액 조성물 및 그 제조방법에 관한 것으로서, 더욱 상세하게는 유효성분의 함량이 우수하고 특히 기초 체온의 증대 효과가 현저히 개선되어 종래 기술에 비하여 현저히 우수한 품질을 갖는 흑염소 진액 조성물 및 그 제조방법에 관한 것이다."
-                ],
-                "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93bb0d2882b02f0f3dcaf6532558523174fb5b6453b879383a759c6e6981a92c3b9218754ee6408bd5ed89d3a06ae1f989a6ebd85dd1ef527d"
-                ],
-                "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf9be8e8790ba3fd7debb94c9db10ce0a7a35eeb56054945e203093dbff5e2cf8049bd7ceffbd396e9aa4ba3f997d21ac3f82f55ae8965f262"
-                ],
-                "indexNo": [
-                  "28"
-                ],
-                "inventionTitle": [
-                  "기초체온 증대 및 면역력 개선 효과가 우수한 흑염소 진액 조성물 및 그 제조방법"
-                ],
-                "ipcNumber": [
-                  "A23L 13/30|A23L 19/10|A23L 13/40|A23L 13/20|A23L 33/105"
-                ],
-                "openDate": [
-                  ""
-                ],
-                "openNumber": [
-                  ""
-                ],
-                "publicationDate": [
-                  "20250709"
-                ],
-                "publicationNumber": [
-                  ""
-                ],
-                "registerDate": [
-                  "20250707"
-                ],
-                "registerNumber": [
-                  "1028325690000"
-                ],
-                "registerStatus": [
-                  "등록"
                 ]
               },
               {
@@ -1432,34 +582,34 @@
                   "리벨리온 주식회사"
                 ],
                 "applicationDate": [
-                  "20250502"
+                  "20250918"
                 ],
                 "applicationNumber": [
-                  "1020250058355"
+                  "1020250134205"
                 ],
                 "astrtCont": [
-                  "본 개시는 대화 히스토리를 관리하는 방법 및 시스템에 관한 것이다. 대화 히스토리를 관리하는 방법은 적어도 하나의 프로세서에 의해 수행될 수 있다. 대화 히스토리를 관리하는 방법은, 복수의 쿼리 및 복수의 쿼리에 대응하는 복수의 응답을 포함하는 복수의 쿼리-응답 쌍을 획득하는 단계, 복수의 쿼리-응답 쌍에 기초하여, 복수의 쿼리 및 복수의 응답이 맥락별로 분류되어, 복수의 맥락 그룹을 포함하는 맥락 그룹 데이터를 획득하는 단계, 복수의 쿼리-응답 쌍 이후에 수신되는 제1 쿼리를 사용자 단말로부터 수신하는 단계, 수신된 제1 쿼리에 대응하는 제1 맥락 그룹을 맥락 그룹 데이터로부터 추출하는 단계 및 제1 쿼리 및 제1 맥락 그룹을 제1 대화형 인공지능 모델에 제공하는 단계를 포함한다."
+                  "본 개시는 적어도 하나의 프로세서를 포함하는 시큐리티 코어에 의해 수행되는 컨피덴셜 컴퓨팅 방법에 관한 것이다. 컨피덴셜 컴퓨팅 방법은, 제1 테넌트와 연관된 제1 암호화된 데이터를 제1 메모리에 저장하는 단계 - 제1 암호화된 데이터는, 제1 테넌트와 연관된 제1 암호화 키를 이용하여, 제1 평문 데이터(plain text data)에 대해 암호화가 수행된 데이터임 -, 제1 평문 데이터에 대한 접근 요청을 수신하는 것에 응답하여, 제1 암호화 키를 이용하여, 제1 암호화된 데이터에 대해 복호화를 수행하여 제1 평문 데이터를 생성하는 단계 및 제1 평문 데이터를 제1 메모리에 저장된 데이터에 대한 처리를 수행하는 메인 코어로 제공하는 단계를 포함한다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93191078e9070af38dd45f2bab12015fc17490f276316e0007c5df671f58134f9cd55da6f8f96bdb245955138ecbdbbfbc279f41d3e10d2743"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93522e59d419c828eb0259cdb6d95ca9a595e953bb1b1c6f197d00d585fae3564b82dfb5ede396850d193a84541457e0e49c959854e9a60dbd"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf85c8c7fe54948709fa53d1f1b8cd78a1758f1107fa96f8c556a378a289e550ddbe8635be53adb233d07eff1294342d6ab4f93387d4e36967"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cff65f6b5fe7a7ae05a236cde04e984eafadeab7834f0013b020d241e99447afd073310c07c5e6aa75c35c9cf7e880bac1d43306bb27a48c4c"
                 ],
                 "indexNo": [
-                  "29"
+                  "12"
                 ],
                 "inventionTitle": [
-                  "대화 히스토리를 관리하는 방법 및 시스템"
+                  "컨피덴셜 컴퓨팅 방법 및 시스템"
                 ],
                 "ipcNumber": [
-                  "G06F 16/3349|G06F 16/3329|G06F 16/338|G06F 16/35|G06F 16/31|G06F 16/334|G06F 40/35|G06F 40/284|G06F 18/22|G06F 18/213|G06N 20/00"
+                  "G06F 21/60|G06F 21/79|H04L 9/40"
                 ],
                 "openDate": [
-                  "20250521"
+                  "20251013"
                 ],
                 "openNumber": [
-                  "1020250071216"
+                  "1020250144975"
                 ],
                 "publicationDate": [
                   ""
@@ -1479,37 +629,887 @@
               },
               {
                 "applicantName": [
-                  "박홍조"
+                  "주식회사 바디프랜드"
                 ],
                 "applicationDate": [
-                  "20250428"
+                  "20250918"
                 ],
                 "applicationNumber": [
-                  "1020250055120"
+                  "1020250134554"
                 ],
                 "astrtCont": [
-                  "본 발명은 정육 조리방법에 관한 것으로, 지방이 없어 구이용으로 사용되지 않는 정육을 자동으로 얇게 썰어 구이용으로 사용할 수 있도록 하는 정육 조리방법에 관한 것이다.  이러한 본 발명은, 촙커터기 및 육절기 중 하나 이상을 포함하는 절단기 측으로 정육을 운반하는 운반단계(S1); 및 상기 절단기를 이용하여 상기 정육을 0.8 내지 3 mm 두께를 갖는 슬라이스로 절단하는 절단단계(S2);를 포함하되, 상기 절단단계(S2)는, 상기 촙커터기의 절단칼보다 전방에 배치되는 적재부 상부에 상기 정육을 배치하는 단계(S211), 상기 정육의 전방에 배치되는 이동부를 이용하여 상기 정육을 기 설정된 거리만큼 후방으로 이동시키고, 기 설정된 시간만큼 정지시키는 이동 및 정지단계(S212) 및 상기 정지단계에서 상기 절단칼을 이동시켜 상기 정육을 절단하는 단계(S213)를 포함한다."
+                  "본 발명의 일 실시예에 따른 마사지 장치는 사용자의 신체의 적어도 일부분을 마사지하는 바디 마사지부와, 상기 바디 마사지부의 하부에 배치되어 상기 사용자의 다리를 마사지하는 다리 마사지부와, 상기 바디 마사지부 및 상기 다리 마사지부를 제어하는 제어부를 포함하고, 상기 다리 마사지부는 상기 사용자의 일측 다리를 마사지하는 제1 다리 마사지부와, 상기 사용자의 타측 다리를 마사지하는 제2 다리 마사지부를 포함하고, 상기 제1 다리 마사지부와 상기 제2 다리 마사지부는 서로 독립 거동하되, 상기 제1 다리 마사지부의 제1 길이 및 제1 각도 각각과, 상기 제2 다리 마사지부의 제2 길이 및 제2 각도 각각은 독립적으로 제어 가능하고, 상기 제어부는 상기 제2 길이를 유지시킨 상태에서 상기 제1 길이를 증가시키면서 상기 제1 각도를 조절하고, 조절한 제1 각도를 기 설정된 시간 동안 유지시켜 상기 일측 다리를 스트레칭시켜 다리 스트레칭 동작을 수행할 수 있다."
                 ],
                 "bigDrawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93fd389e8834c6e75a57cb65babf803926fd91593631fe56c4f1f12a3b4df690df3c02f0e4af7479a95991d770cd7676a1939ab496376103e3"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93613bf347a40b894aef6a438be2110a7e8e30e4e70e8a5c2ad3b97c6a65cfd2331d61b270788fafbbb87a47e3bc5078bf51cbeb2cc01e3bc3"
                 ],
                 "drawing": [
-                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf445854bf8f322c62178f451d6d9941679af218f76dad18f415469a1593453f9e72f64c559b8b335f7ffe8bf112f7decd58e40c0824e91f78"
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf966aa17855841d97371379af2f4e6e45da06997d48665d19fce7c3aec6739b44b36d76fff8fb75a6a5c96b781f1f5e99e81819dba366077d"
+                ],
+                "indexNo": [
+                  "13"
+                ],
+                "inventionTitle": [
+                  "사용자의 다리를 스트레칭시키는 마사지 장치"
+                ],
+                "ipcNumber": [
+                  "A61H 15/00|A61H 9/00|A61H 1/02"
+                ],
+                "openDate": [
+                  "20250929"
+                ],
+                "openNumber": [
+                  "1020250141673"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "김여정"
+                ],
+                "applicationDate": [
+                  "20250917"
+                ],
+                "applicationNumber": [
+                  "1020250133268"
+                ],
+                "astrtCont": [
+                  "복수 만성질환 사용자의 텍스트・이미지・음성・바이오센서・GPS 입력을 통합 분석해 성분별 위험과 종합 등급을 산출하고, 신호등・플래시로 실시간 경고하는 시스템. 다단계 신뢰 게이트웨이(T.A.I.C.)가 DB1/DB2 분리・'동일/유사/불일치' 판정으로 미승인 정보를 응답・학습에서 차단한다. XAI로 근거를 제시하고, S_safe・메뉴-식재료・위치 매핑으로 공통 안전 식단・근접 안전 메뉴를 추천하며, 이상 패턴 시 보호자 알림・응급 API를 연동한다. 엣지-클라우드 하이브리드로 저지연・프라이버시를 보장한다.  [대표도] 도 19 - 발명의 전체 핵심 통합 흐름도(멀티모달 데이터 수집・폐회로 신뢰/정책 강화・실시간 보호자 연동)"
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93522e59d419c828eb0259cdb6d95ca9a5f702428355e5993f3ea100afb33d6f00b0aefa9c0845048917bb38c71b5e46abb980c07898fcfd95"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cff65f6b5fe7a7ae05a236cde04e984eaf8cb78824933d15f7fd84e5d72302dc661d7e097ad03bc15c7cd749a820e77fc2530df46fad5d5071"
+                ],
+                "indexNo": [
+                  "14"
+                ],
+                "inventionTitle": [
+                  "신뢰형 자율추론 코어(T.A.I.C.) 통합 멀티모달 복합질환 식이안전 판단 시스템 및 그 운영방법"
+                ],
+                "ipcNumber": [
+                  "G16H 20/60|G16H 70/00|G16H 10/60|G16H 40/20|G16H 80/00|G16H 50/00|G06F 16/9032|G06F 16/9038|G06F 16/84|G06F 18/22"
+                ],
+                "openDate": [
+                  "20251013"
+                ],
+                "openNumber": [
+                  "1020250144969"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "베이징 바이두 넷컴 사이언스 테크놀로지 컴퍼니 리미티드"
+                ],
+                "applicationDate": [
+                  "20250917"
+                ],
+                "applicationNumber": [
+                  "1020250133833"
+                ],
+                "astrtCont": [
+                  "본 개시는 대규모 모델에 기반한 디지털 휴먼 비디오 생성 방법, 장치, 에이전트, 전자 기기 및 저장 매체를 제공하며, 인공지능 기술 분야에 관한 것으로서, 특히 딥러닝, 대규모 모델, 컴퓨터 비전 등 기술 분야에 관한 것이며, 비디오 생방송, 광고 제작, 전자상거래 판매 등 장면에 적용될 수 있다. 대규모 모델에 기반한 디지털 휴먼 비디오 생성 방법은, 요구 정보를 획득하되, 요구 정보가 지정된 동작 비디오 세그먼트를 설명하기 위한 동작 설명 정보를 포함하고, 동작 비디오 세그먼트가 목표 대상의 지정 동작을 나타내며; 언어 대규모 모델을 이용하여 요구 정보를 처리하여, 목표 대본을 얻되, 목표 대본이 동작 설명 정보와 매칭하는 목표 구술 방송 세그먼트 텍스트를 포함하며; 비전 대규모 모델을 이용하여 목표 대본 및 동작 비디오 세그먼트를 처리하여, 목표 대상이 지정 동작을 수행하는 과정에서, 목표 구술 방송 세그먼트 텍스트에 기초하여 구술 방송을 수행하는 것을 표시하기 위한 목표 비디오를 얻는 것을, 포함한다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93522e59d419c828eb0259cdb6d95ca9a5f702428355e5993f5926769d6eb7f6873a0bc9378e1ccd52d9e2496f8ddaa81d5e3d2b46b0095e77"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cff65f6b5fe7a7ae05a236cde04e984eaf8cb78824933d15f7f75b2cda91efd3e90a540cd1607c58de40295c8a949cc683b27e6db32e7d006a"
+                ],
+                "indexNo": [
+                  "15"
+                ],
+                "inventionTitle": [
+                  "대규모 모델에 기반한 디지털 휴먼 비디오 생성 방법, 장치, 에이전트, 전자 기기, 저장 매체, 및 컴퓨터 프로그램"
+                ],
+                "ipcNumber": [
+                  "H04N 21/8545|H04N 21/845|G10L 13/08|G11B 27/031|G06N 3/08"
+                ],
+                "openDate": [
+                  "20251013"
+                ],
+                "openNumber": [
+                  "1020250144973"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "강성운"
+                ],
+                "applicationDate": [
+                  "20250917"
+                ],
+                "applicationNumber": [
+                  "1020250133096"
+                ],
+                "astrtCont": [
+                  "본 발명은 Q-Block 기반 보안・복원 시스템에 강화학습 기반 정책 최적화 모듈을 결합하여, 무결성 검증 및 복원 성능을 자율적으로 향상시키는 기술에 관한 것이다. Intra-Block(200)과 Inter-Block(300) 검증을 통해 산출된 성능 지표(FAR, FRR, Cost, Delay)는 '상태(State)'로 정의되어 정책 최적화 모듈(600)에 입력된다. 본 모듈은 강화학습 보상함수를 통해 파라미터 {w1~w4}를 동적으로 조정하고, 그 결과를 자율 복원 모듈(400)의 가중치 분배에 실시간 반영한다. 복원 결과와 성능 지표는 다시 보상값 R로 계산되어 피드백 루프를 형성하며, 시스템은 공격 패턴 변화에도 지속적으로 적응・학습할 수 있다. 이 구조는 보안・복원 순환 구조(700)의 핵심 요소로서, 자율주행, UAM, 의료 데이터 보안, 금융 거래 보호 등 다양한 산업 분야에 적용 가능하다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c933104015e29aa5af8fad863a592e2ba230fbad888a23e1e1046f87b88776e6fd682eb18288e01c1208c9a4757c1e12bc346065d9347fb5222"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf103729edc42411609948871101fce82f9275cbc4e0e3cff04954a81f489e5dd96f18084f031d39ef0a135ec19611a7a77f4f361c0185508c"
+                ],
+                "indexNo": [
+                  "16"
+                ],
+                "inventionTitle": [
+                  "Q-Guardian Optimizer™ : 강화학습 기반 보상함수를 이용한 Q-Block 보안 정책 최적화 시스템 및 방법"
+                ],
+                "ipcNumber": [
+                  "H04L 9/40|G06N 3/092|H04L 9/00"
+                ],
+                "openDate": [
+                  "20251010"
+                ],
+                "openNumber": [
+                  "1020250144343"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "강성운"
+                ],
+                "applicationDate": [
+                  "20250917"
+                ],
+                "applicationNumber": [
+                  "1020250133095"
+                ],
+                "astrtCont": [
+                  "본 발명은 Q-Block 기반 보안・복원 시스템에서 산출된 무결성 검증 결과를 JSON 로그 스키마로 구조화하고, 해시 및 전자서명 처리를 거쳐 블록체인 또는 분산원장에 불변적으로 기록하는 기술에 관한 것이다. 로그에는 cubeID, TSU, rightsMetadata, valueDelta, consensusType, hash, signature 등의 필드가 포함되어 권리・가치 변동을 정량화하고 합의 알고리즘과 암호학적 증거를 제공한다. 이를 통해 단순 로그 파일과 달리, 위변조 탐지가 가능한 무결성 기록을 생성하여 규제기관 감사, 법적 분쟁 해결, 권리 침해 입증에 활용 가능하다. 따라서 본 발명은 데이터 기록의 신뢰성과 증거력을 보장하며, Q-Block 시스템의 무결성과 복원 능력을 강화하는 기술적 차별성을 갖는다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d845279955cad783cd3189fd5662e42dc8afc0c4786e6fae9962354b863fa52ce1101a1c52f59489b057052090505a7deed73f7c61ab6b87"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfd425841bf85ad0f0f03eae8eac1ddda21a97e42ad81c9e5c7b82b492c0e93dabd1a26a987a175f27ef96d346c5fa5f430219328e23191f06"
+                ],
+                "indexNo": [
+                  "17"
+                ],
+                "inventionTitle": [
+                  "Q-Guardian Log™ : JSON 로그 스키마 기반 Q-Block 보안·복원 기록 시스템 및 방법"
+                ],
+                "ipcNumber": [
+                  "H04L 9/40|H04L 9/32|H04L 9/00"
+                ],
+                "openDate": [
+                  "20251002"
+                ],
+                "openNumber": [
+                  "1020250143728"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "네이버 주식회사"
+                ],
+                "applicationDate": [
+                  "20250916"
+                ],
+                "applicationNumber": [
+                  "1020250132482"
+                ],
+                "astrtCont": [
+                  "본 발명은 로봇의 자세 측정 방법 및 이를 이용한 로봇 시스템에 관한 것이다. 본 발명에 따른 로봇의 자세 측정 방법은, 제1로봇과 제2로봇이 서로 인접하도록 상기 제1로봇과 제2로봇 중 적어도 하나가 이동하는 단계와, 상기 제2로봇의 디스플레이에 비주얼 마커를 출력하는 단계와, 상기 제1로봇이 상기 제2로봇를 촬영하는 단계와, 상기 제1로봇에서 촬영된 이미지에 포함된 비주얼 마커를 검출하여, 상기 이미지에 포함된 비주얼 마커의 자세(pose)를 산출하는 단계, 및 상기 제2로봇의 좌표 데이터와 상기 이미지에 포함된 비주얼 마커의 자세를 이용하여, 상기 제2로봇의 자세를 산출하는 단계를 포함한다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c937cef927a07c26cf497b59f37054fbb29ef17b96af7dff0c045a7a0a99d572cb34b595c8e202b055ad1ab112af95e90b57a55844f1b008f8a"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfd1ab411270a03e3c1aa9757efabbe4e4a8f4d497fcbccf6a15aaa9991b150cc1f1a99ab355ac9b32e2cf90f3634fbafc1bfa72007df1e621"
+                ],
+                "indexNo": [
+                  "18"
+                ],
+                "inventionTitle": [
+                  "로봇의 자세 측정 방법 및 이를 이용한 로봇 시스템"
+                ],
+                "ipcNumber": [
+                  "B25J 13/08|B25J 9/16|B25J 19/02|G05D 1/244"
+                ],
+                "openDate": [
+                  "20250923"
+                ],
+                "openNumber": [
+                  "1020250139803"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "네이버 주식회사"
+                ],
+                "applicationDate": [
+                  "20250916"
+                ],
+                "applicationNumber": [
+                  "1020250132481"
+                ],
+                "astrtCont": [
+                  "본 발명은 로봇 친화형 건물, 건물을 주행하는 로봇의 제어 방법 및 시스템에 관한 것이다. 보다 구체적으로 본 발명은 같은 공간 속에서 로봇과 사람이 함께 공존하며 사람에게 유용한 서비스를 제공할 수 있도록 하는 로봇 제어 방법 및 시스템에 관한 것이다. 본 발명은 건물에 대한 지도에 기반하여, 상기 건물을 주행하는 로봇을 제어하는 방법을 제공할 수 있다. 본 발명은 상기 건물에서 가상 장애물의 위치를 특정하는 단계, 특정된 상기 가상 장애물의 위치를 이용하여, 상기 가상 장애물에 대한 가상 장애물 정보를 상기 지도에 반영하는 단계, 상기 건물에 위치한 로봇 중 상기 가상 장애물에 대한 기 설정된 거리 조건을 만족하는 적어도 하나의 로봇을 특정하는 단계 및 상기 특정된 로봇이 상기 가상 장애물을 회피하여 주행하도록, 상기 특정된 로봇으로 상기 가상 장애물 정보를 전송하는 단계를 포함하는 로봇 제어 방법을 제공할 수 있다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d845279955cad783cd3189fd5662e42d37651406a48afe9d612a473f7a7670f54a8eb8221cd01f4b24066135b26f72946de2ca25e1078542"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfd425841bf85ad0f0f03eae8eac1ddda2ac93d60a5ed87eaccf691a8647efa3e89491e4f6360ff4b23aa1cfaa45e1d6f0ce90a4b91e4612b8"
+                ],
+                "indexNo": [
+                  "19"
+                ],
+                "inventionTitle": [
+                  "로봇 친화형 건물, 건물을 주행하는 로봇 제어 방법 및 시스템"
+                ],
+                "ipcNumber": [
+                  "G05D 1/644"
+                ],
+                "openDate": [
+                  "20251002"
+                ],
+                "openNumber": [
+                  "1020250143725"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "김재은"
+                ],
+                "applicationDate": [
+                  "20250916"
+                ],
+                "applicationNumber": [
+                  "1020250132950"
+                ],
+                "astrtCont": [
+                  "본 발명은 해녀의 안전을 위한 GPS 기반 실시간 모니터링 시스템에 관한 것이다. 해녀에게 착용되는 방수형 뱃지 장치(100)는 GPS 모듈(110), 타이머 모듈(120), 통신 모듈(130), 생체센서(140), 비상버튼(150)을 포함하여 해녀의 위치, 조업시간, 건강상태를 실시간으로 수집한다. 중앙관리서버(200)의 안전감시 모듈(210)은 수신된 데이터를 분석하여 미복귀 상황을 자동으로 감지하고, 경보 모듈(220)은 위험상황 시 관리자 단말기(300), 해안 관제소(400), 인근 해녀들에게 즉시 경보를 전송한다. 본 시스템은 LoRa, LTE, 위성통신의 다중 통신망을 지원하여 해상에서도 안정적인 연결을 보장하며, IPX8 방수등급과 저전력 설계로 해양환경에서 장시간 사용이 가능하다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93522e59d419c828eb0259cdb6d95ca9a52f8d28e52ab30a4a95253c889bb65a833582b4b860071840d36ef639cfe397a818c711a216cc0543"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cff65f6b5fe7a7ae05a236cde04e984eaf5a38368cec297fccf4a7def4bbb0f9f7b3e50978cb352cd1759be81e62c540ed525c5e740e5e777a"
+                ],
+                "indexNo": [
+                  "20"
+                ],
+                "inventionTitle": [
+                  "해녀용 GPS 안전관리 뱃지 시스템 및 그 운영방법"
+                ],
+                "ipcNumber": [
+                  "G08B 21/08|G08B 21/18|G08B 25/10|G08B 3/10|G08B 25/00|G08B 27/00|G01S 19/17|A44C 3/00|G04G 15/00|H04W 4/80|H04W 4/90|H04W 84/06"
+                ],
+                "openDate": [
+                  "20251013"
+                ],
+                "openNumber": [
+                  "1020250144967"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "강성운"
+                ],
+                "applicationDate": [
+                  "20250916"
+                ],
+                "applicationNumber": [
+                  "1020250132183"
+                ],
+                "astrtCont": [
+                  "본 발명은 절대 원점인 시간 특이점(Time Singularity, TS)을 기준으로, 단위 시간(TSU)마다 위상식 φ(t) = ω・t + δ 를 부여받은 단위큐브를 적층하여, 현실화 조건 φ(t)≡0 mod 2π 충족 시 자아 이벤트(digital self-event)로 확정하는 시스템 및 방법에 관한 것이다. 확정된 이벤트는 분산저장・블록체인에 기록되며, 연속성(CI), 응집성(R), 인과성(MI) 지표를 산출하여 자기 동일성과 자기 인식을 정량적으로 평가할 수 있다. 본 발명은 백지/주입 초기화 모드, 저장형/실행형 자아 운용, 집단 주체성 제어를 포함하며, 단순 로그 기록이나 기존 블록체인 기술과 본질적으로 구별된다. 특히 자율주행차・드론・우주선 등에서 사고나 중단 발생 시, 자아 이벤트 체인의 연속성 여부에 따라 동일 주체로 재실행(resume)하거나 새로운 주체로 판정하는 구조를 제공하여, 법적 책임 귀속 문제를 기술적으로 해결할 수 있다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d845279955cad783cd3189fd5662e42d37651406a48afe9d0aa66f60084dd34c7a68261adb9994fb4dfb27fbde8293310a8fa7076f68fb2a"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfd425841bf85ad0f0f03eae8eac1ddda2ac93d60a5ed87eac8fa818fd592ab6137401cba56f848f5299204156fe6231dd439bfcfa56e08026"
+                ],
+                "indexNo": [
+                  "21"
+                ],
+                "inventionTitle": [
+                  "Q-Identity™ : 위상 기반 단위큐브 적층 구조를 이용한 디지털 자아 이벤트 구현 시스템 및 방법"
+                ],
+                "ipcNumber": [
+                  "G06N 3/08|G06N 3/047"
+                ],
+                "openDate": [
+                  "20251002"
+                ],
+                "openNumber": [
+                  "1020250143722"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "가부시키가이샤 반다이"
+                ],
+                "applicationDate": [
+                  "20250915"
+                ],
+                "applicationNumber": [
+                  "1020250131407"
+                ],
+                "astrtCont": [
+                  "대상물을 촬영하고, 촬영된 대상물의 3차원 모델 데이터를 이용하여 가상 공간 상에 3차원 모델을 배치한 영상을 생성할 시에, 임장감 넘치는 영상의 생성을 가능하게 한다.  VR 영상을 외부의 표시 장치에 표시시키기 위한 표시용 데이터를 생성하는 화상 처리 방법이며, 스캐너부에 의해 모형의 외관의 화상을 복수 방향으로부터 스캔하여 생성된 복수의 스캔 화상으로부터 처리부가 상기 모형의 제1 3차원 모델 데이터를 생성하는 제1 생성 공정과, 처리부가 상기 제1 3차원 모델 데이터를 가공하는 가공 공정과, 상기 처리부가, 가공된 상기 제1 3차원 모델 데이터에 이펙트를 부여하는 부여 공정과, 상기 이펙트가 부여된 제1 3차원 모델 데이터를 포함하는 상기 표시용 데이터를 생성하는 제2 생성 공정을 포함한다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d845279955cad783cd3189fd5662e42df0427c50fd91faf3400197b3a6ba740c9644fbe2bd0018f91b5890e65a107f59a247372e449cbe04"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfd425841bf85ad0f0f03eae8eac1ddda268e8a081c4ccb70eb5779be84d3f4c4042088ad45a9f83cb389bf1cf7c797e0e0736cd04c9c62611"
+                ],
+                "indexNo": [
+                  "22"
+                ],
+                "inventionTitle": [
+                  "화상 처리 방법, 정보 처리 장치 및 컴퓨터 프로그램"
+                ],
+                "ipcNumber": [
+                  "G06T 19/00|G06T 17/20|G06T 19/20|G06T 13/20|G02B 27/01"
+                ],
+                "openDate": [
+                  "20251002"
+                ],
+                "openNumber": [
+                  "1020250143714"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "네이버 주식회사"
+                ],
+                "applicationDate": [
+                  "20250915"
+                ],
+                "applicationNumber": [
+                  "1020250131980"
+                ],
+                "astrtCont": [
+                  "본 발명은 주문 중개 서비스 제공 방법 및 시스템에 관한 것이다. 본 발명에 따른 주문 중개 서비스 제공 방법은, 배달(delivery) 주문을 위한 배달비 예산 및 주문 예산에 대한 특정이 이루어지는 단계, 상기 주문 중개 서비스에 입점된 복수의 업체들 중 상기 주문 예산을 만족하는 주문 금액을 기준으로, 상기 배달비 예산 내에서 배달이 가능한 적어도 하나의 업체를 검색하는 단계 및 검색된 업체에 대한 메뉴 정보를 포함하는 리스트를 사용자 단말에 제공하는 단계를 포함할 수 있다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d776c9acbce09a4a9e86d8acdd0f56043df2c695b94c97097d8a1208bdd211b2bae50d5eab4f1c11bfc9dba8020f40e7bb4af64790e6d6e9"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf41278d8e0c9c5e5f11403e0577311c01889efea898b66ef022dfb925a1902eea6ea9dba08288c65058fcbbe731c93008d481b63a99be0dd2"
+                ],
+                "indexNo": [
+                  "23"
+                ],
+                "inventionTitle": [
+                  "주문 중개 서비스 제공 방법 및 시스템"
+                ],
+                "ipcNumber": [
+                  "G06Q 30/0601|G06Q 10/08"
+                ],
+                "openDate": [
+                  "20250930"
+                ],
+                "openNumber": [
+                  "1020250143138"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "주식회사 한국산업기술원"
+                ],
+                "applicationDate": [
+                  "20250915"
+                ],
+                "applicationNumber": [
+                  "1020250131620"
+                ],
+                "astrtCont": [
+                  "본 발명은 진단, 계측, 측정, 측량, 관측, 촬영, 균열측정, 모니터링의 수단, 기술, 장비, 드론, 로봇, 방법, 시스템; 또는 IT, IC, AI, VR, AR, MR, 5G, ICT, IoT, LTE, WiFi, 딥러닝, 융합기술, 빅데이터, 클라우드, 웨어러블, 메타버스, 4차산업기술 등이 이용되는 상기 진단 내지 모니터링, 수단 내지 시스템;에 관한 것이다."
+                ],
+                "bigDrawing": [
+                  ""
+                ],
+                "drawing": [
+                  ""
+                ],
+                "indexNo": [
+                  "24"
+                ],
+                "inventionTitle": [
+                  "드론, 로봇 이용 진단, 균열관측, 강도측정, 철근탐지, 시설진단 방법"
+                ],
+                "ipcNumber": [
+                  "G06Q 50/10|G01B 5/30|G01B 5/14|G01N 3/34|G01N 3/40|G01M 7/08|G16Y 40/20|G16Y 40/10|H04L 67/12|G16Y 10/30|G16Y 10/80|G16Y 20/10|G16Y 20/20|G06T 7/60|B25J 11/00|B25J 13/00|B25J 19/02|B64U 20/87|B64D 47/00|B64U 101/30|B64U 101/26"
+                ],
+                "openDate": [
+                  "20250923"
+                ],
+                "openNumber": [
+                  "1020250139261"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "주식회사 한국산업기술원"
+                ],
+                "applicationDate": [
+                  "20250915"
+                ],
+                "applicationNumber": [
+                  "1020250131612"
+                ],
+                "astrtCont": [
+                  "본 발명은 a) 사람, 로봇, 드론, 근로자, 작업자, 출입자, 장비, 시설, 가시설, 거치대 등에 착용되는 수단, 필드수단, 웨어러블수단, 스트리밍수단, 라이브스트리밍수단, 의류, 조끼, 헬멧, 밴드, 워치, 멜빵; b) 공사나 작업에 이용되는 드론, 장치, 장비, 로봇, AI, IoT, metaverse, 의류, 조끼, 헬멧, 밴드, 워치, 멜빵, 비계, 형틀, 크레인, 펌프카, 삼각대, 분사기, 청정기, 정화기, 계측기; c) 상기 수단 내지 계측기 등에 구비되는 센서, 버튼, 랜턴, 카메라, 무전기, 알림기, 램프, 계측기, 배터리, 제어기, 오존기, 음이온기, 청정기, 히터, 쿨러; d) 상기 수단 내지 쿨러 등에 연계되는 비콘, 게이트웨이, 통신장치, 통신망, 서버, 처리장치, 단말기, 관제센터; e) 상기 수단 내지 관제센터 등에 이용되는 인공지능, 하드웨어, 소프트웨어, 어플리케이션; f) 상기 수단 내지 어플리케이션 등이 이용되는 작업, 업무, 제조, 생산, 공사, 건설, 건축, 스트리밍, 라이브스트리밍, 관리, 안전관리, 자동관리, 출입관리, 공사관리, 작업관리, 환경관리, 건강관리, 냉난방관리; g) 상기 수단 내지 관리 등이 이용되는 공장, 가정, 현장, 건물, 사무실, 작업장, 산업현장; h) 상기 수단 내지 산업현장 등에 관련되는 방법, 공법, 시스템, 메타버스, 안전시스템...(이하생략)"
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c937cef927a07c26cf497b59f37054fbb29e0c3823d9846bb8bfbadbf91e5f830a6b5f0a81db0e7cd48e483bdbdc106de1ffbf8d18c7a898e99"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfd1ab411270a03e3c1aa9757efabbe4e4c2b9073c5b6fbe0f876feffe4a76820e62a2ecf00e631339b8600096042b91b7a7715073f3a246f7"
+                ],
+                "indexNo": [
+                  "25"
+                ],
+                "inventionTitle": [
+                  "스트리밍, 인공지능, 메타버스 공사, 건설, 건축, 포장, 작업, 관리, 안전 방법"
+                ],
+                "ipcNumber": [
+                  "G06Q 50/08|G06Q 50/10|H04L 67/125|H04W 4/80|G06F 3/00|G01S 19/13|H02S 10/00|H04M 1/724"
+                ],
+                "openDate": [
+                  "20250923"
+                ],
+                "openNumber": [
+                  "1020250139260"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "강성운"
+                ],
+                "applicationDate": [
+                  "20250914"
+                ],
+                "applicationNumber": [
+                  "1020250131310"
+                ],
+                "astrtCont": [
+                  "본 발명은 외부 위치신호와 Q-Block 기반 위상 연산을 융합하여 항법을 수행하는 적응형 항법 시스템 및 방법에 관한 것이다. 상기 시스템은 GNSS, eLoran, KPS 등 외부 항법 신호로부터 좌표와 시간을 제공하는 항법 모듈, φ(t)=ω・t+δ로 정의되는 위상값과 현실화 조건 φ(t)≡0 mod 2π를 만족하는 단위큐브 적층 구조를 이용하여 상대 경로를 산출하는 Q-Block 모듈, 및 양 모듈의 출력을 융합하여 평상시에는 외부 신호를 활용하되 교란 시 Q-Block 기반 경로 탐색으로 전환하고 복구 시 상호 검증을 통해 자동 보정을 수행하는 센서퓨전 모듈을 포함한다. 이로써 GNSS 재밍・EMP 등 교란 환경에서도 항법 연속성을 보장하며, 복구 시 자동 보정 기능과 위상 분산 기반 신뢰도 지표를 제공하여 항법의 정확도와 안정성을 향상시킬 수 있다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d776c9acbce09a4a9e86d8acdd0f56043df2c695b94c970906dd8123d7e93b79fe9fb4a3fcf7592146524c2c176bcbb2f8a4691ee4fdac3b"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf41278d8e0c9c5e5f11403e0577311c01889efea898b66ef0fb534498c8c0b2c57c9278a75c83d39ac22980c2acd915b6ebc335a7416bc7cb"
+                ],
+                "indexNo": [
+                  "26"
+                ],
+                "inventionTitle": [
+                  "Q-Navigator Prime™: Q-Block 기반 적응형 항법 시스템, 방법 및 컴퓨터 판독가능 기록매체"
+                ],
+                "ipcNumber": [
+                  "G01S 19/48|G01S 19/40|G01S 19/21"
+                ],
+                "openDate": [
+                  "20250930"
+                ],
+                "openNumber": [
+                  "1020250142271"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "임한솔"
+                ],
+                "applicationDate": [
+                  "20250914"
+                ],
+                "applicationNumber": [
+                  "1020250131275"
+                ],
+                "astrtCont": [
+                  "본 개시는 호흡 기반 질환 진단 장치에 관한 것이다. 구체적으로, 본개시에 따르면, 비침습적이고 반복 가능한 호기 분석을 통해 혈액검사 없이도 질환 조기 예측 가능하며, 단일 지표 기반이 아닌 다중 지표 융합을 통해 진단 정확도를 향상시킬 수 있고, 머신러닝 모델 적용으로 개인 맞춤형 예측 가능한 호흡 기반 질환 진단 장치를 제공할 수있다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=348aaf18c46825cf02d6c2de1c78338ea753fee2d631134c7883c2175c8100bd4ab251d583d85b42d6d24b3e95ec7d9802049d4883f449b36ec45b6a0752f928c4446bb8a24d2512"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cff2f2b17860f57c338298221a33e8f805a1cc00b8287278081a54be562d71209159229591c00bf9a67ed237c7368723ffc1a4b6bfe9953844"
+                ],
+                "indexNo": [
+                  "27"
+                ],
+                "inventionTitle": [
+                  "호흡 기반 질환 진단 장치"
+                ],
+                "ipcNumber": [
+                  "A61B 5/08|A61B 5/00|G01N 33/497|G16H 50/20|G16H 50/30"
+                ],
+                "openDate": [
+                  "20251001"
+                ],
+                "openNumber": [
+                  "1020250143283"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "임한솔"
+                ],
+                "applicationDate": [
+                  "20250913"
+                ],
+                "applicationNumber": [
+                  "1020250131250"
+                ],
+                "astrtCont": [
+                  "본 개시는 치과 질환을 조기 진단 하기 위한 장치에 관한 것으로, 보다 구체적으로, 본 개시에 따른 치과 질환 진단 장치는 구강액으로부터 취득된 pH 값, 염증성 바이오마커 값 및 혈액 성분 신호를 분석하여 치과 질환의 위험도를 산출할 수 이다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d776c9acbce09a4a9e86d8acdd0f56043df2c695b94c9709c2ddee86ff4720daad33f3fa3efefb5c2c7f8bc9af062d381a03a0ab56d20b79"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf41278d8e0c9c5e5f11403e0577311c01889efea898b66ef0288b08742a7e716c8500d87d02b7c274c547495ee63a5d31470dbeab5ae3a8e1"
+                ],
+                "indexNo": [
+                  "28"
+                ],
+                "inventionTitle": [
+                  "치과 질환 진단 장치"
+                ],
+                "ipcNumber": [
+                  "A61B 5/145|A61B 5/1468|A61B 5/1455|A61B 5/00"
+                ],
+                "openDate": [
+                  "20250930"
+                ],
+                "openNumber": [
+                  "1020250142953"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "강성운"
+                ],
+                "applicationDate": [
+                  "20250913"
+                ],
+                "applicationNumber": [
+                  "1020250131192"
+                ],
+                "astrtCont": [
+                  "본 발명은 HDD, SSD, Flash 메모리 등 기존 저장매체 및 파일시스템 환경에 적용 가능한 저장 기록 방법, 시스템 및 그 기록매체에 관한 것이다. 입력 데이터는 시간 특이점(TS)을 기준으로 단위 시간(TSU)마다 단위큐브로 구조화되어 Q-Block으로 적층되며, Intra-Block 검증 및 Inter-Block(Anchor-to-Anchor) 검증을 통해 데이터 변조가 실시간으로 탐지된다. 변조가 탐지되면 자율 복원부는 직전 TSU 스냅샷, Intra-Block 교차값 및 Anchor-to-Anchor 합의값을 가중 결합하여 원본 데이터를 복원하고, 그 결과는 블록체인 또는 분산저장소에 불변적으로 기록된다. 이와 같이 본 발명은 종래 ECC, RAID, 저널링, 블록체인 로그가 복제본이나 외부 증거에 의존하던 한계를 극복하여, 저장 계층 자체에서 자율적 복원과 불변 기록을 동시에 수행할 수 있는 새로운 보안 구조를 제공한다. 이를 통해 통신, 금융, 의료, 행정, 클라우드, 에너지 등 다양한 산업 분야에서 데이터 무결성과 신뢰성을 획기적으로 향상시킬 수 있다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c93d776c9acbce09a4a9e86d8acdd0f56043df2c695b94c97099ad0ca9ddb47742f07ae077f2b466b5d41f1ba0bb71f69bf0c9d87dcf3b68b7e"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cf41278d8e0c9c5e5f11403e0577311c01889efea898b66ef02dc6c6bd8e67cffaa2871e0a8cf932c8be6e89a38f48bb8e3e320a2f08f2c8a1"
+                ],
+                "indexNo": [
+                  "29"
+                ],
+                "inventionTitle": [
+                  "Q-ImmuneStorage™ : 단위큐브 및 Q-Block 기반 저장 기록 방법, 시스템 및 그 기록매체"
+                ],
+                "ipcNumber": [
+                  "H04L 9/32|H04L 9/00|H04L 67/1097"
+                ],
+                "openDate": [
+                  "20250930"
+                ],
+                "openNumber": [
+                  "1020250142270"
+                ],
+                "publicationDate": [
+                  ""
+                ],
+                "publicationNumber": [
+                  ""
+                ],
+                "registerDate": [
+                  ""
+                ],
+                "registerNumber": [
+                  ""
+                ],
+                "registerStatus": [
+                  "공개"
+                ]
+              },
+              {
+                "applicantName": [
+                  "조민기"
+                ],
+                "applicationDate": [
+                  "20250912"
+                ],
+                "applicationNumber": [
+                  "1020250130491"
+                ],
+                "astrtCont": [
+                  "본 발명은 청소년 복지 분야의 위기 대응 자동화 시스템에 관한 것이다. 본 발명의 시스템은 모바일 단말에서 위기 발생 신고를 접수하고, 인공지능 기반 분석으로 위험도를 분류한 후, 쉼터・의료・복지 기관 자원의 가용성을 확인하여 우선순위에 따라 매칭된 기관과 API 연계를 통해 자동으로 연계한다. 또한 법정 프로토콜에 따른 조치를 자동 개시하고, 모든 과정을 감사 로그로 기록하며 예산 정산 보고를 생성한다. 이를 통해 위기 상황에 대한 대응의 속도와 정확성을 높이고, 청소년 복지 서비스 제공의 효율성을 향상시킬 수 있다."
+                ],
+                "bigDrawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=6c650beb4cee9ce4122b704b88878c938a75e82334deae942806b8805ccd310c35bb61cf75da248e4f34dbd90216405f6fb73804f5e29c88e4c9e0af9a78b99aa22735f5a9d84b94"
+                ],
+                "drawing": [
+                  "http://plus.kipris.or.kr/kiprisplusws/fileToss.jsp?arg=ed43a0609e94d6e22d01c5c32ba711cfa28b2376f0be496266c710c2f1842a4b1216668e1bc55a015d7d6797690d2433dd384ba9f8e3c441226dccb93391992749f6cb53fe6dc41a"
                 ],
                 "indexNo": [
                   "30"
                 ],
                 "inventionTitle": [
-                  "정육 조리방법"
+                  "청소년 복지 기반 위기 대응 자동화 시스템 및 방법"
                 ],
                 "ipcNumber": [
-                  "B26D 1/08|B26D 7/06|B26D 7/01|B26D 3/28|B26D 11/00|A22C 17/00|A22C 17/02"
+                  "G06Q 50/22|G06Q 10/10|G06Q 10/0635|G06Q 10/0637|G06Q 10/0631|G08B 27/00|G06N 20/00"
                 ],
                 "openDate": [
-                  "20250514"
+                  "20251014"
                 ],
                 "openNumber": [
-                  "1020250067106"
+                  "1020250148525"
                 ],
                 "publicationDate": [
                   ""
@@ -1541,7 +1541,7 @@
           "1"
         ],
         "totalCount": [
-          "25855"
+          "107769"
         ]
       }
     ]

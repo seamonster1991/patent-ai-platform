@@ -15,8 +15,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        // Web-safe system stack only (no external webfonts)
-        sans: ['system-ui', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', 'sans-serif'],
+        // Inter font family for modern admin dashboard
+        sans: ['Inter', 'system-ui', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', 'sans-serif'],
         mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
       },
       colors: {
@@ -27,6 +27,19 @@ export default {
           accent: '#34463D', // Warm Dark Olive accent
           olive: '#34463D', // Warm Dark Olive token (used widely across components)
           line: '#E5E7EB', // Thin separators
+        },
+        // Olive color palette for Patent-AI branding
+        olive: {
+          50: '#f7f8f7',
+          100: '#eef0ed',
+          200: '#dde1da',
+          300: '#c4cbbf',
+          400: '#a5b09e',
+          500: '#8a9582',
+          600: '#6b7a66',
+          700: '#556353',
+          800: '#475145',
+          900: '#3c443a',
         },
         // WCAG 2.1 AA 표준에 맞는 색상 팔레트
         primary: {
@@ -136,6 +149,9 @@ export default {
         'focus': '0 0 0 2px rgba(17, 24, 39, 0.12)',
         'focus-danger': '0 0 0 2px rgba(239, 68, 68, 0.25)',
         'focus-success': '0 0 0 2px rgba(34, 197, 94, 0.25)',
+        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+        'card-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        'lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
       },
       animation: {
         'fade-in': 'fadeIn 0.2s ease-in-out',
