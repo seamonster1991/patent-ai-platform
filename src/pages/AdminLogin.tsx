@@ -1,76 +1,73 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAdminStore } from '../stores/useAdminStore';
-import { Button } from '../components/UI/Button';
-import { Input } from '../components/UI/Input';
-import { Label } from '../components/UI/Label';
 import { LoadingSpinner } from '../components/UI/LoadingSpinner';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isAuthenticated, isLoading, error, clearError } = useAdminStore();
 
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    totp_code: ''
-  });
-  const [showTotpInput, setShowTotpInput] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const { login, logout, isAuthenticated, isLoading, error } = useAdminStore();
+
+  // 개별 상태 변수들
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+
+  console.log('🔄 [AdminLogin] 컴포넌트 렌더링 시작');
+  console.log('🔍 [AdminLogin] 상태 확인:', { email, password, twoFactorCode, isLoading, error });
   const [showPassword, setShowPassword] = useState(false);
+  const [requires2FA, setRequires2FA] = useState(false);
+
+  // 컴포넌트 마운트 시 기존 토큰 클리어
+  useEffect(() => {
+    console.log('🔄 [AdminLogin] 컴포넌트 마운트, 기존 토큰 클리어');
+    logout();
+  }, [logout]);
 
   // 이미 인증된 경우 대시보드로 리다이렉트
   useEffect(() => {
     if (isAuthenticated) {
+      console.log('✅ [AdminLogin] 이미 인증됨, 대시보드로 리다이렉트');
       const from = location.state?.from?.pathname || '/admin';
       navigate(from, { replace: true });
     }
   }, [isAuthenticated, navigate, location]);
 
-  // 에러 클리어
-  useEffect(() => {
-    return () => clearError();
-  }, [clearError]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // 에러가 있으면 클리어
-    if (error) {
-      clearError();
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    clearError();
-
-    if (!formData.email || !formData.password) {
-      return;
-    }
+    console.log('🚀 [AdminLogin] 폼 제출 시작 - handleSubmit 호출됨');
+    console.log('🚀 [AdminLogin] 폼 데이터:', { email, password });
 
     try {
-      const success = await login({
-        email: formData.email,
-        password: formData.password,
-        totp_code: formData.totp_code || undefined
-      });
+      // 빈 필드 체크
+      if (!email || !password) {
+        console.log('❌ [AdminLogin] 이메일 또는 비밀번호가 없음');
+        return;
+      }
 
-      if (success) {
-        const from = location.state?.from?.pathname || '/admin';
-        navigate(from, { replace: true });
+      console.log('🔐 [AdminLogin] 로그인 시도:', { email });
+      
+      // 로그인 시도
+      const credentials = {
+        email,
+        password,
+        totp_code: twoFactorCode
+      };
+      const result = await login(credentials);
+      
+      if (result.success) {
+        console.log('✅ [AdminLogin] 로그인 성공, 관리자 페이지로 리다이렉트');
+        navigate('/admin');
+      } else if (result.requires2FA) {
+        console.log('🔐 [AdminLogin] 2FA 필요');
+        setRequires2FA(true);
+      } else {
+        console.log('❌ [AdminLogin] 로그인 실패:', result.error);
       }
-    } catch (error: any) {
-      // 2FA가 필요한 경우
-      if (error.response?.data?.requires_2fa) {
-        setShowTotpInput(true);
-      }
+    } catch (error) {
+      console.error('❌ [AdminLogin] 로그인 에러:', error);
     }
   };
 
@@ -102,7 +99,10 @@ const AdminLogin: React.FC = () => {
         </div>
 
         <div className="bg-white py-8 px-8 shadow-lg rounded-lg">
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <form 
+            className="space-y-6" 
+            onSubmit={handleSubmit}
+          >
             {error && (
               <div className="rounded-md bg-red-50 p-4">
                 <div className="flex">
@@ -122,7 +122,7 @@ const AdminLogin: React.FC = () => {
                   <div className="ml-3">
                     <h3 className="text-sm font-medium text-red-800">로그인 실패</h3>
                     <div className="mt-2 text-sm text-red-700">
-                      <p>{error}</p>
+                      <p>{Array.isArray(error) ? error.map(e => typeof e === 'object' ? e.msg || JSON.stringify(e) : e).join(', ') : error}</p>
                     </div>
                   </div>
                 </div>
@@ -130,37 +130,45 @@ const AdminLogin: React.FC = () => {
             )}
 
             <div>
-              <Label htmlFor="email">이메일 주소</Label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                이메일 주소
+              </label>
               <div className="mt-1">
-                <Input
+                <input
                   id="email"
                   name="email"
                   type="email"
                   autoComplete="email"
                   required
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="admin@example.com"
-                  disabled={isLoading}
-                  className="w-full min-w-[400px]"
+                  className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                  placeholder="이메일 주소"
+                  value={email}
+                  onChange={(e) => {
+                    console.log('📧 [AdminLogin] 이메일 입력:', e.target.value);
+                    setEmail(e.target.value);
+                  }}
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="password">비밀번호</Label>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                비밀번호
+              </label>
               <div className="mt-1 relative">
-                <Input
+                <input
                   id="password"
                   name="password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   required
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  placeholder="비밀번호를 입력하세요"
-                  disabled={isLoading}
-                  className="w-full min-w-[400px] pr-10"
+                  className="appearance-none rounded-md relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                  placeholder="비밀번호"
+                  value={password}
+                  onChange={(e) => {
+                    console.log('🔒 [AdminLogin] 비밀번호 입력:', e.target.value);
+                    setPassword(e.target.value);
+                  }}
                 />
                 <button
                   type="button"
@@ -176,32 +184,37 @@ const AdminLogin: React.FC = () => {
               </div>
             </div>
 
-            {showTotpInput && (
-              <div className="space-y-2">
-                <Label htmlFor="totp_code">2FA 인증 코드</Label>
-                <Input
-                  id="totp_code"
-                  name="totp_code"
-                  type="text"
-                  placeholder="6자리 인증 코드"
-                  value={formData.totp_code}
-                  onChange={handleInputChange}
-                  maxLength={6}
-                  className="text-center tracking-widest"
-                  required
-                />
-                <p className="text-sm text-gray-600">
-                  인증 앱에서 생성된 6자리 코드를 입력하세요
-                </p>
-              </div>
-            )}
+            {requires2FA && (
+               <div>
+                 <label htmlFor="twoFactorCode" className="block text-sm font-medium text-gray-700">
+                   2단계 인증 코드
+                 </label>
+                 <div className="mt-1">
+                   <input
+                     id="twoFactorCode"
+                     name="twoFactorCode"
+                     type="text"
+                     autoComplete="one-time-code"
+                     required
+                     className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm text-center tracking-widest"
+                     placeholder="2단계 인증 코드 (6자리)"
+                     value={twoFactorCode}
+                     onChange={(e) => setTwoFactorCode(e.target.value)}
+                     maxLength={6}
+                   />
+                 </div>
+               </div>
+             )}
 
             <div>
-              <Button
+              <button
                 type="submit"
-                variant="primary"
-                className="w-full"
-                disabled={isLoading || !formData.email || !formData.password}
+                onClick={(e) => {
+                  console.log('🔥 [AdminLogin] 버튼 클릭됨!');
+                  handleSubmit(e);
+                }}
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoading || !email || !password}
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center">
@@ -211,7 +224,7 @@ const AdminLogin: React.FC = () => {
                 ) : (
                   '로그인'
                 )}
-              </Button>
+              </button>
             </div>
           </form>
 

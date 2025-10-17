@@ -1,0 +1,263 @@
+/* 관리자 대시보드 반응형 스타일 */
+
+/* 스크롤바 스타일링 */
+.admin-dashboard::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-dashboard::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.admin-dashboard::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.admin-dashboard::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* 포커스 스타일 개선 */
+.admin-dashboard button:focus,
+.admin-dashboard input:focus,
+.admin-dashboard select:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* 카드 호버 효과 */
+.admin-dashboard .card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease-in-out;
+}
+
+/* 로딩 애니메이션 */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.admin-dashboard .animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* 그라데이션 배경 */
+.admin-dashboard .gradient-bg {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* 반응형 텍스트 크기 */
+@media (max-width: 640px) {
+  .admin-dashboard .text-responsive-sm {
+    font-size: 0.875rem;
+  }
+  
+  .admin-dashboard .text-responsive-base {
+    font-size: 1rem;
+  }
+  
+  .admin-dashboard .text-responsive-lg {
+    font-size: 1.125rem;
+  }
+  
+  .admin-dashboard .text-responsive-xl {
+    font-size: 1.25rem;
+  }
+  
+  .admin-dashboard .text-responsive-2xl {
+    font-size: 1.5rem;
+  }
+}
+
+@media (min-width: 641px) {
+  .admin-dashboard .text-responsive-sm {
+    font-size: 1rem;
+  }
+  
+  .admin-dashboard .text-responsive-base {
+    font-size: 1.125rem;
+  }
+  
+  .admin-dashboard .text-responsive-lg {
+    font-size: 1.25rem;
+  }
+  
+  .admin-dashboard .text-responsive-xl {
+    font-size: 1.5rem;
+  }
+  
+  .admin-dashboard .text-responsive-2xl {
+    font-size: 1.875rem;
+  }
+}
+
+/* 차트 컨테이너 반응형 */
+.admin-dashboard .chart-container {
+  position: relative;
+  width: 100%;
+  height: 250px;
+}
+
+@media (min-width: 640px) {
+  .admin-dashboard .chart-container {
+    height: 320px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .admin-dashboard .chart-container {
+    height: 400px;
+  }
+}
+
+/* 테이블 반응형 */
+.admin-dashboard .table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-dashboard .table-responsive table {
+  min-width: 600px;
+}
+
+/* 접근성 개선 */
+.admin-dashboard .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 고대비 모드 지원 */
+@media (prefers-contrast: high) {
+  .admin-dashboard .card {
+    border: 2px solid #000;
+  }
+  
+  .admin-dashboard .text-gray-600 {
+    color: #000 !important;
+  }
+  
+  .admin-dashboard .bg-gray-50 {
+    background-color: #fff !important;
+  }
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .admin-dashboard .bg-gray-50 {
+    background-color: #1f2937;
+  }
+  
+  .admin-dashboard .text-gray-900 {
+    color: #f9fafb;
+  }
+  
+  .admin-dashboard .text-gray-600 {
+    color: #d1d5db;
+  }
+  
+  .admin-dashboard .bg-white {
+    background-color: #374151;
+  }
+  
+  .admin-dashboard .border-gray-200 {
+    border-color: #4b5563;
+  }
+}
+
+/* 프린트 스타일 */
+@media print {
+  .admin-dashboard .no-print {
+    display: none !important;
+  }
+  
+  .admin-dashboard .print-break {
+    page-break-before: always;
+  }
+  
+  .admin-dashboard {
+    background: white !important;
+    color: black !important;
+  }
+  
+  .admin-dashboard .card {
+    border: 1px solid #000 !important;
+    box-shadow: none !important;
+  }
+}
+
+/* 모션 감소 설정 */
+@media (prefers-reduced-motion: reduce) {
+  .admin-dashboard * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 터치 디바이스 최적화 */
+@media (hover: none) and (pointer: coarse) {
+  .admin-dashboard button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .admin-dashboard .card-hover:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* 로딩 스피너 */
+.admin-dashboard .loading-spinner {
+  border: 2px solid #f3f4f6;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 에러 상태 스타일 */
+.admin-dashboard .error-state {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+/* 성공 상태 스타일 */
+.admin-dashboard .success-state {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #16a34a;
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+/* 경고 상태 스타일 */
+.admin-dashboard .warning-state {
+  background-color: #fffbeb;
+  border: 1px solid #fed7aa;
+  color: #d97706;
+  padding: 1rem;
+  border-radius: 0.5rem;
+}

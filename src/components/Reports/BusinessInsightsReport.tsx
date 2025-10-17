@@ -22,7 +22,7 @@ import ReportLoadingState from './ReportLoadingState'
 import ReportErrorState from './ReportErrorState'
 import { useAuthStore } from '../../store/authStore'
 import { useNavigate } from 'react-router-dom'
-import { handleReportGeneratedFromAPI } from '../../utils/eventUtils';
+import { handleReportGeneratedFromAPI, dispatchPointBalanceUpdateEvent } from '../../utils/eventUtils';
 import { getApiUrl } from '../../lib/api';
 
 interface BusinessInsightsReportProps {
@@ -315,9 +315,9 @@ const renderContent = (content: string) => {
   const flush = () => {
     if (ul.length) {
       elements.push(
-        <ul className="list-disc ml-6 space-y-1">
+        <ul key={`ul-${elements.length}`} className="list-disc ml-6 space-y-1">
           {ul.map((item, i) => (
-            <li key={`ul-${i}`} className="text-sm leading-relaxed text-gray-700 font-medium" dangerouslySetInnerHTML={{ __html: toHtml(item) }} />
+            <li key={`ul-${elements.length}-${i}`} className="text-sm leading-relaxed text-gray-700 font-medium" dangerouslySetInnerHTML={{ __html: toHtml(item) }} />
           ))}
         </ul>
       )
@@ -325,9 +325,9 @@ const renderContent = (content: string) => {
     }
     if (ol.length) {
       elements.push(
-        <ol className="list-decimal ml-6 space-y-1">
+        <ol key={`ol-${elements.length}`} className="list-decimal ml-6 space-y-1">
           {ol.map((item, i) => (
-            <li key={`ol-${i}`} className="text-sm leading-relaxed text-gray-700 font-medium" dangerouslySetInnerHTML={{ __html: toHtml(item) }} />
+            <li key={`ol-${elements.length}-${i}`} className="text-sm leading-relaxed text-gray-700 font-medium" dangerouslySetInnerHTML={{ __html: toHtml(item) }} />
           ))}
         </ol>
       )
@@ -469,6 +469,60 @@ export default function BusinessInsightsReport({
     setError('')
 
     try {
+      // 포인트 잔액 확인
+      console.log('🔍 [BusinessInsightsReport] 포인트 잔액 확인 중...');
+      const pointsApiUrl = getApiUrl(`/api/points?action=balance&userId=${user.id}`);
+      const pointsResponse = await fetch(pointsApiUrl);
+      
+      if (pointsResponse.ok) {
+        const pointsData = await pointsResponse.json();
+        const currentBalance = pointsData.current_balance || 0;
+        const requiredPoints = 1000; // 비즈니스 인사이트 리포트 생성에 필요한 포인트
+        
+        console.log('💰 [BusinessInsightsReport] 포인트 잔액:', {
+          current: currentBalance,
+          required: requiredPoints,
+          sufficient: currentBalance >= requiredPoints
+        });
+        
+        // 포인트 부족 시 결제창으로 리다이렉트
+        if (currentBalance < requiredPoints) {
+          console.log('⚠️ [BusinessInsightsReport] 포인트 부족 - 결제창으로 리다이렉트');
+          setLoading(false);
+          
+          // 현재 페이지 정보를 세션 스토리지에 저장 (결제 후 복귀용)
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('returnAfterPayment', JSON.stringify({
+              path: window.location.pathname,
+              action: 'generateBusinessInsightReport',
+              patentData: {
+                applicationNumber: patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber,
+                inventionTitle: patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle
+              }
+            }));
+          }
+          
+          // 사용자에게 포인트 부족 알림
+          toast.error(`포인트가 부족합니다. 비즈니스 인사이트 리포트 생성에는 ${requiredPoints} 포인트가 필요합니다. (현재: ${currentBalance} 포인트)`, {
+            duration: 5000
+          });
+          
+          // 결제창으로 리다이렉트
+          navigate('/payment', { 
+            state: { 
+              reason: 'insufficient_points',
+              requiredPoints: requiredPoints,
+              currentPoints: currentBalance,
+              reportType: 'business_insights',
+              returnPath: window.location.pathname
+            }
+          });
+          return;
+        }
+      } else {
+        console.warn('⚠️ [BusinessInsightsReport] 포인트 잔액 확인 실패, 리포트 생성 계속 진행');
+      }
+
       const apiUrl = getApiUrl('/api/generate-report');
       console.log('🔗 [BusinessInsightsReport] API URL:', apiUrl);
       
@@ -496,153 +550,92 @@ export default function BusinessInsightsReport({
                 errorDetails = '잠시 후 다시 시도하거나, 더 간단한 특허로 테스트해보세요.'
                 break
               case 'AUTH_ERROR':
-                errorMessage = 'AI 서비스 인증에 실패했습니다.'
-                errorDetails = 'API 키 설정을 확인하거나 관리자에게 문의하세요.'
+                errorMessage = '인증에 실패했습니다. 다시 로그인해주세요.'
+                errorDetails = '세션이 만료되었을 수 있습니다.'
                 break
-              case 'QUOTA_ERROR':
-                errorMessage = 'AI 서비스 사용량 한도에 도달했습니다.'
-                errorDetails = '잠시 후 다시 시도하거나, 사용량 한도를 확인해보세요.'
-                break
-              case 'NETWORK_ERROR':
-                errorMessage = '네트워크 연결에 문제가 있습니다.'
-                errorDetails = '인터넷 연결을 확인하고 다시 시도해주세요.'
-                break
-              case 'PARSE_ERROR':
-                errorMessage = 'AI 응답 처리 중 오류가 발생했습니다.'
+              case 'RATE_LIMIT_ERROR':
+                errorMessage = 'API 요청 한도를 초과했습니다.'
                 errorDetails = '잠시 후 다시 시도해주세요.'
                 break
-              case 'MODEL_ERROR':
-                errorMessage = 'AI 모델 설정에 문제가 있습니다.'
-                errorDetails = '관리자에게 문의해주세요.'
-                break
-              case 'Insufficient points':
+              case 'INSUFFICIENT_POINTS':
                 errorMessage = '포인트가 부족합니다.'
-                errorDetails = '비즈니스 인사이트 리포트 생성에는 600 포인트가 필요합니다. 포인트를 충전한 후 다시 시도해주세요.'
-                // 포인트 충전 페이지로 안내
+                errorDetails = `리포트 생성에는 ${errorData.requiredPoints || 1000} 포인트가 필요합니다.`
+                // 포인트 부족 시 결제창으로 리다이렉트
                 setTimeout(() => {
-                  toast.error('포인트가 부족합니다. 포인트를 충전한 후 다시 시도해주세요.', {
-                    action: {
-                      label: '포인트 충전',
-                      onClick: () => navigate('/payment')
+                  navigate('/payment', { 
+                    state: { 
+                      reason: 'insufficient_points',
+                      requiredPoints: errorData.requiredPoints || 1000,
+                      currentPoints: errorData.currentPoints || 0,
+                      reportType: 'business_insights'
                     }
-                  })
-                }, 0)
+                  });
+                }, 2000);
                 break
+              case 'INVALID_PATENT_DATA':
+                errorMessage = '특허 데이터가 유효하지 않습니다.'
+                errorDetails = '특허 정보를 다시 확인해주세요.'
+                break
+              case 'AI_SERVICE_ERROR':
+                errorMessage = 'AI 분석 서비스에 문제가 발생했습니다.'
+                errorDetails = 'AI 서비스가 일시적으로 불안정할 수 있습니다. 잠시 후 다시 시도해주세요.'
+                break
+              case 'DATABASE_ERROR':
+                errorMessage = '데이터베이스 연결에 문제가 발생했습니다.'
+                errorDetails = '서버 상태를 확인하고 있습니다. 잠시 후 다시 시도해주세요.'
+                break
+              default:
+                errorMessage = errorData.message || '알 수 없는 오류가 발생했습니다.'
+                errorDetails = errorData.details || '관리자에게 문의해주세요.'
             }
           }
         } catch (parseError) {
-          switch (response.status) {
-            case 400:
-              errorMessage = '잘못된 요청입니다. 특허 번호를 확인해주세요.'
-              break
-            case 401:
-              errorMessage = '인증에 실패했습니다. 로그인 상태를 확인해주세요.'
-              break
-            case 403:
-              errorMessage = '접근 권한이 없습니다.'
-              break
-            case 404:
-              errorMessage = '요청한 리소스를 찾을 수 없습니다.'
-              break
-            case 429:
-              errorMessage = '너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.'
-              break
-            case 500:
-              errorMessage = '서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
-              break
-            case 503:
-              errorMessage = 'AI 서비스가 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해주세요.'
-              break
-            default:
-              errorMessage = `서버 오류 (${response.status}): 잠시 후 다시 시도해주세요.`
-          }
+          console.error('Error response parsing failed:', parseError)
+          errorMessage = `서버 오류 (${response.status}): ${response.statusText}`
+          errorDetails = '서버에서 예상치 못한 응답을 받았습니다.'
         }
-        
+
         const fullErrorMessage = errorDetails ? `${errorMessage}\n\n${errorDetails}` : errorMessage
-        throw new Error(fullErrorMessage)
+        setError(fullErrorMessage)
+        
+        // 에러 토스트 표시
+        toast.error(errorMessage, {
+          duration: 5000,
+          description: errorDetails
+        })
+        
+        return
       }
 
       const data = await response.json()
       
-      if (data.success && data.data) {
-        const reportData: ReportData = {
-          reportType: data.data.reportType || 'business',
-          reportName: data.data.reportName || '비즈니스 인사이트 리포트',
-          sections: data.data.sections || [],
-          generatedAt: data.data.generatedAt || new Date().toISOString()
-        };
+      if (data.success && data.content) {
+        const sections = parseComplexContent(data.content)
         
-        setReportData(reportData);
-        // 안전한 toast 호출 - setTimeout 사용
-        setTimeout(() => {
-          toast.success('비즈니스 인사이트 리포트가 생성되었습니다.');
-        }, 0);
-        
-        // 데이터베이스에 리포트 생성 활동 추적
-        try {
-          const { supabase } = await import('../../lib/supabase')
-          await supabase
-            .from('ai_analysis_reports')
-            .insert({
-              user_id: user.id,
-              patent_application_number: patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber,
-              invention_title: patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle,
-              analysis_type: 'business',
-              report_name: reportData.reportName,
-              report_content: JSON.stringify(reportData.sections),
-              status: 'completed'
-            })
-          console.log('✅ [BusinessInsightsReport] 데이터베이스 추적 완료')
-        } catch (error) {
-          console.error('❌ [BusinessInsightsReport] 데이터베이스 추적 실패:', error)
+        const newReportData: ReportData = {
+          reportType: 'business_insights',
+          reportName: '비즈니스 인사이트 리포트',
+          sections: sections,
+          generatedAt: typeof window !== 'undefined' ? new Date().toISOString() : ''
         }
         
-        // 대시보드 업데이트를 위한 이벤트 발생
+        setReportData(newReportData)
+        
+        // 리포트 생성 완료 이벤트 발생
         if (typeof window !== 'undefined') {
-          console.log('🔧 [BusinessInsightsReport] 이벤트 디스패치 준비 중...', {
-            hasWindow: typeof window !== 'undefined',
-            shouldDispatchEvent: data.shouldDispatchEvent,
-            hasEventData: !!data.eventData,
-            currentPath: window.location.pathname
-          });
+          console.log('📊 [BusinessInsightsReport] reportGenerated 이벤트 발생 준비');
           
-          // eventUtils를 사용하여 이벤트 발생
-          const eventDispatched = handleReportGeneratedFromAPI(data, {
-            reportType: 'business',
-            reportTitle: reportData.reportName,
-            patentTitle: patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle || '특허 제목',
-            patentNumber: patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber || '특허 번호'
-          });
+          const eventDetail = {
+            reportType: 'business_insights',
+            reportTitle: '비즈니스 인사이트 리포트',
+            patentTitle: patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle || '특허',
+            patentNumber: patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber || 'N/A',
+            generatedAt: new Date().toISOString(),
+            sections: sections,
+            userId: user.id
+          };
           
-          console.log('✅ [BusinessInsightsReport] 이벤트 발생 완료:', eventDispatched);
-
-          // 백엔드에서 제공하는 이벤트 데이터 사용
-          let eventDetail;
-          if (data.shouldDispatchEvent && data.eventData) {
-            eventDetail = data.eventData;
-            console.log('📊 [BusinessInsightsReport] 백엔드 제공 이벤트 데이터 사용:', eventDetail);
-          } else {
-            // 폴백: 기존 방식
-            eventDetail = {
-              type: 'reportGenerated',
-              reportType: 'business',
-              reportTitle: reportData.reportName,
-              patentTitle: patent.biblioSummaryInfoArray?.biblioSummaryInfo?.inventionTitle,
-              patentNumber: patent.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber,
-              timestamp: reportData.generatedAt
-            };
-            console.log('📊 [BusinessInsightsReport] 폴백 이벤트 데이터 사용:', eventDetail);
-          }
-          
-          console.log('📊 [BusinessInsightsReport] reportGenerated 이벤트 발생 준비:', {
-            eventType: 'reportGenerated',
-            eventDetail: eventDetail,
-            timestamp: new Date().toISOString()
-          });
-          
-          // 이벤트 디스패치 전 현재 등록된 리스너 확인
-          const listeners = 'N/A'; // getEventListeners는 개발자 도구에서만 사용 가능
-          console.log('🔍 [BusinessInsightsReport] 현재 등록된 이벤트 리스너:', listeners);
+          console.log('📤 [BusinessInsightsReport] 이벤트 디스패치 데이터:', eventDetail);
           
           const customEvent = new CustomEvent('reportGenerated', {
             detail: eventDetail,
@@ -683,48 +676,32 @@ export default function BusinessInsightsReport({
       console.error('❌ [BusinessInsightsReport] 리포트 생성 오류:', {
         error: error.message,
         stack: error.stack,
-        patentNumber: patent?.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber,
-        timestamp: new Date().toISOString()
+        patent: patent?.biblioSummaryInfoArray?.biblioSummaryInfo?.applicationNumber
       });
       
-      let displayError = error.message || '알 수 없는 오류가 발생했습니다.'
-      let errorIcon = '❌'
-      let errorType = 'error'
+      let errorMessage = '리포트 생성 중 오류가 발생했습니다.'
+      let errorDetails = ''
       
-      // 에러 타입별 상세 처리
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        displayError = '🌐 네트워크 연결에 문제가 있습니다.\n\n💡 해결 방법:\n• 인터넷 연결을 확인해주세요\n• 방화벽 설정을 확인해주세요\n• VPN 연결을 확인해주세요'
-        errorIcon = '🌐'
-        errorType = 'network'
-      } else if (error.message.includes('Failed to fetch')) {
-        displayError = '🔌 서버에 연결할 수 없습니다.\n\n💡 해결 방법:\n• 서버가 실행 중인지 확인해주세요\n• 네트워크 연결을 확인해주세요\n• 잠시 후 다시 시도해주세요'
-        errorIcon = '🔌'
-        errorType = 'connection'
-      } else if (error.message.includes('timeout') || error.message.includes('시간 초과')) {
-        displayError = '⏰ AI 분석 시간이 초과되었습니다.\n\n💡 해결 방법:\n• 잠시 후 다시 시도해주세요 (5분 후 권장)\n• 특허 데이터가 복잡하여 처리 시간이 오래 걸릴 수 있습니다\n• 네트워크 상태를 확인해주세요\n• 브라우저를 새로고침 후 재시도해주세요'
-        errorIcon = '⏰'
-        errorType = 'timeout'
-      } else if (error.message.includes('AI 서비스')) {
-        displayError = '🤖 AI 서비스에 문제가 발생했습니다.\n\n💡 해결 방법:\n• 잠시 후 다시 시도해주세요\n• 서비스가 일시적으로 과부하 상태일 수 있습니다\n• 문제가 지속되면 관리자에게 문의해주세요'
-        errorIcon = '🤖'
-        errorType = 'ai_service'
-      } else if (error.message.includes('인증')) {
-        displayError = '🔐 인증에 문제가 발생했습니다.\n\n💡 해결 방법:\n• 로그인 상태를 확인해주세요\n• 페이지를 새로고침 후 재시도해주세요\n• 문제가 지속되면 관리자에게 문의해주세요'
-        errorIcon = '🔐'
-        errorType = 'auth'
+        errorMessage = '네트워크 연결에 문제가 발생했습니다.'
+        errorDetails = '인터넷 연결을 확인하고 다시 시도해주세요.'
+      } else if (error.message.includes('timeout')) {
+        errorMessage = '요청 시간이 초과되었습니다.'
+        errorDetails = '서버가 바쁠 수 있습니다. 잠시 후 다시 시도해주세요.'
+      } else {
+        errorDetails = error.message || '알 수 없는 오류가 발생했습니다.'
       }
       
-      setError(displayError);
+      const fullErrorMessage = errorDetails ? `${errorMessage}\n\n${errorDetails}` : errorMessage
+      setError(fullErrorMessage)
       
-      // 토스트 메시지는 첫 번째 줄만 표시 - Wrap in requestAnimationFrame
-      const toastMessage = `${errorIcon} ${displayError.split('\n')[0].replace(/^[🌐🔌⏰🤖🔐❌]\s*/, '')}`;
-      requestAnimationFrame(() => {
-        toast.error(toastMessage, {
-          duration: errorType === 'timeout' ? 6000 : 4000, // 타임아웃 에러는 더 오래 표시
-        });
-      });
+      // 에러 토스트 표시
+      toast.error(errorMessage, {
+        duration: 5000,
+        description: errorDetails
+      })
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
@@ -795,6 +772,11 @@ export default function BusinessInsightsReport({
             <div className="flex items-center justify-center gap-2 text-sm text-amber-700 bg-amber-50 px-4 py-2 rounded-lg border border-amber-200 mb-6">
               <Coins className="w-4 h-4" />
               <span>비즈니스 인사이트 리포트 생성 시 <strong>600 포인트</strong>가 차감됩니다</span>
+            </div>
+            
+            {/* 안전장치 안내 */}
+            <div className="flex items-center justify-center gap-2 text-xs text-green-700 bg-green-50 px-3 py-2 rounded-lg border border-green-200 mb-4">
+              <span>✅ 리포트 생성 성공 시에만 포인트가 차감됩니다</span>
             </div>
             
             <Button 

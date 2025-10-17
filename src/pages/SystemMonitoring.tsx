@@ -57,7 +57,14 @@ const SystemMonitoring: React.FC = () => {
   const fetchMetrics = async () => {
     try {
       const response = await adminApiService.getSystemMetrics();
-      setMetrics(response);
+      // ApiResponse 형태인지 확인하고 data 추출
+      if (Array.isArray(response)) {
+        setMetrics(response);
+      } else if (response && 'data' in response) {
+        setMetrics(response.data);
+      } else {
+        setMetrics([]);
+      }
       setError(null);
     } catch (error: any) {
       setError(error.response?.data?.detail || '시스템 메트릭을 불러오는데 실패했습니다.');

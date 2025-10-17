@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { handleReportGeneratedFromAPI } from '../utils/eventUtils';
+import { apiPost, getApiUrl } from '../lib/api';
 
 const TestReportGeneration: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -47,41 +48,35 @@ const TestReportGeneration: React.FC = () => {
       };
       
       console.log('📡 API 요청 전송 중...');
-      console.log('🔍 요청 URL:', 'http://localhost:3001/api/generate-report');
+      console.log('🔍 요청 URL:', getApiUrl('/api/generate-report'));
       console.log('📦 요청 데이터 크기:', JSON.stringify(requestData).length, 'bytes');
       console.log('🎯 요청 타입:', requestData.reportType);
       
-      const response = await fetch('http://localhost:3001/api/generate-report', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData),
+      const response = await apiPost(getApiUrl('/api/generate-report'), requestData, {
+        timeout: 60000,
+        retries: 2,
+        requireAuth: false
       });
 
       const processingTime = Date.now() - startTime;
       console.log(`⏱️ API 응답 시간: ${processingTime}ms`);
       console.log('📊 응답 상태:', {
+        success: response.success,
         status: response.status,
-        statusText: response.statusText,
-        ok: response.ok,
-        headers: Object.fromEntries(response.headers.entries())
+        error: response.error
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+      if (!response.success) {
         console.error('❌ API 응답 오류:', {
-          status: response.status,
-          statusText: response.statusText,
-          errorData,
-          url: response.url,
-          type: response.type
+          error: response.error,
+          errorCode: response.errorCode,
+          status: response.status
         });
 
         let errorMessage = '리포트 생성에 실패했습니다.';
         switch (response.status) {
           case 400:
-            errorMessage = errorData.message || '요청 데이터가 유효하지 않습니다.';
+            errorMessage = response.error || '요청 데이터가 유효하지 않습니다.';
             break;
           case 401:
             errorMessage = 'AI 서비스 인증 오류입니다. 관리자에게 문의하세요.';
@@ -96,7 +91,7 @@ const TestReportGeneration: React.FC = () => {
             errorMessage = '네트워크 연결 오류입니다. 인터넷 연결을 확인해주세요.';
             break;
           default:
-            errorMessage = errorData.message || '알 수 없는 오류가 발생했습니다.';
+            errorMessage = response.error || '알 수 없는 오류가 발생했습니다.';
         }
 
         setError(errorMessage);
@@ -104,26 +99,25 @@ const TestReportGeneration: React.FC = () => {
         return;
       }
 
-      const data = await response.json();
       console.log('✅ API 응답 데이터:', {
-        success: data.success,
-        reportType: data.data?.reportType,
-        sectionsCount: data.data?.content?.sections?.length,
-        processingTime: data.data?.processingTime,
-        generatedAt: data.data?.generatedAt
+        success: response.success,
+        reportType: response.data?.reportType,
+        sectionsCount: response.data?.content?.sections?.length,
+        processingTime: response.data?.processingTime,
+        generatedAt: response.data?.generatedAt
       });
 
-      if (data.success && data.data?.content) {
-        setReport(data.data.content);
+      if (response.success && response.data?.content) {
+        setReport(response.data.content);
         toast.success(`${reportType === 'market' ? '시장 분석' : '비즈니스 인사이트'} 리포트가 생성되었습니다!`);
-        console.log('🎉 리포트 생성 완료:', data.data.content);
+        console.log('🎉 리포트 생성 완료:', response.data.content);
         
         // 대시보드 실시간 업데이트를 위한 이벤트 발생
         if (typeof window !== 'undefined') {
           console.log('📊 [TestReportGeneration] reportGenerated 이벤트 발생 준비');
           
           // eventUtils를 사용하여 이벤트 발생
-          const eventDispatched = handleReportGeneratedFromAPI(data, {
+          const eventDispatched = handleReportGeneratedFromAPI(response, {
             reportType: reportType,
             reportTitle: `${reportType === 'market' ? '시장 분석' : '비즈니스 인사이트'} 리포트`,
             patentTitle: testPatentData.biblioSummaryInfo.inventionTitle,
@@ -133,7 +127,7 @@ const TestReportGeneration: React.FC = () => {
           console.log('✅ [TestReportGeneration] 이벤트 발생 완료:', eventDispatched);
         }
       } else {
-        throw new Error(data.message || '리포트 데이터가 유효하지 않습니다.');
+        throw new Error(response.error || '리포트 데이터가 유효하지 않습니다.');
       }
 
     } catch (error: any) {

@@ -19,19 +19,28 @@ interface AdminState {
   // 상태
   isAuthenticated: boolean;
   isLoading: boolean;
+  isInitialized: boolean;
+  isInitializing: boolean;
+  isFetchingAdmin: boolean;
   admin: AdminUser | null;
   token: string | null;
   refreshToken: string | null;
   error: string | null;
+  lastInitTime: number; // 마지막 초기화 시간 추가
 
   // 액션
-  login: (credentials: LoginRequest) => Promise<boolean>;
+  login: (credentials: LoginRequest) => Promise<{success: boolean, requires2FA?: boolean, error?: string}>;
   logout: () => void;
   refreshAuth: () => Promise<boolean>;
   clearError: () => void;
   setLoading: (loading: boolean) => void;
   getCurrentAdmin: () => Promise<void>;
+  initialize: () => Promise<void>;
 }
+
+// 캐시 관리
+const CACHE_DURATION = 5 * 60 * 1000; // 5분 캐시
+let adminCache: { admin: AdminUser | null; timestamp: number } | null = null;
 
 export const useAdminStore = create<AdminState>()(
   persist(
@@ -39,25 +48,120 @@ export const useAdminStore = create<AdminState>()(
       // 초기 상태
       isAuthenticated: false,
       isLoading: false,
+      isInitialized: false,
+      isInitializing: false,
+      isFetchingAdmin: false,
       admin: null,
-      token: localStorage.getItem('admin_token'),
-      refreshToken: localStorage.getItem('admin_refresh_token'),
+      token: null,
+      refreshToken: null,
       error: null,
+      lastInitTime: 0,
 
-      // 로그인
-      login: async (credentials: LoginRequest): Promise<boolean> => {
+      // 초기화 함수 - 성능 최적화
+      initialize: async (): Promise<void> => {
+        const state = get();
+        const now = Date.now();
+        
+        // 최근 5분 이내에 초기화했다면 스킵
+        if (state.isInitialized && (now - state.lastInitTime) < CACHE_DURATION) {
+          console.log('[AdminStore] 최근 초기화됨, 캐시 사용');
+          return;
+        }
+        
+        // 이미 초기화 중이면 스킵
+        if (state.isInitializing) {
+          console.log('[AdminStore] 이미 초기화 진행 중, 스킵');
+          return;
+        }
+
+        const token = localStorage.getItem('admin_token');
+        const refreshToken = localStorage.getItem('admin_refresh_token');
+        
+        console.log('[AdminStore] 초기화 시작, token:', token ? '있음' : '없음');
+        
+        set({ 
+          isInitializing: true,
+          isLoading: true,
+          error: null
+        });
+        
+        try {
+          if (token) {
+            set({ 
+              token, 
+              refreshToken
+            });
+            
+            // 캐시된 관리자 정보 확인
+            if (adminCache && (now - adminCache.timestamp) < CACHE_DURATION) {
+              console.log('[AdminStore] 캐시된 관리자 정보 사용');
+              set({
+                admin: adminCache.admin,
+                isAuthenticated: !!adminCache.admin,
+                isLoading: false,
+                isInitialized: true,
+                lastInitTime: now
+              });
+              return;
+            }
+            
+            // 토큰이 있으면 현재 관리자 정보를 가져옴 (타임아웃 적용)
+            await Promise.race([
+              get().getCurrentAdmin(),
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('getCurrentAdmin timeout')), 3000)
+              )
+            ]);
+          } else {
+            // 토큰이 없으면 로딩 상태 해제
+            set({ 
+              isLoading: false,
+              isAuthenticated: false,
+              admin: null
+            });
+          }
+        } catch (error) {
+          console.error('[AdminStore] 초기화 중 getCurrentAdmin 실패:', error);
+          // 토큰이 유효하지 않으면 로그아웃
+          get().logout();
+        } finally {
+          set({ 
+            isInitializing: false, 
+            isInitialized: true,
+            isLoading: false,
+            lastInitTime: now
+          });
+        }
+      },
+
+      // 로그인 - 성능 최적화
+      login: async (credentials: LoginRequest): Promise<{success: boolean, requires2FA?: boolean, error?: string}> => {
         console.log('[AdminStore] 로그인 시도:', credentials.email);
         set({ isLoading: true, error: null });
 
         try {
           console.log('[AdminStore] API 호출 시작');
-          const response: LoginResponse = await adminApiService.login(credentials);
+          
+          // 로그인 API 호출에 타임아웃 적용
+          const response: LoginResponse = await Promise.race([
+            adminApiService.login(credentials),
+            new Promise<never>((_, reject) => 
+              setTimeout(() => reject(new Error('Login timeout')), 5000)
+            )
+          ]);
+          
           console.log('[AdminStore] API 응답 받음:', response);
           
           // 토큰 저장
           localStorage.setItem('admin_token', response.access_token);
           localStorage.setItem('admin_refresh_token', response.refresh_token);
           console.log('[AdminStore] 토큰 저장 완료');
+
+          // 관리자 정보 캐시 업데이트
+          adminCache = {
+            admin: response.admin,
+            timestamp: Date.now()
+          };
 
           set({
             isAuthenticated: true,
@@ -66,13 +170,22 @@ export const useAdminStore = create<AdminState>()(
             refreshToken: response.refresh_token,
             isLoading: false,
             error: null,
+            isInitialized: true,
+            lastInitTime: Date.now()
           });
 
           console.log('[AdminStore] 로그인 성공');
-          return true;
+          return { success: true };
         } catch (error: any) {
           console.error('[AdminStore] 로그인 실패:', error);
-          const errorMessage = error.response?.data?.detail || '로그인에 실패했습니다.';
+          let errorMessage = '로그인에 실패했습니다.';
+          
+          if (error.message === 'Login timeout') {
+            errorMessage = '로그인 요청 시간이 초과되었습니다. 다시 시도해주세요.';
+          } else if (error.response?.data?.detail) {
+            errorMessage = error.response.data.detail;
+          }
+          
           set({
             isAuthenticated: false,
             admin: null,
@@ -81,14 +194,19 @@ export const useAdminStore = create<AdminState>()(
             isLoading: false,
             error: errorMessage,
           });
-          return false;
+          return { success: false, error: errorMessage };
         }
       },
 
-      // 로그아웃
+      // 로그아웃 - 캐시 정리 추가
       logout: () => {
+        console.log('[AdminStore] 로그아웃 실행');
+        
         // API 호출 (백그라운드에서)
         adminApiService.logout().catch(console.error);
+
+        // 캐시 정리
+        adminCache = null;
 
         // 로컬 상태 및 저장소 정리
         localStorage.removeItem('admin_token');
@@ -100,10 +218,13 @@ export const useAdminStore = create<AdminState>()(
           token: null,
           refreshToken: null,
           error: null,
+          isLoading: false,
+          isInitialized: false,
+          lastInitTime: 0
         });
       },
 
-      // 토큰 갱신
+      // 토큰 갱신 - 성능 최적화
       refreshAuth: async (): Promise<boolean> => {
         const { refreshToken } = get();
         
@@ -112,7 +233,12 @@ export const useAdminStore = create<AdminState>()(
         }
 
         try {
-          const response = await adminApiService.refreshToken();
+          const response = await Promise.race([
+            adminApiService.refreshToken(),
+            new Promise<never>((_, reject) => 
+              setTimeout(() => reject(new Error('Refresh timeout')), 3000)
+            )
+          ]);
           
           localStorage.setItem('admin_token', response.access_token);
 
@@ -123,29 +249,64 @@ export const useAdminStore = create<AdminState>()(
 
           return true;
         } catch (error) {
+          console.error('[AdminStore] 토큰 갱신 실패:', error);
           // 리프레시 토큰도 만료된 경우 로그아웃
           get().logout();
           return false;
         }
       },
 
-      // 현재 관리자 정보 조회
+      // 현재 관리자 정보 조회 - 성능 최적화
       getCurrentAdmin: async (): Promise<void> => {
-        const { token } = get();
-        console.log('[AdminStore] getCurrentAdmin 호출, token:', token ? '있음' : '없음');
+        const state = get();
+        console.log('[AdminStore] getCurrentAdmin 호출, token:', state.token ? '있음' : '없음');
         
-        if (!token) {
-          console.log('[AdminStore] 토큰이 없어서 getCurrentAdmin 종료');
+        // 이미 관리자 정보를 가져오는 중이면 중복 실행 방지
+        if (state.isFetchingAdmin) {
+          console.log('[AdminStore] 이미 getCurrentAdmin 진행 중, 스킵');
           return;
         }
+        
+        if (!state.token) {
+          console.log('[AdminStore] 토큰이 없어서 getCurrentAdmin 종료');
+          set({ isLoading: false });
+          return;
+        }
+
+        // 캐시 확인
+        const now = Date.now();
+        if (adminCache && (now - adminCache.timestamp) < CACHE_DURATION) {
+          console.log('[AdminStore] 캐시된 관리자 정보 사용');
+          set({ 
+            admin: adminCache.admin, 
+            isAuthenticated: !!adminCache.admin, 
+            isLoading: false
+          });
+          return;
+        }
+
+        set({ isFetchingAdmin: true });
 
         try {
           console.log('[AdminStore] adminApiService.getCurrentAdmin 호출');
           const admin = await adminApiService.getCurrentAdmin();
           console.log('[AdminStore] getCurrentAdmin 성공:', admin);
-          set({ admin, isAuthenticated: true });
+          
+          // 캐시 업데이트
+          adminCache = {
+            admin,
+            timestamp: now
+          };
+          
+          set({ 
+            admin, 
+            isAuthenticated: true, 
+            isLoading: false,
+            isFetchingAdmin: false
+          });
         } catch (error) {
           console.error('[AdminStore] getCurrentAdmin 실패:', error);
+          set({ isFetchingAdmin: false });
           // 토큰이 유효하지 않은 경우 로그아웃
           get().logout();
         }
@@ -168,6 +329,7 @@ export const useAdminStore = create<AdminState>()(
         admin: state.admin,
         token: state.token,
         refreshToken: state.refreshToken,
+        lastInitTime: state.lastInitTime,
       }),
     }
   )

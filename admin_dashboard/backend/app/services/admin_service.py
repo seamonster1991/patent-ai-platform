@@ -14,7 +14,7 @@ from app.core.auth import (
     get_password_hash, verify_password, generate_2fa_secret,
     verify_2fa_token, TokenManager, generate_session_token
 )
-from app.config import settings
+from app.core.config import settings
 
 
 class AdminService:

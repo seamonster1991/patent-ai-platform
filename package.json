@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "client:dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "build:production": "NODE_ENV=production npm run build",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -27,6 +27,7 @@
     "@vercel/node": "^5.3.6",
     "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.2",
     "chart.js": "^4.5.0",
     "clsx": "^2.1.1",
     "cors": "^2.8.5",

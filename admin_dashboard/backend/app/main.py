@@ -12,7 +12,7 @@ import uvicorn
 import logging
 from typing import AsyncGenerator
 
-from app.config import settings
+from app.core.config import settings
 from app.core.database import init_db, close_db
 from app.core.security import verify_admin_token
 from app.api.v1 import auth, dashboard, users, payments, monitoring, websocket, test
@@ -54,7 +54,7 @@ app = FastAPI(
 # CORS 미들웨어 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.get_allowed_origins(),
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["*"],

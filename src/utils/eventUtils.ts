@@ -24,6 +24,13 @@ export interface DashboardRefreshEventDetail {
   data?: any;
 }
 
+export interface PointBalanceUpdateEventDetail {
+  type: 'pointBalanceUpdate';
+  source: string;
+  timestamp: string;
+  newBalance?: number;
+}
+
 /**
  * reportGenerated 이벤트를 발생시킵니다.
  * @param eventDetail 이벤트 상세 정보
@@ -144,4 +151,34 @@ export function handleReportGeneratedFromAPI(
   }
 
   return dispatchReportGeneratedEvent(eventDetail);
+}
+
+/**
+ * pointBalanceUpdate 이벤트를 발생시킵니다.
+ * @param eventDetail 이벤트 상세 정보
+ */
+export function dispatchPointBalanceUpdateEvent(eventDetail: PointBalanceUpdateEventDetail): boolean {
+  if (typeof window === 'undefined') {
+    console.warn('⚠️ [eventUtils] window 객체를 사용할 수 없습니다.');
+    return false;
+  }
+
+  console.log('💰 [eventUtils] pointBalanceUpdate 이벤트 발생 준비:', eventDetail);
+
+  const customEvent = new CustomEvent('pointBalanceUpdate', {
+    detail: eventDetail,
+    bubbles: true,
+    cancelable: true
+  });
+
+  console.log('📤 [eventUtils] pointBalanceUpdate 이벤트 디스패치 실행...');
+  const dispatched = window.dispatchEvent(customEvent);
+
+  console.log('✅ [eventUtils] pointBalanceUpdate 이벤트 디스패치 완료:', {
+    dispatched,
+    eventType: customEvent.type,
+    timestamp: new Date().toISOString()
+  });
+
+  return dispatched;
 }

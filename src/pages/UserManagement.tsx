@@ -17,7 +17,10 @@ import {
   EyeIcon,
   CheckCircleIcon,
   XCircleIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  PlusIcon,
+  MinusIcon,
+  CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
 
 interface UserFilters {
@@ -41,6 +44,14 @@ const UserManagement: React.FC = () => {
   const [showDeletedUsers, setShowDeletedUsers] = useState(false);
   const [deletedUsers, setDeletedUsers] = useState<User[]>([]);
   const [isLoadingDeleted, setIsLoadingDeleted] = useState(false);
+  
+  // 포인트 관리 상태
+  const [showPointModal, setShowPointModal] = useState(false);
+  const [pointUser, setPointUser] = useState<User | null>(null);
+  const [pointAmount, setPointAmount] = useState('');
+  const [pointType, setPointType] = useState<'add' | 'subtract'>('add');
+  const [pointReason, setPointReason] = useState('');
+  const [isProcessingPoint, setIsProcessingPoint] = useState(false);
   
   // 필터 및 검색 상태
   const [filters, setFilters] = useState<UserFilters>({
@@ -162,6 +173,65 @@ const UserManagement: React.FC = () => {
   const handleViewUser = (user: User) => {
     setSelectedUser(user);
     setShowUserModal(true);
+  };
+
+  // 포인트 관리 모달 열기
+  const handleOpenPointModal = (user: User, type: 'add' | 'subtract') => {
+    setPointUser(user);
+    setPointType(type);
+    setPointAmount('');
+    setPointReason('');
+    setShowPointModal(true);
+  };
+
+  // 포인트 관리 처리
+  const handlePointManagement = async () => {
+    if (!pointUser || !pointAmount || !pointReason) {
+      alert('모든 필드를 입력해주세요.');
+      return;
+    }
+
+    const amount = parseInt(pointAmount);
+    if (isNaN(amount) || amount <= 0) {
+      alert('유효한 포인트 금액을 입력해주세요.');
+      return;
+    }
+
+    setIsProcessingPoint(true);
+    
+    try {
+      const response = await fetch('/api/admin/point-management', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: pointUser.id,
+          amount,
+          type: pointType,
+          reason: pointReason,
+          adminId: 'admin' // 실제 구현에서는 현재 관리자 ID를 사용
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(result.message);
+        setShowPointModal(false);
+        setPointUser(null);
+        setPointAmount('');
+        setPointReason('');
+        fetchUsers(); // 사용자 목록 새로고침
+      } else {
+        alert(result.error || '포인트 관리에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('포인트 관리 오류:', error);
+      alert('포인트 관리 중 오류가 발생했습니다.');
+    } finally {
+      setIsProcessingPoint(false);
+    }
   };
 
   // 상태 배지 색상
@@ -497,6 +567,20 @@ const UserManagement: React.FC = () => {
                             </button>
                           )}
                           <button
+                            onClick={() => handleOpenPointModal(user, 'add')}
+                            className="text-green-600 hover:text-green-900"
+                            title="포인트 충전"
+                          >
+                            <PlusIcon className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleOpenPointModal(user, 'subtract')}
+                            className="text-orange-600 hover:text-orange-900"
+                            title="포인트 차감"
+                          >
+                            <MinusIcon className="h-4 w-4" />
+                          </button>
+                          <button
                             onClick={() => {
                               setUserToDelete(user);
                               setShowDeleteConfirm(true);
@@ -644,7 +728,29 @@ const UserManagement: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="flex justify-end space-x-3 pt-4">
+                <div className="flex justify-between items-center pt-4">
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => {
+                        setShowUserModal(false);
+                        handleOpenPointModal(selectedUser, 'add');
+                      }}
+                      className="flex items-center px-3 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700"
+                    >
+                      <PlusIcon className="h-4 w-4 mr-1" />
+                      포인트 충전
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowUserModal(false);
+                        handleOpenPointModal(selectedUser, 'subtract');
+                      }}
+                      className="flex items-center px-3 py-2 bg-orange-600 text-white rounded-md text-sm font-medium hover:bg-orange-700"
+                    >
+                      <MinusIcon className="h-4 w-4 mr-1" />
+                      포인트 차감
+                    </button>
+                  </div>
                   <button
                     onClick={() => {
                       setShowUserModal(false);
@@ -835,6 +941,84 @@ const UserManagement: React.FC = () => {
                 className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700"
               >
                 복원
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 포인트 관리 모달 */}
+      {showPointModal && pointUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex items-center mb-4">
+              <CurrencyDollarIcon className="h-6 w-6 text-blue-600 mr-3" />
+              <h2 className="text-lg font-bold text-gray-900">
+                포인트 {pointType === 'add' ? '충전' : '차감'}
+              </h2>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  사용자
+                </label>
+                <p className="text-sm text-gray-900">
+                  {pointUser.name || pointUser.email} (현재: {pointUser.point_balance || 0}P)
+                </p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {pointType === 'add' ? '충전' : '차감'} 포인트
+                </label>
+                <input
+                  type="number"
+                  value={pointAmount}
+                  onChange={(e) => setPointAmount(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="포인트 입력"
+                  min="1"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  사유
+                </label>
+                <textarea
+                  value={pointReason}
+                  onChange={(e) => setPointReason(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="포인트 관리 사유를 입력하세요"
+                  rows={3}
+                />
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowPointModal(false);
+                  setPointUser(null);
+                  setPointAmount('');
+                  setPointReason('');
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                disabled={isProcessingPoint}
+              >
+                취소
+              </button>
+              <button
+                onClick={handlePointManagement}
+                className={`px-4 py-2 rounded-md text-sm font-medium text-white ${
+                  pointType === 'add' 
+                    ? 'bg-green-600 hover:bg-green-700' 
+                    : 'bg-orange-600 hover:bg-orange-700'
+                }`}
+                disabled={isProcessingPoint}
+              >
+                {isProcessingPoint ? '처리 중...' : (pointType === 'add' ? '충전' : '차감')}
               </button>
             </div>
           </div>

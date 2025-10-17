@@ -527,32 +527,43 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initialize: async () => {
     const currentState = get();
     
-    // 중복 초기화 방지
+    // 중복 초기화 방지 - 더 엄격한 체크
     if (currentState.initialized || isInitializing) {
+      console.log('[AuthStore] 초기화 이미 완료되었거나 진행 중:', { initialized: currentState.initialized, isInitializing });
       return;
     }
     
+    console.log('[AuthStore] 초기화 시작');
     isInitializing = true;
-    set({ loading: true });
+    
+    // 초기화 시작 시 loading: true, initialized: false로 명확히 설정
+    set({ loading: true, initialized: false });
     
     try {
-      // 현재 세션 확인 (단순화)
+      // 현재 세션 확인
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) {
         console.error('[AuthStore] 세션 가져오기 오류:', error);
         set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true });
+        isInitializing = false;
         return;
       }
       
       if (session?.user) {
-        // JWT 토큰 저장 (단순화)
+        console.log('[AuthStore] 세션 사용자 발견:', session.user.email);
+        // JWT 토큰 저장
         if (session.access_token) {
           localStorage.setItem('token', session.access_token);
         }
         
         await handleUserSession(session.user, set);
+        
+        // handleUserSession 완료 후 확실히 초기화 완료 상태로 설정
+        const updatedState = get();
+        set({ ...updatedState, loading: false, initialized: true });
       } else {
+        console.log('[AuthStore] 세션 없음 - 로그아웃 상태로 설정');
         set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true });
       }
       
@@ -561,6 +572,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true });
     } finally {
       isInitializing = false;
+      
+      // 최종 안전장치: 초기화가 완료되지 않았다면 강제로 완료 처리
+      const finalState = get();
+      if (!finalState.initialized || finalState.loading) {
+        console.log('[AuthStore] 최종 안전장치 - 초기화 완료 처리');
+        set({ ...finalState, initialized: true, loading: false });
+      }
+      
+      console.log('[AuthStore] 초기화 완료 - 최종 상태:', { 
+        initialized: get().initialized, 
+        loading: get().loading,
+        hasUser: !!get().user 
+      });
     }
   },
 

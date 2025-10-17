@@ -127,47 +127,75 @@ export function getApiUrl(endpoint: string): string {
   const currentProtocol = window.location.protocol;
   const currentHost = window.location.host;
   
-  console.log(`🔗 [API] 환경 감지: ${environment}, 호스트: ${currentHost}`);
+  // 🚨 긴급 캐시 문제 해결: 3001 포트 사용
+  const FORCE_API_PORT = '3001';
+  const FORCE_API_BASE = `http://localhost:${FORCE_API_PORT}`;
+  
+  // 모든 환경 변수 로깅
+  const envApiUrl = import.meta.env.VITE_API_BASE_URL;
+  console.log(`🔗 [API] ===== API URL 생성 시작 =====`);
+  console.log(`🔗 [API] 요청 엔드포인트: ${endpoint}`);
+  console.log(`🔗 [API] 환경 감지: ${environment}`);
+  console.log(`🔗 [API] 현재 호스트: ${currentHost}`);
+  console.log(`🔗 [API] 현재 프로토콜: ${currentProtocol}`);
+  console.log(`🔗 [API] VITE_API_BASE_URL: ${envApiUrl}`);
+  console.log(`🔗 [API] 🚨 강제 API 베이스: ${FORCE_API_BASE}`);
+  console.log(`🔗 [API] import.meta.env:`, import.meta.env);
   
   // 엔드포인트 정규화 함수 - 중복된 /api 경로 제거
   function normalizeEndpoint(baseUrl: string, endpoint: string): string {
+    console.log(`🔗 [API] 정규화 전 - baseUrl: ${baseUrl}, endpoint: ${endpoint}`);
+    let result;
+    
     // baseUrl이 /api로 끝나고 endpoint가 /api로 시작하면 중복 제거
     if (baseUrl.endsWith('/api') && endpoint.startsWith('/api')) {
-      return `${baseUrl}${endpoint.substring(4)}`; // /api 제거
+      result = `${baseUrl}${endpoint.substring(4)}`; // /api 제거
+      console.log(`🔗 [API] 중복 /api 제거: ${result}`);
     }
     // baseUrl이 /api로 끝나지 않고 endpoint가 /api로 시작하지 않으면 /api 추가
-    if (!baseUrl.endsWith('/api') && !endpoint.startsWith('/api')) {
-      return `${baseUrl}/api${endpoint}`;
+    else if (!baseUrl.endsWith('/api') && !endpoint.startsWith('/api')) {
+      result = `${baseUrl}/api${endpoint}`;
+      console.log(`🔗 [API] /api 추가: ${result}`);
     }
     // 그 외의 경우는 그대로 연결
-    return `${baseUrl}${endpoint}`;
+    else {
+      result = `${baseUrl}${endpoint}`;
+      console.log(`🔗 [API] 그대로 연결: ${result}`);
+    }
+    
+    // 3001 포트 사용 허용
+    // 포트 변경 로직 제거됨
+    
+    return result;
   }
   
+  let finalUrl;
+  
   if (environment === 'development') {
-    // 로컬 개발 환경
+    console.log(`🔗 [API] 개발 환경 처리 시작`);
+    // 🚨 긴급 해결책: 로컬 개발 환경에서는 무조건 3001 포트 사용
     if (currentHost.includes('localhost') || currentHost.includes('127.0.0.1')) {
-      // 환경변수에서 API URL 확인
-      const envApiUrl = import.meta.env.VITE_API_BASE_URL;
-      if (envApiUrl) {
-        const localApiUrl = normalizeEndpoint(envApiUrl, endpoint);
-        console.log(`🔗 [API] 환경변수 기반 API URL: ${localApiUrl}`);
-        return localApiUrl;
-      }
-      
-      // 기본값으로 로컬 API 서버 사용
-      const localApiUrl = normalizeEndpoint('http://localhost:3005', endpoint);
-      console.log(`🔗 [API] 기본 로컬 API URL: ${localApiUrl}`);
-      return localApiUrl;
+      console.log(`🔗 [API] localhost 감지됨 - 강제로 3001 포트 사용`);
+      finalUrl = normalizeEndpoint(FORCE_API_BASE, endpoint);
+      console.log(`🔗 [API] ✅ 강제 3001 포트 최종 URL: ${finalUrl}`);
+    } else {
+      // 기타 로컬 포트 - 여전히 강제로 3001 사용
+      finalUrl = normalizeEndpoint(FORCE_API_BASE, endpoint);
+      console.log(`🔗 [API] ✅ 강제 3001 포트 (기타 로컬) 최종 URL: ${finalUrl}`);
     }
-    // 기타 로컬 포트 - Vite 프록시 사용
-    return endpoint;
   } else {
+    console.log(`🔗 [API] 프로덕션 환경 처리 시작`);
     // 프로덕션 환경 - Vercel Functions 사용
     const baseUrl = `${currentProtocol}//${currentHost}`;
-    const productionUrl = normalizeEndpoint(baseUrl, endpoint);
-    console.log(`🔗 [API] 프로덕션 API URL 생성: ${productionUrl}`);
-    return productionUrl;
+    finalUrl = normalizeEndpoint(baseUrl, endpoint);
+    console.log(`🔗 [API] ✅ 프로덕션 최종 URL: ${finalUrl}`);
   }
+  
+  // 3001 포트 사용 허용
+  // 최종 안전장치 제거됨
+  
+  console.log(`🔗 [API] ===== 최종 반환 URL: ${finalUrl} =====`);
+  return finalUrl;
 }
 
 /**
@@ -234,6 +262,9 @@ export async function apiRequest<T = any>(
     }
     authHeaders = { 'Authorization': `Bearer ${token}` };
   }
+
+  // 3001 포트 사용 허용
+  // 포트 차단 로직 제거됨
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
@@ -522,7 +553,8 @@ export async function getDashboardStats(userId: string, period: string = '100d')
     // 개발 환경에서는 test_user_id 파라미터 사용
     const isDevelopment = detectEnvironment() === 'development';
     const queryParam = isDevelopment ? `test_user_id=${userId}` : `user_id=${userId}`;
-    const { primary, fallback } = getApiUrlWithFallback(`/api/dashboard-stats?${queryParam}&period=${period}`);
+    const timestamp = Date.now();
+    const { primary, fallback } = getApiUrlWithFallback(`/api/dashboard-stats?${queryParam}&period=${period}&_t=${timestamp}`);
     console.log('📊 [API] 사용할 API URL:', primary, fallback ? `(대체: ${fallback})` : '');
 
     // 먼저 기본 URL로 시도
@@ -699,7 +731,10 @@ export function formatApiError(error: any): string {
 export async function getUserProfile(userId: string): Promise<ApiResponse> {
   console.log('👤 [API] 사용자 프로필 조회 요청:', userId);
   
-  return apiGet(`/api/users/profile?userId=${encodeURIComponent(userId)}`, {
+  const apiUrl = getApiUrl(`/api/users/profile?userId=${encodeURIComponent(userId)}`);
+  console.log('👤 [API] 프로필 조회 URL:', apiUrl);
+  
+  return apiGet(apiUrl, {
     timeout: 15000,
     retries: 2,
     retryDelay: 1000,
@@ -735,7 +770,10 @@ export async function updateUserProfile(userId: string, profileData: {
   
   console.log('📝 [API] 정규화된 페이로드:', payload);
   
-  return apiPut(`/api/users/profile?userId=${encodeURIComponent(userId)}`, payload, {
+  const apiUrl = getApiUrl(`/api/users/profile?userId=${encodeURIComponent(userId)}`);
+  console.log('📝 [API] 프로필 업데이트 URL:', apiUrl);
+  
+  return apiPut(apiUrl, payload, {
     timeout: 15000,
     retries: 2,
     retryDelay: 1000,

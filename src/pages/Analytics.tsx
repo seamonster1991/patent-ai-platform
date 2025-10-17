@@ -58,7 +58,7 @@ const Analytics: React.FC = () => {
       setError(null);
 
       // 실제 백엔드 API 호출
-      const response = await fetch(`http://localhost:8004/api/v1/dashboard/metrics?period=${selectedPeriod}`, {
+      const response = await fetch(`/api/dashboard/metrics?period=${selectedPeriod}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -69,25 +69,28 @@ const Analytics: React.FC = () => {
         throw new Error(`API 호출 실패: ${response.status}`);
       }
 
-      const data = await response.json();
+      const response_data = await response.json();
+      
+      // 서버 응답이 {success: true, data: {...}} 형식인지 확인
+      const data = response_data.success && response_data.data ? response_data.data : response_data;
       
       // API 응답을 Analytics 컴포넌트 형식에 맞게 변환
       const analyticsData: AnalyticsData = {
         userAnalytics: {
-          totalUsers: data.total_users || 0,
-          activeUsers: data.active_users || 0,
-          newUsersToday: data.recent_users || 0,
+          totalUsers: data.total_users || data.totalUsers || 0,
+          activeUsers: data.active_users || data.activeUsers || 0,
+          newUsersToday: data.recent_users || data.todayNewUsers || 0,
           userGrowthRate: data.user_growth_rate || 0
         },
         paymentAnalytics: {
           totalRevenue: data.total_revenue || 0,
           monthlyRevenue: data.monthly_revenue || 0,
-          transactionCount: data.recent_payments || 0,
-          averageTransactionValue: data.total_revenue && data.recent_payments ? 
-            Math.round(data.total_revenue / Math.max(data.recent_payments, 1)) : 0
+          transactionCount: data.recent_payments || data.totalReports || 0,
+          averageTransactionValue: data.total_revenue && (data.recent_payments || data.totalReports) ? 
+            Math.round(data.total_revenue / Math.max(data.recent_payments || data.totalReports, 1)) : 0
         },
         systemAnalytics: {
-          apiCalls: data.api_calls_today || 0,
+          apiCalls: data.api_calls_today || data.totalSearches || data.total_analyses || 0,
           responseTime: data.average_response_time || 0,
           errorRate: data.error_rate || 0,
           uptime: 99.9 // 시스템 업타임은 별도 API에서 조회 가능

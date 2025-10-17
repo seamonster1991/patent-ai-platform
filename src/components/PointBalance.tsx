@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Coins } from 'lucide-react';
+import { PointBalanceUpdateEventDetail } from '../utils/eventUtils';
 
 interface PointBalanceProps {
   className?: string;
@@ -19,7 +20,21 @@ const PointBalance: React.FC<PointBalanceProps> = ({ className = '', showDetails
 
   useEffect(() => {
     checkUserAndLoadBalance();
-  }, []);
+
+    // 포인트 잔액 업데이트 이벤트 리스너 추가
+    const handlePointBalanceUpdate = (event: CustomEvent<PointBalanceUpdateEventDetail>) => {
+      console.log('💰 [PointBalance] pointBalanceUpdate 이벤트 수신:', event.detail);
+      if (user) {
+        loadPointBalance(user.id);
+      }
+    };
+
+    window.addEventListener('pointBalanceUpdate', handlePointBalanceUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('pointBalanceUpdate', handlePointBalanceUpdate as EventListener);
+    };
+  }, [user]);
 
   const checkUserAndLoadBalance = async () => {
     try {
@@ -41,18 +56,31 @@ const PointBalance: React.FC<PointBalanceProps> = ({ className = '', showDetails
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch(`/api/points?action=balance`, {
+      // API 기본 URL 설정 (개발/프로덕션 환경 대응)
+      const apiBaseUrl = process.env.NODE_ENV === 'production' 
+        ? '' // Vercel에서는 상대 경로 사용
+        : 'http://localhost:3001'; // 로컬 개발 환경
+
+      const response = await fetch(`${apiBaseUrl}/api/points?action=balance`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json'
         }
       });
+      
       if (response.ok) {
         const balanceData = await response.json();
+        console.log('💰 [PointBalance] 포인트 잔액 로드 성공:', balanceData);
         setBalance(balanceData);
+      } else {
+        console.error('💰 [PointBalance] 포인트 잔액 로드 실패:', response.status, response.statusText);
+        // 실패 시 기본값 설정
+        setBalance({ current_balance: 0, last_updated: new Date().toISOString() });
       }
     } catch (error) {
       console.error('포인트 잔액 로드 실패:', error);
+      // 에러 시 기본값 설정
+      setBalance({ current_balance: 0, last_updated: new Date().toISOString() });
     }
   };
 

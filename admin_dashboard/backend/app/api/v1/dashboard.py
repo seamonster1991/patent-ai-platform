@@ -10,7 +10,7 @@ from datetime import datetime, timezone, timedelta
 import logging
 
 from app.core.database import get_db, DatabaseManager
-from app.core.auth import get_current_admin, require_permission
+from app.core.security import get_current_admin, require_permission
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

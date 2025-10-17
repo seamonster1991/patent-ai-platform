@@ -5,26 +5,52 @@
 
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 
-// API 기본 설정
-const API_BASE_URL = 'http://localhost:8005/api/v1';
+// API 기본 URL 설정
+const API_BASE_URL = import.meta.env.MODE === 'production' 
+  ? '/api' // Vercel에서는 상대 경로 사용
+  : 'http://localhost:3001'; // Node.js Express 서버 포트
+
+// 타임아웃 설정 최적화
+const API_TIMEOUTS = {
+  auth: 5000,      // 인증 관련: 5초
+  dashboard: 8000, // 대시보드: 8초
+  default: 10000   // 기본: 10초
+};
 
 // Axios 인스턴스 생성
 const adminApi: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 60000, // 60초로 증가
+  timeout: API_TIMEOUTS.default,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// 요청 인터셉터 - 토큰 자동 추가
+// 요청 인터셉터 - 토큰 자동 추가 및 타임아웃 동적 설정
 adminApi.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('admin_token');
     if (token && config.headers) {
       (config.headers as any).Authorization = `Bearer ${token}`;
     }
-    console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`);
+    
+    // URL에 따른 동적 타임아웃 설정
+    if (config.url?.includes('/auth/')) {
+      config.timeout = API_TIMEOUTS.auth;
+    } else if (config.url?.includes('/dashboard/')) {
+      config.timeout = API_TIMEOUTS.dashboard;
+    }
+    
+    // Content-Type 헤더 강제 설정
+    if (config.headers && config.data) {
+      (config.headers as any)['Content-Type'] = 'application/json';
+    }
+    
+    console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url} (timeout: ${config.timeout}ms)`, {
+      headers: config.headers,
+      data: config.data ? (typeof config.data === 'string' ? config.data : JSON.stringify(config.data)) : 'no data'
+    });
+    
     return config;
   },
   (error) => {
@@ -33,27 +59,75 @@ adminApi.interceptors.request.use(
   }
 );
 
-// 응답 인터셉터 - 에러 처리
+// 응답 인터셉터 - 에러 처리 개선
 adminApi.interceptors.response.use(
   (response: AxiosResponse) => {
-    console.log(`[API Response] ${response.config.method?.toUpperCase()} ${response.config.url} - ${response.status}`);
+    console.log(`[API Response] ${response.config.method?.toUpperCase()} ${response.config.url} - ${response.status} (${response.headers['content-length'] || 'unknown'} bytes)`);
     return response;
   },
   (error) => {
-    console.error(`[API Error] ${error.config?.method?.toUpperCase()} ${error.config?.url}`, error);
+    const method = error.config?.method?.toUpperCase();
+    const url = error.config?.url;
+    const status = error.response?.status;
     
-    if (error.code === 'ECONNABORTED') {
+    console.error(`[API Error] ${method} ${url} - Status: ${status}`, {
+      message: error.message,
+      code: error.code,
+      response: error.response?.data
+    });
+    
+    // 타임아웃 에러 처리
+    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
       console.error('[API Timeout] Request timed out');
+      error.isTimeout = true;
+      error.userMessage = '요청 시간이 초과되었습니다. 네트워크 연결을 확인하고 다시 시도해주세요.';
     }
     
-    if (error.response?.status === 401) {
-      // 토큰 만료 시 로그아웃 처리
-      localStorage.removeItem('admin_token');
-      window.location.href = '/admin/login';
+    // 네트워크 에러 처리
+    if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+      console.error('[API Network Error] Cannot connect to server');
+      error.isNetworkError = true;
+      error.userMessage = '서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.';
     }
+    
+    // 401 에러 처리 (토큰 만료)
+    if (status === 401) {
+      console.warn('[API Auth Error] Token expired or invalid');
+      localStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_refresh_token');
+      
+      // 현재 페이지가 로그인 페이지가 아닌 경우에만 리다이렉트
+      if (!window.location.pathname.includes('/admin/login')) {
+        window.location.href = '/admin/login';
+      }
+      error.userMessage = '인증이 만료되었습니다. 다시 로그인해주세요.';
+    }
+    
+    // 403 에러 처리 (권한 없음)
+    if (status === 403) {
+      error.userMessage = '접근 권한이 없습니다.';
+    }
+    
+    // 404 에러 처리
+    if (status === 404) {
+      error.userMessage = '요청한 리소스를 찾을 수 없습니다.';
+    }
+    
+    // 500 에러 처리 (서버 에러)
+    if (status >= 500) {
+      error.userMessage = '서버에 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
+    }
+    
     return Promise.reject(error);
   }
 );
+
+// 제네릭 API 응답 타입
+export interface ApiResponse<T> {
+  data: T;
+  success?: boolean;
+  message?: string;
+}
 
 // 타입 정의
 export interface LoginRequest {
@@ -68,6 +142,7 @@ export interface LoginResponse {
   token_type: string;
   expires_in: number;
   admin: AdminUser;
+  requires_2fa: boolean;
 }
 
 export interface DashboardMetrics {
@@ -81,6 +156,44 @@ export interface DashboardMetrics {
   revenue_growth_rate: number;
   total_analyses: number;
   analysis_growth_rate: number;
+  
+  // 기존 통계
+  totalUsers: number;
+  totalSearches: number;
+  totalReports: number;
+  activeUsers: number;
+  todaySearches: number;
+  todayReports: number;
+  todayNewUsers: number;
+  
+  // 로그인 통계
+  totalLogins: number;
+  todayLogins: number;
+  weeklyLogins: number;
+  monthlyLogins: number;
+  uniqueLoginUsers: number;
+  
+  // 검색 통계
+  averageDailySearches: number;
+  searchesPerUser: number;
+  uniqueSearchUsers: number;
+  
+  // 리포트 생성 통계
+  averageDailyReports: number;
+  reportsPerUser: number;
+  uniqueReportUsers: number;
+  
+  // 전환율 통계
+  searchToReportRate: number;
+  loginToSearchRate: number;
+  newToActiveUserRate: number;
+  userActivityRate: number;
+  
+  // 추가 통계
+  averageSessionTime: number;
+  returnUserRate: number;
+  engagementScore: number;
+  
   system_health: {
     status: string;
     cpu_usage: number;
@@ -94,6 +207,7 @@ export interface DashboardMetrics {
     timestamp: string;
     user_email?: string;
   }>;
+  timestamp: string;
 }
 
 // 확장된 대시보드 통계 타입
@@ -217,57 +331,195 @@ export interface SystemMetrics {
   status?: string;
 }
 
+// 회원별 통계 타입 정의
+export interface UserStats {
+  id: string;
+  email: string;
+  name: string;
+  company: string;
+  role: string;
+  subscription_plan: string;
+  total_logins: number;
+  total_searches: number;
+  total_reports: number;
+  total_detail_views: number;
+  last_login_at: string | null;
+  created_at: string;
+  activity_score: number;
+}
+
+export interface UserStatsResponse {
+  success: boolean;
+  data: {
+    users: UserStats[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+    summary: {
+      totalUsers: number;
+      totalLogins: number;
+      totalSearches: number;
+      totalReports: number;
+      averageLogins: number;
+      averageSearches: number;
+      averageReports: number;
+    };
+    timestamp: string;
+  };
+}
+
 // API 함수들
 export const adminApiService = {
   // 인증 관련
   async login(credentials: LoginRequest): Promise<LoginResponse> {
-    const response = await adminApi.post('/auth/login', credentials);
-    return response.data;
+    try {
+      // 모든 환경에서 동일한 엔드포인트 사용
+      const endpoint = '/api/admin/auth';
+      
+      // 요청 데이터 검증 및 정리
+      const cleanCredentials = {
+        email: credentials.email?.trim(),
+        password: credentials.password?.trim()
+      };
+      
+      // 디버깅을 위한 로그
+      console.log('🔐 [AdminAPI] 로그인 시도:', {
+        endpoint,
+        fullUrl: `${adminApi.defaults.baseURL}${endpoint}`,
+        credentials: { email: cleanCredentials.email, password: '***' },
+        baseURL: adminApi.defaults.baseURL
+      });
+      
+      // JSON 직렬화 확인
+      const requestData = JSON.stringify(cleanCredentials);
+      console.log('📤 [AdminAPI] 요청 데이터:', requestData);
+      
+      // 명시적인 axios 설정으로 요청
+      const response = await axios({
+        method: 'POST',
+        url: `${adminApi.defaults.baseURL}${endpoint}`,
+        data: cleanCredentials,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        timeout: API_TIMEOUTS.auth,
+        validateStatus: (status) => status < 500 // 500 미만은 모두 성공으로 처리
+      });
+      
+      console.log('✅ [AdminAPI] 로그인 응답:', {
+        status: response.status,
+        headers: response.headers,
+        data: response.data
+      });
+      
+      if (response.status >= 400) {
+        throw new Error(`HTTP ${response.status}: ${response.data?.message || '로그인 실패'}`);
+      }
+      
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ [AdminAPI] 로그인 실패:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url,
+        method: error.config?.method,
+        headers: error.config?.headers,
+        requestData: error.config?.data
+      });
+      
+      // 에러 메시지 개선
+      if (error.code === 'ECONNREFUSED') {
+        throw new Error('서버에 연결할 수 없습니다. 백엔드 서버가 실행 중인지 확인해주세요.');
+      } else if (error.response?.status === 401) {
+        throw new Error('이메일 또는 비밀번호가 올바르지 않습니다.');
+      } else if (error.response?.status === 400) {
+        throw new Error(error.response.data?.message || '잘못된 요청입니다.');
+      }
+      
+      throw error;
+    }
   },
 
   async logout(): Promise<void> {
-    await adminApi.post('/auth/logout');
+    // 로컬 토큰만 제거 (서버에 logout 엔드포인트가 없음)
     localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_refresh_token');
   },
 
   async refreshToken(): Promise<{ access_token: string }> {
     const refreshToken = localStorage.getItem('admin_refresh_token');
-    const response = await adminApi.post('/auth/refresh', {
+    // 모든 환경에서 동일한 엔드포인트 사용
+    const endpoint = '/api/admin/auth/refresh';
+    const response = await adminApi.post(endpoint, {
       refresh_token: refreshToken,
     });
     return response.data;
   },
 
   async getCurrentAdmin(): Promise<any> {
-    const response = await adminApi.get('/auth/me');
+    // 모든 환경에서 동일한 엔드포인트 사용
+    const endpoint = '/api/admin/auth/me';
+    const response = await adminApi.get(endpoint);
     return response.data;
   },
 
   // 대시보드 관련
-  async getDashboardMetrics(period: string = '7d'): Promise<DashboardMetrics> {
-    const response = await adminApi.get(`/dashboard/metrics?period=${period}`);
+  async getDashboardMetrics(period: string = '7d'): Promise<DashboardMetrics | ApiResponse<DashboardMetrics>> {
+    const timestamp = Date.now();
+    const response = await adminApi.get(`/dashboard/metrics?period=${period}&_t=${timestamp}`);
     return response.data;
   },
 
-  async getRecentActivities(limit: number = 10): Promise<any[]> {
-    const response = await adminApi.get(`/dashboard/recent-activities?limit=${limit}`);
+  async getRecentActivities(limit: number = 10): Promise<any[] | ApiResponse<any[]>> {
+    const timestamp = Date.now();
+    const response = await adminApi.get(`/dashboard/recent-activities?limit=${limit}&_t=${timestamp}`);
     return response.data;
   },
 
   // 확장된 대시보드 통계
   async getExtendedDashboardStats(days: number = 30): Promise<ExtendedDashboardStats> {
-    const response = await adminApi.get(`/dashboard/extended-stats?days=${days}`);
+    const timestamp = Date.now();
+    const response = await adminApi.get(`/dashboard/extended-stats?days=${days}&_t=${timestamp}`);
     return response.data;
   },
 
   async getPopularKeywords(days: number = 30): Promise<PopularKeyword[]> {
-    const response = await adminApi.get(`/dashboard/popular-keywords?days=${days}`);
+    const timestamp = Date.now();
+    const response = await adminApi.get(`/dashboard/popular-keywords?days=${days}&_t=${timestamp}`);
     return response.data.keywords || [];
   },
 
   async getPopularPatents(days: number = 30): Promise<PopularPatent[]> {
-    const response = await adminApi.get(`/dashboard/popular-patents?days=${days}`);
+    const timestamp = Date.now();
+    const response = await adminApi.get(`/dashboard/popular-patents?days=${days}&_t=${timestamp}`);
     return response.data.patents || [];
+  },
+
+  // 회원별 통계 조회
+  async getUserStats(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  } = {}): Promise<UserStatsResponse> {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.search) queryParams.append('search', params.search);
+    if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+    if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+    
+    const response = await adminApi.get(`/dashboard/user-stats?${queryParams.toString()}`);
+    return response.data;
   },
 
   // 사용자 관리
@@ -396,7 +648,23 @@ export const adminApiService = {
     if (params.amount_range) queryParams.append('amount_range', params.amount_range);
     
     const response = await adminApi.get(`/payments?${queryParams}`);
-    return response.data;
+    
+    // 서버 응답 구조 확인 및 변환
+    const serverData = response.data;
+    
+    // 서버가 { data: [], pagination: {} } 형식으로 반환하는 경우 처리
+    if (serverData.data && serverData.pagination) {
+      return {
+        payments: serverData.data || [],
+        total: serverData.pagination.total || 0,
+        page: serverData.pagination.page || 1,
+        per_page: serverData.pagination.per_page || 20,
+        total_pages: serverData.pagination.total_pages || 0,
+      };
+    }
+    
+    // 기존 형식으로 반환하는 경우
+    return serverData;
   },
 
   async getPaymentById(paymentId: string): Promise<Payment> {
@@ -433,12 +701,29 @@ export const adminApiService = {
       queryParams.append('date_range', params.date_range);
     }
     const response = await adminApi.get(`/payments/stats${queryParams.toString() ? '?' + queryParams.toString() : ''}`);
-    return response.data;
+    
+    // 서버 응답을 프론트엔드 형식에 맞게 변환
+    const serverData = response.data;
+    return {
+      total_revenue: serverData.total_revenue || 0,
+      total_transactions: serverData.total_transactions || 0,
+      successful_transactions: serverData.completed_transactions || 0,
+      failed_transactions: serverData.failed_transactions || 0,
+      refunded_transactions: serverData.cancelled_transactions || 0, // cancelled를 refunded로 매핑
+      pending_transactions: serverData.pending_transactions || 0,
+      average_transaction_amount: serverData.total_transactions > 0 
+        ? Math.round((serverData.total_revenue / serverData.total_transactions) * 100) / 100 
+        : 0,
+      revenue_today: 0, // 서버에서 제공하지 않으므로 0으로 설정
+      revenue_this_week: 0, // 서버에서 제공하지 않으므로 0으로 설정
+      revenue_this_month: serverData.total_revenue || 0, // 전체 수익을 월간 수익으로 사용
+    };
   },
 
-  // 시스템 모니터링
-  async getSystemMetrics(period: string = '1h'): Promise<SystemMetrics[]> {
-    const response = await adminApi.get(`/dashboard/system-metrics?period=${period}`);
+  // 시스템 메트릭 조회
+  async getSystemMetrics(period: string = '1h'): Promise<SystemMetrics[] | ApiResponse<SystemMetrics[]>> {
+    const timestamp = Date.now();
+    const response = await adminApi.get(`/dashboard/system-metrics?period=${period}&_t=${timestamp}`);
     return response.data;
   },
 

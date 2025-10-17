@@ -25,12 +25,13 @@ import { useThemeStore } from "@/store/themeStore";
 import AdminProtectedRoute from "@/components/Auth/AdminProtectedRoute";
 import AdminLogin from "@/pages/AdminLogin";
 import AdminDashboard from "@/pages/AdminDashboard";
+import AdminDashboardSimple from "@/pages/AdminDashboardSimple";
+import TestPage from "@/pages/TestPage";
 import UserManagement from "@/pages/UserManagement";
 import PaymentManagement from "@/pages/PaymentManagement";
 import SystemMonitoring from "@/pages/SystemMonitoring";
 import Analytics from "@/pages/Analytics";
 import AdminSettings from "@/pages/AdminSettings";
-
 export default function App() {
   // Zustand store hooks를 안전하게 호출
   const authStore = useAuthStore();
@@ -40,6 +41,7 @@ export default function App() {
   const { isDark } = themeStore;
 
   useEffect(() => {
+    console.log('[App] 애플리케이션 초기화 시작');
     initialize();
   }, [initialize]);
 
@@ -152,11 +154,20 @@ export default function App() {
               <AdminDashboard />
             </AdminProtectedRoute>
           } />
-          <Route path="/admin/dashboard" element={
+          <Route 
+              path="/admin/dashboard" 
+              element={
+                <AdminProtectedRoute>
+                  <AdminDashboard />
+                </AdminProtectedRoute>
+              } 
+            />
+          <Route path="/admin/test" element={
             <AdminProtectedRoute>
-              <AdminDashboard />
+              <AdminDashboardSimple />
             </AdminProtectedRoute>
           } />
+          <Route path="/test" element={<TestPage />} />
           <Route path="/admin/users" element={
             <AdminProtectedRoute>
               <UserManagement />

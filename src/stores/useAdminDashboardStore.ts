@@ -11,8 +11,17 @@ import adminApiService, {
   AdminUser, 
   ExtendedDashboardStats, 
   PopularKeyword, 
-  PopularPatent 
+  PopularPatent,
+  ApiResponse 
 } from '../services/adminApi';
+
+// 안전한 데이터 추출 헬퍼 함수
+function extractData<T>(response: T | ApiResponse<T>): T {
+  if (response && typeof response === 'object' && 'data' in response) {
+    return (response as ApiResponse<T>).data;
+  }
+  return response as T;
+}
 
 interface CacheEntry<T> {
   data: T;
@@ -108,38 +117,18 @@ export const useAdminDashboardStore = create<DashboardState>((set, get) => ({
   // 대시보드 메트릭 조회
   fetchMetrics: async (period?: string) => {
     const currentPeriod = period || get().selectedPeriod;
-    const cacheKey = `metrics_${currentPeriod}`;
-    
-    // 캐시된 데이터 확인
-    const cachedMetrics = get().getCachedData<DashboardMetrics>(cacheKey);
-    if (cachedMetrics) {
-      console.log('[AdminDashboard] 캐시된 메트릭 사용:', currentPeriod);
-      set({ 
-        metrics: cachedMetrics, 
-        selectedPeriod: currentPeriod 
-      });
-      return;
-    }
-    
-    console.log('[AdminDashboard] 메트릭 조회 시작:', currentPeriod);
     set({ isLoadingMetrics: true, metricsError: null });
     
     try {
-      console.log('[AdminDashboard] API 호출 중...');
-      const metrics = await adminApiService.getDashboardMetrics(currentPeriod);
-      console.log('[AdminDashboard] 메트릭 조회 성공:', metrics);
-      console.log('[AdminDashboard] total_analyses 값:', metrics.total_analyses);
-      
-      // 캐시에 저장
-      get().setCachedData(cacheKey, metrics);
+      const response = await adminApiService.getDashboardMetrics(currentPeriod);
+      const extractedData = extractData(response);
       
       set({ 
-        metrics, 
+        metrics: extractedData,
         isLoadingMetrics: false,
         selectedPeriod: currentPeriod 
       });
     } catch (error: any) {
-      console.error('[AdminDashboard] 메트릭 조회 실패:', error);
       const errorMessage = error.response?.data?.detail || '메트릭 조회에 실패했습니다.';
       set({ 
         metricsError: errorMessage, 
@@ -150,26 +139,14 @@ export const useAdminDashboardStore = create<DashboardState>((set, get) => ({
   
   // 최근 활동 조회
   fetchRecentActivities: async (limit = 10) => {
-    const cacheKey = `activities_${limit}`;
-    
-    // 캐시된 데이터 확인
-    const cachedActivities = get().getCachedData<any[]>(cacheKey);
-    if (cachedActivities) {
-      console.log('[AdminDashboard] 캐시된 활동 로그 사용');
-      set({ recentActivities: cachedActivities });
-      return;
-    }
-    
     set({ isLoadingActivities: true, activitiesError: null });
     
     try {
-      const activities = await adminApiService.getRecentActivities(limit);
-      
-      // 캐시에 저장
-      get().setCachedData(cacheKey, activities);
+      const response = await adminApiService.getRecentActivities(limit);
+      const extractedData = extractData(response);
       
       set({ 
-        recentActivities: activities, 
+        recentActivities: extractedData, 
         isLoadingActivities: false 
       });
     } catch (error: any) {
@@ -186,9 +163,11 @@ export const useAdminDashboardStore = create<DashboardState>((set, get) => ({
     set({ isLoadingSystemMetrics: true, systemMetricsError: null });
     
     try {
-      const systemMetrics = await adminApiService.getSystemMetrics(period);
+      const response = await adminApiService.getSystemMetrics(period);
+      const extractedData = extractData(response);
+      
       set({ 
-        systemMetrics, 
+        systemMetrics: extractedData, 
         isLoadingSystemMetrics: false 
       });
     } catch (error: any) {
@@ -362,11 +341,18 @@ export const useMetricsFormatters = () => {
     }).format(amount);
   };
   
-  const formatNumber = (num: number): string => {
+  const formatNumber = (num: number, decimals?: number): string => {
     if (isNaN(num) || num === null || num === undefined) {
       return '0';
     }
-    return new Intl.NumberFormat('ko-KR').format(num);
+    
+    const options: Intl.NumberFormatOptions = {};
+    if (decimals !== undefined) {
+      options.minimumFractionDigits = decimals;
+      options.maximumFractionDigits = decimals;
+    }
+    
+    return new Intl.NumberFormat('ko-KR', options).format(num);
   };
   
   const formatPercentage = (value: number): string => {
@@ -432,4 +418,4 @@ export const useMetricsFormatters = () => {
   };
 };
 
-export default useAdminDashboardStore
+export default useAdminDashboardStore;

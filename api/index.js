@@ -74,8 +74,9 @@ app.all('/api/dashboard-analytics', wrapVercelHandler('./dashboard-analytics.js'
 app.all('/api/popular-keywords', wrapVercelHandler('./popular-keywords.js'));
 app.all('/api/ai-analysis', wrapVercelHandler('./ai-analysis.js'));
 
-// Admin Routes
+// Admin routes
 app.all('/api/admin', wrapVercelHandler('./admin.js'));
+app.all('/api/admin/auth/*', wrapVercelHandler('./admin/auth.js'));
 app.all('/api/admin/auth', wrapVercelHandler('./admin/auth.js'));
 app.all('/api/admin/analytics', wrapVercelHandler('./admin/analytics.js'));
 app.all('/api/admin/analytics-keywords', wrapVercelHandler('./admin/analytics-keywords.js'));
@@ -90,6 +91,27 @@ app.all('/api/admin/users-management', wrapVercelHandler('./admin/users-manageme
 app.all('/api/admin/billing', wrapVercelHandler('./admin/billing-management.js'));
 app.all('/api/admin/billing-management', wrapVercelHandler('./admin/billing-management.js'));
 app.all('/api/admin/payment-management', wrapVercelHandler('./admin/payment-management.js'));
+
+// Dashboard API routes
+app.get('/api/dashboard/metrics', wrapVercelHandler('./dashboard/metrics.js'));
+app.get('/api/dashboard/comprehensive-stats', wrapVercelHandler('./dashboard/comprehensive-stats.js'));
+app.get('/api/dashboard/extended-stats', wrapVercelHandler('./dashboard/extended-stats.js'));
+app.get('/api/dashboard/daily-trends', wrapVercelHandler('./dashboard/daily-trends.js'));
+app.get('/api/dashboard/popular-keywords', wrapVercelHandler('./dashboard/popular-keywords.js'));
+app.get('/api/dashboard/popular-patents', wrapVercelHandler('./dashboard/popular-patents.js'));
+app.get('/api/dashboard/recent-activities', wrapVercelHandler('./dashboard/recent-activities.js'));
+app.get('/api/dashboard/system-metrics', wrapVercelHandler('./dashboard/system-metrics.js'));
+app.get('/api/dashboard/user-stats', wrapVercelHandler('./dashboard/user-stats.js'));
+
+// Admin Dashboard API routes
+app.get('/api/dashboard/admin-comprehensive-stats', wrapVercelHandler('./dashboard/admin-comprehensive-stats.js'));
+app.get('/api/dashboard/admin-trends', wrapVercelHandler('./dashboard/admin-trends.js'));
+app.get('/api/dashboard/admin-top-insights', wrapVercelHandler('./dashboard/admin-top-insights.js'));
+app.get('/api/dashboard/top-keywords', wrapVercelHandler('./dashboard/top-keywords.js'));
+app.get('/api/dashboard/top-report-categories', wrapVercelHandler('./dashboard/top-report-categories.js'));
+app.get('/api/dashboard/top-patent-fields', wrapVercelHandler('./dashboard/top-patent-fields.js'));
+app.all('/api/dashboard/admin-users', wrapVercelHandler('./dashboard/admin-users.js'));
+app.all('/api/dashboard/admin-payments', wrapVercelHandler('./dashboard/admin-payments.js'));
 
 // Payment Routes
 app.all('/api/payment/history', wrapVercelHandler('./payment/history.js'));

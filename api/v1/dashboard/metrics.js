@@ -52,25 +52,10 @@ export default async function handler(req, res) {
       };
     }
 
-    // Calculate date range
+    // 기간 제한 제거 - 100일치 모든 데이터 사용
     const now = new Date();
-    let startDate, endDate;
-    
-    switch (date_range) {
-      case 'week':
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case 'month':
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        break;
-      case 'year':
-        startDate = new Date(now.getFullYear(), 0, 1);
-        break;
-      default:
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-    }
-    
-    endDate = now;
+    const startDate = new Date(now.getTime() - 100 * 24 * 60 * 60 * 1000); // 100일 전
+    const endDate = now;
 
     // Get total users count
     const usersResponse = await supabaseQuery('users', {

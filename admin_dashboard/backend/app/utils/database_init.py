@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal, engine, Base
 from app.models.admin import AdminUser
 from app.core.auth import get_password_hash
-from app.config import settings
+from app.core.config import settings
 import logging
 
 logger = logging.getLogger(__name__)

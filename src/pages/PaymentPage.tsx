@@ -1,10 +1,12 @@
 // Patent-AI 결제 정보 페이지
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Calendar, Gift, Clock, ArrowRight, CheckCircle } from 'lucide-react';
+import { CreditCard, Calendar, Gift, Clock, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import PointBalance from '../components/PointBalance';
 import NicePayButton from '../components/Payment/NicePayButton';
 import { useAuthStore } from '../store/authStore';
 import { supabase } from '../lib/supabase';
+import { toast } from 'sonner';
 
 interface Transaction {
   id: string;
@@ -17,8 +19,20 @@ interface Transaction {
   report_type?: string;
 }
 
+interface PaymentState {
+  reason?: 'insufficient_points';
+  requiredPoints?: number;
+  currentPoints?: number;
+  reportType?: string;
+  returnPath?: string;
+}
+
 const PaymentPage: React.FC = () => {
   const { user, profile, loading: authLoading } = useAuthStore();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const paymentState = location.state as PaymentState;
+  
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +46,19 @@ const PaymentPage: React.FC = () => {
 
   useEffect(() => {
     fetchTransactions();
-  }, []);
+    
+    // 포인트 부족으로 인한 리다이렉트인 경우 안내 메시지 표시
+    if (paymentState?.reason === 'insufficient_points') {
+      const { requiredPoints, currentPoints, reportType } = paymentState;
+      toast.info(
+        `${reportType === 'business_insights' ? '비즈니스 인사이트' : '시장 분석'} 리포트 생성을 위해 포인트 충전이 필요합니다.`,
+        {
+          description: `필요 포인트: ${requiredPoints}P, 현재 포인트: ${currentPoints}P`,
+          duration: 5000
+        }
+      );
+    }
+  }, [paymentState]);
 
   const fetchTransactions = async () => {
     try {
@@ -141,17 +167,60 @@ const PaymentPage: React.FC = () => {
 
   const handlePaymentSuccess = (result: any) => {
     console.log('결제 성공:', result);
-    alert('결제가 성공적으로 완료되었습니다!');
+    toast.success('결제가 성공적으로 완료되었습니다!', {
+      duration: 3000
+    });
+    
     setSelectedPlan(null);
     setPaymentData(null);
     fetchTransactions(); // 거래 내역 새로고침
+    
+    // 결제 완료 후 원래 페이지로 복귀
+    setTimeout(() => {
+      handleReturnAfterPayment();
+    }, 2000);
   };
 
   const handlePaymentError = (error: any) => {
     console.error('결제 오류:', error);
-    alert(error.message || '결제 중 오류가 발생했습니다.');
+    toast.error(error.message || '결제 중 오류가 발생했습니다.', {
+      duration: 5000
+    });
     setSelectedPlan(null);
     setPaymentData(null);
+  };
+
+  const handleReturnAfterPayment = () => {
+    // 세션 스토리지에서 복귀 정보 확인
+    const returnInfo = sessionStorage.getItem('returnAfterPayment');
+    if (returnInfo) {
+      try {
+        const parsed = JSON.parse(returnInfo);
+        sessionStorage.removeItem('returnAfterPayment');
+        
+        // 원래 페이지로 복귀하면서 리포트 생성 재시도 안내
+        toast.info('포인트 충전이 완료되었습니다. 리포트 생성을 다시 시도해주세요.', {
+          duration: 4000
+        });
+        
+        navigate(parsed.path);
+        return;
+      } catch (error) {
+        console.error('Return info parsing error:', error);
+      }
+    }
+    
+    // paymentState에서 복귀 경로 확인
+    if (paymentState?.returnPath) {
+      toast.info('포인트 충전이 완료되었습니다. 리포트 생성을 다시 시도해주세요.', {
+        duration: 4000
+      });
+      navigate(paymentState.returnPath);
+      return;
+    }
+    
+    // 기본적으로 대시보드로 이동
+    navigate('/dashboard');
   };
 
   const getTransactionIcon = (type: string) => {
@@ -198,14 +267,15 @@ const PaymentPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">로그인이 필요합니다</h2>
-          <p className="text-gray-600 mb-6">결제 정보를 확인하려면 로그인해주세요.</p>
-          <a
-            href="/login"
-            className="bg-olive-600 text-white px-6 py-3 rounded-lg hover:bg-olive-700 transition-colors"
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">로그인이 필요합니다</h2>
+          <p className="text-gray-600 mb-4">결제 서비스를 이용하려면 로그인해주세요.</p>
+          <button
+            onClick={() => navigate('/login')}
+            className="px-4 py-2 bg-olive-600 text-white rounded-lg hover:bg-olive-700 transition-colors"
           >
             로그인하기
-          </a>
+          </button>
         </div>
       </div>
     );
@@ -220,6 +290,70 @@ const PaymentPage: React.FC = () => {
           <p className="mt-2 text-gray-600">포인트 충전 및 거래 내역을 관리하세요</p>
         </div>
 
+        {/* 포인트 부족 알림 (포인트 부족으로 인한 리다이렉트인 경우) */}
+        {paymentState?.reason === 'insufficient_points' && (
+          <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-6">
+            <div className="flex items-start space-x-3">
+              <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-amber-800 mb-2">
+                  포인트 부족으로 인한 충전 필요
+                </h3>
+                <p className="text-amber-700 mb-3">
+                  {paymentState.reportType === 'business_insights' ? '비즈니스 인사이트' : '시장 분석'} 리포트 생성을 위해 포인트가 부족합니다.
+                </p>
+                <div className="bg-white rounded-lg p-4 border border-amber-200">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-600">필요 포인트:</span>
+                      <span className="font-semibold text-amber-800 ml-2">{paymentState.requiredPoints?.toLocaleString()}P</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">현재 포인트:</span>
+                      <span className="font-semibold text-red-600 ml-2">{paymentState.currentPoints?.toLocaleString()}P</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">부족 포인트:</span>
+                      <span className="font-semibold text-red-600 ml-2">
+                        {((paymentState.requiredPoints || 0) - (paymentState.currentPoints || 0)).toLocaleString()}P
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">리포트 유형:</span>
+                      <span className="font-semibold text-amber-800 ml-2">
+                        {paymentState.reportType === 'business_insights' ? '비즈니스 인사이트' : '시장 분석'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center space-x-3">
+                  <button
+                    onClick={() => {
+                      const shortfall = (paymentState.requiredPoints || 0) - (paymentState.currentPoints || 0);
+                      if (shortfall <= 5500) {
+                        handleAddonPurchase(5000);
+                      } else if (shortfall <= 11000) {
+                        handleAddonPurchase(10000);
+                      } else {
+                        handleSubscription();
+                      }
+                    }}
+                    className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors font-medium"
+                  >
+                    추천 충전하기
+                  </button>
+                  <button
+                    onClick={() => navigate(paymentState.returnPath || '/dashboard')}
+                    className="text-amber-700 hover:text-amber-800 font-medium"
+                  >
+                    나중에 하기
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* 왼쪽: 포인트 잔액 및 충전 옵션 */}
           <div className="lg:col-span-2 space-y-6">
@@ -232,13 +366,22 @@ const PaymentPage: React.FC = () => {
               
               {/* 정기 구독 */}
               <div className="mb-6">
-                <div className="bg-olive-50 border border-olive-200 rounded-lg p-6">
+                <div className={`border rounded-lg p-6 ${
+                  paymentState?.reason === 'insufficient_points' && 
+                  ((paymentState.requiredPoints || 0) - (paymentState.currentPoints || 0)) > 11000
+                    ? 'bg-amber-50 border-amber-200' 
+                    : 'bg-olive-50 border-olive-200'
+                }`}>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
                         <Calendar className="w-5 h-5 text-olive-600" />
                         <h4 className="text-lg font-semibold text-olive-800">월간 정기 구독</h4>
                         <span className="bg-olive-600 text-white text-xs px-2 py-1 rounded-full">추천</span>
+                        {paymentState?.reason === 'insufficient_points' && 
+                         ((paymentState.requiredPoints || 0) - (paymentState.currentPoints || 0)) > 11000 && (
+                          <span className="bg-amber-600 text-white text-xs px-2 py-1 rounded-full">권장</span>
+                        )}
                       </div>
                       <p className="text-olive-700 mb-3">매월 자동으로 포인트가 충전됩니다</p>
                       <div className="space-y-2 text-sm text-olive-600">
@@ -266,32 +409,63 @@ const PaymentPage: React.FC = () => {
                 <h4 className="text-lg font-semibold text-gray-900 mb-4">추가 포인트 충전</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   {/* 5,000원 충전 */}
-                  <div className="border border-gray-200 rounded-lg p-4">
+                  <div className={`border rounded-lg p-4 ${
+                    paymentState?.reason === 'insufficient_points' && 
+                    ((paymentState.requiredPoints || 0) - (paymentState.currentPoints || 0)) <= 5500
+                      ? 'border-amber-300 bg-amber-50' 
+                      : 'border-gray-200'
+                  }`}>
                     <div className="text-center">
                       <p className="text-lg font-semibold text-gray-900">₩5,500</p>
                       <p className="text-sm text-gray-600 mb-2">(VAT 포함)</p>
                       <p className="text-sm text-blue-600 font-medium">5,500포인트</p>
                       <p className="text-xs text-green-600 font-medium">10% 보너스 포함</p>
+                      {paymentState?.reason === 'insufficient_points' && 
+                       ((paymentState.requiredPoints || 0) - (paymentState.currentPoints || 0)) <= 5500 && (
+                        <p className="text-xs text-amber-600 font-medium mt-1">권장 충전</p>
+                      )}
                     </div>
                     <button
                       onClick={() => handleAddonPurchase(5000)}
-                      className="w-full mt-3 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
+                      className={`w-full mt-3 py-2 px-4 rounded-lg transition-colors ${
+                        paymentState?.reason === 'insufficient_points' && 
+                        ((paymentState.requiredPoints || 0) - (paymentState.currentPoints || 0)) <= 5500
+                          ? 'bg-amber-600 text-white hover:bg-amber-700' 
+                          : 'bg-gray-600 text-white hover:bg-gray-700'
+                      }`}
                     >
                       충전하기
                     </button>
                   </div>
 
                   {/* 10,000원 충전 */}
-                  <div className="border border-gray-200 rounded-lg p-4">
+                  <div className={`border rounded-lg p-4 ${
+                    paymentState?.reason === 'insufficient_points' && 
+                    ((paymentState.requiredPoints || 0) - (paymentState.currentPoints || 0)) > 5500 &&
+                    ((paymentState.requiredPoints || 0) - (paymentState.currentPoints || 0)) <= 11000
+                      ? 'border-amber-300 bg-amber-50' 
+                      : 'border-gray-200'
+                  }`}>
                     <div className="text-center">
                       <p className="text-lg font-semibold text-gray-900">₩11,000</p>
                       <p className="text-sm text-gray-600 mb-2">(VAT 포함)</p>
                       <p className="text-sm text-blue-600 font-medium">11,000포인트</p>
                       <p className="text-xs text-green-600 font-medium">10% 보너스 포함</p>
+                      {paymentState?.reason === 'insufficient_points' && 
+                       ((paymentState.requiredPoints || 0) - (paymentState.currentPoints || 0)) > 5500 &&
+                       ((paymentState.requiredPoints || 0) - (paymentState.currentPoints || 0)) <= 11000 && (
+                        <p className="text-xs text-amber-600 font-medium mt-1">권장 충전</p>
+                      )}
                     </div>
                     <button
                       onClick={() => handleAddonPurchase(10000)}
-                      className="w-full mt-3 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
+                      className={`w-full mt-3 py-2 px-4 rounded-lg transition-colors ${
+                        paymentState?.reason === 'insufficient_points' && 
+                        ((paymentState.requiredPoints || 0) - (paymentState.currentPoints || 0)) > 5500 &&
+                        ((paymentState.requiredPoints || 0) - (paymentState.currentPoints || 0)) <= 11000
+                          ? 'bg-amber-600 text-white hover:bg-amber-700' 
+                          : 'bg-gray-600 text-white hover:bg-gray-700'
+                      }`}
                     >
                       충전하기
                     </button>

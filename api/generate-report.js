@@ -234,6 +234,89 @@ export default async function handler(req, res) {
 
     console.log('Report type:', reportType, 'Timeout:', TIMEOUT_MS + 'ms');
 
+    // 🔍 Step 1: 사용자 인증 및 포인트 차감 처리
+    console.log('💰 포인트 차감 처리 시작');
+    
+    // 사용자 ID 검증
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required',
+        message: '사용자 인증이 필요합니다.'
+      });
+    }
+
+    // 사용자 정보 조회
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('id, email')
+      .eq('id', userId)
+      .single();
+
+    if (userError || !user) {
+      console.error('❌ 사용자 조회 실패:', userError);
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+        message: '사용자를 찾을 수 없습니다.'
+      });
+    }
+
+    // 사용자 포인트 잔액 조회
+    const { data: pointBalance, error: balanceError } = await supabase
+      .from('user_point_balances')
+      .select('current_balance')
+      .eq('user_id', userId)
+      .single();
+
+    if (balanceError || !pointBalance) {
+      console.error('❌ 포인트 잔액 조회 실패:', balanceError);
+      return res.status(404).json({
+        success: false,
+        error: 'User balance not found',
+        message: '사용자 포인트 정보를 찾을 수 없습니다.'
+      });
+    }
+
+    const currentPoints = pointBalance.current_balance;
+
+    console.log('✅ 사용자 정보 조회 성공:', {
+      userId: user.id,
+      email: user.email,
+      currentPoints: currentPoints
+    });
+
+    // 분석 타입에 따른 포인트 차감량 결정
+    let pointsRequired;
+    
+    if (reportType === 'market') {
+      pointsRequired = 400;
+    } else if (reportType === 'business') {
+      pointsRequired = 600;
+    } else {
+      // 기본값은 business
+      pointsRequired = 600;
+    }
+
+    console.log(`💰 리포트 타입: ${reportType}, 필요 포인트: ${pointsRequired}, 현재 포인트: ${currentPoints}`);
+
+    // 🔍 Step 1: 포인트 잔액 검증 (차감하지 않고 확인만)
+    if (currentPoints < pointsRequired) {
+      return res.status(400).json({
+        success: false,
+        error: 'Insufficient points',
+        message: `포인트가 부족합니다. ${reportType === 'market' ? '시장 분석' : '비즈니스 인사이트'} 리포트 생성에는 ${pointsRequired} 포인트가 필요합니다.`,
+        requiredPoints: pointsRequired,
+        currentPoints: currentPoints,
+        reportType: reportType
+      });
+    }
+
+    console.log('✅ 포인트 잔액 검증 완료 - 리포트 생성을 진행합니다.');
+
+    // 중복 요청 방지를 위한 요청 ID 생성
+    const requestId = `${user.id}_${patentData.applicationNumber || 'unknown'}_${reportType}_${Date.now()}`;
+
     // 특허 정보 추출
     const patentInfo = extractPatentInfo(patentData);
     
@@ -707,6 +790,36 @@ export default async function handler(req, res) {
       hasSupabase: !!supabase
     });
 
+    // 🔍 Step 2: 리포트 생성 성공 후 포인트 차감 실행
+    console.log('💰 리포트 생성 성공 - 포인트 차감을 진행합니다.');
+    
+    try {
+      // FEFO 포인트 차감 실행
+      const { data: deductResult, error: deductError } = await supabase
+        .rpc('deduct_points_fefo', {
+          p_user_id: userId,
+          p_points: pointsRequired,
+          p_report_type: reportType === 'market' ? 'market_analysis' : 'business_insight',
+          p_request_id: requestId
+        });
+
+      if (deductError) {
+        console.error('❌ 리포트 생성 후 포인트 차감 실패:', deductError);
+        
+        // 포인트 차감 실패 시에도 리포트는 이미 생성되었으므로 경고 로그만 남기고 계속 진행
+        console.warn('⚠️ 리포트는 생성되었지만 포인트 차감에 실패했습니다. 관리자 확인 필요.');
+        
+        // 포인트 차감 실패를 응답에 포함
+        console.log('✅ 포인트 차감 실패했지만 리포트 생성은 성공 - 응답을 반환합니다.');
+      } else {
+        console.log('✅ 포인트 차감 성공:', deductResult);
+      }
+      
+    } catch (error) {
+      console.error('❌ 포인트 차감 처리 중 예외 발생:', error);
+      console.warn('⚠️ 리포트는 생성되었지만 포인트 차감 중 예외가 발생했습니다. 관리자 확인 필요.');
+    }
+
     res.status(200).json({
       success: true,
       data: {
@@ -816,6 +929,9 @@ export default async function handler(req, res) {
     let statusCode = 500;
     let errorMessage = '리포트 생성 중 오류가 발생했습니다.';
     let errorDetails = {};
+    
+    // 포인트 관련 오류인지 확인
+    const isPointError = error.message?.includes('point') || error.message?.includes('포인트');
     
     // 타임아웃 오류
     if (error.message.includes('timeout')) {

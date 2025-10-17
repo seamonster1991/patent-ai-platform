@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 
 from app.database import get_db
-from app.config import settings
+from app.core.config import settings
 from app.models.admin import AdminUser
 from app.core.auth import verify_token
 

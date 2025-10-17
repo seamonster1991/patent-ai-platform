@@ -2,7 +2,7 @@
 Supabase client configuration and utilities
 """
 from supabase import create_client, Client
-from app.config import settings
+from app.core.config import settings
 import logging
 
 logger = logging.getLogger(__name__)

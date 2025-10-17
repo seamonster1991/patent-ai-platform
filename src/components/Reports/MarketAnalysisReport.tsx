@@ -18,7 +18,7 @@ import ReportLoadingState from './ReportLoadingState'
 import ReportErrorState from './ReportErrorState'
 import { useAuthStore } from '../../store/authStore'
 import { useNavigate } from 'react-router-dom'
-import { handleReportGeneratedFromAPI } from '../../utils/eventUtils';
+import { handleReportGeneratedFromAPI, dispatchPointBalanceUpdateEvent } from '../../utils/eventUtils';
 import { getApiUrl } from '../../lib/api';
 
 interface MarketAnalysisReportProps {
@@ -558,6 +558,15 @@ export default function MarketAnalysisReport({
           
           console.log('✅ [MarketAnalysisReport] 이벤트 발생 완료:', eventDispatched);
 
+          // 포인트 잔액 업데이트 이벤트 발생
+          const pointUpdateDispatched = dispatchPointBalanceUpdateEvent({
+            type: 'pointBalanceUpdate',
+            source: 'market_report_generation',
+            timestamp: new Date().toISOString()
+          });
+          
+          console.log('💰 [MarketAnalysisReport] 포인트 업데이트 이벤트 발생 완료:', pointUpdateDispatched);
+
           // 백엔드에서 제공하는 이벤트 데이터 사용
           let eventDetail;
           if (data.shouldDispatchEvent && data.eventData) {
@@ -742,6 +751,11 @@ export default function MarketAnalysisReport({
             <div className="flex items-center justify-center gap-2 text-sm text-amber-700 bg-amber-50 px-4 py-2 rounded-lg border border-amber-200 mb-6">
               <Coins className="w-4 h-4" />
               <span>시장분석 리포트 생성 시 <strong>400 포인트</strong>가 차감됩니다</span>
+            </div>
+            
+            {/* 안전장치 안내 */}
+            <div className="flex items-center justify-center gap-2 text-xs text-green-700 bg-green-50 px-3 py-2 rounded-lg border border-green-200 mb-4">
+              <span>✅ 리포트 생성 성공 시에만 포인트가 차감됩니다</span>
             </div>
             
             <Button 

@@ -7,6 +7,7 @@ import Card, { CardContent, CardHeader, CardTitle } from '../components/UI/Card'
 import { useSearchStore } from '../store/searchStore'
 import { toast } from 'sonner'
 import { useAuthStore } from '../store/authStore'
+import { apiRequest, getApiUrl } from '../lib/api'
 
 export default function Home() {
   const [searchKeyword, setSearchKeyword] = useState('')
@@ -21,8 +22,11 @@ export default function Home() {
     const fetchPopularKeywords = async () => {
       setLoadingKeywords(true)
       try {
-        const response = await fetch('http://localhost:3001/api/popular-keywords')
-        const result = await response.json()
+        const result = await apiRequest(getApiUrl('/api/popular-keywords'), {
+          timeout: 10000,
+          retries: 2,
+          requireAuth: false
+        })
         
         if (result.success && result.data) {
           // API 데이터에서 keyword 필드만 추출하여 문자열 배열로 변환

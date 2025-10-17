@@ -3,11 +3,13 @@ class RedirectGuard {
   private redirectCount: Map<string, number> = new Map();
   private lastRedirectTime: Map<string, number> = new Map();
   private redirectHistory: Array<{path: string, timestamp: number, source: string}> = [];
-  private readonly MAX_REDIRECTS = 2; // 더 엄격하게 설정
-  private readonly RESET_INTERVAL = 3000; // 3초로 단축
-  private readonly MAX_HISTORY = 10;
+  private readonly MAX_REDIRECTS = 3; // 더 관대하게 설정 (3회 허용)
+  private readonly RESET_INTERVAL = 2000; // 2초로 단축
+  private readonly MAX_HISTORY = 15;
+  private readonly RAPID_REDIRECT_THRESHOLD = 1000; // 1초 이내 연속 리다이렉트 감지
   private isBlocked = false;
   private blockUntil = 0;
+  private lastGlobalRedirectTime = 0;
 
   canRedirect(path: string, source: string = 'unknown'): boolean {
     // 클라이언트 사이드에서만 실행
@@ -25,7 +27,21 @@ class RedirectGuard {
       this.unblock();
     }
 
+    // 매우 빠른 전역 리다이렉트 감지
+    if (now - this.lastGlobalRedirectTime < this.RAPID_REDIRECT_THRESHOLD) {
+      console.error(`[RedirectGuard] 매우 빠른 연속 리다이렉트 감지 (${now - this.lastGlobalRedirectTime}ms) - 즉시 블록`);
+      this.block(3000); // 3초 블록으로 단축
+      return false;
+    }
+
+    // 중복 리다이렉트 감지 (같은 경로로의 빠른 연속 리다이렉트)
     const lastTime = this.lastRedirectTime.get(path) || 0;
+    if (now - lastTime < this.RAPID_REDIRECT_THRESHOLD) {
+      console.error(`[RedirectGuard] 중복 리다이렉트 감지: ${path} (${now - lastTime}ms 간격)`);
+      this.block(3000); // 3초 블록으로 단축
+      return false;
+    }
+
     const count = this.redirectCount.get(path) || 0;
 
     // 히스토리에 추가
@@ -35,10 +51,20 @@ class RedirectGuard {
     }
 
     // 최근 히스토리 분석 (빠른 연속 리다이렉트 감지)
-    const recentRedirects = this.redirectHistory.filter(h => now - h.timestamp < 1000);
-    if (recentRedirects.length >= 3) {
+    const recentRedirects = this.redirectHistory.filter(h => now - h.timestamp < 2000);
+    if (recentRedirects.length >= 2) {
       console.error('[RedirectGuard] 빠른 연속 리다이렉트 감지 - 전역 블록 활성화');
       this.block(10000); // 10초 블록
+      return false;
+    }
+
+    // 동일한 소스에서의 중복 리다이렉트 감지
+    const sameSourceRedirects = this.redirectHistory.filter(h => 
+      h.source === source && now - h.timestamp < 3000
+    );
+    if (sameSourceRedirects.length >= 2) {
+      console.error(`[RedirectGuard] 동일 소스(${source})에서 중복 리다이렉트 감지 - 블록`);
+      this.block(8000); // 8초 블록
       return false;
     }
 
@@ -53,7 +79,7 @@ class RedirectGuard {
     // 최대 리다이렉트 횟수 초과 확인
     if (count >= this.MAX_REDIRECTS) {
       console.error(`[RedirectGuard] 리다이렉트 루프 감지: ${path} (${count}회) - 소스: ${source}`);
-      this.block(5000); // 5초 블록
+      this.block(3000); // 3초 블록으로 단축
       return false;
     }
 
@@ -72,6 +98,7 @@ class RedirectGuard {
     
     this.redirectCount.set(path, count + 1);
     this.lastRedirectTime.set(path, now);
+    this.lastGlobalRedirectTime = now; // 전역 리다이렉트 시간 업데이트
     
     console.log(`[RedirectGuard] 리다이렉트 기록: ${path} (${count + 1}회) - 소스: ${source}`);
   }
@@ -97,8 +124,14 @@ class RedirectGuard {
     this.redirectCount.clear();
     this.lastRedirectTime.clear();
     this.redirectHistory = [];
+    this.lastGlobalRedirectTime = 0;
     this.unblock();
     console.log('[RedirectGuard] 완전 리셋');
+  }
+
+  // 블록 상태 확인
+  isCurrentlyBlocked(): boolean {
+    return this.isBlocked && Date.now() < this.blockUntil;
   }
 
   getStatus(): any {
@@ -106,7 +139,8 @@ class RedirectGuard {
       isBlocked: this.isBlocked,
       blockUntil: this.blockUntil,
       redirectCount: Object.fromEntries(this.redirectCount),
-      recentHistory: this.redirectHistory.slice(-5)
+      recentHistory: this.redirectHistory.slice(-5),
+      lastGlobalRedirectTime: this.lastGlobalRedirectTime
     };
   }
 }

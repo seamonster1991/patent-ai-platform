@@ -98,7 +98,13 @@ class AdminApiClient {
   private refreshToken: string | null = null;
 
   constructor() {
-    this.baseURL = 'http://localhost:8005/api/admin';
+    // 환경에 따른 API URL 설정
+    const isDevelopment = import.meta.env.DEV;
+    const apiUrl = isDevelopment 
+      ? 'http://localhost:3001' 
+      : (import.meta.env.VITE_API_URL || window.location.origin);
+    
+    this.baseURL = `${apiUrl}/api/admin`;
     this.loadTokensFromStorage();
   }
 
@@ -175,7 +181,7 @@ class AdminApiClient {
 
   // 인증 관련 메서드
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    const response = await this.makeRequest<LoginResponse>('/auth/login', {
+    const response = await this.makeRequest<LoginResponse>('/auth', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
@@ -218,7 +224,8 @@ class AdminApiClient {
 
   // 대시보드 관련 메서드
   async getDashboardMetrics(period: string = 'week'): Promise<DashboardMetrics> {
-    return this.makeRequest<DashboardMetrics>(`/dashboard/metrics?period=${period}`);
+    const timestamp = Date.now();
+    return this.makeRequest<DashboardMetrics>(`/dashboard/metrics?period=${period}&_t=${timestamp}`);
   }
 
   async getSystemHealth(): Promise<SystemHealth> {

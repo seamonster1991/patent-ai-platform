@@ -26,7 +26,28 @@ export default function Register() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    
+    // Format phone number automatically
+    if (name === 'phone') {
+      const phoneValue = value.replace(/\D/g, '') // Remove non-digits
+      let formattedPhone = phoneValue
+      
+      if (phoneValue.length >= 3) {
+        formattedPhone = phoneValue.slice(0, 3) + '-'
+        if (phoneValue.length >= 7) {
+          formattedPhone += phoneValue.slice(3, 7) + '-' + phoneValue.slice(7, 11)
+        } else {
+          formattedPhone += phoneValue.slice(3)
+        }
+      }
+      
+      setFormData(prev => ({ 
+        ...prev, 
+        [name]: formattedPhone 
+      }))
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }))
+    }
     
     // Clear error when user starts typing
     if (errors[name]) {
@@ -50,6 +71,12 @@ export default function Register() {
       newErrors.email = '이메일을 입력해주세요.'
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = '유효한 이메일 주소를 입력해주세요.'
+    }
+
+    if (!formData.phone.trim()) {
+      newErrors.phone = '전화번호를 입력해주세요.'
+    } else if (!/^\d{3}-\d{4}-\d{4}$/.test(formData.phone)) {
+      newErrors.phone = '전화번호는 000-0000-0000 형식으로 입력해주세요.'
     }
 
     if (!formData.password) {
@@ -208,17 +235,23 @@ export default function Register() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                전화번호
+                전화번호 *
               </label>
               <input
                 type="tel"
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-olive-500 focus:border-olive-500 transition-colors"
-                placeholder="전화번호를 입력하세요 (선택사항)"
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-olive-500 focus:border-olive-500 transition-colors ${
+                  errors.phone ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="000-0000-0000"
                 autoComplete="tel"
+                required
               />
+              {errors.phone && (
+                <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
+              )}
             </div>
 
             <div>

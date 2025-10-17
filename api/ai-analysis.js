@@ -141,8 +141,8 @@ export default async function handler(req, res) {
     console.log('- abstract 길이:', patentInfo.abstract?.length || 0);
     console.log('- claims 길이:', patentInfo.claims?.length || 0);
 
-    // 🔍 Step 4: 포인트 차감 처리
-    console.log('💰 포인트 차감 처리 시작');
+    // 🔍 Step 4: 포인트 검증 처리 (차감하지 않고 확인만)
+    console.log('💰 포인트 검증 처리 시작');
     
     // 분석 타입에 따른 포인트 차감량 결정
     let reportType;
@@ -162,60 +162,41 @@ export default async function handler(req, res) {
 
     console.log(`💰 리포트 타입: ${reportType}, 필요 포인트: ${pointsRequired}`);
 
-    // 중복 요청 방지를 위한 요청 ID 생성
-    const requestId = `${user.id}_${patentInfo.applicationNumber}_${reportType}_${Date.now()}`;
-    
-    try {
-      // FEFO 포인트 차감 실행
-      const { data: deductResult, error: deductError } = await supabase
-        .rpc('deduct_points_fefo', {
-          p_user_id: user.id,
-          p_points: pointsRequired,
-          p_report_type: reportType,
-          p_request_id: requestId
-        });
+    // 사용자 포인트 잔액 조회
+    const { data: pointBalance, error: balanceError } = await supabase
+      .from('user_point_balances')
+      .select('current_balance')
+      .eq('user_id', user.id)
+      .single();
 
-      if (deductError) {
-        console.error('❌ 포인트 차감 실패:', deductError);
-        
-        // 잔액 부족 오류 처리
-        if (deductError.message?.includes('insufficient') || deductError.message?.includes('부족')) {
-          return res.status(400).json({
-            success: false,
-            error: 'Insufficient points',
-            message: `포인트가 부족합니다. ${reportType === 'market_analysis' ? '시장 분석' : '비즈니스 인사이트'} 리포트 생성에는 ${pointsRequired} 포인트가 필요합니다.`,
-            requiredPoints: pointsRequired,
-            reportType: reportType
-          });
-        }
-        
-        // 중복 요청 오류 처리
-        if (deductError.message?.includes('duplicate') || deductError.message?.includes('중복')) {
-          return res.status(409).json({
-            success: false,
-            error: 'Duplicate request',
-            message: '동일한 요청이 이미 처리 중입니다. 잠시 후 다시 시도해주세요.'
-          });
-        }
-        
-        // 기타 오류
-        return res.status(500).json({
-          success: false,
-          error: 'Point deduction failed',
-          message: '포인트 차감 중 오류가 발생했습니다.'
-        });
-      }
-
-      console.log('✅ 포인트 차감 성공:', deductResult);
-      
-    } catch (error) {
-      console.error('❌ 포인트 차감 처리 중 예외 발생:', error);
-      return res.status(500).json({
+    if (balanceError || !pointBalance) {
+      console.error('❌ 포인트 잔액 조회 실패:', balanceError);
+      return res.status(404).json({
         success: false,
-        error: 'Point deduction error',
-        message: '포인트 차감 처리 중 오류가 발생했습니다.'
+        error: 'User balance not found',
+        message: '사용자 포인트 정보를 찾을 수 없습니다.'
       });
     }
+
+    const currentPoints = pointBalance.current_balance;
+    console.log(`💰 현재 포인트: ${currentPoints}, 필요 포인트: ${pointsRequired}`);
+
+    // 🔍 Step 4-1: 포인트 잔액 검증 (차감하지 않고 확인만)
+    if (currentPoints < pointsRequired) {
+      return res.status(400).json({
+        success: false,
+        error: 'Insufficient points',
+        message: `포인트가 부족합니다. ${reportType === 'market_analysis' ? '시장 분석' : '비즈니스 인사이트'} 리포트 생성에는 ${pointsRequired} 포인트가 필요합니다.`,
+        requiredPoints: pointsRequired,
+        currentPoints: currentPoints,
+        reportType: reportType
+      });
+    }
+
+    console.log('✅ 포인트 잔액 검증 완료 - 분석을 진행합니다.');
+
+    // 중복 요청 방지를 위한 요청 ID 생성
+    const requestId = `${user.id}_${patentInfo.applicationNumber}_${reportType}_${Date.now()}`;
 
     // 🔧 DEBUGGING: 캐시 비활성화 및 Gemini API 강제 사용
     console.log('🔍 Step 5: Gemini API 키 상태 확인');
@@ -610,6 +591,33 @@ export default async function handler(req, res) {
     }
     
     console.log('🔧 Step 7: 응답 반환 준비 완료');
+    
+    // 🔍 Step 7-1: 분석 성공 후 포인트 차감 실행
+    console.log('💰 분석 성공 - 포인트 차감을 진행합니다.');
+    
+    try {
+      // FEFO 포인트 차감 실행
+      const { data: deductResult, error: deductError } = await supabase
+        .rpc('deduct_points_fefo', {
+          p_user_id: user.id,
+          p_points: pointsRequired,
+          p_report_type: reportType,
+          p_request_id: requestId
+        });
+
+      if (deductError) {
+        console.error('❌ 분석 성공 후 포인트 차감 실패:', deductError);
+        
+        // 포인트 차감 실패 시에도 분석은 이미 완료되었으므로 경고 로그만 남기고 계속 진행
+        console.warn('⚠️ 분석은 완료되었지만 포인트 차감에 실패했습니다. 관리자 확인 필요.');
+      } else {
+        console.log('✅ 포인트 차감 성공:', deductResult);
+      }
+      
+    } catch (error) {
+      console.error('❌ 포인트 차감 처리 중 예외 발생:', error);
+      console.warn('⚠️ 분석은 완료되었지만 포인트 차감 중 예외가 발생했습니다. 관리자 확인 필요.');
+    }
     
     // 중복 제거: DB 저장은 generate-report.js에서만 처리
     console.log('ℹ️ DB 저장은 generate-report.js에서 통합 처리됨 (중복 제거)');

@@ -41,8 +41,7 @@ async function checkUsersAndCreateData() {
           email: 'test@example.com',
           name: '테스트 사용자',
           subscription_plan: 'premium',
-          max_quota: 1000,
-          current_usage: 0,
+          usage_count: 0,
           created_at: new Date().toISOString()
         }])
         .select()
@@ -66,7 +65,7 @@ async function checkUsersAndCreateData() {
         keyword: '인공지능 특허',
         technology_field: '인공지능',
         ipc_codes: ['G06N', 'G06F'],
-        search_results_count: 150,
+        results_count: 150,
         created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
       },
       {
@@ -74,7 +73,7 @@ async function checkUsersAndCreateData() {
         keyword: '블록체인 암호화',
         technology_field: '블록체인',
         ipc_codes: ['H04L', 'G06F'],
-        search_results_count: 89,
+        results_count: 89,
         created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
       },
       {
@@ -82,7 +81,7 @@ async function checkUsersAndCreateData() {
         keyword: '자율주행 센서',
         technology_field: '자동차',
         ipc_codes: ['B60W', 'G01S'],
-        search_results_count: 234,
+        results_count: 234,
         created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
       },
       {
@@ -90,7 +89,7 @@ async function checkUsersAndCreateData() {
         keyword: '5G 통신',
         technology_field: '통신',
         ipc_codes: ['H04B', 'H04W'],
-        search_results_count: 312,
+        results_count: 312,
         created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString()
       },
       {
@@ -98,7 +97,7 @@ async function checkUsersAndCreateData() {
         keyword: '바이오 센서',
         technology_field: '바이오',
         ipc_codes: ['A61B', 'G01N'],
-        search_results_count: 167,
+        results_count: 167,
         created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
       }
     ]
@@ -125,16 +124,11 @@ async function checkUsersAndCreateData() {
         ipc_codes: ['G06N', 'G06F'],
         application_number: 'US20240001001',
         analysis_type: 'market',
-        market_analysis: {
-          market_size: '50억 달러',
-          growth_rate: '15%',
-          key_players: ['Google', 'Microsoft', 'IBM']
-        },
-        technical_analysis: {
-          novelty_score: 85,
-          technical_complexity: 'High',
-          implementation_difficulty: 'Medium'
-        },
+        market_penetration: '50억 달러 시장 규모, 15% 성장률',
+        competitive_landscape: 'Google, Microsoft, IBM 등 주요 경쟁사',
+        market_growth_drivers: 'AI 기술 발전, 자동화 수요 증가',
+        risk_factors: '기술적 복잡성, 규제 리스크',
+        revenue_model: '라이선스 및 SaaS 모델',
         created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
       },
       {
@@ -144,16 +138,11 @@ async function checkUsersAndCreateData() {
         ipc_codes: ['H04L', 'G06F'],
         application_number: 'US20240001002',
         analysis_type: 'technical',
-        market_analysis: {
-          market_size: '30억 달러',
-          growth_rate: '25%',
-          key_players: ['Ethereum', 'Bitcoin', 'Ripple']
-        },
-        technical_analysis: {
-          novelty_score: 78,
-          technical_complexity: 'High',
-          implementation_difficulty: 'High'
-        },
+        market_penetration: '30억 달러 시장 규모, 25% 성장률',
+        competitive_landscape: 'Ethereum, Bitcoin, Ripple 등',
+        market_growth_drivers: '보안 요구 증가, 탈중앙화 트렌드',
+        risk_factors: '규제 불확실성, 기술적 한계',
+        revenue_model: '토큰 이코노미 및 플랫폼 수수료',
         created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
       },
       {
@@ -163,16 +152,11 @@ async function checkUsersAndCreateData() {
         ipc_codes: ['B60W', 'G01S'],
         application_number: 'US20240001003',
         analysis_type: 'market',
-        market_analysis: {
-          market_size: '100억 달러',
-          growth_rate: '20%',
-          key_players: ['Tesla', 'Waymo', 'Uber']
-        },
-        technical_analysis: {
-          novelty_score: 92,
-          technical_complexity: 'Very High',
-          implementation_difficulty: 'Very High'
-        },
+        market_penetration: '100억 달러 시장 규모, 20% 성장률',
+        competitive_landscape: 'Tesla, Waymo, Uber 등 주요 플레이어',
+        market_growth_drivers: '자율주행 기술 발전, 안전성 요구',
+        risk_factors: '기술적 복잡성, 법적 책임 문제',
+        revenue_model: '하드웨어 판매 및 소프트웨어 라이선스',
         created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
       }
     ]
@@ -245,7 +229,7 @@ async function checkUsersAndCreateData() {
       .update({
         total_searches: searchSamples.length,
         total_reports: reportSamples.length,
-        current_usage: reportSamples.length,
+        usage_count: reportSamples.length,
         updated_at: new Date().toISOString()
       })
       .eq('id', targetUserId)

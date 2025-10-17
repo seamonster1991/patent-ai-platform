@@ -1009,28 +1009,39 @@ async def get_payments(page: int = 1, per_page: int = 20, status: Optional[str] 
             "total_pages": 1
         }
 
+from pydantic import BaseModel, EmailStr
+from typing import Optional
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+    totp_code: Optional[str] = None
+
 @app.post("/api/v1/auth/login")
-async def admin_login(credentials: dict):
+async def admin_login(credentials: LoginRequest):
     """Admin login endpoint"""
     try:
-        email = credentials.get("email")
-        password = credentials.get("password")
+        email = credentials.email
+        password = credentials.password
         
         if not email or not password:
             raise HTTPException(status_code=400, detail="이메일과 비밀번호가 필요합니다.")
         
         # Mock admin authentication
-        if email == "admin@example.com" and password == "admin123":
+        if email == "admin@p-ai.co.kr" and password == "admin123":
             return {
-                "success": True,
-                "message": "로그인 성공",
-                "token": "mock_admin_token",
-                "user": {
+                "access_token": "mock_admin_token",
+                "refresh_token": "mock_refresh_token",
+                "token_type": "bearer",
+                "expires_in": 3600,
+                "admin": {
                     "id": "admin_001",
                     "email": email,
                     "role": "admin",
-                    "name": "관리자"
-                }
+                    "name": "관리자",
+                    "permissions": ["all"]
+                },
+                "requires_2fa": False
             }
         else:
             raise HTTPException(status_code=401, detail="잘못된 인증 정보입니다.")
@@ -1040,6 +1051,26 @@ async def admin_login(credentials: dict):
     except Exception as e:
         print(f"Login error: {e}")
         raise HTTPException(status_code=500, detail="로그인 처리 중 오류가 발생했습니다.")
+
+@app.get("/api/v1/auth/me")
+async def get_current_admin():
+    """Get current admin info endpoint"""
+    try:
+        # For testing purposes, return mock admin info without token validation
+        # In production, this should validate the Bearer token
+        return {
+            "id": "admin_001",
+            "email": "admin@p-ai.co.kr",
+            "name": "관리자",
+            "role": "admin",
+            "permissions": ["all"],
+            "is_active": True,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    except Exception as e:
+        print(f"Get current admin error: {e}")
+        raise HTTPException(status_code=500, detail="관리자 정보 조회 중 오류가 발생했습니다.")
 
 @app.post("/api/v1/auth/signup")
 async def user_signup(user_data: dict):
@@ -1555,31 +1586,28 @@ async def get_alert_rules():
         }
 
 @app.get("/api/v1/dashboard/extended-stats")
-async def get_extended_stats(days: int = 30):
-    """Extended dashboard statistics endpoint with real data"""
+async def get_extended_stats(days: int = 100):
+    """Extended dashboard statistics endpoint with ALL available data (no period restrictions)"""
     try:
-        # Calculate date range
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=days)
+        # Remove period restrictions - use ALL available data for conversion rate calculations
+        # This ensures conversion rates are calculated from the complete dataset
         
         # Get total users count
         users_response = supabase_query("users", select="id", count=True)
         total_users = users_response["count"]
         
-        # Get login activities count
+        # Get ALL login activities count (no date filter)
         login_activities_response = supabase_query("user_activities", 
             select="id", 
             filters={
-                "activity_type": "eq.login",
-                "created_at": f"gte.{start_date.isoformat()}"
+                "activity_type": "eq.login"
             }, 
             count=True)
         total_logins = login_activities_response["count"]
         
-        # Get search activities count
+        # Get ALL search activities count (no date filter)
         search_activities_response = supabase_query("search_history", 
             select="id", 
-            filters={"created_at": f"gte.{start_date.isoformat()}"}, 
             count=True)
         total_searches = search_activities_response["count"]
         
@@ -1588,49 +1616,45 @@ async def get_extended_stats(days: int = 30):
             search_activities_alt = supabase_query("user_activities", 
                 select="id", 
                 filters={
-                    "activity_type": "eq.search",
-                    "created_at": f"gte.{start_date.isoformat()}"
+                    "activity_type": "eq.search"
                 }, 
                 count=True)
             total_searches = search_activities_alt["count"]
         
-        # Get reports count
+        # Get ALL reports count (no date filter)
         reports_response = supabase_query("reports", 
             select="id", 
-            filters={"created_at": f"gte.{start_date.isoformat()}"}, 
             count=True)
         total_reports = reports_response["count"]
         
-        # Get AI analysis reports count
+        # Get ALL AI analysis reports count (no date filter)
         ai_reports_response = supabase_query("ai_analysis_reports", 
             select="id", 
-            filters={"created_at": f"gte.{start_date.isoformat()}"}, 
             count=True)
         total_ai_reports = ai_reports_response["count"]
         
         # Use the higher count between reports and ai_analysis_reports
         total_reports = max(total_reports, total_ai_reports)
         
-        # Calculate averages and conversion rates
+        # Calculate averages and conversion rates using ALL data
         avg_logins_per_user = round(total_logins / total_users, 2) if total_users > 0 else 0
         avg_searches_per_user = round(total_searches / total_users, 2) if total_users > 0 else 0
         avg_reports_per_user = round(total_reports / total_users, 2) if total_users > 0 else 0
         
+        # Conversion rates using ALL available data (no period restrictions)
         login_to_report_rate = round((total_reports / total_logins * 100), 2) if total_logins > 0 else 0
         search_to_report_rate = round((total_reports / total_searches * 100), 2) if total_searches > 0 else 0
         
-        # Get additional metrics
+        # Get additional metrics (ALL data)
         # Patent views
         patent_views_response = supabase_query("patent_views", 
             select="id", 
-            filters={"created_at": f"gte.{start_date.isoformat()}"}, 
             count=True)
         total_patent_views = patent_views_response["count"]
         
         # Document downloads
         downloads_response = supabase_query("document_downloads", 
             select="id", 
-            filters={"created_at": f"gte.{start_date.isoformat()}"}, 
             count=True)
         total_downloads = downloads_response["count"]
         
@@ -1646,7 +1670,8 @@ async def get_extended_stats(days: int = 30):
             "avg_reports_per_user": avg_reports_per_user,
             "login_to_report_rate": login_to_report_rate,
             "search_to_report_rate": search_to_report_rate,
-            "period_days": days
+            "period_days": "ALL_DATA",  # Indicates all available data is used
+            "note": "Conversion rates calculated using ALL available database data (no period restrictions)"
         }
     except Exception as e:
         print(f"Error fetching extended stats: {e}")
@@ -1670,7 +1695,8 @@ async def get_extended_stats(days: int = 30):
                 "avg_reports_per_user": round(reports_count / users_count, 2) if users_count > 0 else 0.0,
                 "login_to_report_rate": 0.0,
                 "search_to_report_rate": 0.0,
-                "period_days": days
+                "period_days": "ALL_DATA",
+                "note": "Fallback data - conversion rates calculated using ALL available database data"
             }
         except:
             return {
@@ -1685,7 +1711,8 @@ async def get_extended_stats(days: int = 30):
                 "avg_reports_per_user": 0.0,
                 "login_to_report_rate": 0.0,
                 "search_to_report_rate": 0.0,
-                "period_days": days
+                "period_days": "ALL_DATA",
+                "note": "Error fallback - no period restrictions applied"
             }
 
 @app.get("/api/v1/dashboard/popular-keywords")

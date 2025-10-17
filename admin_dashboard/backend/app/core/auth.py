@@ -9,7 +9,7 @@ import pyotp
 import secrets
 import string
 
-from app.config import settings
+from app.core.config import settings
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

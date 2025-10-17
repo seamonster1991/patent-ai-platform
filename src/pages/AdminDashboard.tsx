@@ -1,455 +1,869 @@
-import React, { useEffect, useCallback, useMemo } from 'react';
-import AdminLayout from '../components/Admin/AdminLayout';
-import { useAdminDashboardStore, useMetricsFormatters } from '../stores/useAdminDashboardStore';
-import { Card } from '../components/UI/Card';
-import { LoadingSpinner } from '../components/UI/LoadingSpinner';
+import React, { useState, useEffect } from 'react';
+import { Card } from '@/components/UI/Card';
+import { Button } from '@/components/UI/Button';
+import { Badge } from '@/components/UI/Badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/UI/Tabs';
+import { Select } from '@/components/UI/Select';
+import UserManagement from '@/components/admin/UserManagement';
+import PaymentManagement from '@/components/admin/PaymentManagement';
+import KPICard from '@/components/admin/KPICard';
+import TrendChart from '@/components/admin/charts/TrendChart';
+import InsightBarChart from '@/components/admin/charts/InsightBarChart';
+import TopPatentFieldsChart from '@/components/TopPatentFieldsChart';
+import LoadingSkeleton from '@/components/admin/LoadingSkeleton';
+import '@/styles/admin-dashboard.css';
 import { 
-  UsersIcon, 
-  CurrencyDollarIcon, 
-  DocumentTextIcon,
-  ExclamationTriangleIcon,
-  ChartBarIcon,
-  ClockIcon
-} from '@heroicons/react/24/outline';
+  Users, 
+  UserCheck, 
+  LogIn, 
+  Search, 
+  FileText, 
+  DollarSign,
+  TrendingUp,
+  BarChart3,
+  Activity,
+  Calendar,
+  Download,
+  RefreshCw
+} from 'lucide-react';
+
+// 인터페이스 정의 - API 응답 구조에 맞게 수정
+interface KPIStats {
+  total_logins: { value: number; change_rate: number };
+  total_searches: { value: number; change_rate: number };
+  total_reports: { value: number; change_rate: number };
+  total_revenue: { value: number; change_rate: number };
+  total_all_users: { value: number; change_rate: number }; // 총 사용자수 (삭제된 계정 포함)
+  total_users: { value: number; change_rate: number }; // 총 회원수 (실제 활동중인 계정)
+  free_members: { value: number; change_rate: number }; // 무료 회원
+  paid_members: { value: number; change_rate: number }; // 유료 회원
+  total_members: { value: number; change_rate: number }; // 총 회원수 (무료+유료)
+  market_reports: { value: number; change_rate: number };
+  business_reports: { value: number; change_rate: number };
+}
+
+interface EfficiencyMetrics {
+  avg_logins_per_user: number;
+  avg_searches_per_user: number;
+  avg_market_reports_per_user: number;
+  avg_business_reports_per_user: number;
+  avg_total_reports_per_user: number;
+}
+
+interface ConversionRates {
+  login_to_report: number;
+  search_to_report: number;
+}
+
+interface DailyTrend {
+  date: string;
+  logins: number;
+  searches: number;
+  reports: number;
+  newUsers: number;
+}
+
+interface TopInsight {
+  rank: number;
+  query?: string;
+  topic?: string;
+  count: number;
+}
+
+interface DashboardData {
+  kpi_stats: KPIStats;
+  efficiency_metrics: EfficiencyMetrics;
+  conversion_rates: ConversionRates;
+}
+
+interface TrendData {
+  trends: DailyTrend[];
+}
+
+interface InsightData {
+  topSearches: TopInsight[];
+  topPatents: TopInsight[];
+}
+
+interface TopKeyword {
+  rank: number;
+  keyword: string;
+  count: number;
+}
+
+interface TopCategory {
+  rank: number;
+  category: string;
+  category_name: string;
+  count: number;
+  percentage?: number;
+}
 
 const AdminDashboard: React.FC = () => {
-  const {
-    metrics,
-    systemMetrics,
-    recentActivities,
-    extendedStats,
-    popularKeywords,
-    popularPatents,
-    isLoadingMetrics,
-    isLoadingActivities,
-    isLoadingSystemMetrics,
-    isLoadingExtendedStats,
-    isLoadingPopularKeywords,
-    isLoadingPopularPatents,
-    metricsError,
-    activitiesError,
-    systemMetricsError,
-    extendedStatsError,
-    popularKeywordsError,
-    popularPatentsError,
-    selectedPeriod,
-    autoRefresh,
-    refreshInterval,
-    setSelectedPeriod,
-    setAutoRefresh,
-    clearErrors,
-    refreshAll
-  } = useAdminDashboardStore();
+  const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d');
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [trendData, setTrendData] = useState<TrendData | null>(null);
+  const [insightData, setInsightData] = useState<InsightData | null>(null);
+  const [topKeywords, setTopKeywords] = useState<TopKeyword[]>([]);
+  const [topCategories, setTopCategories] = useState<TopCategory[]>([]);
+  const [reportCategories, setReportCategories] = useState<TopCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const {
-    formatCurrency,
-    formatNumber,
-    formatPercentage,
-    formatDate,
-    getStatusBadgeColor
-  } = useMetricsFormatters();
+  // 데이터 페칭 함수
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // API 기본 URL 설정 - 백엔드 서버(포트 3001)로 요청
+      const apiBaseUrl = process.env.NODE_ENV === 'production' 
+        ? '' // Vercel에서는 상대 경로 사용
+        : 'http://localhost:3001'; // 개발 환경에서는 백엔드 서버 포트 사용
+      
+      // 인증 헤더 설정
+      const token = localStorage.getItem('admin_token');
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      
+      // API 엔드포인트 설정 - 백엔드 API 사용 (period 파라미터 추가)
+      const metricsEndpoint = `/api/dashboard/metrics?period=${period}`;
+      const extendedStatsEndpoint = `/api/dashboard/extended-stats?period=${period}&days=100`;
+      const keywordsEndpoint = `/api/dashboard/popular-keywords?period=${period}`;
+      const patentsEndpoint = `/api/dashboard/popular-patents?period=${period}`;
+      const dailyTrendsEndpoint = `/api/dashboard/daily-trends?period=${period}`;
+      const topPatentFieldsEndpoint = `/api/dashboard/top-patent-fields?period=${period}&limit=10`;
+      
+      // 모든 API 호출
+      const [
+        statsResponse, 
+        extendedStatsResponse, 
+        keywordsResponse, 
+        patentsResponse,
+        dailyTrendsResponse,
+        topPatentFieldsResponse
+      ] = await Promise.all([
+        fetch(`${apiBaseUrl}${metricsEndpoint}`, { headers }),
+        fetch(`${apiBaseUrl}${extendedStatsEndpoint}`, { headers }),
+        fetch(`${apiBaseUrl}${keywordsEndpoint}`, { headers }),
+        fetch(`${apiBaseUrl}${patentsEndpoint}`, { headers }),
+        fetch(`${apiBaseUrl}${dailyTrendsEndpoint}`, { headers }),
+        fetch(`${apiBaseUrl}${topPatentFieldsEndpoint}`, { headers })
+      ]);
+
+      if (!statsResponse.ok || !extendedStatsResponse.ok || !keywordsResponse.ok || !patentsResponse.ok) {
+        throw new Error('Failed to fetch dashboard data');
+      }
+
+      const [
+        statsData, 
+        extendedStatsData, 
+        keywordsData, 
+        patentsData,
+        dailyTrendsData,
+        topPatentFieldsData
+      ] = await Promise.all([
+        statsResponse.json(),
+        extendedStatsResponse.json(),
+        keywordsResponse.json(),
+        patentsResponse.json(),
+        dailyTrendsResponse.ok ? dailyTrendsResponse.json() : null,
+        topPatentFieldsResponse.ok ? topPatentFieldsResponse.json() : null
+      ]);
+
+      // 백엔드 응답 구조에 맞게 데이터 매핑 (API 응답의 data 필드에서 실제 데이터 추출)
+      const actualStatsData = statsData.success ? statsData.data : statsData;
+      const actualExtendedStatsData = extendedStatsData.success ? extendedStatsData.data : extendedStatsData;
+      const actualKeywordsData = keywordsData.success ? keywordsData.data : keywordsData;
+      const actualPatentsData = patentsData.success ? patentsData.data : patentsData;
+      const actualDailyTrendsData = dailyTrendsData?.success ? dailyTrendsData.data : dailyTrendsData;
+      const actualTopPatentFieldsData = topPatentFieldsData?.success ? topPatentFieldsData.data : topPatentFieldsData;
+
+      // 디버깅을 위한 로그 추가
+      console.log('Stats Data:', actualStatsData);
+      console.log('Extended Stats Data:', actualExtendedStatsData);
+      console.log('Keywords Data:', actualKeywordsData);
+      console.log('Patents Data:', actualPatentsData);
+
+      const mappedDashboardData = {
+        kpi_stats: {
+          total_all_users: { value: actualStatsData.total_all_users || 0, change_rate: 0 }, // 총 사용자수 (삭제된 계정 포함)
+          total_users: { value: actualStatsData.total_users || 0, change_rate: actualStatsData.user_growth_rate || 0 }, // 총 회원수 (실제 활동중인 계정)
+          free_members: { value: actualStatsData.free_members || 0, change_rate: 0 }, // 무료 회원
+          paid_members: { value: actualStatsData.paid_members || 0, change_rate: 0 }, // 유료 회원
+          total_members: { value: (actualStatsData.free_members || 0) + (actualStatsData.paid_members || 0), change_rate: 0 }, // 총 회원수 (무료+유료)
+          total_logins: { value: actualStatsData.login_stats?.total_logins || actualExtendedStatsData?.total_logins || 0, change_rate: 0 },
+          total_searches: { value: actualStatsData.search_stats?.total_searches || actualStatsData.totalSearches || actualExtendedStatsData?.total_searches || 0, change_rate: 0 },
+          market_reports: { value: Math.floor((actualStatsData.report_stats?.total_reports || actualStatsData.totalReports || 0) * 0.6), change_rate: 0 },
+          business_reports: { value: Math.floor((actualStatsData.report_stats?.total_reports || actualStatsData.totalReports || 0) * 0.4), change_rate: 0 },
+          total_reports: { value: actualStatsData.report_stats?.total_reports || actualStatsData.totalReports || actualExtendedStatsData?.total_reports || 0, change_rate: actualStatsData.analysis_growth_rate || 0 },
+          total_revenue: { value: actualStatsData.total_revenue || 0, change_rate: actualStatsData.revenue_growth_rate || 0 }
+        },
+        efficiency_metrics: {
+          avg_logins_per_user: actualExtendedStatsData?.avg_logins_per_user || (actualStatsData.login_stats?.total_logins && actualStatsData.total_users ? actualStatsData.login_stats.total_logins / actualStatsData.total_users : 0),
+          avg_searches_per_user: actualExtendedStatsData?.avg_searches_per_user || actualStatsData.search_stats?.avg_searches_per_user || 0,
+          avg_market_reports_per_user: (actualExtendedStatsData?.avg_reports_per_user || actualStatsData.report_stats?.avg_reports_per_user || 0) * 0.6,
+          avg_business_reports_per_user: (actualExtendedStatsData?.avg_reports_per_user || actualStatsData.report_stats?.avg_reports_per_user || 0) * 0.4,
+          avg_total_reports_per_user: actualExtendedStatsData?.avg_reports_per_user || actualStatsData.report_stats?.avg_reports_per_user || 0
+        },
+        conversion_rates: {
+          // 전환율 계산 - 실제 데이터에서 가져오기
+          login_to_report: actualStatsData.conversion_rates?.login_to_search || actualExtendedStatsData?.login_to_report_rate || 
+            (actualStatsData.login_stats?.total_logins > 0 ? 
+              ((actualStatsData.report_stats?.total_reports || 0) / actualStatsData.login_stats.total_logins * 100) : 0),
+          search_to_report: actualStatsData.conversion_rates?.search_to_report || actualExtendedStatsData?.search_to_report_rate || 
+            (actualStatsData.search_stats?.total_searches > 0 ? 
+              ((actualStatsData.report_stats?.total_reports || 0) / actualStatsData.search_stats.total_searches * 100) : 0)
+        }
+      };
+
+      console.log('Mapped Dashboard Data:', mappedDashboardData);
+      setDashboardData(mappedDashboardData);
+      
+      // 일일 트렌드 데이터 설정
+      if (actualDailyTrendsData && actualDailyTrendsData.daily_trends) {
+        setTrendData({
+          trends: actualDailyTrendsData.daily_trends.map((item: any) => ({
+            date: item.date,
+            newUsers: item.new_users || 0,
+            logins: item.total_logins || 0,
+            searches: item.total_searches || 0,
+            reports: item.total_reports || 0
+          }))
+        });
+      } else {
+        setTrendData({ trends: [] });
+      }
+      
+      // 키워드 데이터 구조 확인 및 매핑
+      console.log('Keywords response:', keywordsData);
+      if (actualKeywordsData) {
+        let mappedKeywords = [];
+        
+        // 다양한 응답 구조 처리
+        if (actualKeywordsData.top_keywords && Array.isArray(actualKeywordsData.top_keywords)) {
+          mappedKeywords = actualKeywordsData.top_keywords.slice(0, 10).map((item: any, index: number) => ({
+            rank: index + 1,
+            keyword: item.keyword || item.search_term || item.term || item.query,
+            count: item.count || item.search_count || item.frequency || 0
+          }));
+        } else if (actualKeywordsData.keywords && Array.isArray(actualKeywordsData.keywords)) {
+          mappedKeywords = actualKeywordsData.keywords.slice(0, 10).map((item: any, index: number) => ({
+            rank: index + 1,
+            keyword: item.keyword || item.search_term || item.term || item.query,
+            count: item.count || item.search_count || item.frequency || 0
+          }));
+        } else if (Array.isArray(actualKeywordsData)) {
+          // 구조: [{ keyword: "...", count: ... }, ...]
+          mappedKeywords = actualKeywordsData.slice(0, 10).map((item: any, index: number) => ({
+            rank: index + 1,
+            keyword: item.keyword || item.search_term || item.term || item.query,
+            count: item.count || item.search_count || item.frequency || 0
+          }));
+        }
+        
+        setTopKeywords(mappedKeywords);
+      } else {
+        setTopKeywords([]);
+      }
+      
+      // 특허 분야 데이터 매핑 (top-patent-fields API 응답 사용)
+      console.log('Top Patent Fields response:', topPatentFieldsData);
+      if (actualTopPatentFieldsData && actualTopPatentFieldsData.topFields && Array.isArray(actualTopPatentFieldsData.topFields)) {
+        const mappedPatentFields = actualTopPatentFieldsData.topFields.slice(0, 10).map((item: any) => ({
+          rank: item.rank,
+          category: item.field,
+          category_name: item.field,
+          count: item.count,
+          percentage: parseFloat(item.percentage) || 0
+        }));
+        setTopCategories(mappedPatentFields);
+      } else {
+        setTopCategories([]);
+      }
+
+      // 리포트 생성 분야 데이터 매핑 (patents API 응답 사용)
+      console.log('Patents response:', patentsData);
+      let reportCategories = [];
+      if (actualPatentsData) {
+        // 다양한 응답 구조 처리
+        if (actualPatentsData.top_patents && Array.isArray(actualPatentsData.top_patents)) {
+          reportCategories = actualPatentsData.top_patents.slice(0, 10).map((item: any, index: number) => ({
+            rank: index + 1,
+            category: item.category || item.field || item.technology_field || item.patent_number,
+            category_name: item.category_name || item.field_name || item.title || item.patent_title || item.invention_title,
+            count: item.count || item.analysis_count || item.frequency || 0
+          }));
+        } else if (actualPatentsData.patents && Array.isArray(actualPatentsData.patents)) {
+          reportCategories = actualPatentsData.patents.slice(0, 10).map((item: any, index: number) => ({
+            rank: index + 1,
+            category: item.category || item.field || item.technology_field || item.patent_number || item.application_number,
+            category_name: item.category_name || item.field_name || item.title || item.patent_title || item.invention_title,
+            count: item.count || item.analysis_count || item.frequency || 0
+          }));
+        } else if (actualPatentsData.categories && Array.isArray(actualPatentsData.categories)) {
+          reportCategories = actualPatentsData.categories.slice(0, 10).map((item: any, index: number) => ({
+            rank: index + 1,
+            category: item.category || item.field || item.technology_field,
+            category_name: item.category_name || item.field_name || item.name,
+            count: item.count || item.frequency || 0
+          }));
+        } else if (Array.isArray(actualPatentsData)) {
+          reportCategories = actualPatentsData.slice(0, 10).map((item: any, index: number) => ({
+            rank: index + 1,
+            category: item.category || item.field || item.technology_field || item.patent_number,
+            category_name: item.category_name || item.field_name || item.title || item.patent_title || item.invention_title,
+            count: item.count || item.analysis_count || item.frequency || 0
+          }));
+        }
+      }
+      
+      // 리포트 생성 분야를 별도 상태로 관리
+      setReportCategories(reportCategories);
+
+      // 인사이트 데이터 설정
+      setInsightData({ topSearches: [], topPatents: [] });
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // 초기 데이터 로드
-    console.log('[AdminDashboard] 컴포넌트 마운트됨, refreshAll 호출');
-    refreshAll();
-  }, []);
+    fetchDashboardData();
+  }, [period]); // period 의존성 추가 - 기간 변경 시 데이터 재로드
 
-  useEffect(() => {
-    if (!autoRefresh) return;
+  // 숫자 포맷팅 함수
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toLocaleString();
+  };
 
-    const interval = setInterval(() => {
-      refreshAll();
-    }, refreshInterval); // 스토어에서 설정된 간격 사용 (60초)
-
-    return () => clearInterval(interval);
-  }, [autoRefresh, refreshInterval, refreshAll]);
-
-  const handlePeriodChange = useCallback((period: string) => {
-    setSelectedPeriod(period);
-  }, [setSelectedPeriod]);
-
-  if (isLoadingMetrics && !metrics) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-64">
-          <LoadingSpinner size="lg" />
-        </div>
-      </AdminLayout>
-    );
-  }
+  // 통화 포맷팅 함수
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('ko-KR', {
+      style: 'currency',
+      currency: 'KRW'
+    }).format(amount);
+  };
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         {/* 헤더 */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">관리자 대시보드</h1>
-            <p className="text-gray-600">시스템 현황과 주요 지표를 확인하세요</p>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            {/* 기간 선택 */}
-            <select
-              value={selectedPeriod}
-              onChange={(e) => handlePeriodChange(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="1d">최근 1일</option>
-              <option value="7d">최근 7일</option>
-              <option value="30d">최근 30일</option>
-              <option value="90d">최근 90일</option>
-            </select>
-
-            {/* 자동 새로고침 토글 */}
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={autoRefresh}
-                onChange={(e) => setAutoRefresh(e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700">자동 새로고침</span>
-            </label>
-
-            {/* 수동 새로고침 버튼 */}
-            <button
-              onClick={refreshAll}
-              disabled={isLoadingMetrics}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-            >
-              새로고침
-            </button>
-          </div>
-        </div>
-
-        {/* 에러 메시지 */}
-        {(metricsError || activitiesError || systemMetricsError || extendedStatsError || popularKeywordsError || popularPatentsError) && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
-            <div className="flex">
-              <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">오류가 발생했습니다</h3>
-                <div className="mt-2 text-sm text-red-700">
-                  {metricsError && <p>메트릭: {metricsError}</p>}
-                  {activitiesError && <p>활동 로그: {activitiesError}</p>}
-                  {systemMetricsError && <p>시스템 메트릭: {systemMetricsError}</p>}
-                  {extendedStatsError && <p>확장 통계: {extendedStatsError}</p>}
-                  {popularKeywordsError && <p>인기 검색어: {popularKeywordsError}</p>}
-                  {popularPatentsError && <p>인기 특허: {popularPatentsError}</p>}
-                </div>
-                <button
-                  onClick={clearErrors}
-                  className="mt-2 text-sm text-red-600 hover:text-red-500"
+        <header className="mb-8">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                  관리자 대시보드
+                </h1>
+                <p className="text-slate-600 mt-2">시스템 전반의 통계와 관리 기능을 제공합니다</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={fetchDashboardData}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/50 hover:bg-white/80 border-slate-200"
                 >
-                  오류 메시지 닫기
-                </button>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  새로고침
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/50 hover:bg-white/80 border-slate-200"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  내보내기
+                </Button>
               </div>
             </div>
           </div>
-        )}
+        </header>
 
-        {/* 주요 메트릭 카드 */}
-        {useMemo(() => metrics && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <UsersIcon className="h-8 w-8 text-blue-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">총 사용자</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {formatNumber(metrics.total_users)}
-                  </p>
-                  {metrics.user_growth_rate !== undefined && (
-                    <p className={`text-sm ${metrics.user_growth_rate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {metrics.user_growth_rate >= 0 ? '+' : ''}{formatPercentage(metrics.user_growth_rate)}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <CurrencyDollarIcon className="h-8 w-8 text-green-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">총 수익</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {formatCurrency(metrics.total_revenue)}
-                  </p>
-                  {metrics.revenue_growth_rate !== undefined && (
-                    <p className={`text-sm ${metrics.revenue_growth_rate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {metrics.revenue_growth_rate >= 0 ? '+' : ''}{formatPercentage(metrics.revenue_growth_rate)}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <DocumentTextIcon className="h-8 w-8 text-purple-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">특허 분석</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {formatNumber(metrics.total_analyses)}
-                  </p>
-                  {metrics.analysis_growth_rate !== undefined && (
-                    <p className={`text-sm ${metrics.analysis_growth_rate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {metrics.analysis_growth_rate >= 0 ? '+' : ''}{formatPercentage(metrics.analysis_growth_rate)}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <ChartBarIcon className="h-8 w-8 text-orange-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">활성 사용자</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {formatNumber(metrics.active_users)}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {metrics.total_users > 0 ? formatPercentage((metrics.active_users / metrics.total_users) * 100) : '0%'} 활성률
-                  </p>
-                </div>
-              </div>
-            </Card>
+        {/* 탭 네비게이션 */}
+        <Tabs defaultValue="dashboard" className="space-y-6">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-2 shadow-lg border border-white/20">
+            <TabsList className="grid w-full grid-cols-3 bg-transparent gap-2">
+              <TabsTrigger 
+                value="dashboard" 
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl transition-all duration-200"
+              >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                대시보드
+              </TabsTrigger>
+              <TabsTrigger 
+                value="users"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl transition-all duration-200"
+              >
+                <Users className="w-4 h-4 mr-2" />
+                사용자 관리
+              </TabsTrigger>
+              <TabsTrigger 
+                value="payments"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl transition-all duration-200"
+              >
+                <DollarSign className="w-4 h-4 mr-2" />
+                결제 관리
+              </TabsTrigger>
+            </TabsList>
           </div>
-        ), [metrics, formatNumber, formatCurrency, formatPercentage])}
 
-        {/* 확장 통계 섹션 */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-gray-900">상세 통계 (최근 30일)</h2>
-          
-          {isLoadingExtendedStats ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(4)].map((_, index) => (
-                <Card key={index} className="p-6">
-                  <div className="text-center">
-                    <div className="animate-pulse">
-                      <div className="h-4 bg-gray-200 rounded w-20 mx-auto mb-2"></div>
-                      <div className="h-8 bg-gray-200 rounded w-16 mx-auto mb-2"></div>
-                      <div className="h-3 bg-gray-200 rounded w-24 mx-auto"></div>
-                    </div>
+          {/* 대시보드 탭 */}
+          <TabsContent value="dashboard" className="space-y-6">
+            {/* 데이터 범위 정보 */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg p-2">
+                    <Calendar className="w-5 h-5 text-white" />
                   </div>
-                </Card>
-              ))}
-            </div>
-          ) : extendedStats ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="p-6">
-                <div className="text-center">
-                  <p className="text-sm font-medium text-gray-500">총 로그인 수</p>
-                  <p className="text-3xl font-bold text-blue-600">
-                    {formatNumber(extendedStats.total_logins)}
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    평균 {extendedStats.avg_logins_per_user.toFixed(1)}회/사용자
-                  </p>
-                </div>
-              </Card>
-
-              <Card className="p-6">
-                <div className="text-center">
-                  <p className="text-sm font-medium text-gray-500">총 검색 수</p>
-                  <p className="text-3xl font-bold text-green-600">
-                    {formatNumber(extendedStats.total_searches)}
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    평균 {extendedStats.avg_searches_per_user.toFixed(1)}회/사용자
-                  </p>
-                </div>
-              </Card>
-
-              <Card className="p-6">
-                <div className="text-center">
-                  <p className="text-sm font-medium text-gray-500">총 리포트 생성</p>
-                  <p className="text-3xl font-bold text-purple-600">
-                    {formatNumber(extendedStats.total_reports)}
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    평균 {extendedStats.avg_reports_per_user.toFixed(1)}회/사용자
-                  </p>
-                </div>
-              </Card>
-
-              <Card className="p-6">
-                <div className="text-center">
-                  <p className="text-sm font-medium text-gray-500">전환율</p>
-                  <div className="space-y-2">
-                    <div>
-                      <p className="text-lg font-bold text-orange-600">
-                        {formatPercentage(extendedStats.login_to_report_rate)}
-                      </p>
-                      <p className="text-xs text-gray-600">로그인→리포트</p>
-                    </div>
-                    <div>
-                      <p className="text-lg font-bold text-teal-600">
-                        {formatPercentage(extendedStats.search_to_report_rate)}
-                      </p>
-                      <p className="text-xs text-gray-600">검색→리포트</p>
-                    </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-slate-800">데이터 범위</h2>
+                    <p className="text-sm text-slate-600">전체 데이터베이스 데이터 사용 (100일치) - 전환율은 모든 데이터 기반으로 계산</p>
                   </div>
                 </div>
-              </Card>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(4)].map((_, index) => (
-                <Card key={index} className="p-6">
-                  <div className="text-center">
-                    <p className="text-sm text-gray-500">확장 통계 데이터 없음</p>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* 인기 순위 섹션 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* 인기 검색어 */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">인기 검색어 TOP 10</h3>
-              <ChartBarIcon className="h-5 w-5 text-gray-400" />
-            </div>
-            
-            {isLoadingPopularKeywords ? (
-              <div className="flex justify-center py-8">
-                <LoadingSpinner />
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-medium text-slate-700">기간 선택:</label>
+                  <Select 
+                    value={period} 
+                    onValueChange={(value: '7d' | '30d' | '90d') => setPeriod(value)}
+                    className="w-32"
+                  >
+                    <option value="7d">7일</option>
+                    <option value="30d">30일</option>
+                    <option value="90d">90일</option>
+                  </Select>
+                </div>
               </div>
-            ) : popularKeywords.length > 0 ? (
-              <div className="space-y-3">
-                {popularKeywords.map((keyword, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <span className="flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                        {index + 1}
-                      </span>
-                      <span className="text-sm font-medium text-gray-900">{keyword.keyword}</span>
-                    </div>
-                    <span className="text-sm text-gray-600">{formatNumber(keyword.count)}회</span>
+            </div>
+
+
+            {/* 에러 표시 */}
+            {error && (
+              <div className="bg-red-50/80 backdrop-blur-sm border border-red-200 rounded-2xl p-6 shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className="bg-red-500 rounded-lg p-2">
+                    <RefreshCw className="w-5 h-5 text-white" />
                   </div>
-                ))}
+                  <div>
+                    <h3 className="text-red-800 font-semibold">데이터 로드 실패</h3>
+                    <p className="text-red-600 text-sm">{error}</p>
+                  </div>
+                  <Button 
+                    onClick={fetchDashboardData} 
+                    className="ml-auto bg-red-500 hover:bg-red-600"
+                    size="sm"
+                  >
+                    다시 시도
+                  </Button>
+                </div>
               </div>
-            ) : (
-              <p className="text-gray-500 text-center py-8">검색어 데이터가 없습니다.</p>
             )}
-          </Card>
 
-          {/* 인기 특허 */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">인기 분석 특허 TOP 10</h3>
-              <DocumentTextIcon className="h-5 w-5 text-gray-400" />
+            {/* KPI 개요 - 현대적 그라데이션 카드 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+              {loading ? (
+                <LoadingSkeleton type="kpi" count={5} />
+              ) : dashboardData?.kpi_stats ? (
+                <>
+                  <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="bg-white/20 rounded-lg p-2">
+                        <Users className="w-6 h-6" />
+                      </div>
+                      <Badge className="bg-white/20 text-white border-white/30">
+                        {dashboardData.kpi_stats.total_users.change_rate >= 0 ? '+' : ''}{dashboardData.kpi_stats.total_users.change_rate.toFixed(1)}%
+                      </Badge>
+                    </div>
+                    <div className="text-2xl font-bold mb-1">{formatNumber(dashboardData.kpi_stats.total_users.value)}</div>
+                    <div className="text-blue-100 text-sm">총 사용자</div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="bg-white/20 rounded-lg p-2">
+                        <UserCheck className="w-6 h-6" />
+                      </div>
+                      <Badge className="bg-white/20 text-white border-white/30">
+                        {dashboardData.kpi_stats.total_members.change_rate >= 0 ? '+' : ''}{dashboardData.kpi_stats.total_members.change_rate.toFixed(1)}%
+                      </Badge>
+                    </div>
+                    <div className="text-2xl font-bold mb-1">{formatNumber(dashboardData.kpi_stats.total_members.value)}</div>
+                    <div className="text-indigo-100 text-sm">총 회원수</div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="bg-white/20 rounded-lg p-2">
+                        <LogIn className="w-6 h-6" />
+                      </div>
+                      <Badge className="bg-white/20 text-white border-white/30">
+                        {dashboardData.kpi_stats.total_logins.change_rate >= 0 ? '+' : ''}{dashboardData.kpi_stats.total_logins.change_rate.toFixed(1)}%
+                      </Badge>
+                    </div>
+                    <div className="text-2xl font-bold mb-1">{formatNumber(dashboardData.kpi_stats.total_logins.value)}</div>
+                    <div className="text-green-100 text-sm">총 로그인</div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="bg-white/20 rounded-lg p-2">
+                        <Search className="w-6 h-6" />
+                      </div>
+                      <Badge className="bg-white/20 text-white border-white/30">
+                        {dashboardData.kpi_stats.total_searches.change_rate >= 0 ? '+' : ''}{dashboardData.kpi_stats.total_searches.change_rate.toFixed(1)}%
+                      </Badge>
+                    </div>
+                    <div className="text-2xl font-bold mb-1">{formatNumber(dashboardData.kpi_stats.total_searches.value)}</div>
+                    <div className="text-purple-100 text-sm">총 검색</div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="bg-white/20 rounded-lg p-2">
+                        <FileText className="w-6 h-6" />
+                      </div>
+                      <Badge className="bg-white/20 text-white border-white/30">
+                        {dashboardData.kpi_stats.total_reports.change_rate >= 0 ? '+' : ''}{dashboardData.kpi_stats.total_reports.change_rate.toFixed(1)}%
+                      </Badge>
+                    </div>
+                    <div className="text-2xl font-bold mb-1">{formatNumber(dashboardData.kpi_stats.total_reports.value)}</div>
+                    <div className="text-orange-100 text-sm">총 리포트</div>
+                  </div>
+                </>
+              ) : null}
             </div>
-            
-            {isLoadingPopularPatents ? (
-              <div className="flex justify-center py-8">
-                <LoadingSpinner />
+
+            {/* 상세 정보 카드들 */}
+            {loading ? (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <LoadingSkeleton type="chart" />
+                <LoadingSkeleton type="chart" />
+                <LoadingSkeleton type="chart" />
               </div>
-            ) : popularPatents.length > 0 ? (
-              <div className="space-y-3">
-                {popularPatents.map((patent, index) => (
-                  <div key={index} className="flex items-start justify-between">
-                    <div className="flex items-start space-x-3 flex-1">
-                      <span className="flex items-center justify-center w-6 h-6 bg-purple-100 text-purple-800 text-sm font-medium rounded-full mt-0.5">
-                        {index + 1}
+            ) : dashboardData?.kpi_stats && (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* 리포트 상세 */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-lg p-2">
+                      <FileText className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-800">리포트 분석</h3>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center p-3 bg-slate-50 rounded-xl">
+                      <span className="text-slate-600 font-medium">총 리포트</span>
+                      <span className="font-bold text-slate-800 text-lg">
+                        {formatNumber(dashboardData.kpi_stats.total_reports.value)}
                       </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{patent.title}</p>
-                        <p className="text-xs text-gray-500">{patent.patent_number}</p>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-orange-50 rounded-xl">
+                      <span className="text-orange-700 font-medium">시장분석</span>
+                      <span className="font-bold text-orange-600 text-lg">
+                        {formatNumber(dashboardData.kpi_stats.market_reports.value)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-red-50 rounded-xl">
+                      <span className="text-red-700 font-medium">비즈니스인사이트</span>
+                      <span className="font-bold text-red-600 text-lg">
+                        {formatNumber(dashboardData.kpi_stats.business_reports.value)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 수익 현황 */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg p-2">
+                      <DollarSign className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-800">수익 현황</h3>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-green-600 mb-2">
+                        {formatCurrency(dashboardData.kpi_stats.total_revenue.value)}
+                      </div>
+                      <div className="text-slate-600 text-sm">총 수익</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-semibold text-slate-700">
+                        수익 증감
+                      </div>
+                      <div className={`text-xl font-bold ${dashboardData.kpi_stats.total_revenue.change_rate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {dashboardData.kpi_stats.total_revenue.change_rate >= 0 ? '+' : ''}{dashboardData.kpi_stats.total_revenue.change_rate.toFixed(1)}%
                       </div>
                     </div>
-                    <span className="text-sm text-gray-600 ml-2">{formatNumber(patent.analysis_count)}회</span>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-center py-8">특허 분석 데이터가 없습니다.</p>
-            )}
-          </Card>
-        </div>
+                </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* 최근 활동 */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">최근 활동</h3>
-              <ClockIcon className="h-5 w-5 text-gray-400" />
-            </div>
-            
-            {isLoadingActivities ? (
-              <div className="flex justify-center py-8">
-                <LoadingSpinner />
-              </div>
-            ) : recentActivities.length > 0 ? (
-              <div className="space-y-4">
-                {recentActivities.slice(0, 5).map((activity, index) => (
-                  <div key={index} className="flex items-start space-x-3">
-                    <div className="flex-shrink-0">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
+                {/* 회원 현황 */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg p-2">
+                      <Users className="w-5 h-5 text-white" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900">{activity.description}</p>
-                      <p className="text-xs text-gray-500">{formatDate(activity.timestamp)}</p>
+                    <h3 className="text-lg font-semibold text-slate-800">회원 현황</h3>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-600">총 사용자수 (삭제된 계정 포함)</span>
+                      <span className="text-xl font-semibold text-slate-500">{formatNumber(dashboardData.kpi_stats.total_all_users.value)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-600">총 회원수 (실제 활동중인 계정의 합)</span>
+                      <span className="text-2xl font-bold text-indigo-600">{formatNumber(dashboardData.kpi_stats.total_members.value)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-600">무료 회원 (구독결제 안된 회원)</span>
+                      <span className="text-xl font-semibold text-gray-600">{formatNumber(dashboardData.kpi_stats.free_members.value)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-600">유료 회원 (구독결제 완료한 회원)</span>
+                      <span className="text-xl font-semibold text-purple-600">{formatNumber(dashboardData.kpi_stats.paid_members.value)}</span>
                     </div>
                   </div>
-                ))}
+                </div>
               </div>
-            ) : (
-              <p className="text-gray-500 text-center py-8">최근 활동이 없습니다.</p>
             )}
-          </Card>
 
-          {/* 시스템 상태 */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">시스템 상태</h3>
-              <ExclamationTriangleIcon className="h-5 w-5 text-gray-400" />
-            </div>
-            
-            {isLoadingSystemMetrics ? (
-              <div className="flex justify-center py-8">
-                <LoadingSpinner />
+            {/* 사용자별 평균 활동 */}
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <LoadingSkeleton type="chart" />
+                <LoadingSkeleton type="chart" />
+                <LoadingSkeleton type="chart" />
               </div>
-            ) : systemMetrics.length > 0 ? (
-              <div className="space-y-4">
-                {systemMetrics.slice(0, 5).map((metric, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{metric.name}</p>
-                      <p className="text-xs text-gray-500">{metric.description}</p>
+            ) : dashboardData?.efficiency_metrics && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg p-2">
+                      <LogIn className="w-5 h-5 text-white" />
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">{metric.value}</p>
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(metric.status)}`}>
-                        {metric.status}
-                      </span>
+                    <h3 className="text-lg font-semibold text-slate-800">평균 로그인</h3>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-blue-600 mb-2">
+                      {dashboardData.efficiency_metrics.avg_logins_per_user.toFixed(1)}
+                    </div>
+                    <div className="text-slate-600 text-sm font-medium">회/사용자</div>
+                  </div>
+                </div>
+
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg p-2">
+                      <Search className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-800">평균 검색</h3>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-purple-600 mb-2">
+                      {dashboardData.efficiency_metrics.avg_searches_per_user.toFixed(1)}
+                    </div>
+                    <div className="text-slate-600 text-sm font-medium">회/사용자</div>
+                  </div>
+                </div>
+
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-gradient-to-r from-green-500 to-teal-500 rounded-lg p-2">
+                      <FileText className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-800">평균 리포트</h3>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-green-600 mb-2">
+                      {(dashboardData.efficiency_metrics.avg_market_reports_per_user + 
+                        dashboardData.efficiency_metrics.avg_business_reports_per_user).toFixed(1)}
+                    </div>
+                    <div className="text-slate-600 text-sm font-medium">개/사용자</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 전환율 */}
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <LoadingSkeleton type="chart" />
+                <LoadingSkeleton type="chart" />
+              </div>
+            ) : dashboardData?.conversion_rates && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg p-2">
+                      <TrendingUp className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-800">로그인 전환율</h3>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-blue-600 mb-2">
+                      {dashboardData.conversion_rates.login_to_report.toFixed(1)}%
+                    </div>
+                    <div className="text-slate-600 text-sm font-medium">로그인 → 리포트</div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      리포트생성수 / 로그인수 × 100
                     </div>
                   </div>
-                ))}
+                </div>
+
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg p-2">
+                      <TrendingUp className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-800">검색 전환율</h3>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-green-600 mb-2">
+                      {dashboardData.conversion_rates.search_to_report.toFixed(1)}%
+                    </div>
+                    <div className="text-slate-600 text-sm font-medium">검색 → 리포트</div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      리포트생성수 / 검색수 × 100
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 일일 활동 트렌드 */}
+            {loading ? (
+              <LoadingSkeleton type="chart" />
+            ) : trendData?.trends && (
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg p-2">
+                    <TrendingUp className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-800">일일 활동 트렌드</h3>
+                </div>
+                <div className="chart-container" role="img" aria-label="일일 활동 트렌드 차트">
+                  <TrendChart 
+                    data={trendData.trends} 
+                    height={window.innerWidth < 640 ? 250 : 320}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* TOP 10 특허 분야 분석 */}
+            <TopPatentFieldsChart 
+              data={topCategories.map(item => ({
+                rank: item.rank,
+                field_name: item.category_name,
+                count: item.count,
+                percentage: item.percentage || ((item.count / (topCategories.reduce((sum, d) => sum + d.count, 0) || 1)) * 100)
+              }))} 
+              loading={loading}
+              period={period} 
+              limit={10} 
+            />
+
+            {/* 상위 검색어 및 특허 분석 주제 */}
+            {loading ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <LoadingSkeleton type="chart" />
+                <LoadingSkeleton type="chart" />
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-8">시스템 메트릭을 불러올 수 없습니다.</p>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* TOP 10 검색어 - 항상 표시 */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg p-2">
+                      <Search className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-800">검색어 순위 TOP 10</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {topKeywords.length > 0 ? (
+                      topKeywords.slice(0, 10).map((item, index) => (
+                        <div key={index} className="flex justify-between items-center p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl hover:from-blue-100 hover:to-cyan-100 transition-all duration-200">
+                          <div className="flex items-center gap-3">
+                            <span className="w-7 h-7 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                              {item.rank}
+                            </span>
+                            <span className="font-medium text-slate-800">{item.keyword}</span>
+                          </div>
+                          <span className="text-blue-600 font-bold text-lg">{item.count}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>검색어 데이터가 없습니다.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* TOP 10 리포트 생성 분야 - 항상 표시 */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg p-2">
+                      <FileText className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-800">리포트 생성 분야 TOP 10</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {reportCategories.length > 0 ? (
+                      reportCategories.slice(0, 10).map((item, index) => (
+                        <div key={index} className="flex justify-between items-center p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl hover:from-green-100 hover:to-emerald-100 transition-all duration-200">
+                          <div className="flex items-center gap-3">
+                            <span className="w-7 h-7 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                              {item.rank}
+                            </span>
+                            <span className="font-medium text-slate-800">{item.category_name}</span>
+                          </div>
+                          <span className="text-green-600 font-bold text-lg">{item.count}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>리포트 분야 데이터가 없습니다.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
-          </Card>
-        </div>
+          </TabsContent>
+
+          {/* 사용자 관리 탭 */}
+          <TabsContent value="users">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20">
+              <UserManagement />
+            </div>
+          </TabsContent>
+
+          {/* 결제 관리 탭 */}
+          <TabsContent value="payments">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20">
+              <PaymentManagement />
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
-    </AdminLayout>
+    </div>
   );
 };
 

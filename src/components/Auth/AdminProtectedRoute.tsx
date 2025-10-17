@@ -1,7 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAdminStore } from '../../stores/useAdminStore';
-import { useAuthStore } from '../../store/authStore';
 import { LoadingSpinner } from '../UI/LoadingSpinner';
 
 interface AdminProtectedRouteProps {
@@ -9,47 +8,94 @@ interface AdminProtectedRouteProps {
   requiredRole?: 'super_admin' | 'admin' | 'operator';
 }
 
+// 전역 초기화 상태 관리 (컴포넌트 간 공유)
+let globalInitialized = false;
+let globalInitializing = false;
+
 const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ 
   children, 
   requiredRole 
 }) => {
   const location = useLocation();
-  const { admin, isAuthenticated, isLoading, getCurrentAdmin } = useAdminStore();
-  const { isAdmin: userIsAdmin, user, loading: userLoading } = useAuthStore();
+  const { admin, isAuthenticated, isLoading, isInitialized, initialize } = useAdminStore();
+  const [localLoading, setLocalLoading] = useState(false);
+  const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    console.log('[AdminProtectedRoute] 상태 확인:', { admin, isAuthenticated, isLoading });
-    console.log('[AdminProtectedRoute] 일반 사용자 상태:', { userIsAdmin, user: user?.email, userLoading });
-    
-    // 토큰이 있지만 사용자 정보가 없는 경우 사용자 정보를 가져옴
-    if (!admin && !isLoading) {
-      console.log('[AdminProtectedRoute] getCurrentAdmin 호출');
-      getCurrentAdmin();
-    }
-  }, [admin, isAuthenticated, isLoading, getCurrentAdmin, userIsAdmin, user, userLoading]);
+    const initializeAuth = async () => {
+      // 전역 및 스토어 상태 확인으로 중복 실행 완전 방지
+      if (globalInitialized || globalInitializing || isInitialized) {
+        console.log('[AdminProtectedRoute] 이미 초기화됨, 스킵');
+        return;
+      }
+
+      console.log('[AdminProtectedRoute] 인증 초기화 시작');
+      globalInitializing = true;
+      setLocalLoading(true);
+
+      // 3초 타임아웃 설정
+      initTimeoutRef.current = setTimeout(() => {
+        console.warn('[AdminProtectedRoute] 초기화 타임아웃 (3초)');
+        setLocalLoading(false);
+        globalInitializing = false;
+      }, 3000);
+
+      try {
+        await initialize();
+        globalInitialized = true;
+        console.log('[AdminProtectedRoute] 초기화 완료');
+      } catch (error) {
+        console.error('[AdminProtectedRoute] 초기화 실패:', error);
+      } finally {
+        if (initTimeoutRef.current) {
+          clearTimeout(initTimeoutRef.current);
+        }
+        setLocalLoading(false);
+        globalInitializing = false;
+      }
+    };
+
+    initializeAuth();
+
+    // 컴포넌트 언마운트 시 타임아웃 정리
+    return () => {
+      if (initTimeoutRef.current) {
+        clearTimeout(initTimeoutRef.current);
+      }
+    };
+  }, []); // 빈 의존성 배열로 마운트 시에만 실행
+
+  // 로딩 상태 통합 관리
+  const isCurrentlyLoading = isLoading || localLoading || globalInitializing;
 
   // 로딩 중인 경우
-  if (isLoading || userLoading) {
+  if (isCurrentlyLoading) {
+    console.log('[AdminProtectedRoute] 로딩 중...');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <LoadingSpinner size="lg" />
-          <p className="mt-4 text-gray-600">인증 정보를 확인하고 있습니다...</p>
+          <p className="mt-4 text-gray-600">관리자 인증 정보를 확인하고 있습니다...</p>
+          <p className="mt-2 text-sm text-gray-400">최대 3초 소요됩니다</p>
         </div>
       </div>
     );
   }
 
-  // 관리자 시스템 인증 또는 일반 사용자의 isAdmin 플래그 확인
-  const hasAdminAccess = (isAuthenticated && admin) || (userIsAdmin && user);
+  console.log('[AdminProtectedRoute] 접근 권한 확인:', {
+    isAuthenticated,
+    hasAdmin: !!admin,
+    adminRole: admin?.role,
+    isInitialized
+  });
 
-  // 인증되지 않은 경우 로그인 페이지로 리다이렉트
-  if (!hasAdminAccess) {
+  // 관리자 시스템 인증 확인
+  if (!isAuthenticated || !admin) {
     console.log('[AdminProtectedRoute] 관리자 접근 권한 없음, 로그인 페이지로 리다이렉트');
     return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
 
-  // 역할 기반 접근 제어 (관리자 시스템에서만 적용)
+  // 역할 기반 접근 제어
   if (requiredRole && admin) {
     const roleHierarchy = {
       operator: 1,
@@ -57,7 +103,7 @@ const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({
       super_admin: 3,
     };
 
-    const userRoleLevel = roleHierarchy[admin.role];
+    const userRoleLevel = roleHierarchy[admin.role as keyof typeof roleHierarchy];
     const requiredRoleLevel = roleHierarchy[requiredRole];
 
     if (userRoleLevel < requiredRoleLevel) {

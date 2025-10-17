@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 import redis
-from app.config import settings
+from app.core.config import settings
 
 # SQLAlchemy setup
 engine = create_engine(

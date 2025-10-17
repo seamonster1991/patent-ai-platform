@@ -3,6 +3,7 @@
  */
 
 export default async function handler(req, res) {
+  console.log('Users API handler called:', req.method, req.url);
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -19,8 +20,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { page = 1, limit = 10, search, status } = req.query;
-    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const { page = 1, per_page = 10, limit, search, status } = req.query;
+    const actualLimit = limit || per_page;
+    const offset = (parseInt(page) - 1) * parseInt(actualLimit);
     
     // Get Supabase configuration
     const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -42,8 +44,8 @@ export default async function handler(req, res) {
       'deleted_at': 'is.null',
       'order': 'created_at.desc',
       'offset': offset.toString(),
-      'limit': limit.toString(),
-      'select': 'id,username,email,role,status,created_at,last_login_at,subscription_type'
+      'limit': actualLimit.toString(),
+      'select': 'id,name,email,role,created_at,last_login_at,subscription_plan'
     });
 
     if (status) {
@@ -51,8 +53,12 @@ export default async function handler(req, res) {
     }
 
     const url = `${SUPABASE_URL}/rest/v1/users?${queryParams.toString()}`;
+    console.log('Users API - URL:', url);
+    console.log('Users API - Headers:', headers);
     const response = await fetch(url, { headers });
     const data = await response.json();
+    console.log('Users API - Response status:', response.status);
+    console.log('Users API - Response data:', data);
     
     // Get total count from Content-Range header
     const contentRange = response.headers.get('content-range');
@@ -66,32 +72,31 @@ export default async function handler(req, res) {
           const searchLower = search.toLowerCase();
           const matchesSearch = 
             (user.email && user.email.toLowerCase().includes(searchLower)) ||
-            (user.username && user.username.toLowerCase().includes(searchLower)) ||
-            (user.full_name && user.full_name.toLowerCase().includes(searchLower));
+            (user.name && user.name.toLowerCase().includes(searchLower));
           
           if (!matchesSearch) return null;
         }
 
         return {
           id: user.id,
-          username: user.username || (user.email ? user.email.split('@')[0] : ''),
+          username: user.name || (user.email ? user.email.split('@')[0] : ''),
           email: user.email,
           role: user.role || 'user',
-          status: user.status || 'active',
+          status: 'active', // Default status since table doesn't have status column
           createdAt: user.created_at,
           lastLogin: user.last_login_at,
-          subscription: user.subscription_type || 'free'
+          subscription: user.subscription_plan || 'free'
         };
       }).filter(Boolean);
     }
 
-    const totalPages = Math.ceil(total / parseInt(limit));
+    const totalPages = Math.ceil(total / parseInt(actualLimit));
 
     res.status(200).json({
       users,
       total,
       page: parseInt(page),
-      limit: parseInt(limit),
+      limit: parseInt(actualLimit),
       totalPages
     });
 

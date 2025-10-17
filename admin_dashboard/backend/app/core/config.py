@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     # 관리자 기본 설정
     ADMIN_DEFAULT_PASSWORD: str = "admin123!"
     SUPER_ADMIN_EMAIL: str = "admin@patent-ai.com"
+    SUPER_ADMIN_PASSWORD: str = "admin123"
+    SECRET_KEY: str = "your-secret-key-here"
     
     # Redis 설정 (선택사항)
     REDIS_URL: Optional[str] = None
@@ -96,10 +98,11 @@ class Settings(BaseSettings):
     BACKUP_RETENTION_DAYS: int = 30
     BACKUP_STORAGE_PATH: str = "backups/"
     
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "case_sensitive": True
+    }
 
 # 설정 인스턴스 생성
 settings = Settings()
