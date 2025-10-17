@@ -4,7 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { startMonthlyPointsScheduler } from './scheduler/monthly-points-cron.js';
+// import { startMonthlyPointsScheduler } from './scheduler/monthly-points-cron.js';
 
 // Load environment variables
 dotenv.config();
@@ -93,6 +93,7 @@ app.all('/api/admin/billing-management', wrapVercelHandler('./admin/billing-mana
 app.all('/api/admin/payment-management', wrapVercelHandler('./admin/payment-management.js'));
 
 // Dashboard API routes
+app.all('/api/dashboard', wrapVercelHandler('./dashboard.js'));
 app.get('/api/dashboard/metrics', wrapVercelHandler('./dashboard/metrics.js'));
 app.get('/api/dashboard/comprehensive-stats', wrapVercelHandler('./dashboard/comprehensive-stats.js'));
 app.get('/api/dashboard/extended-stats', wrapVercelHandler('./dashboard/extended-stats.js'));
@@ -140,12 +141,12 @@ app.listen(PORT, () => {
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
   
   // Start monthly points scheduler
-  try {
-    startMonthlyPointsScheduler();
-    console.log(`⏰ Monthly points scheduler started`);
-  } catch (error) {
-    console.error('Failed to start monthly points scheduler:', error);
-  }
+  // try {
+  //   startMonthlyPointsScheduler();
+  //   console.log(`⏰ Monthly points scheduler started`);
+  // } catch (error) {
+  //   console.error('Failed to start monthly points scheduler:', error);
+  // }
 });
 
 export default app;

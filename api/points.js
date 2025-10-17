@@ -5,6 +5,11 @@
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 
+// 환경 변수 검증
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('Missing required environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+}
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -24,6 +29,15 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  // 환경 변수 검증
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error('Missing required environment variables');
+    return res.status(500).json({ 
+      error: 'Server configuration error',
+      details: 'Missing required environment variables'
+    });
   }
 
   try {

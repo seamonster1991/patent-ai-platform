@@ -3,6 +3,11 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+// 환경 변수 검증
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing required environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+}
+
 // 공통 헤더 설정 함수
 function setCommonHeaders(res) {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -152,23 +157,33 @@ async function getUserStats(supabase) {
 
 // 인기 키워드 조회 함수
 async function getPopularKeywords(supabase, limit = 10) {
-  const { data } = await supabase
-    .from('search_logs')
-    .select('keyword')
-    .not('keyword', 'is', null)
-    .limit(1000);
+  try {
+    const { data, error } = await supabase
+      .from('search_logs')
+      .select('keyword')
+      .not('keyword', 'is', null)
+      .limit(1000);
 
-  const keywordCounts = {};
-  data?.forEach(log => {
-    if (log.keyword) {
-      keywordCounts[log.keyword] = (keywordCounts[log.keyword] || 0) + 1;
+    if (error) {
+      console.error('Error fetching search logs:', error);
+      return [];
     }
-  });
 
-  return Object.entries(keywordCounts)
-    .sort(([,a], [,b]) => b - a)
-    .slice(0, limit)
-    .map(([keyword, count]) => ({ keyword, count }));
+    const keywordCounts = {};
+    data?.forEach(log => {
+      if (log.keyword) {
+        keywordCounts[log.keyword] = (keywordCounts[log.keyword] || 0) + 1;
+      }
+    });
+
+    return Object.entries(keywordCounts)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, limit)
+      .map(([keyword, count]) => ({ keyword, count }));
+  } catch (error) {
+    console.error('Error in getPopularKeywords:', error);
+    return [];
+  }
 }
 
 // 인기 특허 조회 함수
