@@ -4,13 +4,13 @@ import { Button } from '@/components/UI/Button';
 import { Badge } from '@/components/UI/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/UI/Tabs';
 import { Select } from '@/components/UI/Select';
-import UserManagement from '@/components/admin/UserManagement';
-import PaymentManagement from '@/components/admin/PaymentManagement';
-import KPICard from '@/components/admin/KPICard';
-import TrendChart from '@/components/admin/charts/TrendChart';
-import InsightBarChart from '@/components/admin/charts/InsightBarChart';
+import UserManagement from '@/components/Admin/UserManagement';
+import PaymentManagement from '@/components/Admin/PaymentManagement';
+import KPICard from '@/components/Admin/KPICard';
+import TrendChart from '@/components/Admin/charts/TrendChart';
+import InsightBarChart from '@/components/Admin/charts/InsightBarChart';
 import TopPatentFieldsChart from '@/components/TopPatentFieldsChart';
-import LoadingSkeleton from '@/components/admin/LoadingSkeleton';
+import LoadingSkeleton from '@/components/Admin/LoadingSkeleton';
 import '@/styles/admin-dashboard.css';
 import { 
   Users, 
