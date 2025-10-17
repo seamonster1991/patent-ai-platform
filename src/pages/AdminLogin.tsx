@@ -20,11 +20,15 @@ const AdminLogin: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [requires2FA, setRequires2FA] = useState(false);
 
-  // 컴포넌트 마운트 시 기존 토큰 클리어
+  // 로그인 페이지 접근 시 초기화 (한 번만 실행)
   useEffect(() => {
-    console.log('🔄 [AdminLogin] 컴포넌트 마운트, 기존 토큰 클리어');
-    logout();
-  }, [logout]);
+    console.log('🔄 [AdminLogin] 컴포넌트 마운트');
+    // 이미 인증된 상태가 아닌 경우에만 토큰 클리어
+    if (!isAuthenticated) {
+      console.log('🧹 [AdminLogin] 미인증 상태, 기존 토큰 클리어');
+      logout();
+    }
+  }, []); // 빈 의존성 배열로 한 번만 실행
 
   // 이미 인증된 경우 대시보드로 리다이렉트
   useEffect(() => {

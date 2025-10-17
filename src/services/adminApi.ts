@@ -422,7 +422,13 @@ export const adminApiService = {
         throw new Error(`HTTP ${response.status}: ${response.data?.message || '로그인 실패'}`);
       }
       
-      return response.data;
+      // 백엔드 API 응답 구조: {success: true, data: {access_token, refresh_token, admin}}
+      if (response.data.success && response.data.data) {
+        console.log('🔍 [AdminAPI] 응답 데이터 구조 확인:', response.data.data);
+        return response.data.data; // 실제 데이터는 data.data에 있음
+      } else {
+        throw new Error(response.data?.error || '로그인 응답 형식이 올바르지 않습니다.');
+      }
     } catch (error: any) {
       console.error('❌ [AdminAPI] 로그인 실패:', {
         message: error.message,
@@ -468,7 +474,15 @@ export const adminApiService = {
     // 모든 환경에서 동일한 엔드포인트 사용
     const endpoint = '/api/admin/auth/me';
     const response = await adminApi.get(endpoint);
-    return response.data;
+    
+    console.log('🔍 [AdminAPI] getCurrentAdmin 응답:', response.data);
+    
+    // 백엔드 API 응답 구조: {success: true, data: {admin: {...}}}
+    if (response.data.success && response.data.data) {
+      return response.data.data.admin; // 실제 admin 데이터는 data.data.admin에 있음
+    } else {
+      throw new Error(response.data?.error || '관리자 정보를 가져올 수 없습니다.');
+    }
   },
 
   // 대시보드 관련
