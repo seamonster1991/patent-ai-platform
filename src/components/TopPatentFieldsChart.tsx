@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/UI/Card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/UI/Tabs';
+import { Badge } from '@/components/UI/Badge';
 import { TrendingUp, BarChart3, PieChart as PieChartIcon } from 'lucide-react';
 
 interface PatentField {
