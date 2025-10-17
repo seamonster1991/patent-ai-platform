@@ -378,8 +378,8 @@ export const adminApiService = {
   // 인증 관련
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
-      // 모든 환경에서 동일한 엔드포인트 사용
-      const endpoint = '/api/admin/auth';
+      // baseURL이 이미 /api로 설정되어 있으므로 endpoint는 /admin/auth만 사용
+      const endpoint = '/admin/auth';
       
       // 요청 데이터 검증 및 정리
       const cleanCredentials = {
@@ -399,15 +399,8 @@ export const adminApiService = {
       const requestData = JSON.stringify(cleanCredentials);
       console.log('📤 [AdminAPI] 요청 데이터:', requestData);
       
-      // 명시적인 axios 설정으로 요청
-      const response = await axios({
-        method: 'POST',
-        url: `${adminApi.defaults.baseURL}${endpoint}`,
-        data: cleanCredentials,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+      // adminApi 인스턴스를 사용하여 요청 (baseURL 자동 적용)
+      const response = await adminApi.post(endpoint, cleanCredentials, {
         timeout: API_TIMEOUTS.auth,
         validateStatus: (status) => status < 500 // 500 미만은 모두 성공으로 처리
       });
@@ -462,8 +455,8 @@ export const adminApiService = {
 
   async refreshToken(): Promise<{ access_token: string }> {
     const refreshToken = localStorage.getItem('admin_refresh_token');
-    // 모든 환경에서 동일한 엔드포인트 사용
-    const endpoint = '/api/admin/auth/refresh';
+    // baseURL이 이미 /api로 설정되어 있으므로 endpoint는 /admin/auth/refresh만 사용
+    const endpoint = '/admin/auth/refresh';
     const response = await adminApi.post(endpoint, {
       refresh_token: refreshToken,
     });
@@ -471,8 +464,8 @@ export const adminApiService = {
   },
 
   async getCurrentAdmin(): Promise<any> {
-    // 모든 환경에서 동일한 엔드포인트 사용
-    const endpoint = '/api/admin/auth/me';
+    // baseURL이 이미 /api로 설정되어 있으므로 endpoint는 /admin/auth/me만 사용
+    const endpoint = '/admin/auth/me';
     const response = await adminApi.get(endpoint);
     
     console.log('🔍 [AdminAPI] getCurrentAdmin 응답:', response.data);
