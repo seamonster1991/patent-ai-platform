@@ -6,6 +6,7 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 // 환경 변수 검증
 if (!supabaseUrl || !supabaseKey) {
   console.error('Missing required environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+  throw new Error('Missing required environment variables');
 }
 
 // Supabase 클라이언트 초기화
@@ -985,6 +986,14 @@ export default async function handler(req, res) {
 
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // 환경 변수 검증
+  if (!supabaseUrl || !supabaseKey) {
+    return res.status(500).json({ 
+      error: 'Server configuration error',
+      details: 'Missing required environment variables'
+    });
   }
 
   try {

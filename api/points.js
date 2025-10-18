@@ -74,8 +74,10 @@ export default async function handler(req, res) {
         return await handleCharge(req, res, userId);
       case 'transactions':
         return await handleTransactions(req, res, userId);
+      case 'monthly-free':
+        return await handleMonthlyFree(req, res, userId);
       default:
-        return res.status(400).json({ error: 'Invalid action. Use balance, deduct, charge, or transactions' });
+        return res.status(400).json({ error: 'Invalid action. Use balance, deduct, charge, transactions, or monthly-free' });
     }
 
   } catch (error) {
@@ -448,5 +450,52 @@ function getDefaultDescription(transaction) {
     
     default:
       return '포인트 거래';
+  }
+}
+
+// 월간 무료 포인트 지급 처리
+async function handleMonthlyFree(req, res, userId) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed for monthly-free' });
+  }
+
+  try {
+    // 월간 무료 포인트 지급 (예: 100포인트, 30일 만료)
+    const freePoints = 100;
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + 30); // 30일 후 만료
+
+    const { data: chargeResult, error: chargeError } = await supabase
+      .rpc('charge_points', {
+        p_user_id: userId,
+        p_amount: freePoints,
+        p_charge_type: 'monthly_free',
+        p_payment_id: null,
+        p_description: '월간 무료 포인트 지급',
+        p_expiration_date: expirationDate.toISOString()
+      });
+
+    if (chargeError) {
+      console.error('Monthly free points charge error:', chargeError);
+      return res.status(500).json({ 
+        error: 'Failed to charge monthly free points',
+        details: chargeError.message 
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: '월간 무료 포인트가 지급되었습니다',
+      points_added: freePoints,
+      expiration_date: expirationDate.toISOString(),
+      transaction_id: chargeResult
+    });
+
+  } catch (error) {
+    console.error('Monthly free points API error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to process monthly free points',
+      details: error.message 
+    });
   }
 }

@@ -8,6 +8,12 @@ import jwt from 'jsonwebtoken';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// 환경 변수 검증
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('Missing required environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+}
+
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // NicePay 설정 (환경변수에서 가져오기)
@@ -553,6 +559,15 @@ async function handler(req, res) {
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  // 환경 변수 검증
+  if (!supabaseUrl || !supabaseServiceKey) {
+    return res.status(500).json({
+      success: false,
+      error: 'Server configuration error',
+      message: 'Missing required environment variables'
+    });
   }
 
   const { action } = req.query;

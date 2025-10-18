@@ -1,5 +1,6 @@
 // Feedback API - 사용자 피드백 수집 및 관리자 알림
 import { createClient } from '@supabase/supabase-js';
+import nodemailer from 'nodemailer';
 
 // 환경 변수 검증
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -10,6 +11,17 @@ const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
+
+// 이메일 전송을 위한 Nodemailer 설정
+const createEmailTransporter = () => {
+  return nodemailer.createTransporter({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER || 'noreply@patent-ai.com',
+      pass: process.env.EMAIL_PASS || ''
+    }
+  });
+};
 
 export default async function handler(req, res) {
   // CORS 헤더 설정
@@ -88,6 +100,14 @@ async function handleSubmitFeedback(req, res) {
       // 알림 실패는 피드백 제출 성공에 영향을 주지 않음
     }
 
+    // 관리자 이메일로 피드백 전송
+    try {
+      await sendFeedbackEmail(feedback);
+    } catch (emailError) {
+      console.error('Email sending error:', emailError);
+      // 이메일 전송 실패는 피드백 제출 성공에 영향을 주지 않음
+    }
+
     return res.status(200).json({
       success: true,
       message: '피드백이 성공적으로 전송되었습니다.',
@@ -154,6 +174,52 @@ async function handleGetFeedback(req, res) {
 }
 
 // 관리자에게 알림 전송
+// 관리자 이메일로 피드백 전송
+async function sendFeedbackEmail(feedback) {
+  try {
+    const transporter = createEmailTransporter();
+    
+    const mailOptions = {
+      from: process.env.EMAIL_USER || 'noreply@patent-ai.com',
+      to: 'dak240228@gmail.com',
+      subject: `[Patent AI] 새로운 피드백: ${feedback.subject}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+          <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">
+            새로운 피드백이 도착했습니다
+          </h2>
+          
+          <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h3 style="color: #495057; margin-top: 0;">피드백 정보</h3>
+            <p><strong>제목:</strong> ${feedback.subject}</p>
+            <p><strong>카테고리:</strong> ${feedback.category}</p>
+            <p><strong>보낸 사람:</strong> ${feedback.name}</p>
+            <p><strong>이메일:</strong> ${feedback.email}</p>
+            <p><strong>작성 시간:</strong> ${new Date(feedback.created_at).toLocaleString('ko-KR')}</p>
+          </div>
+          
+          <div style="background-color: #ffffff; padding: 15px; border: 1px solid #dee2e6; border-radius: 5px;">
+            <h3 style="color: #495057; margin-top: 0;">메시지 내용</h3>
+            <p style="line-height: 1.6; white-space: pre-wrap;">${feedback.message}</p>
+          </div>
+          
+          <div style="margin-top: 20px; padding: 15px; background-color: #e9ecef; border-radius: 5px; font-size: 12px; color: #6c757d;">
+            <p>이 이메일은 Patent AI 시스템에서 자동으로 발송되었습니다.</p>
+            <p>피드백 ID: ${feedback.id}</p>
+          </div>
+        </div>
+      `
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log('Feedback email sent successfully:', result.messageId);
+    
+  } catch (error) {
+    console.error('Failed to send feedback email:', error);
+    throw error;
+  }
+}
+
 async function notifyAdmins(feedback) {
   try {
     // 관리자 목록 조회
