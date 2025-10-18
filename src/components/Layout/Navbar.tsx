@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, User, LogOut, Settings, Sun, Moon, Search, FileText, CreditCard } from 'lucide-react';
+import { Menu, X, User, LogOut, Settings, Sun, Moon, Search, FileText, CreditCard, MessageSquare } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
 import PointBalance from '../PointBalance';
@@ -25,6 +25,7 @@ const Navbar: React.FC = () => {
     { path: '/', label: '홈', icon: null },
     { path: '/search', label: '특허 검색', icon: Search },
     { path: '/dashboard', label: '대시보드', icon: null, requireAuth: false },
+    { path: '/feedback', label: 'Feedback', icon: MessageSquare, requireAuth: false },
     ...(user ? [{ path: '/billing', label: '결제정보', icon: CreditCard, requireAuth: true }] : []),
   ];
 

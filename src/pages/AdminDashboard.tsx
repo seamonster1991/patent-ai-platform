@@ -116,202 +116,196 @@ const AdminDashboard: React.FC = () => {
     setError(null);
     
     try {
-      // API 기본 URL 설정 - 백엔드 서버(포트 3001)로 요청
-      const apiBaseUrl = process.env.NODE_ENV === 'production' 
-        ? '' // Vercel에서는 상대 경로 사용
-        : 'http://localhost:3001'; // 개발 환경에서는 백엔드 서버 포트 사용
-      
-      // 인증 헤더 설정
       const token = localStorage.getItem('admin_token');
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      };
-      
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
+      if (!token) {
+        throw new Error('관리자 토큰이 없습니다.');
       }
-      
-      // API 엔드포인트 설정 - 백엔드 API 사용 (period 파라미터 추가)
-      const metricsEndpoint = `/api/dashboard/metrics?period=${period}`;
-      const extendedStatsEndpoint = `/api/dashboard/extended-stats?period=${period}&days=100`;
-      const keywordsEndpoint = `/api/dashboard/popular-keywords?period=${period}`;
-      const patentsEndpoint = `/api/dashboard/popular-patents?period=${period}`;
-      const dailyTrendsEndpoint = `/api/dashboard/daily-trends?period=${period}`;
-      const topPatentFieldsEndpoint = `/api/dashboard/top-patent-fields?period=${period}&limit=10`;
-      
-      // 모든 API 호출
+
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://patent-ai.vercel.app' 
+        : 'http://localhost:3001';
+
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+
+      // API 호출을 올바른 엔드포인트와 파라미터로 수정
       const [
-        statsResponse, 
-        extendedStatsResponse, 
-        keywordsResponse, 
+        metricsResponse,
+        extendedStatsResponse,
+        keywordsResponse,
         patentsResponse,
-        dailyTrendsResponse,
-        topPatentFieldsResponse
+        trendsResponse,
+        fieldsResponse
       ] = await Promise.all([
-        fetch(`${apiBaseUrl}${metricsEndpoint}`, { headers }),
-        fetch(`${apiBaseUrl}${extendedStatsEndpoint}`, { headers }),
-        fetch(`${apiBaseUrl}${keywordsEndpoint}`, { headers }),
-        fetch(`${apiBaseUrl}${patentsEndpoint}`, { headers }),
-        fetch(`${apiBaseUrl}${dailyTrendsEndpoint}`, { headers }),
-        fetch(`${apiBaseUrl}${topPatentFieldsEndpoint}`, { headers })
+        fetch(`${baseUrl}/api/dashboard?action=metrics&period=${period}`, { headers }),
+        fetch(`${baseUrl}/api/dashboard?action=admin-stats`, { headers }),
+        fetch(`${baseUrl}/api/dashboard?action=popular-keywords&limit=10`, { headers }),
+        fetch(`${baseUrl}/api/dashboard?action=popular-patents&limit=10`, { headers }),
+        fetch(`${baseUrl}/api/dashboard?action=daily-trends&days=30`, { headers }),
+        fetch(`${baseUrl}/api/dashboard?action=field-analysis`, { headers })
       ]);
 
-      if (!statsResponse.ok || !extendedStatsResponse.ok || !keywordsResponse.ok || !patentsResponse.ok) {
-        throw new Error('Failed to fetch dashboard data');
-      }
+      // 응답 검증
+      if (!metricsResponse.ok) throw new Error(`메트릭 데이터 로드 실패: ${metricsResponse.status}`);
+      if (!extendedStatsResponse.ok) throw new Error(`확장 통계 데이터 로드 실패: ${extendedStatsResponse.status}`);
+      if (!keywordsResponse.ok) throw new Error(`인기 키워드 데이터 로드 실패: ${keywordsResponse.status}`);
+      if (!patentsResponse.ok) throw new Error(`인기 특허 데이터 로드 실패: ${patentsResponse.status}`);
+      if (!trendsResponse.ok) throw new Error(`트렌드 데이터 로드 실패: ${trendsResponse.status}`);
+      if (!fieldsResponse.ok) throw new Error(`분야 분석 데이터 로드 실패: ${fieldsResponse.status}`);
 
+      // JSON 파싱
       const [
-        statsData, 
-        extendedStatsData, 
-        keywordsData, 
+        metricsData,
+        extendedStatsData,
+        keywordsData,
         patentsData,
-        dailyTrendsData,
-        topPatentFieldsData
+        trendsData,
+        fieldsData
       ] = await Promise.all([
-        statsResponse.json(),
+        metricsResponse.json(),
         extendedStatsResponse.json(),
         keywordsResponse.json(),
         patentsResponse.json(),
-        dailyTrendsResponse.ok ? dailyTrendsResponse.json() : null,
-        topPatentFieldsResponse.ok ? topPatentFieldsResponse.json() : null
+        trendsResponse.json(),
+        fieldsResponse.json()
       ]);
 
-      // 백엔드 응답 구조에 맞게 데이터 매핑 (API 응답의 data 필드에서 실제 데이터 추출)
-      const actualStatsData = statsData.success ? statsData.data : statsData;
+      // 실제 데이터 추출 (success 필드에서)
+      const actualMetricsData = metricsData.success ? metricsData.data : metricsData;
       const actualExtendedStatsData = extendedStatsData.success ? extendedStatsData.data : extendedStatsData;
       const actualKeywordsData = keywordsData.success ? keywordsData.data : keywordsData;
       const actualPatentsData = patentsData.success ? patentsData.data : patentsData;
-      const actualDailyTrendsData = dailyTrendsData?.success ? dailyTrendsData.data : dailyTrendsData;
-      const actualTopPatentFieldsData = topPatentFieldsData?.success ? topPatentFieldsData.data : topPatentFieldsData;
+      const actualTrendsData = trendsData.success ? trendsData.data : trendsData;
+      const actualFieldsData = fieldsData.success ? fieldsData.data : fieldsData;
 
-      // 디버깅을 위한 로그 추가
-      console.log('Stats Data:', actualStatsData);
-      console.log('Extended Stats Data:', actualExtendedStatsData);
-      console.log('Keywords Data:', actualKeywordsData);
-      console.log('Patents Data:', actualPatentsData);
+      console.log('API 응답 데이터:', {
+        metrics: actualMetricsData,
+        extendedStats: actualExtendedStatsData,
+        keywords: actualKeywordsData,
+        patents: actualPatentsData,
+        trends: actualTrendsData,
+        fields: actualFieldsData
+      });
 
-      const mappedDashboardData = {
+      // 대시보드 데이터 매핑
+      const mappedDashboardData: DashboardData = {
         kpi_stats: {
-          total_all_users: { value: actualStatsData.total_all_users || 0, change_rate: 0 }, // 총 사용자수 (삭제된 계정 포함)
-          total_users: { value: actualStatsData.total_users || 0, change_rate: actualStatsData.user_growth_rate || 0 }, // 총 회원수 (실제 활동중인 계정)
-          free_members: { value: actualStatsData.free_members || 0, change_rate: 0 }, // 무료 회원
-          paid_members: { value: actualStatsData.paid_members || 0, change_rate: 0 }, // 유료 회원
-          total_members: { value: (actualStatsData.free_members || 0) + (actualStatsData.paid_members || 0), change_rate: 0 }, // 총 회원수 (무료+유료)
-          total_logins: { value: actualStatsData.login_stats?.total_logins || actualExtendedStatsData?.total_logins || 0, change_rate: 0 },
-          total_searches: { value: actualStatsData.search_stats?.total_searches || actualStatsData.totalSearches || actualExtendedStatsData?.total_searches || 0, change_rate: 0 },
-          market_reports: { value: Math.floor((actualStatsData.report_stats?.total_reports || actualStatsData.totalReports || 0) * 0.6), change_rate: 0 },
-          business_reports: { value: Math.floor((actualStatsData.report_stats?.total_reports || actualStatsData.totalReports || 0) * 0.4), change_rate: 0 },
-          total_reports: { value: actualStatsData.report_stats?.total_reports || actualStatsData.totalReports || actualExtendedStatsData?.total_reports || 0, change_rate: actualStatsData.analysis_growth_rate || 0 },
-          total_revenue: { value: actualStatsData.total_revenue || 0, change_rate: actualStatsData.revenue_growth_rate || 0 }
+          total_logins: { 
+            value: actualMetricsData?.totalSearches || actualExtendedStatsData?.total_logins || 0, 
+            change_rate: 0 
+          },
+          total_searches: { 
+            value: actualMetricsData?.totalSearches || actualExtendedStatsData?.total_searches || 0, 
+            change_rate: 0 
+          },
+          total_reports: { 
+            value: actualMetricsData?.totalReports || actualExtendedStatsData?.total_reports || 0, 
+            change_rate: 0 
+          },
+          total_revenue: { 
+            value: actualMetricsData?.totalRevenue || actualExtendedStatsData?.total_revenue || 0, 
+            change_rate: 0 
+          },
+          total_all_users: { 
+            value: actualMetricsData?.totalUsers || actualExtendedStatsData?.total_all_users || 0, 
+            change_rate: 0 
+          },
+          total_users: { 
+            value: actualMetricsData?.activeUsers || actualExtendedStatsData?.total_users || 0, 
+            change_rate: 0 
+          },
+          free_members: { 
+            value: actualExtendedStatsData?.free_members || 0, 
+            change_rate: 0 
+          },
+          paid_members: { 
+            value: actualExtendedStatsData?.paid_members || 0, 
+            change_rate: 0 
+          },
+          total_members: { 
+            value: actualExtendedStatsData?.total_members || 0, 
+            change_rate: 0 
+          },
+          market_reports: { 
+            value: actualExtendedStatsData?.market_reports || 0, 
+            change_rate: 0 
+          },
+          business_reports: { 
+            value: actualExtendedStatsData?.business_reports || 0, 
+            change_rate: 0 
+          }
         },
         efficiency_metrics: {
-          avg_logins_per_user: actualExtendedStatsData?.avg_logins_per_user || (actualStatsData.login_stats?.total_logins && actualStatsData.total_users ? actualStatsData.login_stats.total_logins / actualStatsData.total_users : 0),
-          avg_searches_per_user: actualExtendedStatsData?.avg_searches_per_user || actualStatsData.search_stats?.avg_searches_per_user || 0,
-          avg_market_reports_per_user: (actualExtendedStatsData?.avg_reports_per_user || actualStatsData.report_stats?.avg_reports_per_user || 0) * 0.6,
-          avg_business_reports_per_user: (actualExtendedStatsData?.avg_reports_per_user || actualStatsData.report_stats?.avg_reports_per_user || 0) * 0.4,
-          avg_total_reports_per_user: actualExtendedStatsData?.avg_reports_per_user || actualStatsData.report_stats?.avg_reports_per_user || 0
+          avg_logins_per_user: actualExtendedStatsData?.avg_logins_per_user || 0,
+          avg_searches_per_user: actualExtendedStatsData?.avg_searches_per_user || 0,
+          avg_market_reports_per_user: actualExtendedStatsData?.avg_market_reports_per_user || 0,
+          avg_business_reports_per_user: actualExtendedStatsData?.avg_business_reports_per_user || 0,
+          avg_total_reports_per_user: actualExtendedStatsData?.avg_total_reports_per_user || 0
         },
         conversion_rates: {
-          // 전환율 계산 - 실제 데이터에서 가져오기
-          login_to_report: actualStatsData.conversion_rates?.login_to_search || actualExtendedStatsData?.login_to_report_rate || 
-            (actualStatsData.login_stats?.total_logins > 0 ? 
-              ((actualStatsData.report_stats?.total_reports || 0) / actualStatsData.login_stats.total_logins * 100) : 0),
-          search_to_report: actualStatsData.conversion_rates?.search_to_report || actualExtendedStatsData?.search_to_report_rate || 
-            (actualStatsData.search_stats?.total_searches > 0 ? 
-              ((actualStatsData.report_stats?.total_reports || 0) / actualStatsData.search_stats.total_searches * 100) : 0)
+          login_to_report: actualExtendedStatsData?.conversion_rates?.login_to_report || 0,
+          search_to_report: actualExtendedStatsData?.conversion_rates?.search_to_report || 0
         }
       };
 
-      console.log('Mapped Dashboard Data:', mappedDashboardData);
       setDashboardData(mappedDashboardData);
-      
-      // 일일 트렌드 데이터 설정
-      if (actualDailyTrendsData && actualDailyTrendsData.daily_trends) {
-        setTrendData({
-          trends: actualDailyTrendsData.daily_trends.map((item: any) => ({
-            date: item.date,
-            newUsers: item.new_users || 0,
-            logins: item.total_logins || 0,
-            searches: item.total_searches || 0,
-            reports: item.total_reports || 0
-          }))
-        });
-      } else {
-        setTrendData({ trends: [] });
-      }
-      
-      // 키워드 데이터 구조 확인 및 매핑
-      console.log('Keywords response:', keywordsData);
-      if (actualKeywordsData) {
-        let mappedKeywords = [];
-        
-        // 다양한 응답 구조 처리
-        if (actualKeywordsData.top_keywords && Array.isArray(actualKeywordsData.top_keywords)) {
-          mappedKeywords = actualKeywordsData.top_keywords.slice(0, 10).map((item: any, index: number) => ({
-            rank: index + 1,
-            keyword: item.keyword || item.search_term || item.term || item.query,
-            count: item.count || item.search_count || item.frequency || 0
-          }));
-        } else if (actualKeywordsData.keywords && Array.isArray(actualKeywordsData.keywords)) {
-          mappedKeywords = actualKeywordsData.keywords.slice(0, 10).map((item: any, index: number) => ({
-            rank: index + 1,
-            keyword: item.keyword || item.search_term || item.term || item.query,
-            count: item.count || item.search_count || item.frequency || 0
-          }));
-        } else if (Array.isArray(actualKeywordsData)) {
-          // 구조: [{ keyword: "...", count: ... }, ...]
-          mappedKeywords = actualKeywordsData.slice(0, 10).map((item: any, index: number) => ({
-            rank: index + 1,
-            keyword: item.keyword || item.search_term || item.term || item.query,
-            count: item.count || item.search_count || item.frequency || 0
-          }));
-        }
-        
-        setTopKeywords(mappedKeywords);
-      } else {
-        setTopKeywords([]);
-      }
-      
-      // 특허 분야 데이터 매핑 (top-patent-fields API 응답 사용)
-      console.log('Top Patent Fields response:', topPatentFieldsData);
-      if (actualTopPatentFieldsData && actualTopPatentFieldsData.topFields && Array.isArray(actualTopPatentFieldsData.topFields)) {
-        const mappedPatentFields = actualTopPatentFieldsData.topFields.slice(0, 10).map((item: any) => ({
-          rank: item.rank,
-          category: item.field,
-          category_name: item.field,
-          count: item.count,
-          percentage: parseFloat(item.percentage) || 0
-        }));
-        setTopCategories(mappedPatentFields);
-      } else {
-        setTopCategories([]);
-      }
 
-      // 리포트 생성 분야 데이터 매핑 (patents API 응답 사용)
-      console.log('Patents response:', patentsData);
-      let reportCategories = [];
-      if (actualPatentsData) {
-        // 다양한 응답 구조 처리
-        if (actualPatentsData.top_patents && Array.isArray(actualPatentsData.top_patents)) {
-          reportCategories = actualPatentsData.top_patents.slice(0, 10).map((item: any, index: number) => ({
+      // 트렌드 데이터 설정
+      let mappedTrendData: TrendData = { trends: [] };
+      if (actualTrendsData && Array.isArray(actualTrendsData)) {
+        mappedTrendData.trends = actualTrendsData.map((item: any) => ({
+          date: item.date || item.day || '',
+          logins: item.logins || item.login_count || 0,
+          searches: item.searches || item.search_count || 0,
+          reports: item.reports || item.report_count || 0,
+          newUsers: item.newUsers || item.new_users || item.user_count || 0
+        }));
+      }
+      setTrendData(mappedTrendData);
+
+      // 인기 키워드 설정
+      let topKeywords: TopKeyword[] = [];
+      if (actualKeywordsData && Array.isArray(actualKeywordsData)) {
+        topKeywords = actualKeywordsData.slice(0, 10).map((item: any, index: number) => ({
+          rank: index + 1,
+          keyword: item.keyword || item.query || item.search_term || '',
+          count: item.count || item.frequency || item.search_count || 0
+        }));
+      }
+      setTopKeywords(topKeywords);
+
+      // 특허 분야 데이터 설정
+      let topCategories: TopCategory[] = [];
+      if (actualFieldsData) {
+        if (actualFieldsData.fields && Array.isArray(actualFieldsData.fields)) {
+          topCategories = actualFieldsData.fields.slice(0, 10).map((item: any, index: number) => ({
             rank: index + 1,
-            category: item.category || item.field || item.technology_field || item.patent_number,
-            category_name: item.category_name || item.field_name || item.title || item.patent_title || item.invention_title,
+            category: item.category || item.field || item.technology_field || '',
+            category_name: item.category_name || item.field_name || item.name || '',
             count: item.count || item.analysis_count || item.frequency || 0
           }));
-        } else if (actualPatentsData.patents && Array.isArray(actualPatentsData.patents)) {
+        } else if (Array.isArray(actualFieldsData)) {
+          topCategories = actualFieldsData.slice(0, 10).map((item: any, index: number) => ({
+            rank: index + 1,
+            category: item.category || item.field || item.technology_field || '',
+            category_name: item.category_name || item.field_name || item.name || '',
+            count: item.count || item.analysis_count || item.frequency || 0
+          }));
+        }
+      }
+      setTopCategories(topCategories);
+
+      // 리포트 카테고리 설정 (특허 데이터 기반)
+      let reportCategories: TopCategory[] = [];
+      if (actualPatentsData) {
+        if (actualPatentsData.patents && Array.isArray(actualPatentsData.patents)) {
           reportCategories = actualPatentsData.patents.slice(0, 10).map((item: any, index: number) => ({
             rank: index + 1,
             category: item.category || item.field || item.technology_field || item.patent_number || item.application_number,
             category_name: item.category_name || item.field_name || item.title || item.patent_title || item.invention_title,
             count: item.count || item.analysis_count || item.frequency || 0
-          }));
-        } else if (actualPatentsData.categories && Array.isArray(actualPatentsData.categories)) {
-          reportCategories = actualPatentsData.categories.slice(0, 10).map((item: any, index: number) => ({
-            rank: index + 1,
-            category: item.category || item.field || item.technology_field,
-            category_name: item.category_name || item.field_name || item.name,
-            count: item.count || item.frequency || 0
           }));
         } else if (Array.isArray(actualPatentsData)) {
           reportCategories = actualPatentsData.slice(0, 10).map((item: any, index: number) => ({
@@ -322,14 +316,13 @@ const AdminDashboard: React.FC = () => {
           }));
         }
       }
-      
-      // 리포트 생성 분야를 별도 상태로 관리
       setReportCategories(reportCategories);
 
       // 인사이트 데이터 설정
       setInsightData({ topSearches: [], topPatents: [] });
       
     } catch (err) {
+      console.error('대시보드 데이터 로드 오류:', err);
       setError(err instanceof Error ? err.message : 'Unknown error occurred');
     } finally {
       setLoading(false);

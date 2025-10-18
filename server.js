@@ -40,9 +40,10 @@ const wrapVercelHandler = (handlerPath) => {
         url: req.url
       };
       
-      // 절대 경로로 import
+      // Windows에서 ESM 모듈 로딩을 위한 file:// URL 스키마 사용
       const absolutePath = path.resolve(process.cwd(), handlerPath);
-      const handler = await import(absolutePath);
+      const fileUrl = `file://${absolutePath.replace(/\\/g, '/')}`;
+      const handler = await import(fileUrl);
       return handler.default(vercelReq, res);
     } catch (error) {
       console.error('API handler error:', error);
@@ -61,26 +62,21 @@ app.post('/api/search', wrapVercelHandler('./api/search.js'))
 app.get('/api/detail', wrapVercelHandler('./api/detail.js'))
 app.post('/api/generate-report', wrapVercelHandler('./api/generate-report.js'))
 
-// 대시보드 API 엔드포인트
-app.get('/api/dashboard/metrics', wrapVercelHandler('./api/dashboard/metrics.js'))
-app.get('/api/dashboard/comprehensive-stats', wrapVercelHandler('./api/dashboard/comprehensive-stats.js'))
-app.get('/api/dashboard/recent-activities', wrapVercelHandler('./api/dashboard/recent-activities.js'))
-app.get('/api/dashboard/system-metrics', wrapVercelHandler('./api/dashboard/system-metrics.js'))
-app.get('/api/dashboard/extended-stats', wrapVercelHandler('./api/dashboard/extended-stats.js'))
-app.get('/api/dashboard/popular-keywords', wrapVercelHandler('./api/dashboard/popular-keywords.js'))
-app.get('/api/dashboard/popular-patents', wrapVercelHandler('./api/dashboard/popular-patents.js'))
-app.get('/api/dashboard/user-stats', wrapVercelHandler('./api/dashboard/user-stats.js'))
-app.get('/api/dashboard/daily-trends', wrapVercelHandler('./api/dashboard/daily-trends.js'))
-app.get('/api/dashboard/top-patent-fields', wrapVercelHandler('./api/dashboard/top-patent-fields.js'))
-app.get('/api/dashboard/top-keywords', wrapVercelHandler('./api/dashboard/top-keywords.js'))
-app.get('/api/dashboard/top-report-categories', wrapVercelHandler('./api/dashboard/top-report-categories.js'))
+// 대시보드 API 엔드포인트 (기본 대시보드 분석만 사용)
+app.get('/api/dashboard', wrapVercelHandler('./api/dashboard.js'))
 
-// 관리자 대시보드 API 엔드포인트
-app.get('/api/dashboard/admin-comprehensive-stats', wrapVercelHandler('./api/dashboard/admin-comprehensive-stats.js'))
-app.get('/api/dashboard/admin-trends', wrapVercelHandler('./api/dashboard/admin-trends.js'))
-app.get('/api/dashboard/admin-top-insights', wrapVercelHandler('./api/dashboard/admin-top-insights.js'))
-app.all('/api/dashboard/admin-users', wrapVercelHandler('./api/dashboard/admin-users.js'))
-app.all('/api/dashboard/admin-payments', wrapVercelHandler('./api/dashboard/admin-payments.js'))
+// 대시보드 하위 엔드포인트 추가
+app.get('/api/dashboard/metrics', wrapVercelHandler('./api/dashboard.js'))
+app.get('/api/dashboard/extended-stats', wrapVercelHandler('./api/dashboard.js'))
+app.get('/api/dashboard/popular-keywords', wrapVercelHandler('./api/dashboard.js'))
+app.get('/api/dashboard/popular-patents', wrapVercelHandler('./api/dashboard.js'))
+app.get('/api/dashboard/daily-trends', wrapVercelHandler('./api/dashboard.js'))
+app.get('/api/dashboard/top-patent-fields', wrapVercelHandler('./api/dashboard.js'))
+
+// 관리자 대시보드 사용자 및 결제 관리 엔드포인트
+app.get('/api/dashboard/admin-users', wrapVercelHandler('./api/dashboard.js'))
+app.get('/api/dashboard/admin-payments', wrapVercelHandler('./api/dashboard.js'))
+app.get('/api/dashboard/admin-stats', wrapVercelHandler('./api/dashboard.js'))
 
 // 모니터링 API 엔드포인트
 app.get('/api/monitoring/logs', wrapVercelHandler('./api/monitoring/logs.js'))
@@ -125,28 +121,12 @@ app.all('/api/v1/dashboard/activities*', wrapVercelHandler('./api/v1/dashboard/a
 // 사용자 활동 API 엔드포인트
 app.all('/api/user_activities', wrapVercelHandler('./api/user-activities.js'))
 
-// 관리자 API 엔드포인트 (기존)
-app.all('/api/admin', wrapVercelHandler('./api/admin.js'))
-app.all('/api/admin/auth*', wrapVercelHandler('./api/admin/auth.js'))
-app.all('/api/admin/dashboard', wrapVercelHandler('./api/admin/dashboard.js'))
-app.all('/api/admin/dashboard/statistics', wrapVercelHandler('./api/admin/dashboard-statistics.js'))
-app.all('/api/admin/comprehensive-statistics', wrapVercelHandler('./api/admin/comprehensive-statistics.js'))
-app.all('/api/admin/text-statistics', wrapVercelHandler('./api/admin/text-statistics.js'))
-app.all('/api/admin/dashboard-charts', wrapVercelHandler('./api/admin/dashboard-charts.js'))
-app.all('/api/admin/dashboard/export-text', wrapVercelHandler('./api/admin/dashboard-export.js'))
-app.all('/api/admin/users', wrapVercelHandler('./api/admin/users.js'))
-app.all('/api/admin/system', wrapVercelHandler('./api/admin/system.js'))
-app.all('/api/admin/analytics', wrapVercelHandler('./api/admin/analytics.js'))
-app.all('/api/admin/pg-integration', wrapVercelHandler('./api/admin/pg-integration.js'))
-app.all('/api/admin/payment-processor', wrapVercelHandler('./api/admin/payment-processor.js'))
-app.all('/api/admin/billing-management', wrapVercelHandler('./api/admin/billing-management.js'))
+// 인증 API 엔드포인트 (일반 사용자 로그인/회원가입)
+app.all('/api/auth', wrapVercelHandler('./api/auth.js'))
 
-// 새로운 관리자 API v2 엔드포인트
-app.all('/api/admin/v2/dashboard', wrapVercelHandler('./api/admin/dashboard-v2.js'))
-app.all('/api/admin/v2/users', wrapVercelHandler('./api/admin/users-v2.js'))
-app.all('/api/admin/v2/payments', wrapVercelHandler('./api/admin/payments-v2.js'))
-app.all('/api/admin/v2/messages', wrapVercelHandler('./api/admin/messages-v2.js'))
-app.all('/api/admin/v2/settings', wrapVercelHandler('./api/admin/settings-v2.js'))
+// 관리자 API 엔드포인트 (기본 관리자 API만 사용)
+app.all('/api/admin', wrapVercelHandler('./api/admin.js'))
+app.all('/api/admin/*', wrapVercelHandler('./api/admin.js'))
 
 // 헬스 체크 엔드포인트
 app.get('/api/health', (req, res) => {

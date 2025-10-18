@@ -7,7 +7,7 @@ import { supabase } from '../../lib/supabase';
 
 declare global {
   interface Window {
-    AUTHNICE: {
+    NICEPAY: {
       requestPay: (params: any) => void;
     };
   }
@@ -65,13 +65,13 @@ const NicePayButton: React.FC<NicePayButtonProps> = ({
   useEffect(() => {
     // 나이스페이 JS SDK 로드
     const loadNicePayScript = () => {
-      if (window.AUTHNICE) {
+      if (window.NICEPAY) {
         setIsScriptLoaded(true);
         return;
       }
 
       const script = document.createElement('script');
-      script.src = paymentConfig?.jsUrl || 'https://pay.nicepay.co.kr/v1/js/';
+      script.src = 'https://web.nicepay.co.kr/v3/webstd/js/nicepay-3.0.js';
       script.async = true;
       script.onload = () => {
         setIsScriptLoaded(true);
@@ -115,7 +115,7 @@ const NicePayButton: React.FC<NicePayButtonProps> = ({
   };
 
   const handleConfirmPayment = async () => {
-    if (!isScriptLoaded || !window.AUTHNICE || !paymentConfig) {
+    if (!isScriptLoaded || !window.NICEPAY || !paymentConfig) {
       onError?.({ message: '결제 모듈이 아직 로드되지 않았습니다.' });
       return;
     }
@@ -156,61 +156,63 @@ const NicePayButton: React.FC<NicePayButtonProps> = ({
         throw new Error(orderResult.error || '주문 생성에 실패했습니다.');
       }
 
-      // 결제 방법별 파라미터 설정 (NicePay 허용 값으로 매핑)
+      // NicePay v3 결제 파라미터 설정
       const getPaymentMethodParams = (payMethod: string) => {
         const baseParams = {
-          clientId: paymentConfig.clientId,
-          orderId: orderResult.orderId,
-          amount: amount,
-          goodsName: productName,
-          buyerName: buyerName,
-          buyerEmail: buyerEmail,
-          buyerTel: buyerTel,
-          returnUrl: orderResult.returnUrl,
+          PayMethod: 'CARD', // 기본값: 신용카드
+          MID: paymentConfig.clientId,
+          Moid: orderResult.orderId,
+          Amt: amount,
+          GoodsName: productName,
+          BuyerName: buyerName || '구매자',
+          BuyerEmail: buyerEmail || '',
+          BuyerTel: buyerTel || '',
+          ReturnURL: paymentConfig.returnUrl,
+          MallUserID: user?.id || '',
+          VbankExpDate: '', // 가상계좌 입금기한 (YYYYMMDD)
+          EdiDate: new Date().toISOString().replace(/[-:]/g, '').slice(0, 14), // 전문생성일시
+          SignData: orderResult.signature || '', // 위변조 검증 데이터
+          CharSet: 'utf-8',
+          ReqReserved: '', // 상점 예약필드
+          TrKey: orderResult.trKey || '' // 암호화키
         };
 
         switch (payMethod) {
           case 'kakaopay':
-            // 카카오페이는 샌드박스에서 지원되지 않으므로 간편결제로 매핑
             return {
               ...baseParams,
-              method: 'cardAndEasyPay',
-              payMethod: 'cardAndEasyPay'
+              PayMethod: 'EASYPAY',
+              EasyPayMethod: 'KAKAOPAY'
             };
           case 'naverpay':
-            // 네이버페이는 샌드박스에서 지원되지 않으므로 간편결제로 매핑
             return {
               ...baseParams,
-              method: 'cardAndEasyPay',
-              payMethod: 'cardAndEasyPay'
+              PayMethod: 'EASYPAY',
+              EasyPayMethod: 'NAVERPAY'
             };
           case 'bank':
-            // 계좌이체는 가상계좌로 매핑
             return {
               ...baseParams,
-              method: 'vbank',
-              payMethod: 'vbank'
+              PayMethod: 'VBANK',
+              VbankExpDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10).replace(/-/g, '') // 3일 후
             };
           case 'card':
           default:
             return {
               ...baseParams,
-              method: 'card',
-              payMethod: 'card'
+              PayMethod: 'CARD'
             };
         }
       };
 
-      // 결제 요청 파라미터 설정
-      const paymentParams = {
-        ...getPaymentMethodParams(orderResult.payMethod || selectedPaymentMethod),
-        fnError: async (result: any) => {
-          console.error('나이스페이 결제 오류:', result);
-          setIsLoading(false);
-          setShowConfirmationModal(false);
-          onError?.(result);
-        },
-        fnSuccess: async (result: any) => {
+      // NicePay v3 결제 요청 파라미터 설정
+      const paymentParams = getPaymentMethodParams(orderResult.payMethod || selectedPaymentMethod);
+
+      // NicePay v3 결제창 호출
+      window.NICEPAY.requestPay({
+        ...paymentParams,
+        // 성공 콜백
+        SuccessfullURL: async (result: any) => {
           console.log('나이스페이 결제 성공:', result);
           
           try {
@@ -221,7 +223,7 @@ const NicePayButton: React.FC<NicePayButtonProps> = ({
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                tid: result.tid,
+                tid: result.TID || result.tid,
                 amount: amount,
                 orderId: orderResult.orderId,
                 signature: orderResult.signature
@@ -243,11 +245,15 @@ const NicePayButton: React.FC<NicePayButtonProps> = ({
             setShowConfirmationModal(false);
             onError?.(approveError);
           }
+        },
+        // 실패 콜백
+        FailURL: async (result: any) => {
+          console.error('나이스페이 결제 오류:', result);
+          setIsLoading(false);
+          setShowConfirmationModal(false);
+          onError?.(result);
         }
-      };
-
-      // 나이스페이 결제창 호출
-      window.AUTHNICE.requestPay(paymentParams);
+      });
 
     } catch (error) {
       console.error('결제 요청 오류:', error);

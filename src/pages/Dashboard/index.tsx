@@ -76,40 +76,48 @@ const Dashboard: React.FC = () => {
   const convertToTextOutputData = (apiData: any) => {
     if (!apiData) return null;
 
-    // API 응답 구조에 맞게 변환
-    const userSearchTrends = apiData.searchTrends?.userSearches || [];
-    const userReportTrends = apiData.reportTrends?.userReports || [];
-    const marketSearchTrends = apiData.searchTrends?.marketAverage || [];
-    const marketReportTrends = apiData.reportTrends?.marketAverage || [];
+    console.log('📊 [Dashboard] API 데이터 구조:', apiData);
 
-    // 총 개수 계산
-    const userTotalSearches = userSearchTrends.reduce((sum: number, item: any) => sum + item.count, 0);
-    const userTotalReports = userReportTrends.reduce((sum: number, item: any) => sum + item.count, 0);
-    const marketTotalSearches = marketSearchTrends.reduce((sum: number, item: any) => sum + item.count, 0);
-    const marketTotalReports = marketReportTrends.reduce((sum: number, item: any) => sum + item.count, 0);
+    // 실제 API 응답 구조에 맞게 변환
+    const stats = apiData.stats || {};
+    const recentActivity = apiData.recentActivity || {};
+    const insights = apiData.insights || {};
+
+    // 검색 트렌드 데이터 (임시로 빈 배열 사용, 실제 트렌드 데이터가 없음)
+    const userSearchTrends = [];
+    const userReportTrends = [];
+    const marketSearchTrends = [];
+    const marketReportTrends = [];
+
+    const userData = user?.id ? {
+      searchTrends: userSearchTrends,
+      reportTrends: userReportTrends,
+      conversionRates: {
+        searchToReport: 0, // 실제 변환율 계산 필요
+        loginToReport: 0
+      },
+      searchFields: [], // 실제 필드 분석 데이터 필요
+      reportFields: [],
+      recentSearches: (recentActivity.searches || []).map((search: any) => ({
+        id: search.id,
+        title: search.keyword,
+        date: search.created_at,
+        type: 'search'
+      })),
+      recentReports: [], // 리포트 데이터가 없음
+      totalSearches: stats.totalSearches || 0,
+      totalReports: stats.totalReports || 0,
+    } : undefined;
 
     return {
-      user: user?.id ? {
-        searchTrends: userSearchTrends,
-        reportTrends: userReportTrends,
-        conversionRates: {
-          searchToReport: apiData.conversionRates?.searchConversion?.conversionRate || 0,
-          loginToReport: apiData.conversionRates?.loginConversion?.conversionRate || 0
-        },
-        searchFields: apiData.fieldAnalysis?.userSearchFields || [],
-        reportFields: apiData.fieldAnalysis?.userReportFields || [],
-        recentSearches: apiData.recentActivities?.searches || [],
-        recentReports: apiData.recentActivities?.reports || [],
-        totalSearches: userTotalSearches,
-        totalReports: userTotalReports,
-      } : undefined,
+      user: userData,
       market: {
         searchTrends: marketSearchTrends,
         reportTrends: marketReportTrends,
-        searchFields: apiData.fieldAnalysis?.marketSearchFields || [],
-        reportFields: apiData.fieldAnalysis?.marketReportFields || [],
-        totalSearches: marketTotalSearches,
-        totalReports: marketTotalReports,
+        searchFields: [],
+        reportFields: [],
+        totalSearches: 0,
+        totalReports: 0,
       }
     };
   };
@@ -243,8 +251,10 @@ const Dashboard: React.FC = () => {
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <CalendarDaysIcon className="w-4 h-4" />
                 <span>
-                  {new Date(dashboardData.period.startDate).toLocaleDateString()} ~ {' '}
-                  {new Date(dashboardData.period.endDate).toLocaleDateString()}
+                  {dashboardData?.period?.startDate 
+                    ? `${new Date(dashboardData.period.startDate).toLocaleDateString()} ~ ${new Date(dashboardData.period.endDate).toLocaleDateString()}`
+                    : '데이터 로딩 중...'
+                  }
                 </span>
               </div>
               <button
@@ -319,105 +329,113 @@ const Dashboard: React.FC = () => {
 
             {viewMode === 'charts' ? (
               <>
-                {/* 추이 분석 섹션 */}
-                <section>
-                  <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
-                     <ArrowTrendingUpIcon className="w-6 h-6 text-blue-600" />
-                     활동 추이 분석
-                   </h2>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <TrendAnalysisChart
-                      title="검색 추이"
-                      userTrends={dashboardData.searchTrends.userSearches}
-                      marketTrends={dashboardData.searchTrends.marketAverage}
-                      marketTotal={dashboardData.searchTrends.marketTotal}
-                      type="search"
-                    />
-                    <TrendAnalysisChart
-                      title="리포트 추이"
-                      userTrends={dashboardData.reportTrends.userReports}
-                      marketTrends={dashboardData.reportTrends.marketAverage}
-                      marketTotal={dashboardData.reportTrends.marketTotal}
-                      type="report"
-                    />
-                  </div>
-                </section>
+                {dashboardData ? (
+                    <>
+                      {/* 추이 분석 섹션 */}
+                      <section>
+                      <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+                         <ArrowTrendingUpIcon className="w-6 h-6 text-blue-600" />
+                         활동 추이 분석
+                       </h2>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <TrendAnalysisChart
+                          title="검색 추이"
+                          userTrends={dashboardData.searchTrends?.userSearches || []}
+                          marketTrends={dashboardData.searchTrends?.marketAverage || []}
+                          marketTotal={dashboardData.searchTrends?.marketTotal || 0}
+                          type="search"
+                        />
+                        <TrendAnalysisChart
+                          title="리포트 추이"
+                          userTrends={dashboardData.reportTrends?.userReports || []}
+                          marketTrends={dashboardData.reportTrends?.marketAverage || []}
+                          marketTotal={dashboardData.reportTrends?.marketTotal || 0}
+                          type="report"
+                        />
+                      </div>
+                    </section>
 
-                {/* 전환율 분석 섹션 */}
-                <section>
-                  <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
-                    <ChartBarIcon className="w-6 h-6 text-emerald-600" />
-                    전환율 분석
-                  </h2>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <ConversionRateChart
-                      title="로그인 전환율"
-                      data={dashboardData.conversionRates.loginConversion}
-                      type="login"
-                    />
-                    <ConversionRateChart
-                      title="검색 전환율"
-                      data={dashboardData.conversionRates.searchConversion}
-                      type="search"
-                    />
-                  </div>
-                </section>
+                    {/* 전환율 분석 섹션 */}
+                    <section>
+                      <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+                        <ChartBarIcon className="w-6 h-6 text-emerald-600" />
+                        전환율 분석
+                      </h2>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <ConversionRateChart
+                          title="로그인 전환율"
+                          data={dashboardData.conversionRates?.loginConversion || { totalLogins: 0, totalReports: 0, conversionRate: 0 }}
+                          type="login"
+                        />
+                        <ConversionRateChart
+                          title="검색 전환율"
+                          data={dashboardData.conversionRates?.searchConversion || { totalSearches: 0, totalReports: 0, conversionRate: 0 }}
+                          type="search"
+                        />
+                      </div>
+                    </section>
 
-                {/* 분야 분석 섹션 */}
-                <section>
-                  <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
-                    <MagnifyingGlassIcon className="w-6 h-6 text-purple-600" />
-                    IPC/CPC 분야 분석
-                  </h2>
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                    <FieldAnalysisDonutChart
-                      title="사용자 검색 분야 분석"
-                      data={dashboardData.fieldAnalysis.userSearchFields}
-                      category="search"
-                    />
-                    <FieldAnalysisDonutChart
-                      title="시장 검색 분야 분석"
-                      data={dashboardData.fieldAnalysis.marketSearchFields}
-                      category="search"
-                    />
-                    <FieldAnalysisDonutChart
-                      title="사용자 리포트 분야 분석"
-                      data={dashboardData.fieldAnalysis.userReportFields}
-                      category="report"
-                    />
-                    <FieldAnalysisDonutChart
-                      title="시장 리포트 분야 분석"
-                      data={dashboardData.fieldAnalysis.marketReportFields}
-                      category="report"
-                    />
-                  </div>
-                </section>
+                    {/* 분야 분석 섹션 */}
+                    <section>
+                      <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+                        <MagnifyingGlassIcon className="w-6 h-6 text-purple-600" />
+                        IPC/CPC 분야 분석
+                      </h2>
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        <FieldAnalysisDonutChart
+                          title="사용자 검색 분야 분석"
+                          data={dashboardData.fieldAnalysis?.userSearchFields || []}
+                          category="search"
+                        />
+                        <FieldAnalysisDonutChart
+                          title="시장 검색 분야 분석"
+                          data={dashboardData.fieldAnalysis?.marketSearchFields || []}
+                          category="search"
+                        />
+                        <FieldAnalysisDonutChart
+                          title="사용자 리포트 분야 분석"
+                          data={dashboardData.fieldAnalysis?.userReportFields || []}
+                          category="report"
+                        />
+                        <FieldAnalysisDonutChart
+                          title="시장 리포트 분야 분석"
+                          data={dashboardData.fieldAnalysis?.marketReportFields || []}
+                          category="report"
+                        />
+                      </div>
+                    </section>
 
-                {/* 최근 활동 섹션 */}
-                <section>
-                  <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
-                    <DocumentTextIcon className="w-6 h-6 text-orange-600" />
-                    최근 활동
-                  </h2>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <RecentActivitiesList
-                       title="최근 검색어 (10개)"
-                       activities={dashboardData.recentActivities.searches.map(item => ({
-                         ...item,
-                         type: item.type as "search" | "report"
-                       }))}
-                       type="search"
-                     />
-                     <RecentActivitiesList
-                       title="최근 리포트 제목 (10개)"
-                       activities={dashboardData.recentActivities.reports.map(item => ({
-                         ...item,
-                         type: item.type as "search" | "report"
-                       }))}
-                       type="report"
-                     />
+                    {/* 최근 활동 섹션 */}
+                    <section>
+                      <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+                        <DocumentTextIcon className="w-6 h-6 text-orange-600" />
+                        최근 활동
+                      </h2>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <RecentActivitiesList
+                           title="최근 검색어 (10개)"
+                           activities={(dashboardData.recentActivities?.searches || []).map(item => ({
+                             ...item,
+                             type: item.type as "search" | "report"
+                           }))}
+                           type="search"
+                         />
+                         <RecentActivitiesList
+                           title="최근 리포트 제목 (10개)"
+                           activities={(dashboardData.recentActivities?.reports || []).map(item => ({
+                             ...item,
+                             type: item.type as "search" | "report"
+                           }))}
+                           type="report"
+                         />
+                      </div>
+                      </section>
+                    </>
+                 ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    데이터 로딩 중...
                   </div>
-                </section>
+                )}
               </>
             ) : (
               /* 텍스트 출력 섹션 */

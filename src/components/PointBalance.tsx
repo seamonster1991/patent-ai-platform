@@ -11,6 +11,11 @@ interface PointBalanceProps {
 interface PointBalance {
   current_balance: number;
   last_updated: string;
+  expiring_soon?: {
+    amount: number;
+    expires_at: string;
+    days_left: number;
+  } | null;
 }
 
 const PointBalance: React.FC<PointBalanceProps> = ({ className = '', showDetails = true }) => {
@@ -98,15 +103,24 @@ const PointBalance: React.FC<PointBalanceProps> = ({ className = '', showDetails
   }
 
   return (
-    <div className={`flex items-center space-x-2 bg-gradient-to-r from-olive-50 to-olive-100 px-3 py-2 rounded-lg border border-olive-200 ${className}`}>
-      <Coins className="w-5 h-5 text-olive-600" />
-      <span className="text-sm font-semibold text-olive-800">
-        {balance ? balance.current_balance.toLocaleString() : '0'}P
-      </span>
-      {showDetails && balance && (
-        <span className="text-xs text-gray-500">
-          ({new Date(balance.last_updated).toLocaleDateString()})
+    <div className={`bg-gradient-to-r from-olive-50 to-olive-100 px-3 py-2 rounded-lg border border-olive-200 ${className}`}>
+      <div className="flex items-center space-x-2">
+        <Coins className="w-5 h-5 text-olive-600" />
+        <span className="text-sm font-semibold text-olive-800">
+          {balance ? balance.current_balance.toLocaleString() : '0'}P
         </span>
+        {showDetails && balance && (
+          <span className="text-xs text-gray-500">
+            ({new Date(balance.last_updated).toLocaleDateString()})
+          </span>
+        )}
+      </div>
+      
+      {/* 만료 예정 포인트 알림 */}
+      {balance?.expiring_soon && balance.expiring_soon.amount > 0 && (
+        <div className="mt-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-200">
+          ⚠️ {balance.expiring_soon.amount.toLocaleString()}P가 {balance.expiring_soon.days_left}일 후 만료됩니다
+        </div>
       )}
     </div>
   );

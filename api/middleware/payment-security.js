@@ -6,7 +6,7 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'patent-ai-admin-jwt-secret-key-2024-development';
 const NICEPAY_SECRET_KEY = process.env.NICEPAY_SECRET_KEY || '101d2ae924fa4ae398c3b76a7ba62226';
 
 // Rate limiting store (in production, use Redis or database)

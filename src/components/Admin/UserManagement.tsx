@@ -250,8 +250,11 @@ const UserManagement: React.FC<UserManagementProps> = ({ className = '' }) => {
     });
   };
 
-  // 숫자 포맷팅
-  const formatNumber = (num: number) => {
+  // 숫자 포맷팅 (안전한 처리)
+  const formatNumber = (num: number | undefined | null) => {
+    if (num === undefined || num === null || isNaN(num)) {
+      return '0';
+    }
     return num.toLocaleString();
   };
 
@@ -279,7 +282,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ className = '' }) => {
         <div>
           <h2 className="text-2xl font-bold text-gray-900">사용자 관리</h2>
           <p className="text-gray-600 mt-1">
-            총 {formatNumber(totalUsers)}명의 사용자
+            총 {formatNumber(totalUsers || 0)}명의 사용자
           </p>
         </div>
         <Button onClick={() => setShowUserModal(true)}>
@@ -435,18 +438,18 @@ const UserManagement: React.FC<UserManagementProps> = ({ className = '' }) => {
                       <div className="flex items-center gap-4 text-sm text-gray-600">
                         <div className="flex items-center gap-1">
                           <Search className="w-4 h-4" />
-                          <span>{formatNumber(user.search_count)}</span>
+                          <span>{formatNumber(user.search_count || 0)}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <FileText className="w-4 h-4" />
-                          <span>{formatNumber(user.report_count)}</span>
+                          <span>{formatNumber(user.report_count || 0)}</span>
                         </div>
                       </div>
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-1 text-sm">
                         <DollarSign className="w-4 h-4 text-green-600" />
-                        <span className="font-medium">{formatNumber(user.point_balance)}</span>
+                        <span className="font-medium">{formatNumber(user.point_balance || 0)}</span>
                       </div>
                     </td>
                     <td className="py-3 px-4">

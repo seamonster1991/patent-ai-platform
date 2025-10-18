@@ -118,6 +118,13 @@ export default function App() {
               </Layout>
             </ProtectedRoute>
           } />
+          <Route path="/payment" element={
+            <ProtectedRoute>
+              <Layout>
+                <PaymentPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
           <Route path="/payment/success" element={
             <ProtectedRoute>
               <Layout>

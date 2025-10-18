@@ -267,15 +267,24 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ className = '' })
   };
 
   // 통화 포맷팅
-  const formatCurrency = (amount: number, currency: string = 'KRW') => {
+  const formatCurrency = (amount: number | undefined | null, currency: string = 'KRW') => {
+    if (amount === undefined || amount === null || isNaN(amount)) {
+      return new Intl.NumberFormat('ko-KR', {
+        style: 'currency',
+        currency: currency
+      }).format(0);
+    }
     return new Intl.NumberFormat('ko-KR', {
       style: 'currency',
       currency: currency
     }).format(amount);
   };
 
-  // 숫자 포맷팅
-  const formatNumber = (num: number) => {
+  // 숫자 포맷팅 (안전한 처리)
+  const formatNumber = (num: number | undefined | null) => {
+    if (num === undefined || num === null || isNaN(num)) {
+      return '0';
+    }
     return num.toLocaleString();
   };
 
@@ -303,7 +312,7 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ className = '' })
         <div>
           <h2 className="text-2xl font-bold text-gray-900">결제 관리</h2>
           <p className="text-gray-600 mt-1">
-            총 {formatNumber(totalPayments)}건의 결제 내역
+            총 {formatNumber(totalPayments || 0)}건의 결제 내역
           </p>
         </div>
         <div className="flex gap-2">
@@ -328,7 +337,7 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ className = '' })
                 <div>
                   <p className="text-sm text-gray-600">총 수익</p>
                   <p className="text-lg font-bold text-gray-900">
-                    {formatCurrency(stats.total_amount)}
+                    {formatCurrency(stats.total_amount || 0)}
                   </p>
                 </div>
               </div>
@@ -341,7 +350,7 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ className = '' })
                 <div>
                   <p className="text-sm text-gray-600">총 거래</p>
                   <p className="text-lg font-bold text-gray-900">
-                    {formatNumber(stats.total_transactions)}
+                    {formatNumber(stats.total_transactions || 0)}
                   </p>
                 </div>
               </div>
@@ -354,7 +363,7 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ className = '' })
                 <div>
                   <p className="text-sm text-gray-600">성공</p>
                   <p className="text-lg font-bold text-gray-900">
-                    {formatNumber(stats.successful_transactions)}
+                    {formatNumber(stats.successful_transactions || 0)}
                   </p>
                 </div>
               </div>
@@ -367,7 +376,7 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ className = '' })
                 <div>
                   <p className="text-sm text-gray-600">실패</p>
                   <p className="text-lg font-bold text-gray-900">
-                    {formatNumber(stats.failed_transactions)}
+                    {formatNumber(stats.failed_transactions || 0)}
                   </p>
                 </div>
               </div>
@@ -380,7 +389,7 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ className = '' })
                 <div>
                   <p className="text-sm text-gray-600">환불액</p>
                   <p className="text-lg font-bold text-gray-900">
-                    {formatCurrency(stats.refunded_amount)}
+                    {formatCurrency(stats.refunded_amount || 0)}
                   </p>
                 </div>
               </div>
@@ -393,7 +402,7 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ className = '' })
                 <div>
                   <p className="text-sm text-gray-600">대기중</p>
                   <p className="text-lg font-bold text-gray-900">
-                    {formatCurrency(stats.pending_amount)}
+                    {formatCurrency(stats.pending_amount || 0)}
                   </p>
                 </div>
               </div>
@@ -559,11 +568,11 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ className = '' })
                     </td>
                     <td className="py-3 px-4">
                       <div className="font-medium text-gray-900">
-                        {formatCurrency(payment.amount, payment.currency)}
+                        {formatCurrency(payment.amount || 0, payment.currency)}
                       </div>
                       {payment.refund_amount && (
                         <div className="text-sm text-red-600">
-                          환불: {formatCurrency(payment.refund_amount, payment.currency)}
+                          환불: {formatCurrency(payment.refund_amount || 0, payment.currency)}
                         </div>
                       )}
                     </td>
@@ -603,7 +612,7 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ className = '' })
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-6">
               <div className="text-sm text-gray-600">
-                {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, totalPayments)} / {formatNumber(totalPayments)}
+                {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, totalPayments || 0)} / {formatNumber(totalPayments || 0)}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -646,7 +655,7 @@ const PaymentManagement: React.FC<PaymentManagementProps> = ({ className = '' })
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">환불 금액</p>
-                  <p className="font-medium">{formatCurrency(refundingPayment.amount, refundingPayment.currency)}</p>
+                  <p className="font-medium">{formatCurrency(refundingPayment.amount || 0, refundingPayment.currency)}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">

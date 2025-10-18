@@ -109,21 +109,21 @@ class AdminApiClient {
   }
 
   private loadTokensFromStorage() {
-    this.accessToken = localStorage.getItem('admin_access_token');
+    this.accessToken = localStorage.getItem('admin_token');
     this.refreshToken = localStorage.getItem('admin_refresh_token');
   }
 
   private saveTokensToStorage(accessToken: string, refreshToken: string) {
     this.accessToken = accessToken;
     this.refreshToken = refreshToken;
-    localStorage.setItem('admin_access_token', accessToken);
+    localStorage.setItem('admin_token', accessToken);
     localStorage.setItem('admin_refresh_token', refreshToken);
   }
 
   private clearTokensFromStorage() {
     this.accessToken = null;
     this.refreshToken = null;
-    localStorage.removeItem('admin_access_token');
+    localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_refresh_token');
   }
 
@@ -176,12 +176,20 @@ class AdminApiClient {
     }
 
     const data = await response.json();
-    return data;
+    
+    // 서버 응답 구조: {success: true, data: {actual_data}}
+    if (data.success && data.data) {
+      return data.data as T;
+    } else if (data.success) {
+      return data as T;
+    } else {
+      throw new Error(data.error || data.message || '요청 처리에 실패했습니다.');
+    }
   }
 
   // 인증 관련 메서드
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    const response = await this.makeRequest<LoginResponse>('/auth', {
+    const response = await this.makeRequest<LoginResponse>('?action=auth', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });

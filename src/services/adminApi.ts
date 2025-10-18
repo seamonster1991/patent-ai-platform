@@ -5,10 +5,10 @@
 
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 
-// API 기본 URL 설정
+// API 기본 URL 설정 - 개발 환경에서는 Vite 프록시 사용
 const API_BASE_URL = import.meta.env.MODE === 'production' 
   ? '/api' // Vercel에서는 상대 경로 사용
-  : 'http://localhost:3001'; // Node.js Express 서버 포트
+  : ''; // 개발 환경에서는 Vite 프록시를 통해 /api로 요청
 
 // 타임아웃 설정 최적화
 const API_TIMEOUTS = {
@@ -28,9 +28,17 @@ const adminApi: AxiosInstance = axios.create({
 
 // 요청 인터셉터 - 토큰 자동 추가 및 타임아웃 동적 설정
 adminApi.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('admin_token');
-    if (token && config.headers) {
+  async (config) => {
+    // 관리자 토큰 가져오기 (일반 사용자 토큰과 구분)
+    const adminToken = localStorage.getItem('admin_token');
+    const userToken = localStorage.getItem('token');
+    
+    // 관리자 API 요청인지 확인
+    const isAdminAuth = config.url?.includes('action=auth');
+    
+    if (!isAdminAuth && (adminToken || userToken) && config.headers) {
+      // 관리자 토큰이 있으면 우선 사용, 없으면 일반 사용자 토큰 사용
+      const token = adminToken || userToken;
       (config.headers as any).Authorization = `Bearer ${token}`;
     }
     
@@ -65,7 +73,7 @@ adminApi.interceptors.response.use(
     console.log(`[API Response] ${response.config.method?.toUpperCase()} ${response.config.url} - ${response.status} (${response.headers['content-length'] || 'unknown'} bytes)`);
     return response;
   },
-  (error) => {
+  async (error) => {
     const method = error.config?.method?.toUpperCase();
     const url = error.config?.url;
     const status = error.response?.status;
@@ -75,6 +83,36 @@ adminApi.interceptors.response.use(
       code: error.code,
       response: error.response?.data
     });
+    
+    // 401 Unauthorized 처리 - 토큰 만료 또는 인증 실패
+    if (status === 401) {
+      console.warn('🔒 [Admin API] 인증 실패 (401) 감지');
+      
+      // 관리자 로그인 요청이 아닌 경우에만 토큰 갱신 시도
+      const isLoginRequest = url?.includes('action=auth');
+      
+      if (!isLoginRequest) {
+        try {
+          // 일반 사용자 토큰으로 재시도 (관리자가 일반 사용자로도 로그인한 경우)
+          const userToken = localStorage.getItem('token');
+          if (userToken) {
+            console.log('🔄 [Admin API] 일반 사용자 토큰으로 재시도');
+            
+            // 원래 요청을 일반 사용자 토큰으로 재시도
+            const originalRequest = error.config;
+            originalRequest.headers.Authorization = `Bearer ${userToken}`;
+            
+            return adminApi.request(originalRequest);
+          }
+        } catch (retryError) {
+          console.error('❌ [Admin API] 토큰 재시도 실패:', retryError);
+        }
+        
+        // 토큰 갱신 실패 시 관리자 토큰 제거
+        localStorage.removeItem('admin_token');
+        console.warn('🚪 [Admin API] 관리자 토큰 제거됨');
+      }
+    }
     
     // 타임아웃 에러 처리
     if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
@@ -378,8 +416,8 @@ export const adminApiService = {
   // 인증 관련
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
-      // baseURL이 이미 /api로 설정되어 있으므로 endpoint는 /admin/auth만 사용
-      const endpoint = '/admin/auth';
+      // 서버의 라우팅에 맞춰 /api/admin?action=auth 사용
+      const endpoint = '/api/admin?action=auth';
       
       // 요청 데이터 검증 및 정리
       const cleanCredentials = {
@@ -455,8 +493,8 @@ export const adminApiService = {
 
   async refreshToken(): Promise<{ access_token: string }> {
     const refreshToken = localStorage.getItem('admin_refresh_token');
-    // baseURL이 이미 /api로 설정되어 있으므로 endpoint는 /admin/auth/refresh만 사용
-    const endpoint = '/admin/auth/refresh';
+    // 서버의 라우팅에 맞춰 /api/admin?action=refresh 사용
+    const endpoint = '/api/admin?action=refresh';
     const response = await adminApi.post(endpoint, {
       refresh_token: refreshToken,
     });
@@ -464,8 +502,8 @@ export const adminApiService = {
   },
 
   async getCurrentAdmin(): Promise<any> {
-    // baseURL이 이미 /api로 설정되어 있으므로 endpoint는 /admin/auth/me만 사용
-    const endpoint = '/admin/auth/me';
+    // 서버의 라우팅에 맞춰 /api/admin?action=me 사용
+    const endpoint = '/api/admin?action=me';
     const response = await adminApi.get(endpoint);
     
     console.log('🔍 [AdminAPI] getCurrentAdmin 응답:', response.data);
@@ -481,7 +519,7 @@ export const adminApiService = {
   // 대시보드 관련
   async getDashboardMetrics(period: string = '7d'): Promise<DashboardMetrics | ApiResponse<DashboardMetrics>> {
     const timestamp = Date.now();
-    const response = await adminApi.get(`/dashboard/metrics?period=${period}&_t=${timestamp}`);
+    const response = await adminApi.get(`/api/admin/dashboard?action=metrics&period=${period}&_t=${timestamp}`);
     return response.data;
   },
 

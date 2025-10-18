@@ -25,14 +25,23 @@ export interface ApiRequestOptions {
  */
 async function getAuthToken(): Promise<string | null> {
   try {
-    // 먼저 localStorage에서 토큰 확인
+    // TokenManager를 사용하여 유효한 토큰 확보
+    const { tokenManager } = await import('./tokenManager');
+    const validToken = await tokenManager.ensureValidToken();
+    
+    if (validToken) {
+      console.log('🔍 [API] 유효한 토큰 확보됨:', `${validToken.substring(0, 20)}...`);
+      return validToken;
+    }
+    
+    // TokenManager에서 토큰을 가져올 수 없는 경우 fallback
     const localToken = localStorage.getItem('token');
     
     // Supabase 세션에서도 토큰 확인
     const { supabase } = await import('./supabase');
     const { data: { session }, error } = await supabase.auth.getSession();
     
-    console.log('🔍 [API] 토큰 확인:', {
+    console.log('🔍 [API] 토큰 확인 (fallback):', {
       localToken: localToken ? `${localToken.substring(0, 20)}...` : null,
       sessionExists: !!session,
       sessionToken: session?.access_token ? `${session.access_token.substring(0, 20)}...` : null,
@@ -289,7 +298,36 @@ export async function apiRequest<T = any>(
         if (response.status === 401 && requireAuth) {
           console.warn('🔒 [API] 인증 실패 (401), 토큰 갱신 시도');
           
-          // 일반 사용자 토큰 만료 처리
+          // TokenManager를 사용하여 토큰 갱신 시도
+          try {
+            const { tokenManager } = await import('./tokenManager');
+            const refreshedToken = await tokenManager.refreshToken();
+            
+            if (refreshedToken) {
+              console.log('✅ [API] 토큰 갱신 성공, 요청 재시도');
+              
+              // 갱신된 토큰으로 요청 재시도
+              const retryResponse = await fetch(url, {
+                ...fetchOptions,
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${refreshedToken}`,
+                  ...headers,
+                },
+                signal: controller.signal,
+              });
+              
+              if (retryResponse.ok) {
+                const retryData = await retryResponse.json();
+                console.log('✅ [API] 토큰 갱신 후 요청 성공');
+                return retryData;
+              }
+            }
+          } catch (refreshError) {
+            console.error('❌ [API] 토큰 갱신 실패:', refreshError);
+          }
+          
+          // 토큰 갱신 실패 시 로그아웃 처리
           await handleTokenExpiration();
           return {
             success: false,

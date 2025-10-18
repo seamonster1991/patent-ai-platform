@@ -26,9 +26,12 @@ function verifyAdminToken(token) {
 
 // 관리자 인증 처리
 async function handleAuth(req, res) {
+  console.log('🔐 [Admin Auth] 로그인 시도:', { email: req.body?.email, hasPassword: !!req.body?.password })
+  
   const { email, password } = req.body
 
   if (!email || !password) {
+    console.log('❌ [Admin Auth] 이메일 또는 비밀번호 누락')
     return res.status(400).json({
       success: false,
       error: '이메일과 비밀번호를 입력해주세요.'
@@ -40,8 +43,15 @@ async function handleAuth(req, res) {
     const { data: admin, error: adminError } = await supabase
       .from('admin_users')
       .select(`
-        *,
-        admin_roles (
+        id,
+        email,
+        password_hash,
+        name,
+        role_id,
+        is_active,
+        last_login_at,
+        created_at,
+        admin_roles!admin_users_role_id_fkey (
           id,
           name,
           description,
@@ -53,21 +63,27 @@ async function handleAuth(req, res) {
       .single()
 
     if (adminError || !admin) {
-      console.log('Admin not found:', adminError)
+      console.log('❌ [Admin Auth] 관리자 계정을 찾을 수 없음:', adminError)
       return res.status(401).json({
         success: false,
         error: '관리자 계정을 찾을 수 없습니다.'
       })
     }
+    
+    console.log('✅ [Admin Auth] 관리자 계정 찾음:', { id: admin.id, email: admin.email })
 
     // 비밀번호 확인
+    console.log('🔑 [Admin Auth] 비밀번호 검증 중...')
     const isValidPassword = await bcrypt.compare(password, admin.password_hash)
     if (!isValidPassword) {
+      console.log('❌ [Admin Auth] 비밀번호 불일치')
       return res.status(401).json({
         success: false,
         error: '비밀번호가 올바르지 않습니다.'
       })
     }
+    
+    console.log('✅ [Admin Auth] 비밀번호 검증 성공')
 
     // JWT 토큰 생성
     const accessToken = jwt.sign(
@@ -97,7 +113,7 @@ async function handleAuth(req, res) {
       .from('admin_login_logs')
       .insert({
         admin_id: admin.id,
-        ip_address: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        ip_address: req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip || 'unknown',
         user_agent: req.headers['user-agent'],
         login_at: new Date().toISOString()
       })
@@ -280,7 +296,8 @@ async function handlePointManagement(req, res) {
   }
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
+  console.log('🚀 [Admin API] 요청 시작:', { method: req.method, url: req.url })
   setCommonHeaders(res)
 
   if (req.method === 'OPTIONS') {
@@ -292,6 +309,13 @@ export default async function handler(req, res) {
     const url = new URL(req.url, `http://${req.headers.host}`)
     const pathname = url.pathname
     const searchParams = url.searchParams
+    
+    console.log('🔍 [Admin API] 요청 분석:', { method, pathname, action: searchParams.get('action') })
+
+    // Express already parses the body, so we don't need to parse it again
+    if (!req.body) {
+      req.body = {}
+    }
 
     // 라우팅 처리
     if (method === 'POST' && pathname.endsWith('/admin')) {
@@ -322,10 +346,13 @@ export default async function handler(req, res) {
     })
 
   } catch (error) {
-    console.error('Admin API error:', error)
+    console.error('❌ [Admin API] 서버 에러:', error)
+    console.error('❌ [Admin API] 에러 스택:', error.stack)
     return res.status(500).json({
       success: false,
       error: '서버 오류가 발생했습니다.'
     })
   }
 }
+
+export default handler;

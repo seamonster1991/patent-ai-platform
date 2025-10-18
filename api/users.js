@@ -56,7 +56,7 @@ async function handleUpdateUser(req, res, userId) {
     const updateData = req.body;
     
     // 업데이트 불가능한 필드 제거
-    const { id, created_at, password_hash, ...allowedUpdates } = updateData;
+    const { id, created_at, password_hash: excludedPasswordHash, ...allowedUpdates } = updateData;
 
     const { data: updatedUser, error } = await supabase
       .from('users')
@@ -77,7 +77,7 @@ async function handleUpdateUser(req, res, userId) {
     }
 
     // 민감한 정보 제거
-    const { password_hash, ...safeUser } = updatedUser;
+    const { password_hash: userPasswordHash, ...safeUser } = updatedUser;
 
     return res.status(200).json({
       success: true,
@@ -227,7 +227,7 @@ async function handleProfile(req, res, userId) {
       }
 
       // 민감한 정보 제거
-      const { password_hash, ...safeProfile } = profile;
+      const { password_hash: profilePasswordHash, ...safeProfile } = profile;
 
       return res.status(200).json({
         success: true,
@@ -238,7 +238,7 @@ async function handleProfile(req, res, userId) {
       console.log('👤 [API] 사용자 프로필 업데이트:', userId);
 
       const updateData = req.body;
-      const { id, created_at, password_hash, ...allowedUpdates } = updateData;
+      const { id, created_at, password_hash: updatePasswordHash, ...allowedUpdates } = updateData;
 
       const { data: updatedProfile, error } = await supabase
         .from('users')
@@ -259,7 +259,7 @@ async function handleProfile(req, res, userId) {
       }
 
       // 민감한 정보 제거
-      const { password_hash, ...safeProfile } = updatedProfile;
+      const { password_hash: updatedProfilePasswordHash, ...safeProfile } = updatedProfile;
 
       return res.status(200).json({
         success: true,

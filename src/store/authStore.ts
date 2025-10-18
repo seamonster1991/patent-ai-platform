@@ -3,6 +3,7 @@ import { User as SupabaseUser } from '@supabase/supabase-js'
 import { supabase, User } from '../lib/supabase'
 import { ActivityTracker } from '../lib/activityTracker'
 import { authGuard } from '../lib/authGuard'
+import { tokenManager } from '../lib/tokenManager'
 
 interface AuthState {
   user: SupabaseUser | null
@@ -98,6 +99,91 @@ const trackLoginActivity = async (userId: string, success: boolean = true, login
 let authSubscription: any = null;
 let isInitializing = false;
 
+// Supabase 인증 상태 변경 리스너 설정
+const setupAuthListener = (set: any, get: any) => {
+  if (authSubscription) {
+    console.log('[AuthStore] 기존 인증 리스너 정리');
+    try {
+      authSubscription.unsubscribe();
+    } catch (error) {
+      console.error('[AuthStore] 리스너 정리 오류:', error);
+    }
+  }
+
+  console.log('[AuthStore] 새 인증 리스너 설정');
+  authSubscription = supabase.auth.onAuthStateChange(async (event, session) => {
+    console.log('[AuthStore] 인증 상태 변경:', event, session?.user?.email);
+    
+    try {
+      switch (event) {
+        case 'SIGNED_IN':
+          if (session?.user) {
+            console.log('[AuthStore] 사용자 로그인 감지:', session.user.email);
+            // JWT 토큰 저장
+            if (session.access_token) {
+              localStorage.setItem('token', session.access_token);
+            }
+            // 즉시 기본 상태 설정 후 백그라운드에서 프로필 로드
+            set({ user: session.user, loading: false, initialized: true });
+            handleUserSessionBackground(session.user, set);
+          }
+          break;
+          
+        case 'SIGNED_OUT':
+          console.log('[AuthStore] 사용자 로그아웃 감지');
+          // localStorage 정리
+          try {
+            localStorage.removeItem('token');
+            localStorage.removeItem('supabase.auth.token');
+            // 기타 앱 관련 localStorage 항목들 정리
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key && (key.startsWith('sb-') || key.includes('auth') || key.includes('user') || key.includes('supabase'))) {
+                keysToRemove.push(key);
+              }
+            }
+            keysToRemove.forEach(key => localStorage.removeItem(key));
+          } catch (error) {
+            console.error('[AuthStore] localStorage 정리 오류:', error);
+          }
+          
+          set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true });
+          break;
+          
+        case 'TOKEN_REFRESHED':
+          if (session?.access_token) {
+            console.log('[AuthStore] 토큰 갱신 감지');
+            localStorage.setItem('token', session.access_token);
+          }
+          break;
+          
+        case 'USER_UPDATED':
+          if (session?.user) {
+            console.log('[AuthStore] 사용자 정보 업데이트 감지');
+            handleUserSessionBackground(session.user, set);
+          }
+          break;
+          
+        default:
+          console.log('[AuthStore] 기타 인증 이벤트:', event);
+      }
+    } catch (error) {
+      console.error('[AuthStore] 인증 상태 변경 처리 오류:', error);
+    }
+  });
+  
+  return authSubscription;
+};
+
+// 백그라운드 사용자 세션 처리 헬퍼 함수
+const handleUserSessionBackground = async (user: SupabaseUser, set: any) => {
+  // 백그라운드에서 비동기로 처리
+  setTimeout(async () => {
+    await handleUserSession(user, set);
+  }, 0);
+};
+
 // 사용자 세션 처리 헬퍼 함수
 const handleUserSession = async (user: SupabaseUser, set: any) => {
   try {
@@ -185,45 +271,48 @@ const handleUserSession = async (user: SupabaseUser, set: any) => {
     // 관리자 권한 확인 (프로필의 role만 신뢰)
     const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin';
     
-    // 월간 무료 포인트 지급 시도 (비동기로 처리하여 로그인 속도에 영향 없음)
-    if (profile) {
-      try {
-        console.log('[AuthStore] 월간 무료 포인트 지급 확인 중...');
-        const response = await fetch('/api/points/monthly-free', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ userId: user.id }),
-        });
-        
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success && result.granted) {
-            console.log('[AuthStore] 월간 무료 포인트 지급 성공:', result.message);
-            // 토스트 알림은 UI에서 처리하도록 이벤트 발생
-            window.dispatchEvent(new CustomEvent('monthlyPointsGranted', { 
-              detail: { points: result.points, message: result.message } 
-            }));
-          } else {
-            console.log('[AuthStore] 월간 무료 포인트:', result.message);
-          }
-        } else {
-          console.warn('[AuthStore] 월간 무료 포인트 API 호출 실패:', response.status);
-        }
-      } catch (error) {
-        console.error('[AuthStore] 월간 무료 포인트 지급 중 오류:', error);
-        // 오류가 발생해도 로그인 프로세스는 계속 진행
-      }
-    }
-    
     console.log('[AuthStore] 사용자 세션 처리 완료:', { 
       userId: user.id, 
       hasProfile: !!profile, 
       isAdmin 
     });
     
+    // 먼저 상태를 설정하여 로그인 완료 처리
     set({ user, profile, isAdmin, loading: false, initialized: true });
+    
+    // 월간 무료 포인트 지급은 백그라운드에서 비동기로 처리 (로그인 속도에 영향 없음)
+    if (profile) {
+      setTimeout(async () => {
+        try {
+          console.log('[AuthStore] 월간 무료 포인트 지급 확인 중...');
+          const response = await fetch('/api/points/monthly-free', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ userId: user.id }),
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.granted) {
+              console.log('[AuthStore] 월간 무료 포인트 지급 성공:', result.message);
+              // 토스트 알림은 UI에서 처리하도록 이벤트 발생
+              window.dispatchEvent(new CustomEvent('monthlyPointsGranted', { 
+                detail: { points: result.points, message: result.message } 
+              }));
+            } else {
+              console.log('[AuthStore] 월간 무료 포인트:', result.message);
+            }
+          } else {
+            console.warn('[AuthStore] 월간 무료 포인트 API 호출 실패:', response.status);
+          }
+        } catch (error) {
+          console.error('[AuthStore] 월간 무료 포인트 지급 중 오류:', error);
+          // 오류가 발생해도 로그인 프로세스는 계속 진행
+        }
+      }, 100); // 100ms 후에 백그라운드에서 실행
+    }
     
   } catch (error) {
     console.error('[AuthStore] 사용자 세션 처리 중 예상치 못한 오류:', error);
@@ -288,25 +377,30 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           console.log('[AuthStore] JWT 토큰 저장 완료');
         }
         
-        await handleUserSession(data.user, set)
+        // 즉시 기본 사용자 정보 설정하여 로그인 완료 처리
+        set({ user: data.user, loading: false, initialized: true });
         
-        // 로그인 활동 추적 (두 가지 방식 모두 사용)
-        await trackLoginActivity(data.user.id);
+        // 프로필 로드와 활동 추적은 백그라운드에서 처리
+        handleUserSessionBackground(data.user, set);
         
-        // ActivityTracker를 통한 추가 추적 (대시보드 통계용)
-        try {
-          const activityTracker = ActivityTracker.getInstance()
-          activityTracker.setUserId(data.user.id)
-          await activityTracker.trackLogin({
-            method: 'email',
-            email: data.user.email,
-            userAgent: navigator.userAgent
-          })
-          console.log('[AuthStore] ActivityTracker 로그인 추적 완료')
-        } catch (activityError) {
-          console.error('[AuthStore] ActivityTracker 로그인 추적 오류:', activityError)
-          // 활동 추적 실패는 로그인 기능에 영향을 주지 않음
-        }
+        // 백그라운드에서 로그인 활동 추적
+        setTimeout(async () => {
+          try {
+            await trackLoginActivity(data.user.id);
+            
+            // ActivityTracker를 통한 추가 추적
+            const activityTracker = ActivityTracker.getInstance()
+            activityTracker.setUserId(data.user.id)
+            await activityTracker.trackLogin({
+              method: 'email',
+              email: data.user.email,
+              userAgent: navigator.userAgent
+            })
+            console.log('[AuthStore] 로그인 추적 완료')
+          } catch (trackError) {
+            console.error('[AuthStore] 로그인 추적 오류:', trackError)
+          }
+        }, 0);
         
         authGuard.finishLogin(true);
         return {}
@@ -474,25 +568,34 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     const { user } = get()
     
-    try {
-      // 사용자 활동 추적 - 로그아웃 (비동기로 처리하여 로그아웃 속도에 영향 없음)
-      if (user) {
-        // ActivityTracker를 백그라운드에서 실행하여 로그아웃 속도에 영향을 주지 않음
-        Promise.resolve().then(async () => {
-          try {
-            const activityTracker = ActivityTracker.getInstance()
-            activityTracker.setUserId(user.id)
-            await activityTracker.trackLogout({
-              email: user.email,
-              sessionDuration: Date.now() - (user.created_at ? new Date(user.created_at).getTime() : Date.now())
-            })
-          } catch (error) {
-            console.error('로그아웃 활동 추적 오류:', error)
-            // 활동 추적 실패는 로그아웃 기능에 영향을 주지 않음
-          }
-        })
-      }
+    // 로그아웃 활동 추적 (비동기로 처리하여 로그아웃 속도에 영향 없음)
+    if (user) {
+      Promise.resolve().then(async () => {
+        try {
+          const activityTracker = ActivityTracker.getInstance()
+          activityTracker.setUserId(user.id)
+          await activityTracker.trackLogout({
+            method: 'manual',
+            userAgent: navigator.userAgent,
+            sessionDuration: Date.now() - (user.created_at ? new Date(user.created_at).getTime() : Date.now())
+          })
+        } catch (error) {
+          console.error('로그아웃 활동 추적 오류:', error)
+          // 활동 추적 실패는 로그아웃 기능에 영향을 주지 않음
+        }
+      })
+    }
 
+    try {
+      // 토큰 관리자 정리
+      tokenManager.clearRefreshTimer();
+      
+      // 인증 리스너 정리
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+        authSubscription = null;
+      }
+      
       // Supabase 로그아웃 실행
       await supabase.auth.signOut()
       
@@ -527,26 +630,38 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initialize: async () => {
     const currentState = get();
     
-    // 중복 초기화 방지 - 더 엄격한 체크
-    if (currentState.initialized || isInitializing) {
-      console.log('[AuthStore] 초기화 이미 완료되었거나 진행 중:', { initialized: currentState.initialized, isInitializing });
+    // 중복 초기화 방지
+    if (currentState.initialized) {
+      console.log('[AuthStore] 이미 초기화 완료됨');
+      return;
+    }
+    
+    if (isInitializing) {
+      console.log('[AuthStore] 초기화 진행 중, 건너뛰기');
       return;
     }
     
     console.log('[AuthStore] 초기화 시작');
     isInitializing = true;
     
-    // 초기화 시작 시 loading: true, initialized: false로 명확히 설정
-    set({ loading: true, initialized: false });
-    
     try {
+      // 즉시 초기화 상태를 true로 설정하여 무한루프 방지
+      set({ loading: true, initialized: true });
+      
+      // 인증 상태 변경 리스너 설정 (한 번만)
+      setupAuthListener(set, get);
+      
+      // 토큰 관리자 시작 (백그라운드)
+      setTimeout(() => {
+        tokenManager.scheduleTokenRefresh();
+      }, 0);
+      
       // 현재 세션 확인
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) {
         console.error('[AuthStore] 세션 가져오기 오류:', error);
-        set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true });
-        isInitializing = false;
+        set({ user: null, profile: null, isAdmin: false, loading: false });
         return;
       }
       
@@ -557,34 +672,48 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           localStorage.setItem('token', session.access_token);
         }
         
-        await handleUserSession(session.user, set);
+        // 즉시 기본 사용자 정보 설정
+        set({ user: session.user, loading: false });
         
-        // handleUserSession 완료 후 확실히 초기화 완료 상태로 설정
-        const updatedState = get();
-        set({ ...updatedState, loading: false, initialized: true });
+        // 프로필 로드는 백그라운드에서 처리
+        handleUserSessionBackground(session.user, set);
       } else {
-        console.log('[AuthStore] 세션 없음 - 로그아웃 상태로 설정');
-        set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true });
+        console.log('[AuthStore] 세션 없음 - localStorage 토큰 확인');
+        
+        // localStorage에서 토큰 확인 (간단하게)
+        const storedToken = localStorage.getItem('token');
+        if (storedToken) {
+          console.log('[AuthStore] 저장된 토큰으로 사용자 복원 시도');
+          
+          try {
+            const { data: { user }, error: userError } = await supabase.auth.getUser(storedToken);
+            
+            if (user && !userError) {
+              console.log('[AuthStore] 토큰으로 사용자 복원 성공:', user.email);
+              set({ user, loading: false });
+              handleUserSessionBackground(user, set);
+            } else {
+              console.log('[AuthStore] 유효하지 않은 토큰 제거');
+              localStorage.removeItem('token');
+              set({ user: null, profile: null, isAdmin: false, loading: false });
+            }
+          } catch (restoreError) {
+            console.error('[AuthStore] 토큰 복원 오류:', restoreError);
+            localStorage.removeItem('token');
+            set({ user: null, profile: null, isAdmin: false, loading: false });
+          }
+        } else {
+          console.log('[AuthStore] 토큰 없음 - 로그아웃 상태');
+          set({ user: null, profile: null, isAdmin: false, loading: false });
+        }
       }
       
     } catch (error) {
       console.error('[AuthStore] 초기화 실패:', error);
-      set({ user: null, profile: null, isAdmin: false, loading: false, initialized: true });
+      set({ user: null, profile: null, isAdmin: false, loading: false });
     } finally {
       isInitializing = false;
-      
-      // 최종 안전장치: 초기화가 완료되지 않았다면 강제로 완료 처리
-      const finalState = get();
-      if (!finalState.initialized || finalState.loading) {
-        console.log('[AuthStore] 최종 안전장치 - 초기화 완료 처리');
-        set({ ...finalState, initialized: true, loading: false });
-      }
-      
-      console.log('[AuthStore] 초기화 완료 - 최종 상태:', { 
-        initialized: get().initialized, 
-        loading: get().loading,
-        hasUser: !!get().user 
-      });
+      console.log('[AuthStore] 초기화 완료');
     }
   },
 

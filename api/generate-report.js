@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import jwt from 'jsonwebtoken';
 
 // Supabase 클라이언트 초기화 (강화된 환경변수 처리)
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -31,7 +32,7 @@ try {
   supabase = null;
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   // 🔍 DEBUG: 함수 호출 추적
   const requestId = Math.random().toString(36).substr(2, 9);
   console.log(`🔍 [DEBUG] generate-report.js 함수 호출 시작 - RequestID: ${requestId}, 시간: ${new Date().toISOString()}`);
@@ -115,39 +116,34 @@ export default async function handler(req, res) {
       prefix: apiKey.substring(0, 4) + '...'
     });
 
-    // 요청 데이터 검증 - reportType을 먼저 추출
-    const { patentData, reportType, userId: rawUserId } = req.body;
-    
-    // 🔍 DEBUG: rawUserId 값 확인
-    console.log('🔍 [DEBUG] rawUserId 값:', {
-      rawUserId: rawUserId,
-      type: typeof rawUserId,
-      hasAt: rawUserId && rawUserId.includes('@'),
-      length: rawUserId ? rawUserId.length : 0
-    });
-    
-    // userId가 이메일인 경우 UUID로 변환
-    let userId = rawUserId;
-    if (rawUserId && rawUserId.includes('@')) {
-      console.log('📧 이메일로 사용자 검색 중:', rawUserId);
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', rawUserId)
-        .single();
-      
-      if (userError) {
-        console.error('❌ 사용자 검색 실패:', userError);
-        return res.status(400).json({
-          success: false,
-          error: 'User not found',
-          message: '사용자를 찾을 수 없습니다.'
-        });
-      }
-      
-      userId = userData.id;
-      console.log(`📧 이메일로 사용자 찾음: ${rawUserId} -> ${userId}`);
+    // JWT 토큰 검증 및 사용자 인증
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required',
+        message: '사용자 인증이 필요합니다.'
+      });
     }
+
+    const token = authHeader.slice(7); // Remove 'Bearer ' prefix
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET || 'patent-ai-admin-jwt-secret-key-2024-development');
+    } catch (error) {
+      console.error('JWT 토큰 검증 실패:', error);
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid token',
+        message: '유효하지 않은 토큰입니다.'
+      });
+    }
+
+    const userId = decoded.userId;
+    console.log('✅ JWT 토큰 검증 성공:', { userId, email: decoded.email });
+
+    // 요청 데이터 검증 - reportType을 먼저 추출
+    const { patentData, reportType } = req.body;
     
     // 🔍 DEBUG: 원본 특허 데이터 로깅
     console.log('🔍 [DEBUG] 원본 특허 데이터 수신:', {
@@ -312,10 +308,57 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log('✅ 포인트 잔액 검증 완료 - 리포트 생성을 진행합니다.');
+    console.log('✅ 포인트 잔액 검증 완료 - 이제 포인트를 먼저 차감합니다.');
 
     // 중복 요청 방지를 위한 요청 ID 생성
     const requestId = `${user.id}_${patentData.applicationNumber || 'unknown'}_${reportType}_${Date.now()}`;
+
+    // 🔍 Step 1: 리포트 생성 전 포인트 먼저 차감 (FEFO 방식)
+    console.log('💰 리포트 생성 전 포인트 차감을 시작합니다.');
+    let pointsDeducted = false;
+    
+    try {
+      // FEFO 포인트 차감 실행
+      const { data: deductResult, error: deductError } = await supabase
+        .rpc('deduct_points_fefo', {
+          p_user_id: userId,
+          p_amount: pointsRequired,
+          p_report_type: reportType === 'market' ? 'market_analysis' : 'business_insight',
+          p_request_id: requestId
+        });
+
+      if (deductError) {
+        console.error('❌ 포인트 차감 실패:', deductError);
+        return res.status(400).json({
+          success: false,
+          error: 'Point deduction failed',
+          message: '포인트 차감에 실패했습니다. 다시 시도해주세요.',
+          details: deductError.message
+        });
+      }
+
+      if (!deductResult || !deductResult[0]?.success) {
+        console.error('❌ 포인트 차감 결과 실패:', deductResult);
+        return res.status(400).json({
+          success: false,
+          error: 'Point deduction failed',
+          message: deductResult?.[0]?.error_message || '포인트 차감에 실패했습니다.',
+          remainingBalance: deductResult?.[0]?.remaining_balance || 0
+        });
+      }
+
+      console.log('✅ 포인트 차감 성공:', deductResult[0]);
+      pointsDeducted = true;
+      
+    } catch (error) {
+      console.error('❌ 포인트 차감 처리 중 예외 발생:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Point deduction error',
+        message: '포인트 차감 중 오류가 발생했습니다.',
+        details: error.message
+      });
+    }
 
     // 특허 정보 추출
     const patentInfo = extractPatentInfo(patentData);
@@ -790,35 +833,8 @@ export default async function handler(req, res) {
       hasSupabase: !!supabase
     });
 
-    // 🔍 Step 2: 리포트 생성 성공 후 포인트 차감 실행
-    console.log('💰 리포트 생성 성공 - 포인트 차감을 진행합니다.');
-    
-    try {
-      // FEFO 포인트 차감 실행
-      const { data: deductResult, error: deductError } = await supabase
-        .rpc('deduct_points_fefo', {
-          p_user_id: userId,
-          p_points: pointsRequired,
-          p_report_type: reportType === 'market' ? 'market_analysis' : 'business_insight',
-          p_request_id: requestId
-        });
-
-      if (deductError) {
-        console.error('❌ 리포트 생성 후 포인트 차감 실패:', deductError);
-        
-        // 포인트 차감 실패 시에도 리포트는 이미 생성되었으므로 경고 로그만 남기고 계속 진행
-        console.warn('⚠️ 리포트는 생성되었지만 포인트 차감에 실패했습니다. 관리자 확인 필요.');
-        
-        // 포인트 차감 실패를 응답에 포함
-        console.log('✅ 포인트 차감 실패했지만 리포트 생성은 성공 - 응답을 반환합니다.');
-      } else {
-        console.log('✅ 포인트 차감 성공:', deductResult);
-      }
-      
-    } catch (error) {
-      console.error('❌ 포인트 차감 처리 중 예외 발생:', error);
-      console.warn('⚠️ 리포트는 생성되었지만 포인트 차감 중 예외가 발생했습니다. 관리자 확인 필요.');
-    }
+    // 포인트는 이미 리포트 생성 전에 차감되었으므로 별도 처리 불필요
+    console.log('💰 리포트 생성 성공 - 포인트는 이미 차감되었습니다.');
 
     res.status(200).json({
       success: true,
@@ -868,6 +884,37 @@ export default async function handler(req, res) {
         patentNumber: patentData?.applicationNumber || 'unknown'
       }
     });
+
+    // 🔄 포인트 환불 처리 - 리포트 생성 실패 시 차감된 포인트 복구
+    if (pointsDeducted && userId && supabase) {
+      console.log('💰 리포트 생성 실패로 인한 포인트 환불을 진행합니다.');
+      
+      try {
+        // 새로운 refund_points 함수 사용
+        const { data: refundResult, error: refundError } = await supabase
+          .rpc('refund_points', {
+            p_user_id: userId,
+            p_amount: pointsRequired,
+            p_request_id: requestId,
+            p_description: `리포트 생성 실패로 인한 포인트 환불 (${reportType === 'market' ? '시장분석' : '비즈니스인사이트'})`
+          });
+
+        if (refundError) {
+          console.error('❌ 포인트 환불 실패:', refundError);
+          // 환불 실패는 별도 알림이 필요하지만 에러 응답에는 포함하지 않음
+        } else if (refundResult && refundResult[0]?.success) {
+          console.log('✅ 포인트 환불 성공:', refundResult[0]);
+          pointsDeducted = false; // 환불 완료로 상태 업데이트
+        } else {
+          console.error('❌ 포인트 환불 결과 실패:', refundResult);
+        }
+        
+      } catch (refundException) {
+        console.error('❌ 포인트 환불 처리 중 예외 발생:', refundException);
+      }
+    } else {
+      console.log('💰 포인트가 차감되지 않았으므로 환불 처리를 건너뜁니다.');
+    }
     
     // 부분 응답이 있는 경우 저장 시도
     let partialResult = null;
@@ -1863,3 +1910,5 @@ async function saveReportWithRetry(insertData, userId, patentInfo, reportType) {
   // 리포트 저장 실패 시에도 리포트 생성은 계속 진행 (사용자에게 결과 제공)
   return null;
 }
+
+export default handler;
