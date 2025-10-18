@@ -114,7 +114,7 @@ app.all('/api/health', wrapVercelHandler('./api/health.js'))
 app.all('/api/index', wrapVercelHandler('./api/index.js'))
 
 // 13. AI 분석 API
-app.all('/api/ai-analysis', wrapVercelHandler('./api/ai-analysis.js'))
+app.all('/api/ai-analysis', wrapVercelHandler('./api/generate-report.js'))
 
 // 헬스 체크 엔드포인트
 app.get('/api/health', (req, res) => {
