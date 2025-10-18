@@ -526,9 +526,22 @@ export default function BusinessInsightsReport({
       const apiUrl = getApiUrl('/api/generate-report');
       console.log('🔗 [BusinessInsightsReport] API URL:', apiUrl);
       
+      // Supabase 세션 토큰 가져오기
+      const { supabase } = await import('../../lib/supabase')
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      }
+      
+      // 세션이 있으면 Authorization 헤더 추가
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+      
       const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ 
           patentData: patent, 
           reportType: 'business',

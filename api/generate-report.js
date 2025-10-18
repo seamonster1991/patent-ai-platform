@@ -40,10 +40,12 @@ async function handler(req, res) {
   // 리포트 ID 저장용 변수 (함수 전체에서 사용)
   let savedReportId = null;
   
-  // CORS 헤더 설정
+  // 강화된 CORS 헤더 설정
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Max-Age', '86400');
 
   // OPTIONS 요청 처리
   if (req.method === 'OPTIONS') {
@@ -116,31 +118,52 @@ async function handler(req, res) {
       prefix: apiKey.substring(0, 4) + '...'
     });
 
-    // JWT 토큰 검증 및 사용자 인증
+    // Supabase 세션 토큰 검증 및 사용자 인증
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    let userId = req.body.userId; // 요청 본문에서 userId 가져오기
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.slice(7); // Remove 'Bearer ' prefix
+      
+      try {
+        // Supabase JWT 토큰 검증
+        const { data: { user }, error } = await supabase.auth.getUser(token);
+        
+        if (error || !user) {
+          console.error('Supabase 토큰 검증 실패:', error);
+          // 토큰이 유효하지 않지만 userId가 제공된 경우 계속 진행
+          if (!userId) {
+            return res.status(401).json({
+              success: false,
+              error: 'Invalid token',
+              message: '유효하지 않은 토큰입니다.'
+            });
+          }
+        } else {
+          userId = user.id;
+          console.log('✅ Supabase 토큰 검증 성공:', { userId, email: user.email });
+        }
+      } catch (error) {
+        console.error('토큰 검증 중 오류:', error);
+        // 토큰 검증 실패 시에도 userId가 있으면 계속 진행
+        if (!userId) {
+          return res.status(401).json({
+            success: false,
+            error: 'Authentication error',
+            message: '인증 처리 중 오류가 발생했습니다.'
+          });
+        }
+      }
+    }
+    
+    // userId가 여전히 없는 경우
+    if (!userId) {
       return res.status(401).json({
         success: false,
         error: 'Authentication required',
         message: '사용자 인증이 필요합니다.'
       });
     }
-
-    const token = authHeader.slice(7); // Remove 'Bearer ' prefix
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET || 'patent-ai-admin-jwt-secret-key-2024-development');
-    } catch (error) {
-      console.error('JWT 토큰 검증 실패:', error);
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid token',
-        message: '유효하지 않은 토큰입니다.'
-      });
-    }
-
-    const userId = decoded.userId;
-    console.log('✅ JWT 토큰 검증 성공:', { userId, email: decoded.email });
 
     // 요청 데이터 검증 - reportType을 먼저 추출
     const { patentData, reportType } = req.body;

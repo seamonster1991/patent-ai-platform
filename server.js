@@ -89,6 +89,8 @@ app.all('/api/detail', wrapVercelHandler('./api/search.js')) // detail 요청을
 
 // 5. 포인트 관리 API
 app.all('/api/points', wrapVercelHandler('./api/points.js'))
+app.all('/api/points/monthly-free', wrapVercelHandler('./api/points.js'))
+app.all('/api/points/expiring-points', wrapVercelHandler('./api/points.js'))
 
 // 6. 결제 시스템 API
 app.all('/api/nicepay', wrapVercelHandler('./api/nicepay.js'))
@@ -110,6 +112,9 @@ app.all('/api/health', wrapVercelHandler('./api/health.js'))
 
 // 12. 메인 라우터 API
 app.all('/api/index', wrapVercelHandler('./api/index.js'))
+
+// 13. AI 분석 API
+app.all('/api/ai-analysis', wrapVercelHandler('./api/ai-analysis.js'))
 
 // 헬스 체크 엔드포인트
 app.get('/api/health', (req, res) => {

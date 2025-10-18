@@ -45,6 +45,18 @@
       "destination": "/api/points.js"
     },
     {
+      "source": "/api/points/monthly-free",
+      "destination": "/api/points.js"
+    },
+    {
+      "source": "/api/points/expiring-points",
+      "destination": "/api/points.js"
+    },
+    {
+      "source": "/api/ai-analysis",
+      "destination": "/api/ai-analysis.js"
+    },
+    {
       "source": "/api/nicepay",
       "destination": "/api/nicepay.js"
     },
