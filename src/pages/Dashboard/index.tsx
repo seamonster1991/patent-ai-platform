@@ -45,8 +45,14 @@ interface DashboardAnalyticsData {
     reports: Array<{ date: string; count: number; type: string }>;
   };
   analysis?: {
-    searchFields: Array<{ field: string; count: number }>;
-    reportFields: Array<{ field: string; count: number }>;
+    searchFields: Array<{ field: string; count: number }> | {
+      topFields: Array<{ field: string; count: number }>;
+      topKeywords: Array<{ keyword: string; count: number }>;
+    };
+    reportFields: Array<{ field: string; count: number }> | {
+      typeDistribution: Array<{ type: string; count: number }>;
+      statusDistribution: Array<{ status: string; count: number }>;
+    };
   };
   recent?: {
     searches: Array<{ id: string; keyword: string; created_at: string }>;
@@ -103,19 +109,33 @@ const Dashboard: React.FC = () => {
     const marketSearchTrends = generateMarketTrends(marketAverage.searchAverage || 0);
     const marketReportTrends = generateMarketTrends(marketAverage.reportAverage || 0);
     
-    // 검색 분야 분석 데이터 변환
-    const searchFields = (analysis.searchFields || []).map((field: any, index: number) => ({
-      label: field.field || `분야 ${index + 1}`,
-      value: field.count || 0,
-      percentage: `${((field.count || 0) / Math.max(stats.totalSearches || 1, 1) * 100).toFixed(1)}%`
-    }));
+    // 검색 분야 분석 데이터 변환 - API 응답 구조에 맞게 수정
+    const searchFieldsData = analysis.searchFields || {};
+    const searchFields = Array.isArray(searchFieldsData) 
+      ? searchFieldsData.map((field: any, index: number) => ({
+          label: field.field || `분야 ${index + 1}`,
+          value: field.count || 0,
+          percentage: `${((field.count || 0) / Math.max(stats.totalSearches || 1, 1) * 100).toFixed(1)}%`
+        }))
+      : (searchFieldsData.topFields || []).map((field: any, index: number) => ({
+          label: field.field || `분야 ${index + 1}`,
+          value: field.count || 0,
+          percentage: `${((field.count || 0) / Math.max(stats.totalSearches || 1, 1) * 100).toFixed(1)}%`
+        }));
 
-    // 리포트 분야 분석 데이터 변환
-    const reportFields = (analysis.reportFields || []).map((field: any, index: number) => ({
-      label: field.field || `분야 ${index + 1}`,
-      value: field.count || 0,
-      percentage: `${((field.count || 0) / Math.max(stats.totalReports || 1, 1) * 100).toFixed(1)}%`
-    }));
+    // 리포트 분야 분석 데이터 변환 - API 응답 구조에 맞게 수정
+    const reportFieldsData = analysis.reportFields || {};
+    const reportFields = Array.isArray(reportFieldsData)
+      ? reportFieldsData.map((field: any, index: number) => ({
+          label: field.field || `분야 ${index + 1}`,
+          value: field.count || 0,
+          percentage: `${((field.count || 0) / Math.max(stats.totalReports || 1, 1) * 100).toFixed(1)}%`
+        }))
+      : (reportFieldsData.typeDistribution || []).map((field: any, index: number) => ({
+          label: field.type || field.field || `분야 ${index + 1}`,
+          value: field.count || 0,
+          percentage: `${((field.count || 0) / Math.max(stats.totalReports || 1, 1) * 100).toFixed(1)}%`
+        }));
 
     const userData = user?.id ? {
       searchTrends: userSearchTrends,
@@ -520,20 +540,42 @@ const Dashboard: React.FC = () => {
                       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                         <FieldAnalysisDonutChart
                           title="검색 분야 분석"
-                          data={(dashboardData.analysis?.searchFields || []).map((field: any) => ({
-                            label: field.field || '기타',
-                            value: field.count || 0,
-                            percentage: `${((field.count || 0) / Math.max(dashboardData.stats?.totalSearches || 1, 1) * 100).toFixed(1)}%`
-                          }))}
+                          data={(() => {
+                            const searchFields = dashboardData.analysis?.searchFields;
+                            let fieldsArray = [];
+                            
+                            if (Array.isArray(searchFields)) {
+                              fieldsArray = searchFields;
+                            } else if (searchFields && typeof searchFields === 'object' && 'topFields' in searchFields) {
+                              fieldsArray = searchFields.topFields || [];
+                            }
+                            
+                            return fieldsArray.map((field: any) => ({
+                              label: field.field || '기타',
+                              value: field.count || 0,
+                              percentage: `${((field.count || 0) / Math.max(dashboardData.stats?.totalSearches || 1, 1) * 100).toFixed(1)}%`
+                            }));
+                          })()}
                           category="search"
                         />
                         <FieldAnalysisDonutChart
                           title="리포트 분야 분석"
-                          data={(dashboardData.analysis?.reportFields || []).map((field: any) => ({
-                            label: field.field || '기타',
-                            value: field.count || 0,
-                            percentage: `${((field.count || 0) / Math.max(dashboardData.stats?.totalReports || 1, 1) * 100).toFixed(1)}%`
-                          }))}
+                          data={(() => {
+                            const reportFields = dashboardData.analysis?.reportFields;
+                            let fieldsArray = [];
+                            
+                            if (Array.isArray(reportFields)) {
+                              fieldsArray = reportFields;
+                            } else if (reportFields && typeof reportFields === 'object' && 'typeDistribution' in reportFields) {
+                              fieldsArray = reportFields.typeDistribution || [];
+                            }
+                            
+                            return fieldsArray.map((field: any) => ({
+                              label: field.field || field.type || '기타',
+                              value: field.count || 0,
+                              percentage: `${((field.count || 0) / Math.max(dashboardData.stats?.totalReports || 1, 1) * 100).toFixed(1)}%`
+                            }));
+                          })()}
                           category="report"
                         />
                       </div>

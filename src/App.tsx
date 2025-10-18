@@ -19,6 +19,7 @@ import PointTest from "@/pages/PointTest";
 import AuthCallback from "@/pages/AuthCallback";
 import Feedback from "@/pages/Feedback";
 import ProtectedRoute from "@/components/Auth/ProtectedRoute";
+import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
 import { useAuthStore } from "@/store/authStore";
 import { useThemeStore } from "@/store/themeStore";
 
@@ -87,7 +88,9 @@ export default function App() {
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <Layout>
-                <Dashboard />
+                <ErrorBoundary>
+                  <Dashboard />
+                </ErrorBoundary>
               </Layout>
             </ProtectedRoute>
           } />
@@ -99,11 +102,11 @@ export default function App() {
             </ProtectedRoute>
           } />
           <Route path="/patent/:applicationNumber" element={
-            <ProtectedRoute>
-              <Layout>
+            <Layout>
+              <ErrorBoundary>
                 <PatentDetail />
-              </Layout>
-            </ProtectedRoute>
+              </ErrorBoundary>
+            </Layout>
           } />
           <Route path="/profile" element={
             <ProtectedRoute>

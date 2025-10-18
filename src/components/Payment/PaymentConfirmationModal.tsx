@@ -16,8 +16,12 @@ interface PaymentConfirmationModalProps {
   onConfirm: () => void;
   paymentData: {
     amount: number;
-    method: string;
-    methodName: string;
+    method?: string;
+    methodName?: string;
+    productName?: string;
+    paymentMethod?: string;
+    buyerName?: string;
+    buyerEmail?: string;
     description?: string;
     orderId?: string;
     fee?: number;
@@ -80,19 +84,53 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
           <div className="p-6 space-y-6">
             <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
               <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
-                {getPaymentMethodIcon(paymentData.method)}
+                {getPaymentMethodIcon(paymentData.method || paymentData.paymentMethod || 'card')}
               </div>
               <div>
                 <h4 className="font-medium text-gray-900">
-                  {paymentData.methodName}
+                  {paymentData.methodName || paymentData.paymentMethod || '결제 수단'}
                 </h4>
-                {paymentData.description && (
+                {(paymentData.description || paymentData.productName) && (
                   <p className="text-sm text-gray-600">
-                    {paymentData.description}
+                    {paymentData.description || paymentData.productName}
                   </p>
                 )}
               </div>
             </div>
+
+            {/* 상품 정보 */}
+            {paymentData.productName && (
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">상품명</span>
+                  <span className="font-medium text-gray-900">
+                    {paymentData.productName}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* 구매자 정보 */}
+            {(paymentData.buyerName || paymentData.buyerEmail) && (
+              <div className="space-y-3">
+                {paymentData.buyerName && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">구매자명</span>
+                    <span className="font-medium text-gray-900">
+                      {paymentData.buyerName}
+                    </span>
+                  </div>
+                )}
+                {paymentData.buyerEmail && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">이메일</span>
+                    <span className="font-medium text-gray-900">
+                      {paymentData.buyerEmail}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="space-y-3">
               <div className="flex justify-between items-center">

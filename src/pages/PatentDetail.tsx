@@ -122,7 +122,7 @@ export default function PatentDetail() {
         retries: 2
       })
       
-      if (response.success && response.data) {
+      if (response.success && response.data && response.data.body && response.data.body.item) {
         setPatent(response.data.body.item)
         
         // 사용자 활동 추적 - 특허 상세 조회
@@ -138,12 +138,29 @@ export default function PatentDetail() {
         
         console.log(`✅ [PatentDetail] 특허 상세 정보 로드 성공: ${appNumber}`)
       } else {
-        throw new Error(response.error || 'No patent data found')
+        const errorMessage = response.error || response.message || 'No patent data found'
+        const errorDetails = response.details ? ` (${response.details})` : ''
+        throw new Error(`${errorMessage}${errorDetails}`)
       }
     } catch (err: any) {
-      console.error(`❌ [PatentDetail] 특허 상세 정보 로드 실패:`, err)
+      console.error(`❌ [PatentDetail] 특허 상세 정보 로드 실패 (${appNumber}):`, {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      })
+      
+      // 더 구체적인 에러 메시지 설정
+      let userMessage = '특허 상세정보를 불러오는데 실패했습니다.'
+      if (err.response?.status === 404) {
+        userMessage = `특허번호 ${appNumber}에 대한 정보를 찾을 수 없습니다.`
+      } else if (err.response?.status === 500) {
+        userMessage = '서버 오류로 인해 특허 정보를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.'
+      } else if (err.message.includes('timeout')) {
+        userMessage = '요청 시간이 초과되었습니다. 네트워크 연결을 확인하고 다시 시도해주세요.'
+      }
+      
       setError(err.message)
-      toast.error('특허 상세정보를 불러오는데 실패했습니다.')
+      toast.error(userMessage)
     } finally {
       setLoading(false)
     }

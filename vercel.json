@@ -17,60 +17,20 @@
   },
   "rewrites": [
     {
-      "source": "/api/v1/dashboard/metrics",
-      "destination": "/api/v1/dashboard/metrics.js"
+      "source": "/api/auth",
+      "destination": "/api/auth.js"
     },
     {
-      "source": "/api/v1/dashboard/activities",
-      "destination": "/api/v1/dashboard/activities.js"
+      "source": "/api/admin",
+      "destination": "/api/admin.js"
     },
     {
-      "source": "/api/v1/users",
-      "destination": "/api/v1/users/index.js"
+      "source": "/api/dashboard",
+      "destination": "/api/dashboard.js"
     },
     {
-      "source": "/api/v1/users/(.*)",
-      "destination": "/api/v1/users/[user_id].js"
-    },
-    {
-      "source": "/api/v1/payments/stats",
-      "destination": "/api/v1/payments/stats.js"
-    },
-    {
-      "source": "/api/v1/payments",
-      "destination": "/api/v1/payments/index.js"
-    },
-    {
-      "source": "/api/v1/auth/login",
-      "destination": "/api/v1/auth/login.js"
-    },
-    {
-      "source": "/api/v1/auth/signup",
-      "destination": "/api/v1/auth/signup.js"
-    },
-    {
-      "source": "/api/admin/auth",
-      "destination": "/api/admin/auth.js"
-    },
-    {
-      "source": "/api/admin/auth/me",
-      "destination": "/api/admin/auth.js"
-    },
-    {
-      "source": "/api/admin/auth/refresh",
-      "destination": "/api/admin/auth.js"
-    },
-    {
-      "source": "/api/generate-report",
-      "destination": "/api/generate-report.js"
-    },
-    {
-      "source": "/api/nicepay",
-      "destination": "/api/nicepay.js"
-    },
-    {
-      "source": "/api/points",
-      "destination": "/api/points.js"
+      "source": "/api/dashboard-analytics",
+      "destination": "/api/dashboard.js"
     },
     {
       "source": "/api/search",
@@ -78,95 +38,39 @@
     },
     {
       "source": "/api/detail",
-      "destination": "/api/detail.js"
+      "destination": "/api/search.js"
     },
     {
-      "source": "/api/ai-analysis",
-      "destination": "/api/ai-analysis.js"
+      "source": "/api/points",
+      "destination": "/api/points.js"
     },
     {
-      "source": "/api/billing",
-      "destination": "/api/billing.js"
+      "source": "/api/nicepay",
+      "destination": "/api/nicepay.js"
     },
     {
-      "source": "/api/dashboard-analytics",
-      "destination": "/api/dashboard-analytics.js"
+      "source": "/api/users",
+      "destination": "/api/users.js"
     },
     {
-      "source": "/api/health",
-      "destination": "/api/health.js"
+      "source": "/api/generate-report",
+      "destination": "/api/generate-report.js"
     },
     {
-      "source": "/api/monthly-points",
-      "destination": "/api/monthly-points.js"
+      "source": "/api/feedback",
+      "destination": "/api/feedback.js"
     },
     {
       "source": "/api/popular-keywords",
       "destination": "/api/popular-keywords.js"
     },
     {
-      "source": "/api/signup-bonus",
-      "destination": "/api/signup-bonus.js"
+      "source": "/api/health",
+      "destination": "/api/health.js"
     },
     {
-      "source": "/api/user-activities",
-      "destination": "/api/user-activities.js"
-    },
-    {
-      "source": "/api/webhook-payment-completed",
-      "destination": "/api/webhook-payment-completed.js"
-    },
-    {
-      "source": "/api/payment/history",
-      "destination": "/api/payment/history.js"
-    },
-    {
-      "source": "/api/payment/result",
-      "destination": "/api/payment/result.js"
-    },
-    {
-      "source": "/api/points/monthly-auto-grant",
-      "destination": "/api/points/monthly-auto-grant.js"
-    },
-    {
-      "source": "/api/points/monthly-free",
-      "destination": "/api/points/monthly-free.js"
-    },
-    {
-      "source": "/api/users/profile",
-      "destination": "/api/users/profile.js"
-    },
-    {
-      "source": "/api/points/balance",
-      "destination": "/api/points-balance.js"
-    },
-    {
-      "source": "/api/points/deduct",
-      "destination": "/api/points-deduct.js"
-    },
-    {
-      "source": "/api/points/transactions",
-      "destination": "/api/points-transactions.js"
-    },
-    {
-      "source": "/api/dashboard/admin-comprehensive-stats",
-      "destination": "/api/dashboard/admin-comprehensive-stats.js"
-    },
-    {
-      "source": "/api/dashboard/admin-users",
-      "destination": "/api/dashboard/admin-users.js"
-    },
-    {
-      "source": "/api/dashboard/admin-payments",
-      "destination": "/api/dashboard/admin-payments.js"
-    },
-    {
-      "source": "/api/users/([^/]+)",
-      "destination": "/api/users/[userId].js"
-    },
-    {
-      "source": "/api/users/([^/]+)/restore",
-      "destination": "/api/users/[userId]/restore.js"
+      "source": "/api/index",
+      "destination": "/api/index.js"
     },
     {
       "source": "/api/(.*)",

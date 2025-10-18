@@ -32,6 +32,75 @@ function handleError(res, error, context = '') {
   });
 }
 
+// 전체 회원 시장평균 데이터 조회 함수 (dashboard-analytics.js에서 통합)
+async function getMarketAverageData() {
+  try {
+    console.log('📊 [Market Average] 전체 회원 시장평균 데이터 조회 시작');
+    
+    // 전체 활성 사용자 수 조회 (삭제되지 않은 사용자)
+    const { data: allUsers, error: usersError } = await supabase
+      .from('users')
+      .select('id')
+      .is('deleted_at', null);
+    
+    if (usersError) {
+      console.error('❌ [Market Average] 사용자 조회 실패:', usersError);
+      return { searchAverage: 0, reportAverage: 0, totalUsers: 0 };
+    }
+    
+    const totalUsers = allUsers?.length || 0;
+    console.log(`📊 [Market Average] 전체 활성 사용자 수: ${totalUsers}`);
+    
+    if (totalUsers === 0) {
+      return { searchAverage: 0, reportAverage: 0, totalUsers: 0 };
+    }
+    
+    // 최근 30일 전체 검색 수 조회
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const { data: allSearches, error: searchError } = await supabase
+      .from('search_history')
+      .select('id')
+      .gte('created_at', thirtyDaysAgo.toISOString());
+    
+    if (searchError) {
+      console.error('❌ [Market Average] 검색 데이터 조회 실패:', searchError);
+    }
+    
+    // 최근 30일 전체 리포트 수 조회
+    const { data: allReports, error: reportError } = await supabase
+      .from('ai_analysis_reports')
+      .select('id')
+      .gte('created_at', thirtyDaysAgo.toISOString());
+    
+    if (reportError) {
+      console.error('❌ [Market Average] 리포트 데이터 조회 실패:', reportError);
+    }
+    
+    const totalSearches = allSearches?.length || 0;
+    const totalReports = allReports?.length || 0;
+    
+    // 사용자당 평균 계산
+    const searchAverage = Math.round(totalSearches / totalUsers);
+    const reportAverage = Math.round(totalReports / totalUsers);
+    
+    console.log(`📊 [Market Average] 계산 완료 - 검색 평균: ${searchAverage}, 리포트 평균: ${reportAverage}`);
+    
+    return {
+      searchAverage,
+      reportAverage,
+      totalUsers,
+      totalSearches,
+      totalReports
+    };
+    
+  } catch (error) {
+    console.error('❌ [Market Average] 시장평균 데이터 조회 실패:', error);
+    return { searchAverage: 0, reportAverage: 0, totalUsers: 0 };
+  }
+}
+
 // 메트릭스 조회 함수
 async function getMetrics(supabase, period = '30d') {
   const now = new Date();
@@ -822,6 +891,109 @@ async function getAdminPayments(supabase, params = {}) {
   } catch (error) {
     console.error('Error in getAdminPayments:', error);
     throw error;
+  }
+}
+
+// 사용자 정보 조회 함수
+async function getUserInfo(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, email, name, role, created_at, last_login_at')
+      .eq('id', userId)
+      .single();
+    
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('getUserInfo error:', error);
+    return null;
+  }
+}
+
+// 검색 기록 조회 함수
+async function getSearchHistory(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('search_history')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('getSearchHistory error:', error);
+    return [];
+  }
+}
+
+// 리포트 기록 조회 함수
+async function getReportHistory(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('ai_reports')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('getReportHistory error:', error);
+    return [];
+  }
+}
+
+// 포인트 거래 기록 조회 함수
+async function getPointTransactions(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('point_transactions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('getPointTransactions error:', error);
+    return [];
+  }
+}
+
+// 결제 기록 조회 함수
+async function getPaymentHistory(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('getPaymentHistory error:', error);
+    return [];
+  }
+}
+
+// 로그인 기록 조회 함수
+async function getLoginLogs(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('user_activities')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('activity_type', 'login')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('getLoginLogs error:', error);
+    return [];
   }
 }
 

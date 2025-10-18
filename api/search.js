@@ -38,15 +38,131 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  // POST 요청만 허용
-  if (req.method !== 'POST') {
-    return res.status(405).json({ 
-      success: false, 
-      error: 'Method not allowed',
-      message: 'Only POST method is allowed'
+  // GET 요청 처리 (특허 상세정보)
+  if (req.method === 'GET') {
+    return handlePatentDetail(req, res);
+  }
+
+  // POST 요청 처리 (특허 검색)
+  if (req.method === 'POST') {
+    return handlePatentSearch(req, res);
+  }
+
+  return res.status(405).json({ 
+    success: false, 
+    error: 'Method not allowed',
+    message: 'Only GET and POST methods are allowed'
+  });
+}
+
+// 특허 상세정보 처리 함수 (detail.js에서 통합)
+async function handlePatentDetail(req, res) {
+  const { applicationNumber } = req.query;
+
+  if (!applicationNumber) {
+    return res.status(400).json({ 
+      error: 'applicationNumber parameter is required' 
     });
   }
 
+  try {
+    console.log(`📋 특허 상세정보 요청: ${applicationNumber}`);
+
+    // 사용자 활동 로깅
+    const userId = req.query.userId;
+    if (userId && supabase) {
+      try {
+        await supabase
+          .from('user_activities')
+          .insert({
+            user_id: userId,
+            activity_type: 'patent_detail_view',
+            activity_data: { applicationNumber },
+            created_at: new Date().toISOString()
+          });
+        console.log(`✅ 사용자 활동 로그 저장 완료: ${userId} - ${applicationNumber}`);
+      } catch (logError) {
+        console.warn('⚠️ 사용자 활동 로그 저장 실패:', logError.message);
+      }
+    }
+
+    // KIPRIS API에서 특허 상세정보 조회
+    const patentDetail = await fetchPatentDetailFromKipris(applicationNumber);
+    
+    if (!patentDetail) {
+      console.warn(`⚠️ 특허 정보를 찾을 수 없음: ${applicationNumber}`);
+      return res.status(404).json({
+        success: false,
+        error: 'Patent not found',
+        message: `특허번호 ${applicationNumber}에 대한 정보를 찾을 수 없습니다.`,
+        details: 'KIPRIS API에서 해당 특허 정보를 조회할 수 없습니다.'
+      });
+    }
+
+    console.log(`✅ 특허 상세정보 조회 완료: ${applicationNumber}`);
+    
+    // 프론트엔드가 기대하는 구조로 변환
+    const formattedPatentDetail = {
+      biblioSummaryInfoArray: {
+        biblioSummaryInfo: {
+          applicationNumber: patentDetail.applicationNumber,
+          inventionTitle: patentDetail.inventionTitle,
+          inventionTitleEng: patentDetail.inventionTitleEng,
+          publicationNumber: patentDetail.publicationNumber,
+          publicationDate: patentDetail.publicationDate,
+          registrationNumber: patentDetail.registrationNumber,
+          registrationDate: patentDetail.registrationDate,
+          applicationDate: patentDetail.applicationDate,
+          priorityApplicationNumber: patentDetail.priorityApplicationNumber,
+          priorityApplicationDate: patentDetail.priorityApplicationDate,
+          registerStatus: '등록',
+          finalDisposal: '등록',
+          openDate: patentDetail.publicationDate,
+          registerNumber: patentDetail.registrationNumber
+        }
+      },
+      ipcInfoArray: patentDetail.ipcInfo,
+      familyInfoArray: patentDetail.familyInfo,
+      abstractInfoArray: patentDetail.abstractInfo,
+      internationalInfoArray: patentDetail.internationalInfo,
+      claimInfoArray: patentDetail.claimInfo,
+      applicantInfoArray: patentDetail.applicantInfo,
+      inventorInfoArray: patentDetail.inventorInfo,
+      agentInfoArray: patentDetail.agentInfo,
+      priorityInfoArray: patentDetail.priorityInfo,
+      designatedStateInfoArray: patentDetail.designatedStateInfo,
+      priorArtDocumentsInfoArray: patentDetail.priorArtDocumentsInfo,
+      legalStatusInfoArray: patentDetail.legalStatusInfo,
+      rndInfoArray: patentDetail.rndInfo
+    };
+    
+    return res.status(200).json({
+      success: true,
+      data: {
+        body: {
+          item: formattedPatentDetail
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error(`❌ 특허 상세정보 조회 실패 (${applicationNumber}):`, {
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: '특허 상세정보를 조회하는 중 오류가 발생했습니다.',
+      details: error.message,
+      applicationNumber: applicationNumber
+    });
+  }
+}
+
+// 특허 검색 처리 함수
+async function handlePatentSearch(req, res) {
   try {
     console.log('=== KIPRIS API 검색 요청 시작 ===');
     console.log('Request body:', req.body);
@@ -934,4 +1050,347 @@ function extractFieldsFromKeywords(textContent) {
   });
   
   return fields;
+}
+
+// ===== Detail.js에서 통합된 함수들 =====
+
+// KIPRIS API에서 특허 상세정보 조회
+async function fetchPatentDetailFromKipris(applicationNumber) {
+  try {
+    console.log(`🔍 KIPRIS API에서 특허 상세정보 조회: ${applicationNumber}`);
+    
+    // 환경변수에서 KIPRIS API 키 가져오기
+    const kiprisApiKey = process.env.KIPRIS_SERVICE_KEY || process.env.KIPRIS_API_KEY;
+    
+    if (!kiprisApiKey) {
+      console.error('KIPRIS API key not found');
+      throw new Error('KIPRIS API key is not configured');
+    }
+
+    // KIPRIS 특허 상세정보 API 엔드포인트 - getBibliographyDetailInfoSearch 사용
+    const kiprisDetailUrl = 'http://plus.kipris.or.kr/kipo-api/kipi/patUtiModInfoSearchSevice/getBibliographyDetailInfoSearch';
+    
+    // API 파라미터 설정 - 상세정보 조회용
+    const params = new URLSearchParams();
+    params.append('ServiceKey', kiprisApiKey);
+    params.append('applicationNumber', applicationNumber);
+    
+    const fullUrl = `${kiprisDetailUrl}?${params.toString()}`;
+    console.log('📡 KIPRIS 상세정보 API 호출 URL:', fullUrl.replace(kiprisApiKey, '[SERVICE_KEY]'));
+    
+    // API 호출
+    const response = await axios.get(fullUrl, {
+      timeout: 10000,
+      headers: {
+        'User-Agent': 'Patent-AI-System/1.0',
+        'Accept': 'application/xml'
+      }
+    });
+    
+    console.log('📡 KIPRIS 상세정보 API 응답 상태:', response.status);
+    
+    // XML 응답을 JSON으로 파싱
+    const kiprisResponse = await parseStringPromise(response.data);
+    console.log('📊 KIPRIS Plus API 원본 XML 응답 길이:', response.data.length);
+    
+    // 응답 구조 상세 분석
+    if (kiprisResponse?.response) {
+      const header = kiprisResponse.response.header?.[0];
+      const body = kiprisResponse.response.body?.[0];
+      
+      console.log('📋 KIPRIS API 응답 헤더:', {
+        successYN: getFieldValue(header?.successYN),
+        resultCode: getFieldValue(header?.resultCode),
+        resultMsg: getFieldValue(header?.resultMsg),
+        responseTime: getFieldValue(header?.responseTime)
+      });
+      
+      if (body) {
+        console.log('📋 응답 바디 구조:', Object.keys(body));
+        if (body.item?.[0]?.biblioSummaryInfoArray?.[0]?.biblioSummaryInfo?.[0]) {
+          const biblioInfo = body.item[0].biblioSummaryInfoArray[0].biblioSummaryInfo[0];
+          console.log('🏷️ 추출된 특허 제목 미리보기:', {
+            inventionTitle: getFieldValue(biblioInfo.inventionTitle),
+            inventionTitleEng: getFieldValue(biblioInfo.inventionTitleEng),
+            applicationNumber: getFieldValue(biblioInfo.applicationNumber)
+          });
+        }
+      }
+    } else {
+      console.warn('⚠️ 예상과 다른 응답 구조:', Object.keys(kiprisResponse || {}));
+    }
+    
+    // KIPRIS Plus API 서지상세정보 응답에서 특허 상세정보 추출
+    const patentDetail = extractPatentDetailFromBibliographyResponse(kiprisResponse, applicationNumber);
+    
+    if (!patentDetail) {
+      console.warn(`⚠️ KIPRIS에서 특허 정보를 찾을 수 없음: ${applicationNumber}`);
+      // 폴백으로 기본 특허 정보 생성
+      return generateFallbackPatentDetail(applicationNumber);
+    }
+    
+    console.log(`✅ KIPRIS에서 특허 상세정보 조회 완료: ${applicationNumber}`);
+    return patentDetail;
+    
+  } catch (error) {
+    console.error(`❌ KIPRIS API 호출 실패 (${applicationNumber}):`, {
+      message: error.message,
+      code: error.code,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      url: error.config?.url?.replace(process.env.KIPRIS_SERVICE_KEY || process.env.KIPRIS_API_KEY || '', '[SERVICE_KEY]')
+    });
+    
+    // API 호출 실패 시 폴백 데이터 생성
+    console.log(`🔄 폴백 데이터 생성: ${applicationNumber}`);
+    return generateFallbackPatentDetail(applicationNumber);
+  }
+}
+
+// KIPRIS 서지상세정보 응답에서 특허 상세정보 추출
+function extractPatentDetailFromBibliographyResponse(kiprisResponse, applicationNumber) {
+  try {
+    console.log(`🔍 서지상세정보 응답에서 특허 상세정보 추출 시작: ${applicationNumber}`);
+    
+    if (!kiprisResponse?.response?.body?.[0]?.item?.[0]) {
+      console.warn('⚠️ 응답에서 item 정보를 찾을 수 없습니다.');
+      return null;
+    }
+    
+    const item = kiprisResponse.response.body[0].item[0];
+    
+    // 서지요약정보 추출
+    const biblioSummaryInfo = item.biblioSummaryInfoArray?.[0]?.biblioSummaryInfo?.[0];
+    if (!biblioSummaryInfo) {
+      console.warn('⚠️ 서지요약정보를 찾을 수 없습니다.');
+      return null;
+    }
+    
+    // 기본 특허 정보 추출
+    const patentDetail = {
+      applicationNumber: getFieldValue(biblioSummaryInfo.applicationNumber) || applicationNumber,
+      inventionTitle: getFieldValue(biblioSummaryInfo.inventionTitle) || '제목 정보 없음',
+      inventionTitleEng: getFieldValue(biblioSummaryInfo.inventionTitleEng) || '',
+      publicationNumber: getFieldValue(biblioSummaryInfo.publicationNumber) || '',
+      publicationDate: getFieldValue(biblioSummaryInfo.publicationDate) || '',
+      registrationNumber: getFieldValue(biblioSummaryInfo.registrationNumber) || '',
+      registrationDate: getFieldValue(biblioSummaryInfo.registrationDate) || '',
+      applicationDate: getFieldValue(biblioSummaryInfo.applicationDate) || '',
+      priorityApplicationNumber: getFieldValue(biblioSummaryInfo.priorityApplicationNumber) || '',
+      priorityApplicationDate: getFieldValue(biblioSummaryInfo.priorityApplicationDate) || '',
+      
+      // 배열 정보들 추출
+      ipcInfo: extractIpcInfoArray(item.ipcInfoArray),
+      familyInfo: extractFamilyInfoArray(item.familyInfoArray),
+      abstractInfo: extractAbstractInfoArray(item.abstractInfoArray),
+      internationalInfo: extractInternationalInfoArray(item.internationalInfoArray),
+      claimInfo: extractClaimInfoArray(item.claimInfoArray),
+      applicantInfo: extractApplicantInfoArray(item.applicantInfoArray),
+      inventorInfo: extractInventorInfoArray(item.inventorInfoArray),
+      agentInfo: extractAgentInfoArray(item.agentInfoArray),
+      priorityInfo: extractPriorityInfoArray(item.priorityInfoArray),
+      designatedStateInfo: extractDesignatedStateInfoArray(item.designatedStateInfoArray),
+      priorArtDocumentsInfo: extractPriorArtDocumentsInfoArray(item.priorArtDocumentsInfoArray),
+      legalStatusInfo: extractLegalStatusInfoArray(item.legalStatusInfoArray),
+      rndInfo: extractRndInfoArray(item.rndInfoArray)
+    };
+    
+    console.log(`✅ 특허 상세정보 추출 완료: ${applicationNumber}`, {
+      title: patentDetail.inventionTitle,
+      publicationNumber: patentDetail.publicationNumber,
+      registrationNumber: patentDetail.registrationNumber
+    });
+    
+    return patentDetail;
+    
+  } catch (error) {
+    console.error(`❌ 특허 상세정보 추출 실패 (${applicationNumber}):`, error);
+    return null;
+  }
+}
+
+// 폴백 특허 상세정보 생성
+function generateFallbackPatentDetail(applicationNumber) {
+  console.log(`🔄 폴백 특허 상세정보 생성: ${applicationNumber}`);
+  
+  return {
+    applicationNumber: applicationNumber,
+    inventionTitle: '특허 정보를 불러올 수 없습니다',
+    inventionTitleEng: 'Patent information unavailable',
+    publicationNumber: '',
+    publicationDate: '',
+    registrationNumber: '',
+    registrationDate: '',
+    applicationDate: '',
+    priorityApplicationNumber: '',
+    priorityApplicationDate: '',
+    
+    ipcInfo: [],
+    familyInfo: [],
+    abstractInfo: [],
+    internationalInfo: [],
+    claimInfo: [],
+    applicantInfo: [],
+    inventorInfo: [],
+    agentInfo: [],
+    priorityInfo: [],
+    designatedStateInfo: [],
+    priorArtDocumentsInfo: [],
+    legalStatusInfo: [],
+    rndInfo: [],
+    
+    error: 'KIPRIS API 호출 실패로 인한 폴백 데이터',
+    fallback: true
+  };
+}
+
+// 배열 정보 추출 함수들
+function extractIpcInfoArray(ipcInfoArray) {
+  if (!ipcInfoArray?.[0]?.ipcInfo) return [];
+  return ipcInfoArray[0].ipcInfo.map(extractIpcInfo);
+}
+
+function extractFamilyInfoArray(familyInfoArray) {
+  if (!familyInfoArray?.[0]?.familyInfo) return [];
+  return familyInfoArray[0].familyInfo.map(extractFamilyInfo);
+}
+
+function extractAbstractInfoArray(abstractInfoArray) {
+  if (!abstractInfoArray?.[0]?.abstractInfo) return [];
+  return abstractInfoArray[0].abstractInfo.map(info => ({
+    abstractContent: getFieldValue(info.abstractContent) || ''
+  }));
+}
+
+function extractInternationalInfoArray(internationalInfoArray) {
+  if (!internationalInfoArray?.[0]?.internationalInfo) return [];
+  return internationalInfoArray[0].internationalInfo.map(extractInternationalInfo);
+}
+
+function extractClaimInfoArray(claimInfoArray) {
+  if (!claimInfoArray?.[0]?.claimInfo) return [];
+  return claimInfoArray[0].claimInfo.map(info => ({
+    claimContent: getFieldValue(info.claimContent) || ''
+  }));
+}
+
+function extractApplicantInfoArray(applicantInfoArray) {
+  if (!applicantInfoArray?.[0]?.applicantInfo) return [];
+  return applicantInfoArray[0].applicantInfo.map(extractApplicantInfo);
+}
+
+function extractInventorInfoArray(inventorInfoArray) {
+  if (!inventorInfoArray?.[0]?.inventorInfo) return [];
+  return inventorInfoArray[0].inventorInfo.map(extractInventorInfo);
+}
+
+function extractAgentInfoArray(agentInfoArray) {
+  if (!agentInfoArray?.[0]?.agentInfo) return [];
+  return agentInfoArray[0].agentInfo.map(extractAgentInfo);
+}
+
+function extractPriorityInfoArray(priorityInfoArray) {
+  if (!priorityInfoArray?.[0]?.priorityInfo) return [];
+  return priorityInfoArray[0].priorityInfo.map(extractPriorityInfo);
+}
+
+function extractDesignatedStateInfoArray(designatedStateInfoArray) {
+  if (!designatedStateInfoArray?.[0]?.designatedStateInfo) return [];
+  return designatedStateInfoArray[0].designatedStateInfo.map(extractDesignatedStateInfo);
+}
+
+function extractPriorArtDocumentsInfoArray(priorArtDocumentsInfoArray) {
+  if (!priorArtDocumentsInfoArray?.[0]?.priorArtDocumentsInfo) return [];
+  return priorArtDocumentsInfoArray[0].priorArtDocumentsInfo.map(extractPriorArtDocumentsInfo);
+}
+
+function extractLegalStatusInfoArray(legalStatusInfoArray) {
+  if (!legalStatusInfoArray?.[0]?.legalStatusInfo) return [];
+  return legalStatusInfoArray[0].legalStatusInfo.map(extractLegalStatusInfo);
+}
+
+function extractRndInfoArray(rndInfoArray) {
+  if (!rndInfoArray?.[0]?.rndInfo) return [];
+  return rndInfoArray[0].rndInfo.map(info => ({
+    rndTaskNumber: getFieldValue(info.rndTaskNumber) || '',
+    rndTaskName: getFieldValue(info.rndTaskName) || '',
+    rndInstitutionName: getFieldValue(info.rndInstitutionName) || ''
+  }));
+}
+
+// 개별 정보 추출 함수들
+function extractIpcInfo(ipcInfo) {
+  return {
+    ipcCode: getFieldValue(ipcInfo.ipcCode) || '',
+    ipcName: getFieldValue(ipcInfo.ipcName) || ''
+  };
+}
+
+function extractFamilyInfo(familyInfo) {
+  return {
+    familyApplicationNumber: getFieldValue(familyInfo.familyApplicationNumber) || '',
+    familyApplicationDate: getFieldValue(familyInfo.familyApplicationDate) || ''
+  };
+}
+
+function extractInternationalInfo(internationalInfo) {
+  return {
+    pctApplicationNumber: getFieldValue(internationalInfo.pctApplicationNumber) || '',
+    pctApplicationDate: getFieldValue(internationalInfo.pctApplicationDate) || '',
+    pctPublicationNumber: getFieldValue(internationalInfo.pctPublicationNumber) || '',
+    pctPublicationDate: getFieldValue(internationalInfo.pctPublicationDate) || ''
+  };
+}
+
+function extractApplicantInfo(applicantInfo) {
+  return {
+    applicantName: getFieldValue(applicantInfo.applicantName) || '',
+    applicantNameEng: getFieldValue(applicantInfo.applicantNameEng) || '',
+    applicantAddress: getFieldValue(applicantInfo.applicantAddress) || '',
+    applicantAddressEng: getFieldValue(applicantInfo.applicantAddressEng) || ''
+  };
+}
+
+function extractInventorInfo(inventorInfo) {
+  return {
+    inventorName: getFieldValue(inventorInfo.inventorName) || '',
+    inventorNameEng: getFieldValue(inventorInfo.inventorNameEng) || '',
+    inventorAddress: getFieldValue(inventorInfo.inventorAddress) || '',
+    inventorAddressEng: getFieldValue(inventorInfo.inventorAddressEng) || ''
+  };
+}
+
+function extractAgentInfo(agentInfo) {
+  return {
+    agentName: getFieldValue(agentInfo.agentName) || '',
+    agentAddress: getFieldValue(agentInfo.agentAddress) || ''
+  };
+}
+
+function extractPriorityInfo(priorityInfo) {
+  return {
+    priorityApplicationNumber: getFieldValue(priorityInfo.priorityApplicationNumber) || '',
+    priorityApplicationDate: getFieldValue(priorityInfo.priorityApplicationDate) || '',
+    priorityApplicationCountry: getFieldValue(priorityInfo.priorityApplicationCountry) || ''
+  };
+}
+
+function extractDesignatedStateInfo(designatedStateInfo) {
+  return {
+    designatedState: getFieldValue(designatedStateInfo.designatedState) || ''
+  };
+}
+
+function extractPriorArtDocumentsInfo(priorArtDocumentsInfo) {
+  return {
+    priorArtDocumentsNumber: getFieldValue(priorArtDocumentsInfo.priorArtDocumentsNumber) || '',
+    priorArtDocumentsDate: getFieldValue(priorArtDocumentsInfo.priorArtDocumentsDate) || ''
+  };
+}
+
+function extractLegalStatusInfo(legalStatusInfo) {
+  return {
+    legalStatus: getFieldValue(legalStatusInfo.legalStatus) || '',
+    legalStatusDate: getFieldValue(legalStatusInfo.legalStatusDate) || ''
+  };
 }
