@@ -107,6 +107,11 @@ const PaymentPage: React.FC = () => {
   };
 
   const handleAddonPurchase = async (amountKrw: number) => {
+    console.log('[PaymentPage] handleAddonPurchase 호출:', {
+      inputAmount: amountKrw,
+      inputType: typeof amountKrw
+    });
+    
     // 나이스페이 추가 충전 결제 처리 - VAT 10% 포함
     const baseAmount = amountKrw;
     const vatAmount = Math.floor(baseAmount * 0.1);
@@ -114,54 +119,95 @@ const PaymentPage: React.FC = () => {
     const points = baseAmount; // 기본 포인트는 VAT 제외 금액
     const bonus = Math.floor(points * 0.1); // 10% 보너스
     const total = points + bonus;
+    
+    console.log('[PaymentPage] 결제 금액 계산:', {
+      baseAmount,
+      vatAmount,
+      totalAmount,
+      points,
+      bonus,
+      total
+    });
+    
     await createNicePayOrder(totalAmount, 'addon', `포인트 충전 (${total.toLocaleString()}P)`);
   };
 
   const createNicePayOrder = async (amountKrw: number, paymentType: 'monthly' | 'addon', goodsName: string) => {
     try {
       if (!user) {
-        alert('로그인이 필요합니다.');
+        toast.error('로그인이 필요합니다.');
         return;
       }
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        alert('인증 세션이 없습니다.');
+        toast.error('인증 세션이 없습니다.');
         return;
       }
 
-      const response = await fetch('/api/nicepay?action=create-order', {
+      console.log('[PaymentPage] createNicePayOrder 호출:', {
+        amountKrw,
+        paymentType,
+        goodsName
+      });
+
+      // 올바른 API 엔드포인트로 요청 (Express 서버)
+      const baseUrl = 'http://localhost:3001'; // Express 서버 포트
+      const response = await fetch(`${baseUrl}/api/nicepay?action=create-order`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          userId: user.id,
           amount: amountKrw,
-          goodsName: goodsName,
-          paymentType: paymentType
+          productName: goodsName,
+          buyerName: user?.user_metadata?.name || '',
+          buyerEmail: user?.email || '',
+          buyerTel: user?.user_metadata?.phone || '',
+          paymentMethod: 'card'
         })
       });
 
       const data = await response.json();
       
+      console.log('[PaymentPage] API 응답 데이터:', data);
+      
       if (!data.success) {
-        throw new Error(data.error || '주문 생성에 실패했습니다.');
+        throw new Error(data.message || '주문 생성에 실패했습니다.');
       }
 
-      // 나이스페이 결제창 호출을 위한 데이터 설정
-      setSelectedPlan(paymentType);
-      setPaymentData({
-        orderId: data.orderId,
-        amount: data.amount,
-        goodsName: data.goodsName,
-        paymentType: data.paymentType
+      console.log('[PaymentPage] 주문 생성 성공:', data);
+
+      // API 응답에서 amount 값 확인 및 보정
+      const responseAmount = data.data?.amount || amountKrw;
+      console.log('[PaymentPage] 결제 데이터 설정:', {
+        orderId: data.data.orderId,
+        originalAmount: amountKrw,
+        responseAmount: responseAmount,
+        goodsName: data.data.productName || goodsName,
+        responseAmountType: typeof responseAmount,
+        responseAmountValid: responseAmount && responseAmount > 0
       });
 
+      // 나이스페이 결제창 호출을 위한 데이터 설정
+      const paymentDataToSet = {
+        orderId: data.data.orderId,
+        amount: responseAmount, // API 응답의 amount 또는 원본 amount 사용
+        goodsName: data.data.productName || goodsName,
+        paymentType: paymentType
+      };
+
+      console.log('[PaymentPage] setPaymentData 호출 전:', paymentDataToSet);
+      
+      setSelectedPlan(paymentType);
+      setPaymentData(paymentDataToSet);
+
+      console.log('[PaymentPage] setPaymentData 호출 완료');
+
     } catch (error) {
-      console.error('주문 생성 오류:', error);
-      alert(error instanceof Error ? error.message : '주문 생성 중 오류가 발생했습니다.');
+      console.error('[PaymentPage] 주문 생성 오류:', error);
+      toast.error(error instanceof Error ? error.message : '주문 생성 중 오류가 발생했습니다.');
     }
   };
 
@@ -306,11 +352,11 @@ const PaymentPage: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-gray-600">필요 포인트:</span>
-                      <span className="font-semibold text-amber-800 ml-2">{paymentState.requiredPoints?.toLocaleString()}P</span>
+                      <span className="font-semibold text-amber-800 ml-2">{(paymentState.requiredPoints || 0).toLocaleString()}P</span>
                     </div>
                     <div>
                       <span className="text-gray-600">현재 포인트:</span>
-                      <span className="font-semibold text-red-600 ml-2">{paymentState.currentPoints?.toLocaleString()}P</span>
+                      <span className="font-semibold text-red-600 ml-2">{(paymentState.currentPoints || 0).toLocaleString()}P</span>
                     </div>
                     <div>
                       <span className="text-gray-600">부족 포인트:</span>
@@ -578,11 +624,11 @@ const PaymentPage: React.FC = () => {
                       <div className="text-right">
                         <p className={`text-sm font-medium ${getTransactionColor(transaction.type)}`}>
                           {transaction.type === 'deduct' || transaction.type === 'expire' ? '-' : '+'}
-                          {transaction.amount.toLocaleString()}P
+                          {(transaction.amount || 0).toLocaleString()}P
                         </p>
                         {transaction.source_amount_krw && (
                           <p className="text-xs text-gray-500">
-                            ₩{transaction.source_amount_krw.toLocaleString()}
+                            ₩{(transaction.source_amount_krw || 0).toLocaleString()}
                           </p>
                         )}
                       </div>
@@ -600,8 +646,8 @@ const PaymentPage: React.FC = () => {
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
               <h3 className="text-lg font-semibold mb-4">결제 진행</h3>
               <div className="mb-4">
-                <p className="text-sm text-gray-600">상품명: {paymentData.goodsName}</p>
-                <p className="text-sm text-gray-600">결제금액: ₩{paymentData.amount.toLocaleString()}</p>
+                <p className="text-sm text-gray-600">상품명: {paymentData.goodsName || '상품명 없음'}</p>
+                <p className="text-sm text-gray-600">결제금액: ₩{(paymentData.amount || 0).toLocaleString()}</p>
               </div>
               <div className="flex space-x-3">
                 <NicePayButton

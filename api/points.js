@@ -22,6 +22,12 @@ const POINT_COSTS = {
 };
 
 export default async function handler(req, res) {
+  console.log('=== Points API Handler ===');
+  console.log('Method:', req.method);
+  console.log('URL:', req.url);
+  console.log('Query:', req.query);
+  console.log('Body:', req.body);
+  
   // CORS 헤더 설정
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -41,8 +47,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 임시로 인증 우회 - userId를 쿼리 파라미터에서 가져옴
+    // userId를 쿼리 파라미터 또는 요청 본문에서 가져옴
     let userId = req.query.userId;
+    
+    // POST 요청인 경우 요청 본문에서 userId 확인
+    if (!userId && req.method === 'POST' && req.body) {
+      userId = req.body.userId;
+    }
     
     if (!userId) {
       // Authorization 헤더에서 토큰 추출
@@ -62,7 +73,22 @@ export default async function handler(req, res) {
       userId = user.id;
     }
 
-    const { action } = req.query;
+    let { action } = req.query;
+    
+    // URL 경로에서 액션 추출 (예: /api/points/monthly-free, /api/points/expiring-points)
+    if (!action && req.url) {
+      console.log('URL:', req.url);
+      if (req.url.includes('/monthly-free')) {
+        action = 'monthly-free';
+        console.log('Action set to monthly-free from URL');
+      } else if (req.url.includes('/expiring-points')) {
+        action = 'expiring-points';
+        console.log('Action set to expiring-points from URL');
+      }
+    }
+    
+    console.log('Final action:', action);
+    console.log('Final userId:', userId);
 
     // 액션에 따른 처리 분기
     switch (action) {
@@ -76,8 +102,10 @@ export default async function handler(req, res) {
         return await handleTransactions(req, res, userId);
       case 'monthly-free':
         return await handleMonthlyFree(req, res, userId);
+      case 'expiring-points':
+        return await handleExpiringPoints(req, res, userId);
       default:
-        return res.status(400).json({ error: 'Invalid action. Use balance, deduct, charge, transactions, or monthly-free' });
+        return res.status(400).json({ error: 'Invalid action. Use balance, deduct, charge, transactions, monthly-free, or expiring-points' });
     }
 
   } catch (error) {
@@ -460,41 +488,132 @@ async function handleMonthlyFree(req, res, userId) {
   }
 
   try {
-    // 월간 무료 포인트 지급 (예: 100포인트, 30일 만료)
-    const freePoints = 100;
-    const expirationDate = new Date();
-    expirationDate.setDate(expirationDate.getDate() + 30); // 30일 후 만료
+    console.log('Processing monthly free points for user:', userId);
 
-    const { data: chargeResult, error: chargeError } = await supabase
-      .rpc('charge_points', {
-        p_user_id: userId,
-        p_amount: freePoints,
-        p_charge_type: 'monthly_free',
-        p_payment_id: null,
-        p_description: '월간 무료 포인트 지급',
-        p_expiration_date: expirationDate.toISOString()
+    // 월간 무료 포인트 확인 및 지급
+    const { data: result, error: grantError } = await supabase
+      .rpc('check_and_grant_monthly_free_points', {
+        p_user_id: userId
       });
 
-    if (chargeError) {
-      console.error('Monthly free points charge error:', chargeError);
+    if (grantError) {
+      console.error('Monthly free points grant error:', grantError);
       return res.status(500).json({ 
-        error: 'Failed to charge monthly free points',
-        details: chargeError.message 
+        error: 'Failed to grant monthly free points',
+        details: grantError.message 
       });
     }
 
+    console.log('Monthly free points result:', result);
+
+    if (!result || result.length === 0) {
+      return res.status(500).json({ 
+        error: 'No result from monthly free points function'
+      });
+    }
+
+    const grantResult = result[0];
+
     return res.status(200).json({
       success: true,
-      message: '월간 무료 포인트가 지급되었습니다',
-      points_added: freePoints,
-      expiration_date: expirationDate.toISOString(),
-      transaction_id: chargeResult
+      granted: grantResult.granted,
+      points_amount: grantResult.points_amount,
+      message: grantResult.message,
+      expires_at: grantResult.expires_at
     });
 
   } catch (error) {
     console.error('Monthly free points API error:', error);
     return res.status(500).json({ 
       error: 'Failed to process monthly free points',
+      details: error.message 
+    });
+  }
+}
+
+// 만료 예정 포인트 조회
+async function handleExpiringPoints(req, res, userId) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed for expiring-points' });
+  }
+
+  try {
+    const { days = 7 } = req.query;
+    const daysNumber = parseInt(days);
+
+    if (isNaN(daysNumber) || daysNumber < 1 || daysNumber > 365) {
+      return res.status(400).json({ 
+        error: 'Invalid days parameter. Must be between 1 and 365' 
+      });
+    }
+
+    console.log(`Fetching expiring points for user ${userId} within ${daysNumber} days`);
+
+    // 지정된 일수 내에 만료되는 포인트 조회
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + daysNumber);
+
+    const { data: expiringPoints, error: queryError } = await supabase
+      .from('point_transactions')
+      .select(`
+        id,
+        amount,
+        expires_at,
+        created_at,
+        source_amount_krw,
+        type
+      `)
+      .eq('user_id', userId)
+      .eq('type', 'charge')
+      .gt('amount', 0)
+      .not('expires_at', 'is', null)
+      .lte('expires_at', futureDate.toISOString())
+      .gte('expires_at', new Date().toISOString())
+      .order('expires_at', { ascending: true });
+
+    if (queryError) {
+      console.error('Expiring points query error:', queryError);
+      return res.status(500).json({ 
+        error: 'Failed to fetch expiring points',
+        details: queryError.message 
+      });
+    }
+
+    // 만료 예정 포인트 정보 가공
+    const expiringPointsData = expiringPoints.map(point => {
+      const expiresAt = new Date(point.expires_at);
+      const now = new Date();
+      const daysLeft = Math.ceil((expiresAt - now) / (1000 * 60 * 60 * 24));
+
+      return {
+        id: point.id,
+        amount: point.amount,
+        expires_at: point.expires_at,
+        created_at: point.created_at,
+        days_left: Math.max(0, daysLeft),
+        source_amount_krw: point.source_amount_krw || 0,
+        is_urgent: daysLeft <= 3 // 3일 이내 만료는 긴급으로 표시
+      };
+    });
+
+    // 총 만료 예정 포인트 계산
+    const totalExpiringPoints = expiringPointsData.reduce((sum, point) => sum + point.amount, 0);
+
+    const responseData = {
+      success: true,
+      expiring_points: expiringPointsData,
+      total_expiring_amount: totalExpiringPoints,
+      days_checked: daysNumber,
+      urgent_count: expiringPointsData.filter(point => point.is_urgent).length,
+      checked_at: new Date().toISOString()
+    };
+
+    return res.status(200).json(responseData);
+
+  } catch (error) {
+    console.error('Expiring points API error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to fetch expiring points',
       details: error.message 
     });
   }

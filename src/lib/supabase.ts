@@ -46,9 +46,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     flowType: 'pkce',
     // 토큰 갱신 설정 개선
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-    storageKey: 'supabase.auth.token',
-    // 세션 만료 전 자동 갱신 시간 (기본값: 60초)
-    refreshThreshold: 60
+    storageKey: 'supabase.auth.token'
   }
 })
 

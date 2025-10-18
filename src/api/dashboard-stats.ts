@@ -1,4 +1,77 @@
-import { supabase } from '../lib/supabase'
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+// 전체 회원 시장평균 데이터 조회 함수
+async function getMarketAverageData() {
+  try {
+    console.log('📊 [Market Average] 전체 회원 시장평균 데이터 조회 시작');
+    
+    // 전체 활성 사용자 수 조회 (삭제되지 않은 사용자)
+    const { data: allUsers, error: usersError } = await supabase
+      .from('users')
+      .select('id')
+      .is('deleted_at', null);
+    
+    if (usersError) {
+      console.error('❌ [Market Average] 사용자 조회 실패:', usersError);
+      return { searchAverage: 0, reportAverage: 0, totalUsers: 0 };
+    }
+    
+    const totalUsers = allUsers?.length || 0;
+    console.log(`📊 [Market Average] 전체 활성 사용자 수: ${totalUsers}`);
+    
+    if (totalUsers === 0) {
+      return { searchAverage: 0, reportAverage: 0, totalUsers: 0 };
+    }
+    
+    // 최근 30일 전체 검색 수 조회
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const { data: allSearches, error: searchError } = await supabase
+      .from('search_history')
+      .select('id')
+      .gte('created_at', thirtyDaysAgo.toISOString());
+    
+    if (searchError) {
+      console.error('❌ [Market Average] 검색 데이터 조회 실패:', searchError);
+    }
+    
+    // 최근 30일 전체 리포트 수 조회
+    const { data: allReports, error: reportError } = await supabase
+      .from('ai_analysis_reports')
+      .select('id')
+      .gte('created_at', thirtyDaysAgo.toISOString());
+    
+    if (reportError) {
+      console.error('❌ [Market Average] 리포트 데이터 조회 실패:', reportError);
+    }
+    
+    const totalSearches = allSearches?.length || 0;
+    const totalReports = allReports?.length || 0;
+    
+    // 사용자당 평균 계산
+    const searchAverage = Math.round(totalSearches / totalUsers);
+    const reportAverage = Math.round(totalReports / totalUsers);
+    
+    console.log(`📊 [Market Average] 계산 완료 - 검색 평균: ${searchAverage}, 리포트 평균: ${reportAverage}`);
+    
+    return {
+      searchAverage,
+      reportAverage,
+      totalUsers,
+      totalSearches,
+      totalReports
+    };
+    
+  } catch (error) {
+    console.error('❌ [Market Average] 시장평균 데이터 조회 실패:', error);
+    return { searchAverage: 0, reportAverage: 0, totalUsers: 0 };
+  }
+}
 
 export interface DashboardStats {
   quotaStatus: {
@@ -207,6 +280,9 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       (searchSuccessRate + reportCompletionRate) / 2
     );
 
+    // 실제 전체 회원 데이터 기반 시장평균 조회
+    const marketData = await getMarketAverageData();
+
     return {
       quotaStatus: {
         searches_used: searchCount,
@@ -220,8 +296,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         total_logins: totalLogins,
         personal_searches: searchCount,
         personal_reports: reportCount,
-        market_search_average: Math.round(searchCount * 1.5), // Estimated market average
-        market_report_average: Math.round(reportCount * 1.2)  // Estimated market average
+        market_search_average: marketData.searchAverage, // 실제 전체 회원 평균
+        market_report_average: marketData.reportAverage  // 실제 전체 회원 평균
       },
       efficiencyMetrics: {
         search_success_rate: Math.round(searchSuccessRate * 10) / 10,

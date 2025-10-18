@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, MessageSquare, User, Mail, AlertCircle, CheckCircle } from 'lucide-react';
+import { Send, MessageSquare, Mail, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
@@ -7,7 +7,6 @@ import { Button } from '../components/UI/Button';
 const Feedback: React.FC = () => {
   const { user, profile } = useAuthStore();
   const [formData, setFormData] = useState({
-    name: profile?.name || '',
     email: user?.email || '',
     category: 'general',
     subject: '',
@@ -61,7 +60,6 @@ const Feedback: React.FC = () => {
       if (response.ok) {
         setSubmitStatus('success');
         setFormData({
-          name: profile?.name || '',
           email: user?.email || '',
           category: 'general',
           subject: '',
@@ -127,42 +125,22 @@ const Feedback: React.FC = () => {
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-ms-text mb-2">
-                        이름
-                      </label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-ms-muted" />
-                        <input
-                          type="text"
-                          id="name"
-                          name="name"
-                          value={formData.name}
-                          onChange={handleInputChange}
-                          className="w-full pl-10 pr-4 py-3 border border-ms-line rounded-lg focus:ring-2 focus:ring-ms-olive focus:border-transparent transition-all"
-                          placeholder="이름을 입력하세요"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-ms-text mb-2">
-                        이메일
-                      </label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-ms-muted" />
-                        <input
-                          type="email"
-                          id="email"
-                          name="email"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          className="w-full pl-10 pr-4 py-3 border border-ms-line rounded-lg focus:ring-2 focus:ring-ms-olive focus:border-transparent transition-all"
-                          placeholder="이메일을 입력하세요"
-                          required
-                        />
-                      </div>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-ms-text mb-2">
+                      이메일
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-ms-muted" />
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        className="w-full pl-10 pr-4 py-3 border border-ms-line rounded-lg focus:ring-2 focus:ring-ms-olive focus:border-transparent transition-all"
+                        placeholder="이메일을 입력하세요"
+                        required
+                      />
                     </div>
                   </div>
 

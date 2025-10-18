@@ -29,13 +29,18 @@ const wrapVercelHandler = (handlerPath) => {
   return async (req, res) => {
     try {
       console.log(`[wrapVercelHandler] ${req.method} ${req.url} -> ${handlerPath}`);
+      console.log(`[wrapVercelHandler] Request body:`, req.body);
+      console.log(`[wrapVercelHandler] Request body type:`, typeof req.body);
+      
+      // 요청 본문 처리 (Express에서 이미 파싱됨)
+      let processedBody = req.body;
       
       // Vercel 함수 형식으로 요청 객체 변환
       const vercelReq = {
         ...req,
-        body: req.body,
-        query: req.query,
-        headers: req.headers,
+        body: processedBody || {},
+        query: req.query || {},
+        headers: req.headers || {},
         method: req.method,
         url: req.url
       };
@@ -47,9 +52,15 @@ const wrapVercelHandler = (handlerPath) => {
       return handler.default(vercelReq, res);
     } catch (error) {
       console.error('API handler error:', error);
+      console.error('Error stack:', error.stack);
       // 응답이 이미 전송되었는지 확인
       if (!res.headersSent) {
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ 
+          success: false,
+          error: '서버 내부 오류가 발생했습니다.',
+          message: error.message,
+          details: error.stack
+        });
       }
     }
   };
@@ -81,15 +92,15 @@ app.get('/api/dashboard/admin-stats', wrapVercelHandler('./api/dashboard.js'))
 // 모니터링 API 엔드포인트
 app.get('/api/monitoring/logs', wrapVercelHandler('./api/monitoring/logs.js'))
 
-// 포인트 관련 API - 통합 엔드포인트
+// 포인트 관리 API
 app.all('/api/points', wrapVercelHandler('./api/points.js'))
+app.all('/api/points/monthly-free', wrapVercelHandler('./api/points.js'))
+app.get('/api/points/expiring-points', wrapVercelHandler('./api/points.js'))
 
-// 포인트 관련 API - 개별 엔드포인트 (하위 호환성)
+// 포인트 세부 API
 app.get('/api/points/balance', wrapVercelHandler('./api/points-balance.js'))
 app.post('/api/points/deduct', wrapVercelHandler('./api/points-deduct.js'))
 app.get('/api/points/transactions', wrapVercelHandler('./api/points-transactions.js'))
-app.get('/api/points/monthly-free', wrapVercelHandler('./api/points/monthly-free.js'))
-app.post('/api/points/monthly-free', wrapVercelHandler('./api/points/monthly-free.js'))
 
 // 결제 관련 API 엔드포인트
 app.post('/api/billing', wrapVercelHandler('./api/billing.js'))
@@ -120,6 +131,9 @@ app.all('/api/v1/dashboard/activities*', wrapVercelHandler('./api/v1/dashboard/a
 
 // 사용자 활동 API 엔드포인트
 app.all('/api/user_activities', wrapVercelHandler('./api/user-activities.js'))
+
+// 피드백 API 엔드포인트
+app.all('/api/feedback', wrapVercelHandler('./api/feedback.js'))
 
 // 인증 API 엔드포인트 (일반 사용자 로그인/회원가입)
 app.all('/api/auth', wrapVercelHandler('./api/auth.js'))

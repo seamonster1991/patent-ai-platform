@@ -3,11 +3,11 @@ import { CreditCard, Loader2 } from 'lucide-react';
 import PaymentMethodSelector from './PaymentMethodSelector';
 import PaymentConfirmationModal from './PaymentConfirmationModal';
 import { useAuthStore } from '../../store/authStore';
-import { supabase } from '../../lib/supabase';
 
+// NicePay 공식 가이드에 따라 NicePayButton 컴포넌트를 완전히 재구성합니다. AUTHNICE.requestPay() 메서드를 사용하고, 모든 결제 수단을 지원하며, 결제 금액이 정확히 표시되도록 수정합니다.
 declare global {
   interface Window {
-    NICEPAY: {
+    AUTHNICE: {
       requestPay: (params: any) => void;
     };
   }
@@ -29,240 +29,250 @@ interface NicePayButtonProps {
 const NicePayButton: React.FC<NicePayButtonProps> = ({
   amount,
   productName,
-  buyerName = '',
-  buyerEmail = '',
-  buyerTel = '',
+  buyerName,
+  buyerEmail,
+  buyerTel,
   onSuccess,
   onError,
   className = '',
   disabled = false,
-  showMethodSelector = true
+  showMethodSelector = false
 }) => {
   const { user } = useAuthStore();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const [paymentConfig, setPaymentConfig] = useState<any>(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('card');
-  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [showMethodSelection, setShowMethodSelection] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('card');
 
+  // amount 값 검증 및 디버깅
   useEffect(() => {
-    // 나이스페이 설정 정보 가져오기
-    const fetchPaymentConfig = async () => {
+    console.log('[NicePayButton] Props 수신:', {
+      amount,
+      productName,
+      buyerName,
+      buyerEmail,
+      buyerTel,
+      amountType: typeof amount,
+      amountValid: amount && amount > 0
+    });
+  }, [amount, productName, buyerName, buyerEmail, buyerTel]);
+
+  // 버튼 상태 디버깅 - 모든 비활성화 조건 추적
+  useEffect(() => {
+    const buttonDisabled = disabled || isLoading || !isScriptLoaded || !paymentConfig || !amount || amount <= 0;
+    
+    console.log('[NicePayButton] 버튼 상태 디버깅:', {
+      disabled,
+      isLoading,
+      isScriptLoaded,
+      hasPaymentConfig: !!paymentConfig,
+      amount,
+      amountValid: amount && amount > 0,
+      windowAuthNice: !!window.AUTHNICE,
+      buttonDisabled,
+      disabledReasons: {
+        propDisabled: disabled,
+        loading: isLoading,
+        scriptNotLoaded: !isScriptLoaded,
+        noPaymentConfig: !paymentConfig,
+        noAmount: !amount,
+        invalidAmount: amount <= 0
+      }
+    });
+  }, [disabled, isLoading, isScriptLoaded, paymentConfig, amount]);
+
+  // NicePay 설정 로드
+  useEffect(() => {
+    const loadPaymentConfig = async () => {
       try {
-        const response = await fetch('/api/nicepay?action=config');
+        console.log('[NicePayButton] NicePay 설정 로드 시작...');
+        // Vite 프록시를 사용하여 상대 경로로 API 호출
+        const response = await fetch(`/api/nicepay?action=config`);
         const config = await response.json();
-        setPaymentConfig(config);
+        
+        console.log('[NicePayButton] NicePay 설정 응답:', config);
+        
+        if (config.success) {
+          setPaymentConfig(config.data);
+          console.log('[NicePayButton] NicePay 설정 로드 성공:', config.data);
+        } else {
+          console.error('[NicePayButton] NicePay 설정 로드 실패:', config.error);
+          onError?.({ message: 'NicePay 설정을 불러올 수 없습니다.' });
+        }
       } catch (error) {
-        console.error('Failed to fetch payment config:', error);
-        onError?.({ message: '결제 설정을 불러오는데 실패했습니다.' });
+        console.error('[NicePayButton] NicePay 설정 로드 오류:', error);
+        onError?.({ message: 'NicePay 설정 로드 중 오류가 발생했습니다.' });
       }
     };
 
-    fetchPaymentConfig();
+    loadPaymentConfig();
   }, [onError]);
 
+  // NicePay JS SDK 로드 (공식 가이드에 따라 AUTHNICE 사용)
   useEffect(() => {
-    // 나이스페이 JS SDK 로드
     const loadNicePayScript = () => {
-      if (window.NICEPAY) {
+      console.log('[NicePayButton] NicePay JS SDK 로드 확인 시작...');
+      
+      if (window.AUTHNICE) {
+        console.log('[NicePayButton] AUTHNICE 이미 로드됨');
         setIsScriptLoaded(true);
         return;
       }
 
+      console.log('[NicePayButton] AUTHNICE 스크립트 로드 시작...');
       const script = document.createElement('script');
-      script.src = 'https://web.nicepay.co.kr/v3/webstd/js/nicepay-3.0.js';
+      // 공식 가이드에 따라 paymentConfig에서 받은 jsSDKUrl 사용
+      script.src = paymentConfig?.jsSDKUrl || 'https://pay.nicepay.co.kr/v1/js/';
       script.async = true;
+      
       script.onload = () => {
+        console.log('[NicePayButton] NicePay JS SDK 로드 완료:', script.src);
+        console.log('[NicePayButton] window.AUTHNICE 확인:', !!window.AUTHNICE);
         setIsScriptLoaded(true);
       };
+      
       script.onerror = () => {
-        console.error('나이스페이 JS SDK 로드 실패');
-        onError?.({ message: '결제 모듈 로드에 실패했습니다.' });
+        console.error('[NicePayButton] NicePay JS SDK 로드 실패:', script.src);
+        onError?.({ message: 'NicePay 결제 모듈을 불러올 수 없습니다.' });
       };
+
       document.head.appendChild(script);
     };
 
-    if (paymentConfig) {
+    if (paymentConfig && paymentConfig.jsSDKUrl) {
+      console.log('[NicePayButton] paymentConfig 확인됨, 스크립트 로드 시작:', paymentConfig.jsSDKUrl);
       loadNicePayScript();
+    } else {
+      console.log('[NicePayButton] paymentConfig 대기 중...', { paymentConfig });
     }
   }, [paymentConfig, onError]);
 
+  // 결제 수단별 이름 반환
   const getPaymentMethodName = (method: string) => {
     switch (method) {
       case 'card': return '신용카드';
       case 'kakaopay': return '카카오페이';
       case 'naverpay': return '네이버페이';
       case 'bank': return '계좌이체';
+      case 'vbank': return '가상계좌';
       default: return '신용카드';
     }
   };
 
-  const getPaymentMethodDescription = (method: string) => {
-    switch (method) {
-      case 'card': return '모든 신용카드 및 체크카드 사용 가능';
-      case 'kakaopay': return '카카오페이로 간편하게 결제';
-      case 'naverpay': return '네이버페이로 안전하게 결제';
-      case 'bank': return '실시간 계좌이체';
-      default: return '모든 신용카드 및 체크카드 사용 가능';
-    }
-  };
-
+  // 결제 수단 선택 핸들러
   const handlePaymentMethodSelect = (methodId: string) => {
     setSelectedPaymentMethod(methodId);
     setShowMethodSelection(false);
     setShowConfirmationModal(true);
   };
 
+  // 결제 확인 및 실행
   const handleConfirmPayment = async () => {
-    if (!isScriptLoaded || !window.NICEPAY || !paymentConfig) {
-      onError?.({ message: '결제 모듈이 아직 로드되지 않았습니다.' });
+    console.log('[NicePayButton] handleConfirmPayment 시작:', {
+      amount,
+      productName,
+      isScriptLoaded,
+      hasPaymentConfig: !!paymentConfig,
+      hasAuthNice: !!window.AUTHNICE
+    });
+
+    if (!isScriptLoaded || !window.AUTHNICE || !paymentConfig) {
+      const errorMsg = '결제 모듈이 아직 로드되지 않았습니다.';
+      console.error('[NicePayButton]', errorMsg);
+      onError?.({ message: errorMsg });
       return;
     }
 
+    // amount 값 검증 강화
+    const validAmount = Number(amount);
+    if (!validAmount || validAmount <= 0 || isNaN(validAmount)) {
+      const errorMsg = `올바른 결제 금액을 입력해주세요. (현재 값: ${amount}, 타입: ${typeof amount})`;
+      console.error('[NicePayButton]', errorMsg);
+      onError?.({ message: errorMsg });
+      return;
+    }
+
+    console.log('[NicePayButton] 검증된 결제 금액:', validAmount);
+
     setIsLoading(true);
+    setShowConfirmationModal(false);
 
     try {
-      if (!user) {
-        onError?.({ message: '로그인이 필요합니다.' });
-        return;
-      }
+      // 주문 생성 요청 (Vite 프록시 사용)
+      const orderRequestBody = {
+        amount: validAmount,
+        productName: productName,
+        buyerName: buyerName || user?.user_metadata?.name || '구매자',
+        buyerEmail: buyerEmail || user?.email || '',
+        buyerTel: buyerTel || '',
+        paymentMethod: selectedPaymentMethod
+      };
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        onError?.({ message: '인증 세션이 없습니다.' });
-        return;
-      }
+      console.log('[NicePayButton] 주문 생성 요청:', orderRequestBody);
 
-      // 주문 생성
-      const orderResponse = await fetch('/api/nicepay?action=create-order', {
+      const orderResponse = await fetch(`/api/nicepay?action=create-order`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
         },
-        body: JSON.stringify({
-          userId: user.id,
-          amount: amount,
-          goodsName: productName,
-          paymentType: 'addon',
-          payMethod: selectedPaymentMethod
-        })
+        body: JSON.stringify(orderRequestBody)
       });
 
       const orderResult = await orderResponse.json();
-
+      
+      console.log('[NicePayButton] 주문 생성 응답:', orderResult);
+      
       if (!orderResult.success) {
-        throw new Error(orderResult.error || '주문 생성에 실패했습니다.');
+        throw new Error(orderResult.message || '주문 생성에 실패했습니다.');
       }
 
-      // NicePay v3 결제 파라미터 설정
-      const getPaymentMethodParams = (payMethod: string) => {
-        const baseParams = {
-          PayMethod: 'CARD', // 기본값: 신용카드
-          MID: paymentConfig.clientId,
-          Moid: orderResult.orderId,
-          Amt: amount,
-          GoodsName: productName,
-          BuyerName: buyerName || '구매자',
-          BuyerEmail: buyerEmail || '',
-          BuyerTel: buyerTel || '',
-          ReturnURL: paymentConfig.returnUrl,
-          MallUserID: user?.id || '',
-          VbankExpDate: '', // 가상계좌 입금기한 (YYYYMMDD)
-          EdiDate: new Date().toISOString().replace(/[-:]/g, '').slice(0, 14), // 전문생성일시
-          SignData: orderResult.signature || '', // 위변조 검증 데이터
-          CharSet: 'utf-8',
-          ReqReserved: '', // 상점 예약필드
-          TrKey: orderResult.trKey || '' // 암호화키
-        };
+      console.log('[NicePayButton] 주문 생성 성공:', orderResult);
 
-        switch (payMethod) {
-          case 'kakaopay':
-            return {
-              ...baseParams,
-              PayMethod: 'EASYPAY',
-              EasyPayMethod: 'KAKAOPAY'
-            };
-          case 'naverpay':
-            return {
-              ...baseParams,
-              PayMethod: 'EASYPAY',
-              EasyPayMethod: 'NAVERPAY'
-            };
-          case 'bank':
-            return {
-              ...baseParams,
-              PayMethod: 'VBANK',
-              VbankExpDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10).replace(/-/g, '') // 3일 후
-            };
-          case 'card':
-          default:
-            return {
-              ...baseParams,
-              PayMethod: 'CARD'
-            };
+      // NicePay 공식 가이드에 따른 결제창 호출 파라미터
+      const paymentParams = {
+        clientId: paymentConfig.clientId,
+        method: selectedPaymentMethod,
+        orderId: orderResult.data.orderId,
+        amount: validAmount, // 검증된 amount 사용
+        goodsName: productName,
+        returnUrl: paymentConfig.returnUrl,
+        buyerName: buyerName || user?.user_metadata?.name || '구매자',
+        buyerEmail: buyerEmail || user?.email || '',
+        buyerTel: buyerTel || '',
+        mallReserved: '', // 가맹점 예약 필드 (공식 가이드 준수)
+        // 에러 콜백 함수 (공식 가이드에 따라 fnError 사용)
+        fnError: (result: any) => {
+          console.error('[NicePayButton] NicePay 결제 오류:', result);
+          setIsLoading(false);
+          onError?.({
+            message: result.errorMsg || '결제 중 오류가 발생했습니다.',
+            code: result.errorCode || 'PAYMENT_ERROR',
+            details: result
+          });
         }
       };
 
-      // NicePay v3 결제 요청 파라미터 설정
-      const paymentParams = getPaymentMethodParams(orderResult.payMethod || selectedPaymentMethod);
+      console.log('[NicePayButton] NicePay 결제창 호출 파라미터:', paymentParams);
 
-      // NicePay v3 결제창 호출
-      window.NICEPAY.requestPay({
-        ...paymentParams,
-        // 성공 콜백
-        SuccessfullURL: async (result: any) => {
-          console.log('나이스페이 결제 성공:', result);
-          
-          try {
-            // 결제 승인 요청
-            const approveResponse = await fetch('/api/nicepay?action=approve', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                tid: result.TID || result.tid,
-                amount: amount,
-                orderId: orderResult.orderId,
-                signature: orderResult.signature
-              })
-            });
+      // NicePay 공식 가이드에 따른 AUTHNICE.requestPay() 호출
+      window.AUTHNICE.requestPay(paymentParams);
 
-            const approveResult = await approveResponse.json();
+      // 결제창이 열리면 로딩 상태 해제 (결제 완료는 returnUrl에서 처리)
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
 
-            if (approveResult.success) {
-              setIsLoading(false);
-              setShowConfirmationModal(false);
-              onSuccess?.(approveResult);
-            } else {
-              throw new Error(approveResult.error || '결제 승인에 실패했습니다.');
-            }
-          } catch (approveError) {
-            console.error('결제 승인 오류:', approveError);
-            setIsLoading(false);
-            setShowConfirmationModal(false);
-            onError?.(approveError);
-          }
-        },
-        // 실패 콜백
-        FailURL: async (result: any) => {
-          console.error('나이스페이 결제 오류:', result);
-          setIsLoading(false);
-          setShowConfirmationModal(false);
-          onError?.(result);
-        }
-      });
-
-    } catch (error) {
-      console.error('결제 요청 오류:', error);
+    } catch (error: any) {
+      console.error('[NicePayButton] 결제 요청 오류:', error);
       setIsLoading(false);
-      setShowConfirmationModal(false);
       onError?.(error);
     }
   };
 
+  // 결제 시작 핸들러
   const handlePaymentStart = () => {
     if (showMethodSelector) {
       setShowMethodSelection(true);
@@ -271,16 +281,28 @@ const NicePayButton: React.FC<NicePayButtonProps> = ({
     }
   };
 
+  // 버튼 텍스트 생성 (금액 표시 문제 해결)
   const getButtonText = () => {
     if (isLoading) return '결제 처리 중...';
-    return `${amount.toLocaleString()}원 결제하기`;
+    
+    // 금액이 유효한지 확인하고 안전하게 표시
+    const validAmount = Number(amount);
+    const displayAmount = validAmount && validAmount > 0 ? validAmount : 0;
+    
+    console.log('[NicePayButton] 버튼 텍스트 생성:', {
+      originalAmount: amount,
+      validAmount,
+      displayAmount
+    });
+    
+    return `${displayAmount.toLocaleString()}원 결제하기`;
   };
 
   return (
     <>
       <button
         onClick={handlePaymentStart}
-        disabled={disabled || isLoading || !isScriptLoaded || !paymentConfig}
+        disabled={disabled || isLoading || !isScriptLoaded || !paymentConfig || !amount || amount <= 0}
         className={`
           flex items-center justify-center space-x-2 px-6 py-3 
           bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 
@@ -291,7 +313,7 @@ const NicePayButton: React.FC<NicePayButtonProps> = ({
         {isLoading ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span>{getButtonText()}</span>
+            <span>결제 처리 중...</span>
           </>
         ) : (
           <>
@@ -301,55 +323,47 @@ const NicePayButton: React.FC<NicePayButtonProps> = ({
         )}
       </button>
 
-      {/* Payment Method Selection Modal */}
+      {/* 결제 수단 선택 모달 */}
       {showMethodSelection && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-            onClick={() => setShowMethodSelection(false)}
-          />
-          
-          <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative bg-white rounded-lg shadow-xl max-w-lg w-full mx-auto">
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  결제 방법 선택
-                </h3>
-                <button
-                  onClick={() => setShowMethodSelection(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  ×
-                </button>
-              </div>
-              
-              <div className="p-6">
-                <PaymentMethodSelector
-                  selectedMethod={selectedPaymentMethod}
-                  onMethodSelect={handlePaymentMethodSelect}
-                  amount={amount}
-                />
-              </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg max-w-md w-full mx-4">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold">결제 수단 선택</h3>
+              <button
+                onClick={() => setShowMethodSelection(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <PaymentMethodSelector
+                selectedMethod={selectedPaymentMethod}
+                onMethodSelect={handlePaymentMethodSelect}
+                amount={amount || 0}
+              />
             </div>
           </div>
         </div>
       )}
 
-      {/* Payment Confirmation Modal */}
-      <PaymentConfirmationModal
-        isOpen={showConfirmationModal}
-        onClose={() => setShowConfirmationModal(false)}
-        onConfirm={handleConfirmPayment}
-        paymentData={{
-          amount,
-          method: selectedPaymentMethod,
-          methodName: getPaymentMethodName(selectedPaymentMethod),
-          description: getPaymentMethodDescription(selectedPaymentMethod),
-          orderId: `ORDER-${Date.now()}`,
-          fee: 0
-        }}
-        isLoading={isLoading}
-      />
+      {/* 결제 확인 모달 */}
+      {showConfirmationModal && (
+        <PaymentConfirmationModal
+          isOpen={showConfirmationModal}
+          onClose={() => setShowConfirmationModal(false)}
+          onConfirm={handleConfirmPayment}
+          paymentData={{
+            amount: amount || 0,
+            productName: productName,
+            paymentMethod: getPaymentMethodName(selectedPaymentMethod),
+            buyerName: buyerName || user?.user_metadata?.name || '구매자',
+            buyerEmail: buyerEmail || user?.email || ''
+          }}
+          isLoading={isLoading}
+        />
+      )}
     </>
   );
 };

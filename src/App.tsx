@@ -17,6 +17,7 @@ import PaymentFailure from "@/pages/Payment/PaymentFailure";
 import PaymentHistory from "@/pages/Payment/PaymentHistory";
 import PointTest from "@/pages/PointTest";
 import AuthCallback from "@/pages/AuthCallback";
+import Feedback from "@/pages/Feedback";
 import ProtectedRoute from "@/components/Auth/ProtectedRoute";
 import { useAuthStore } from "@/store/authStore";
 import { useThemeStore } from "@/store/themeStore";
@@ -150,6 +151,13 @@ export default function App() {
             <ProtectedRoute>
               <Layout>
                 <PointTest />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/feedback" element={
+            <ProtectedRoute>
+              <Layout>
+                <Feedback />
               </Layout>
             </ProtectedRoute>
           } />
